@@ -200,6 +200,8 @@
     "seeAll": "See all results for “{q}”"
   },
   "reader": {
+    "noPages": "This episode has no pages yet",
+    "noPagesDesc": "Check back soon, or go to another episode.",
     "backToSeries": "Back to series",
     "episodes": "Episodes",
     "chapters": "Chapters",

@@ -31,7 +31,8 @@ type AppState = {
   purchases: StoredPurchase[]
   returnTo: string | null
   shopReturn: { page: string; episode: number; title: string } | null
-  pendingUnlock: { seriesId: string; episode: number } | null
+  /** `direct`: set by a reader redirect (locked episode opened by URL): reopen even when logged out. */
+  pendingUnlock: { seriesId: string; episode: number; direct?: boolean } | null
   novelSettings: NovelSettings
   lang: Locale
   accounts: StoredAccount[]

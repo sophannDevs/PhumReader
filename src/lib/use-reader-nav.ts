@@ -7,7 +7,8 @@ import type { Episode, Series } from "@/data"
 import { useRouter } from "@/i18n/navigation"
 import { useEpisodes } from "@/lib/queries"
 import { readerHref } from "@/lib/routes"
-import { useAppStore, useCoins } from "@/lib/store"
+import { seriesHref } from "@/lib/routes"
+import { useAppStore, useCoins, useHydrated } from "@/lib/store"
 
 /**
  * Shared by the comic and novel readers: records reading progress, moves between
@@ -21,12 +22,26 @@ export function useReaderNav(series: Series, n: number, total: number) {
   const unlocked = useAppStore((s) => s.unlocked[series.id])
   const { request, dialog } = useSeriesUnlock(series)
 
-  useEffect(() => {
-    useAppStore.getState().markRead(series.id, n)
-  }, [series.id, n])
+  const hydrated = useHydrated()
 
   const list = episodes.data ?? []
   const isLocked = (e: Episode) => e.access === "fastpass" && !unlocked?.includes(e.n)
+  const here = list.find((x) => x.n === n)
+  const lockedHere = hydrated && !!here && isLocked(here)
+  // Held back until the store and the episode list are known: a locked episode opened by URL
+  // must never show its pages, it goes to the series page with the unlock dialog open.
+  const gated = !hydrated || episodes.isPending || lockedHere
+
+  useEffect(() => {
+    if (gated) return
+    useAppStore.getState().markRead(series.id, n)
+  }, [gated, series.id, n])
+
+  useEffect(() => {
+    if (!lockedHere) return
+    useAppStore.getState().setPendingUnlock({ seriesId: series.id, episode: n, direct: true })
+    router.replace(seriesHref(series))
+  }, [lockedHere, series, n, router])
 
   function go(target: number) {
     if (target < 1 || target > total) return
@@ -55,5 +70,5 @@ export function useReaderNav(series: Series, n: number, total: number) {
     locked: isLocked(e),
   }))
 
-  return { go, list, listEpisodes, isLocked, coins, request, dialog }
+  return { go, list, listEpisodes, isLocked, coins, request, dialog, gated }
 }

@@ -11,11 +11,13 @@ export function ErrorState({
   title,
   description,
   className,
+  extra,
 }: {
   onRetry?: () => void
   title?: string
   description?: string
   className?: string
+  extra?: React.ReactNode
 }) {
   const t = useTranslations("states")
   return (
@@ -31,10 +33,15 @@ export function ErrorState({
         <h3 className="type-h3">{title ?? t("errorTitle")}</h3>
         <p className="type-body text-muted-foreground">{description ?? t("errorDescription")}</p>
       </div>
-      {onRetry ? (
-        <Button variant="outline" onClick={onRetry} className="mt-1">
-          {t("retry")}
-        </Button>
+      {onRetry || extra ? (
+        <div className="mt-1 flex flex-wrap justify-center gap-2">
+          {onRetry ? (
+            <Button variant="outline" onClick={onRetry}>
+              {t("retry")}
+            </Button>
+          ) : null}
+          {extra}
+        </div>
       ) : null}
     </div>
   )

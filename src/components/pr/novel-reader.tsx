@@ -8,8 +8,10 @@ import { ReadingSettingsPopover } from "@/components/layout/reading-settings"
 import { NovelEndSection } from "@/components/pr/novel-end-section"
 import { EmptyState } from "@/components/pr/empty-state"
 import { ErrorState } from "@/components/pr/error-state"
+import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import type { NovelBlock } from "@/data"
+import { Link } from "@/i18n/navigation"
 import { useChapter } from "@/lib/queries"
 import { seriesHref } from "@/lib/routes"
 import { useAppStore } from "@/lib/store"
@@ -17,8 +19,9 @@ import { useReaderNav } from "@/lib/use-reader-nav"
 import { cn } from "@/lib/utils"
 
 function NovelSkeleton() {
+  const theme = useAppStore((s) => s.novelSettings.theme)
   return (
-    <div className="flex flex-1 flex-col bg-reader-page" data-reader-theme="light" aria-hidden>
+    <div className="flex flex-1 flex-col bg-reader-page" data-reader-theme={theme} aria-hidden>
       <Skeleton className="h-14 rounded-none" />
       <div className="mx-auto flex w-full max-w-[720px] flex-col gap-3 px-4 py-12">
         <Skeleton className="h-3 w-20" />
@@ -59,9 +62,23 @@ export function NovelBody({ blocks }: { blocks: NovelBlock[] }) {
 export function NovelReader({ slug, n }: { slug: string; n: number }) {
   const query = useChapter(slug, n)
   const settings = useAppStore((s) => s.novelSettings)
+  const t = useTranslations("reader")
 
   if (query.isPending) return <NovelSkeleton />
-  if (query.isError) return <ErrorState className="flex-1" onRetry={() => void query.refetch()} />
+  if (query.isError)
+    return (
+      <div data-reader-theme={settings.theme} className="flex flex-1 flex-col bg-reader-page text-reader-text">
+        <ErrorState
+          className="flex-1 justify-center [&_p]:text-reader-quiet"
+          onRetry={() => void query.refetch()}
+          extra={
+            <Button asChild variant="ghost">
+              <Link href={`/series/${slug}`}>{t("backToSeries")}</Link>
+            </Button>
+          }
+        />
+      </div>
+    )
   if (!query.data) notFound()
 
   const { series, chapter, total } = query.data
@@ -86,7 +103,8 @@ type Loaded = NonNullable<ReturnType<typeof useChapter>["data"]>
 function NovelReaderBody({ series, chapter, total, font }: Loaded & { font: "sans" | "serif" }) {
   const t = useTranslations("reader")
   const n = chapter.n
-  const { go, list, listEpisodes, isLocked, coins, dialog } = useReaderNav(series, n, total)
+  const { go, list, listEpisodes, isLocked, coins, dialog, gated } = useReaderNav(series, n, total)
+  if (gated) return <NovelSkeleton />
   const nextEpisode = list.find((e) => e.n === n + 1)
 
   return (

@@ -50,12 +50,14 @@ export function useSeriesUnlock(series: Series) {
       return
     }
     if (!hydrated || !episodes.data || selfRequest.current) return
-    if (!user || !pending || pending.seriesId !== series.id) return
+    if (!pending || pending.seriesId !== series.id) return
+    // A redirect from a reader (`direct`) is for the series page only, even when logged out.
+    if (pending.direct ? pathname !== seriesHref(series) : !user) return
     const episode = episodes.data.find((e) => e.n === pending.episode)
     useAppStore.getState().clearPendingUnlock()
     // eslint-disable-next-line react-hooks/set-state-in-effect -- reopen after returning from /login or /coins
     if (episode && episode.access === "fastpass") setTarget(episode)
-  }, [pathname, hydrated, user, pending, series.id, episodes.data])
+  }, [pathname, hydrated, user, pending, series, episodes.data])
 
   const store = useAppStore.getState
   const here = () => `${pathname}${typeof window === "undefined" ? "" : window.location.search}`
