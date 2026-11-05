@@ -36,6 +36,8 @@ type ReaderBarProps = {
   onNext?: () => void
   prevDisabled?: boolean
   nextDisabled?: boolean
+  /** Show the previous / next arrows (the novel design has none; it uses ← / → and the end buttons). */
+  showArrows?: boolean
   /** 0..1, drawn as a 2 px green line under the bar. */
   progress: number
   className?: string
@@ -61,6 +63,7 @@ function ReaderBar({ tone, ...p }: ReaderBarProps & { tone: keyof typeof tones }
         </div>
         {p.listSlot}
         {p.trailingSlot}
+        {p.showArrows === false ? null : (
         <div className="flex items-center">
           <Button
             variant="ghost"
@@ -83,6 +86,7 @@ function ReaderBar({ tone, ...p }: ReaderBarProps & { tone: keyof typeof tones }
             <ChevronRightIcon />
           </Button>
         </div>
+        )}
       </div>
       <div
         role="progressbar"
@@ -105,5 +109,5 @@ export function ComicReaderBar(props: ReaderBarProps) {
 
 /** Bar of the novel reader; colours follow the `data-reader-theme` of an ancestor. */
 export function NovelReaderBar(props: ReaderBarProps) {
-  return <ReaderBar tone="themed" kind="chapter" {...props} />
+  return <ReaderBar tone="themed" kind="chapter" showArrows={false} {...props} />
 }

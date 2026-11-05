@@ -159,7 +159,12 @@
     "allEpisodes": "គ្រប់វគ្គរបស់ {title}",
     "addComment": "បន្ថែមមតិ",
     "loginToComment": "ចូលគណនីដើម្បីបញ្ចេញមតិ",
-    "post": "បង្ហោះ"
+    "post": "បង្ហោះ",
+    "chapterEyebrow": "ជំពូក {n}",
+    "minRead": "អាន {count} នាទី",
+    "chapterLabel": "ជំពូក {n}",
+    "noText": "ជំពូកនេះមិនទាន់មានអត្ថបទទេ",
+    "noTextDesc": "សូមត្រឡប់មកវិញឆាប់ៗនេះ។"
   },
   "auth": {
     "back": "ត្រឡប់ទៅ PhumReader",
