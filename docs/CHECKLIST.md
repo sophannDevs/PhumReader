@@ -29,7 +29,7 @@ npm run test:e2e     # Playwright, available after T52
 - Components in Part 2 and Part 3 are presentational (props + callbacks). Part 4 adds data, the fake API and the store, and wires them in. Part 5 builds the pages with all interactions. Part 6 completes loading / empty / error states on every page.
 - A temporary preview page at `/dev/kit` is used to check components in Parts 2–4. It is deleted in T53.
 
-Progress: 20 / 53
+Progress: 21 / 53
 
 ---
 
@@ -151,7 +151,7 @@ Progress: 20 / 53
   - Look at: `01-home-desktop.png`, `01-home-phone.png`; `design/spec.md` §1.1.
   - Done when: all three slides cycle; clicking a dot or arrow stops autoplay; Subscribe persists after reload; autoplay is off under `prefers-reduced-motion`; arrows are reachable by keyboard.
 
-- [ ] **T21 Home: Continue reading + Daily updates** (≈45 min)
+- [x] **T21 Home: Continue reading + Daily updates** (≈45 min)
   - Build: Continue reading: 4 ContinueCards from the demo entries (episode replaced by `lastRead` when the user has read further) → reader at that episode; subtitle "Pick up where you left off." when logged in, "Your reading history on this device." when logged out; "My library ›" link; section hidden when empty. Daily updates: "New episodes every day. Today is Thursday."; pill Tabs Mon–Sun with Thu labelled "Today" and selected; grid of the first 6 SeriesCards for that day (filled with UP series when fewer than 6); 6 / 4 / 3 columns.
   - Look at: `01-home-desktop.png`, `01-home-phone.png`; `design/spec.md` §1.2–1.3.
   - Done when: Thursday shows Paper Tigers, The Quiet Kingdom, Little Thunder, Wolves of Wren Street, Lantern Alley, Hollow Signal in that order; switching days changes the grid; arrow keys move between day tabs.
@@ -398,3 +398,4 @@ Progress: 20 / 53
 64. **Chrome wiring**: `ConnectedHeader` / `ConnectedTabBar` (`site-chrome.tsx`) read `user` and `coins` from the store. Log in / Sign up / the Me (Log in) tab save `returnTo` = current path + query before navigating, except when already on `/login`. Log out calls `logout()` (coins, unlocks and subscriptions stay: Assumption 14) and shows the toast "You're logged out" (`toasts.loggedOut`). `LanguageSwitch` calls `setLang`, and `StoreHydrator` keeps the store's `lang` equal to the URL locale after hydration. The temporary "Log in as Sokha" and "Add 37 coins" buttons live in the Store section of `/dev/kit`.
 65. **Hero carousel**: Embla (shadcn `Carousel`) with `loop`; autoplay is a 7 s `setInterval` that stops for good on any dot / arrow click, drag or ← / → key, and never starts under `prefers-reduced-motion`. The green tag comes from `homeHero[].tag` (for the web-novel slide the tag already reads "Web novel"), next to a dark genre badge. Phone: 144 px cover above the text, 16 px banner radius (20 px from 768 px; the `rounded-hero` utility is the 20 px theme radius, so phones use `rounded-[16px] md:rounded-hero`).
 66. **Header widths** (found while checking the hero): below `lg` the header shows only the brand "Log in" button (like the phone); "Log in" + "Sign up" appear from 1024 px, the search bar is 192 px wide at `lg` and 288 px from `xl`, and the logo wordmark is hidden under 360 px so the header never overflows from 320 px to 1920 px.
+67. **Home sections** live in `src/components/pr/` (`continue-reading-section`, `daily-updates-section`, `section-header`) and are composed by `home-content.tsx` from one `useHome()` query. Each section file also exports a layout-matching skeleton used while loading (T46 adds the empty / error variants). Day tabs scroll horizontally on narrow phones; "Today" is derived from the pinned date (`weekdayOf(today)`), not the real clock. Khmer weekday names are my own wording (review in T51).

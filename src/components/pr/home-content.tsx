@@ -1,7 +1,9 @@
 "use client"
 
-import { HeroCarousel } from "@/components/pr/hero-carousel"
 import { ErrorState } from "@/components/pr/error-state"
+import { ContinueReadingSection, ContinueReadingSkeleton } from "@/components/pr/continue-reading-section"
+import { DailyUpdatesSection, DailyUpdatesSkeleton } from "@/components/pr/daily-updates-section"
+import { HeroCarousel } from "@/components/pr/hero-carousel"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useHome } from "@/lib/queries"
 
@@ -12,12 +14,20 @@ export function HomeContent() {
   return (
     <div className="container flex flex-col gap-14 pt-6">
       {home.isPending ? (
-        <Skeleton className="h-[560px] rounded-[16px] md:h-[470px] md:rounded-hero" />
+        <>
+          <Skeleton className="h-[560px] rounded-[16px] md:h-[470px] md:rounded-hero" />
+          <ContinueReadingSkeleton />
+          <DailyUpdatesSkeleton />
+        </>
       ) : home.isError ? (
         <ErrorState onRetry={() => void home.refetch()} />
-      ) : home.data.hero.length > 0 ? (
-        <HeroCarousel slides={home.data.hero} />
-      ) : null}
+      ) : (
+        <>
+          {home.data.hero.length > 0 ? <HeroCarousel slides={home.data.hero} /> : null}
+          <ContinueReadingSection entries={home.data.continueReading} />
+          <DailyUpdatesSection daily={home.data.daily} />
+        </>
+      )}
     </div>
   )
 }

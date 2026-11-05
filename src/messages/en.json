@@ -186,6 +186,31 @@
     "details": "Series details",
     "prev": "Previous slide",
     "next": "Next slide",
-    "goTo": "Go to slide {n}"
+    "goTo": "Go to slide {n}",
+    "continueTitle": "Continue reading",
+    "continueLoggedIn": "Pick up where you left off.",
+    "continueLoggedOut": "Your reading history on this device.",
+    "myLibrary": "My library",
+    "dailyTitle": "Daily updates",
+    "dailySubtitle": "New episodes every day. Today is {day}.",
+    "today": "Today",
+    "days": {
+      "Mon": "Mon",
+      "Tue": "Tue",
+      "Wed": "Wed",
+      "Thu": "Thu",
+      "Fri": "Fri",
+      "Sat": "Sat",
+      "Sun": "Sun"
+    },
+    "dayFull": {
+      "Mon": "Monday",
+      "Tue": "Tuesday",
+      "Wed": "Wednesday",
+      "Thu": "Thursday",
+      "Fri": "Friday",
+      "Sat": "Saturday",
+      "Sun": "Sunday"
+    }
   }
 }
