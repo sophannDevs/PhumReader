@@ -29,7 +29,7 @@ npm run test:e2e     # Playwright, available after T52
 - Components in Part 2 and Part 3 are presentational (props + callbacks). Part 4 adds data, the fake API and the store, and wires them in. Part 5 builds the pages with all interactions. Part 6 completes loading / empty / error states on every page.
 - A temporary preview page at `/dev/kit` is used to check components in Parts 2–4. It is deleted in T53.
 
-Progress: 23 / 53
+Progress: 24 / 53
 
 ---
 
@@ -166,7 +166,7 @@ Progress: 23 / 53
   - Look at: `01-home-desktop.png`, `01-home-phone.png`; `design/spec.md` §1.6–1.7.
   - Done when: the full Home page matches the desktop and phone screens section by section with 56 px between sections; every link resolves.
 
-- [ ] **T24 Series: hero, tabs shell, About tab, sidebar** (≈60 min)
+- [x] **T24 Series: hero, tabs shell, About tab, sidebar** (≈60 min)
   - Build: `/series/[slug]` (`notFound()` for unknown slugs): dark hero with blurred cover, breadcrumb Home › Genre › Title, 240 px cover (132 on phone), badges genre / Comic or Web novel / 📅 schedule / green "Ongoing", series title, creator avatar + name, synopsis from `synopsisByGenre`, stats Views · Likes · Subscribers · Episodes, "Read episode 1" or "Continue episode N" (brand lg → reader), Subscribe toggle, Share icon button (copies the URL, toast "Link copied"). Underline Tabs: Episodes [count] · About · Comments [2.4K]. About: synopsis + "New episodes every <day>.", details list (Genre, Format, Schedule, Status, Language, Age rating), tag badges. Sidebar (below content on phone): About the creator (avatar, name, "N series on PhumReader", Follow ⇄ Following with toast) and You may also like (4 same-genre series).
   - Look at: `02-series-desktop.png`, `02-series-phone.png`; `design/spec.md` §2.
   - Done when: `/series/glass-compass` matches both screens; a novel series says "Web novel" and links to `/novel/...`; Follow persists; Share copies the URL.
@@ -402,3 +402,5 @@ Progress: 23 / 53
 68. **Trending / genres**: the Trending card has `id="rank"` and the genre section `id="genres"` (targets of the header and footer `/#rank` and `/#genres` links, with `scroll-mt-24` under the sticky header). Genre chips are `Toggle`s (one pressed at a time, `aria-pressed`); genre names on the chips come from the data (English; not translated).
 69. **Regression note (fixed in T23)**: while removing the unused `rounded-hero` utility in T20, an edit to `globals.css` also deleted the type scale (`type-*`), `cover-zoom` and the reduced-motion rule; they were restored from T05 in the T23 commit. When checking a page, verify computed font sizes (not only text content) and never delete a block from `globals.css` by index range.
 70. **Home**: the Web novels section has `id="novels"` (target of the header link `/#novels`), 6 `NovelCard`s (3 columns from 1024 px, 2 from 768, 1 on phones), and the CTA's three covers come from `fetchHome().creatorCovers` (Ink Witch, Sunday Sword, The Orchard Pact). The page title is "PhumReader · Read and share stories in Khmer and English."; the CTA "Start publishing" button goes to `/creator` (T42), "Creator guidelines" to `/creator#guidelines`.
+71. **Series page** (`/series/[slug]`): the server page statically generates every slug in both locales and returns 404 for unknown slugs using the static `getSeriesBySlug` selector (a status-correct 404, not the fake API); the client `SeriesPage` loads details through `useSeries`. Next's dev overlay shows a non-blocking "Insight" that `params` is awaited outside Suspense (it only concerns instant client navigations); the production build is fine. "Continue episode N" uses `lastRead + 1` when it is free or unlocked, otherwise `lastRead`. About tab: the "tags" are the genre, the format and the languages (the data has no tag list); the details list shows English / ខ្មែរ for languages and "All ages" for rating `all`. Series breadcrumb genre links go to `/genres/<slug>` (`genreHref`, page in T43).
+72. **Underline tabs scroll horizontally** when they do not fit (320 px), and the series layout uses an explicit `minmax(0, 1fr)` column so wide children never overflow the page.

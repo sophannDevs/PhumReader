@@ -175,7 +175,10 @@
   "toasts": {
     "loggedOut": "អ្នកបានចាកចេញ",
     "subscribed": "បានតាមដាន {title}",
-    "unsubscribed": "បានឈប់តាមដាន"
+    "unsubscribed": "បានឈប់តាមដាន",
+    "linkCopied": "បានចម្លងតំណ",
+    "followed": "កំពុងតាមដាន {name}",
+    "unfollowed": "បានឈប់តាមដាន {name}"
   },
   "home": {
     "heroLabel": "រឿងពិសេស",
@@ -227,5 +230,46 @@
     "ctaBody": "បង្ហោះកំប្លែង ឬសរសេរប្រលោមលោកអនឡាញ បង្កើនអ្នកអាន និងរកប្រាក់ចំណូលពីវគ្គ Fast Pass។",
     "ctaStart": "ចាប់ផ្តើមបោះពុម្ព",
     "ctaGuidelines": "គោលការណ៍ណែនាំអ្នកបង្កើត"
+  },
+  "series": {
+    "breadcrumb": "ផ្លូវរុករក",
+    "home": "ទំព័រដើម",
+    "comic": "កំប្លែង",
+    "novel": "ប្រលោមលោកអនឡាញ",
+    "ongoing": "កំពុងបន្ត",
+    "completed": "ចប់ហើយ",
+    "views": "ការមើល",
+    "likes": "ចូលចិត្ត",
+    "subscribers": "អ្នកតាមដាន",
+    "episodes": "វគ្គ",
+    "chapters": "ជំពូក",
+    "readEpisode": "អានវគ្គ ១",
+    "readChapter": "អានជំពូក ១",
+    "continueEpisode": "បន្តវគ្គ {n}",
+    "continueChapter": "បន្តជំពូក {n}",
+    "subscribe": "តាមដាន",
+    "subscribed": "កំពុងតាមដាន",
+    "share": "ចែករំលែក",
+    "tabEpisodes": "វគ្គ",
+    "tabAbout": "អំពី",
+    "tabComments": "មតិ",
+    "aboutNew": "វគ្គថ្មីរៀងរាល់{day}។",
+    "detailsTitle": "ព័ត៌មានលម្អិត",
+    "genre": "ប្រភេទ",
+    "format": "ទម្រង់",
+    "schedule": "កាលវិភាគ",
+    "status": "ស្ថានភាព",
+    "language": "ភាសា",
+    "ageRating": "អាយុសម្រាប់មើល",
+    "allAges": "គ្រប់វ័យ",
+    "english": "English",
+    "khmer": "ខ្មែរ",
+    "tags": "ស្លាក",
+    "creatorTitle": "អំពីអ្នកបង្កើត",
+    "seriesCount": "{count} រឿងនៅលើ PhumReader",
+    "follow": "តាមដានអ្នកបង្កើត",
+    "following": "កំពុងតាមដាន",
+    "related": "អ្នកប្រហែលជាចូលចិត្ត",
+    "notFoundTitle": "រកមិនឃើញរឿង"
   }
 }

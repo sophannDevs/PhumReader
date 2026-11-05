@@ -175,7 +175,10 @@
   "toasts": {
     "loggedOut": "You're logged out",
     "subscribed": "Subscribed to {title}",
-    "unsubscribed": "Unsubscribed"
+    "unsubscribed": "Unsubscribed",
+    "linkCopied": "Link copied",
+    "followed": "Following {name}",
+    "unfollowed": "Unfollowed {name}"
   },
   "home": {
     "heroLabel": "Featured series",
@@ -227,5 +230,46 @@
     "ctaBody": "Upload comics or write web novels, grow your readers, and earn from Fast Pass episodes.",
     "ctaStart": "Start publishing",
     "ctaGuidelines": "Creator guidelines"
+  },
+  "series": {
+    "breadcrumb": "Breadcrumb",
+    "home": "Home",
+    "comic": "Comic",
+    "novel": "Web novel",
+    "ongoing": "Ongoing",
+    "completed": "Completed",
+    "views": "Views",
+    "likes": "Likes",
+    "subscribers": "Subscribers",
+    "episodes": "Episodes",
+    "chapters": "Chapters",
+    "readEpisode": "Read episode 1",
+    "readChapter": "Read chapter 1",
+    "continueEpisode": "Continue episode {n}",
+    "continueChapter": "Continue chapter {n}",
+    "subscribe": "Subscribe",
+    "subscribed": "Subscribed",
+    "share": "Share",
+    "tabEpisodes": "Episodes",
+    "tabAbout": "About",
+    "tabComments": "Comments",
+    "aboutNew": "New episodes every {day}.",
+    "detailsTitle": "Details",
+    "genre": "Genre",
+    "format": "Format",
+    "schedule": "Schedule",
+    "status": "Status",
+    "language": "Language",
+    "ageRating": "Age rating",
+    "allAges": "All ages",
+    "english": "English",
+    "khmer": "ខ្មែរ",
+    "tags": "Tags",
+    "creatorTitle": "About the creator",
+    "seriesCount": "{count, plural, one {# series} other {# series}} on PhumReader",
+    "follow": "Follow creator",
+    "following": "Following",
+    "related": "You may also like",
+    "notFoundTitle": "Series not found"
   }
 }

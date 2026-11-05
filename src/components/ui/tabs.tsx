@@ -28,7 +28,7 @@ const tabsListVariants = cva(
     variants: {
       variant: {
         pill: "h-9 justify-center gap-0.5 rounded-lg bg-muted p-[3px]",
-        line: "h-auto w-full justify-start gap-6 border-b bg-transparent p-0",
+        line: "h-auto w-full justify-start gap-6 overflow-x-auto border-b bg-transparent p-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
       },
     },
     defaultVariants: { variant: "pill" },

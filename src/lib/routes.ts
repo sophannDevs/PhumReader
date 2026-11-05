@@ -8,3 +8,7 @@ export const readerHref = (series: Pick<Series, "slug" | "type">, episode: numbe
   series.type === "novel"
     ? `/novel/${series.slug}/${episode}`
     : `/read/${series.slug}/${episode}`
+
+/** "Slice of life" -> "slice-of-life", "Sci-fi" -> "sci-fi" (used by /genres/[genre], T43). */
+export const genreSlug = (genre: string) => genre.toLowerCase().replace(/\s+/g, "-")
+export const genreHref = (genre: string) => `/genres/${genreSlug(genre)}`
