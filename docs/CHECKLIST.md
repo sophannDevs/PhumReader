@@ -29,7 +29,7 @@ npm run test:e2e     # Playwright, available after T52
 - Components in Part 2 and Part 3 are presentational (props + callbacks). Part 4 adds data, the fake API and the store, and wires them in. Part 5 builds the pages with all interactions. Part 6 completes loading / empty / error states on every page.
 - A temporary preview page at `/dev/kit` is used to check components in Parts 2–4. It is deleted in T53.
 
-Progress: 36 / 53
+Progress: 37 / 53
 
 ---
 
@@ -231,7 +231,7 @@ Progress: 36 / 53
   - Look at: `06-coins-desktop.png`, `06-coins-phone.png`; `design/spec.md` §6.
   - Done when: layout matches both screens; "Go back" returns to the series page; selection survives a reload.
 
-- [ ] **T37 Coins: order summary (Review step), purchase history, FAQ** (≈45 min)
+- [x] **T37 Coins: order summary (Review step), purchase history, FAQ** (≈45 min)
   - Build: Checkout card (right column, below packs on phone) Review step: "Order summary", "120 coin pack · 120 coins", "Pack bonus +20", "First-purchase bonus +120" (during the offer), "You get 260 coins", "Total [PRICE USD] / [PRICE KHR]", "Paying with KHQR", "Continue to payment" brand (logged out → save `returnTo = "/coins"` → `/login`), "Balance after: N coins · Coins don't expire". "Purchase history" Table (Date, Item, Method hidden on phone, Coins "+33", Status badge Paid green / Failed red / Cancelled grey) from `purchases`, newest first. "Questions" Accordion from `coinsFaq` (first item open). Line "Prototype only: prices and payment screens are placeholders. No real payment is taken."
   - Look at: `06-coins-desktop.png`, `06-coins-phone.png`; `design/spec.md` §6.
   - Done when: totals update when changing pack or method (120 pack → 260 during the offer, 140 after); history shows the 2 demo rows; the accordion works by keyboard.
@@ -416,3 +416,4 @@ Progress: 36 / 53
 82. **Verify code**: digits only (`input-otp` pattern), autofocus, paste supported. The Verify button stays disabled until 6 digits are typed. A wrong code keeps the digits (shown red through `data-invalid` on the wrapper and `aria-invalid`), refocuses the OTP and clears the error as soon as the code changes. The resend countdown is 30 s (`aria-live="polite"`), "Resend code" shows the toast "Code sent" and restarts it. A correct code (123456) calls `addAccount` + `login`, then shows the Done view.
 83. **Forgot password**: the "sent" confirmation is a state inside `ForgotView` (not a separate flow view). The language switch opens the other locale's route, which would reset the page state, so Log in / Sign up / Forgot are mirrored in `?mode=` (via `history.replaceState`) and the switch keeps the query string; Verify and Done are not persisted (Verify without its data would need the sign-up form again). All `/login` strings come from the `auth` namespace in both languages; only the brand name, the email placeholder, the demo credentials and "Fast Pass" stay in Latin script in Khmer.
 84. **Coins page** (`/coins`, `coins-page.tsx`): header + balance card (`aria-live`), the "Get coins for episode N" alert (only with `shopReturn`; "Go back" clears `shopReturn` and `pendingUnlock` and returns to the saved page) and the first-purchase alert (`useFirstPurchaseOffer`: active until a Paid purchase *with an `orderId`* exists, so the two seeded demo rows never end it). Pack and method pickers are RadioGroups bound to `checkoutDraft` in the store. The right column (order summary) and the history / FAQ row are added in T37.
+85. **Order summary / history / FAQ** (`checkout-card.tsx`, `purchase-history.tsx`, `coins-faq.tsx`): the total is coins + pack bonus + first-purchase bonus while the offer lasts (`packTotal`); "Balance after" is balance + total. Logged-out "Continue to payment" saves `returnTo = "/coins"` and goes to `/login` (pack and method stay in `checkoutDraft`). History comes from the store (newest first, seeded with the 2 demo rows), the Method column is hidden below 768 px, a new `danger` Badge variant is used for Failed, and `?demo=empty` shows "No purchases yet". The FAQ accordion is single / collapsible with the first item open.

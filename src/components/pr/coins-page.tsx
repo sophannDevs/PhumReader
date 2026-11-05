@@ -2,10 +2,13 @@
 
 import { GiftIcon, ZapIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
+import { CheckoutCard } from "@/components/pr/checkout-card"
 import { CoinIcon } from "@/components/pr/coin-icon"
+import { CoinsFaq } from "@/components/pr/coins-faq"
 import { ErrorState } from "@/components/pr/error-state"
 import { PackCard } from "@/components/pr/pack-card"
 import { PaymentMethodCard } from "@/components/pr/payment-method-card"
+import { PurchaseHistory } from "@/components/pr/purchase-history"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { RadioGroup } from "@/components/ui/radio-group"
@@ -163,8 +166,22 @@ export function CoinsPage() {
             </>
           )}
         </div>
-        {/* T37: order summary (right column), then purchase history and the FAQ */}
+        {query.data ? (
+          <>
+            <CheckoutCard
+              pack={query.data.packs.find((p) => p.coins === draft.pack) ?? query.data.packs[0]}
+              method={query.data.methods.find((m) => m.id === draft.method) ?? query.data.methods[0]}
+              offer={offer}
+              onContinue={() => {
+                /* T38: the Pay step */
+              }}
+            />
+            <PurchaseHistory methods={query.data.methods} />
+            <CoinsFaq items={query.data.faq} />
+          </>
+        ) : null}
       </div>
+      <p className="type-small font-normal text-muted-foreground">{t("prototype")}</p>
     </div>
   )
 }

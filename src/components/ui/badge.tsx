@@ -19,6 +19,8 @@ const badgeVariants = cva(
         new: "bg-primary text-primary-foreground",
         // Fast Pass price, warnings
         warn: "border-warning-border bg-warning-soft text-warning-ink",
+        // failed payments
+        danger: "border-destructive-border bg-destructive-soft text-destructive-ink",
         // on top of cover art
         dark: "bg-scrim text-surface-foreground",
       },
