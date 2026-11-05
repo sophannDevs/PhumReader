@@ -29,7 +29,7 @@ npm run test:e2e     # Playwright, available after T52
 - Components in Part 2 and Part 3 are presentational (props + callbacks). Part 4 adds data, the fake API and the store, and wires them in. Part 5 builds the pages with all interactions. Part 6 completes loading / empty / error states on every page.
 - A temporary preview page at `/dev/kit` is used to check components in Parts 2–4. It is deleted in T53.
 
-Progress: 2 / 53
+Progress: 3 / 53
 
 ---
 
@@ -45,7 +45,7 @@ Progress: 2 / 53
   - Look at: `design/README.md`, `design/demo-data.json`, `CLAUDE.md` (Scope rules).
   - Done when: `/covers/<id>.svg` and `/panels/<id>.svg` open in the browser; `import { demoData } from "@/data"` is fully typed with no `any`; `grep -ri toonwave src/` only hits `demoAccount`; lint, typecheck, build pass.
 
-- [ ] **T03 next-intl (en, km) and route groups** (≈45 min)
+- [x] **T03 next-intl (en, km) and route groups** (≈45 min)
   - Build: `src/i18n/routing.ts` (locales `en`, `km`; default `en`; `localePrefix: "as-needed"` so English URLs match `spec.md` and Khmer lives under `/km/...`), `src/i18n/request.ts`, `src/i18n/navigation.ts` (`Link`, `useRouter`, `usePathname`, `redirect`), `src/middleware.ts` (or `src/proxy.ts` on Next 16). Move the app under `src/app/[locale]/` with route groups `(site)`, `(reader)`, `(auth)`, each with a placeholder `layout.tsx`. Root `[locale]/layout.tsx`: `<html lang={locale}>`, `NextIntlClientProvider`, `generateStaticParams` for both locales, metadata title "PhumReader" + description "Read and share stories in Khmer and English." `src/messages/en.json` and `km.json` with a `common` namespace (`siteName`, `tagline`).
   - Look at: `CLAUDE.md` (Stack, Folder structure).
   - Done when: `/` renders in English with `<html lang="en">`; `/km` renders with `lang="km"`; `/fr` returns 404; lint, typecheck, build pass.
