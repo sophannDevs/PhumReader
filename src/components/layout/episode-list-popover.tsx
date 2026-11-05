@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { useAppStore } from "@/lib/store"
 import { cn } from "@/lib/utils"
 
 export type ListEpisode = { n: number; title: string; thumb: string; locked: boolean }
@@ -61,6 +62,8 @@ export function EpisodeListPopover({
   const t = useTranslations("reader")
   const s = tones[tone]
   const rows = nearby(episodes, current)
+  // The popover renders in a portal, outside the reader root: carry the theme with it.
+  const readerTheme = useAppStore((st) => st.novelSettings.theme)
 
   return (
     <Popover>
@@ -70,7 +73,11 @@ export function EpisodeListPopover({
           {t(kind === "chapter" ? "chapters" : "episodes")}
         </Button>
       </PopoverTrigger>
-      <PopoverContent align="end" className={cn("w-80 gap-0 p-0", s.content)}>
+      <PopoverContent
+        align="end"
+        data-reader-theme={tone === "themed" ? readerTheme : undefined}
+        className={cn("w-80 gap-0 p-0", s.content)}
+      >
         <p className={cn("border-b px-4 py-3 text-sm font-semibold tabular-nums", s.divider)}>
           {t(kind === "chapter" ? "headerChapters" : "headerEpisodes", { count: episodes.length, coins })}
         </p>

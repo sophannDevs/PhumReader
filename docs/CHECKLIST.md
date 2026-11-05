@@ -29,7 +29,7 @@ npm run test:e2e     # Playwright, available after T52
 - Components in Part 2 and Part 3 are presentational (props + callbacks). Part 4 adds data, the fake API and the store, and wires them in. Part 5 builds the pages with all interactions. Part 6 completes loading / empty / error states on every page.
 - A temporary preview page at `/dev/kit` is used to check components in Parts 2–4. It is deleted in T53.
 
-Progress: 30 / 53
+Progress: 31 / 53
 
 ---
 
@@ -201,7 +201,7 @@ Progress: 30 / 53
   - Look at: `04-novel-reader-desktop.png`, `04-novel-reader-phone.png`; `design/spec.md` §4.
   - Done when: `/novel/letters-to-tuesday/1` matches ("Flour and Ink", Sep 12, 2024); chapter 114 opens the unlock dialog; ← / → navigate.
 
-- [ ] **T31 Novel reader: settings popover + end section** (≈60 min)
+- [x] **T31 Novel reader: settings popover + end section** (≈60 min)
   - Build: "Aa" popover: Text size − / + over 14, 16, 18, 20, 22, 24 with "18 px" label and a Progress bar; Theme Light / Sepia / Dark (pill tabs); Font Sans / Serif (Noto Serif); "Wide line spacing" Switch (1.85 vs 1.6). Applied instantly via `data-reader-theme` + CSS variables on the reader root and persisted in `novelSettings`. End: "END OF CHAPTER N" card with ♡ Like, 🔖 Bookmark (toasts "Bookmarked" / "Bookmark removed"), Share; Creator's note card (avatar + `creatorNote`); Previous / Next chapter buttons (Previous disabled at 1; Next brand; "Next · 5 coins" when locked → dialog); "All chapters of <series>" link.
   - Look at: `04-novel-reader-settings-dark-desktop.png`, `04-novel-reader-sepia-phone.png`; `design/spec.md` §4; `design/foundations.md` novel themes.
   - Done when: Sepia + Serif + size 22 survive a reload; Dark matches the screen (page `#111113`); the switch and tabs work by keyboard; the bar follows the theme.
@@ -410,3 +410,4 @@ Progress: 30 / 53
 76. **Comic reader** (`/read/[slug]/[episode]`): the server page 404s for unknown slugs or numbers outside 1..total and redirects web novels to `/novel/...` (locale-aware `redirect`); only episode 1 of each comic is statically generated, the rest render on request. The client reader reuses `useSeriesUnlock` (so the UnlockDialog, login and coin round trips behave as on the series page) and the T14 bar / popover. ← / → are ignored while typing or while a dialog or menu is open. A locked episode opened directly by URL is not blocked yet (T47 adds the redirect with the dialog).
 77. **Comic end section**: the episode Like count is shown compact ("47K") but the exact figure is in the button's `aria-label` ("Like, 47,001 likes"), because a +1 does not change the compact text; the heart fills red and the state is persisted under `episode:<seriesId>:<n>`. The episode comment count (not in the data) is derived as 2.55% of the episode's likes ("47K" -> "1.2K", `episodeCommentCount`). The reader's comments card is `CommentsSection variant="reader"` (one-line composer, dark `CommentList tone="dark"`); the thread is the shared `comments.episode` list.
 78. **Novel reader** (`/novel/[slug]/[chapter]`): same route rules as the comic reader (404, comic -> `/read/...`, chapter 1 prerendered). Navigation logic is shared in `useReaderNav` (`src/lib/use-reader-nav.ts`: `markRead`, locked-aware `go`, ← / →, popover list) and used by both readers. The novel bar has no previous / next arrows (the design shows only Chapters and Aa); the chapter buttons come with the end section (T31). The reader root applies the saved `novelSettings` (theme via `data-reader-theme`, size and line height via `--novel-size` / `--novel-leading`, serif via `font-novel`); the "Aa" controls arrive in T31. "6 min read" is a fixed value (the demo text is the same in every chapter and the design shows 6).
+79. **Reading settings** (`reading-settings.tsx`): `ReadingSettingsControls` (text size stepper over 14-24 with a progress bar, Light / Sepia / Dark tabs, Sans / Serif tabs, wide line spacing switch) writes `novelSettings` in the store, and the reader root re-renders instantly; `themed` colours it with the reader tokens (the popover) and the unthemed variant is for the Settings page (T41). Popovers render in a portal outside the reader root, so `ReadingSettingsPopover` and the chapters `EpisodeListPopover` set `data-reader-theme` on their own content. The chapter Like and Bookmark use the persisted `likes` keys `episode:<id>:<n>` and `bookmark:<id>:<n>`.

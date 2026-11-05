@@ -4,6 +4,8 @@ import { notFound } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { EpisodeListPopover } from "@/components/layout/episode-list-popover"
 import { NovelReaderBar } from "@/components/layout/reader-bar"
+import { ReadingSettingsPopover } from "@/components/layout/reading-settings"
+import { NovelEndSection } from "@/components/pr/novel-end-section"
 import { EmptyState } from "@/components/pr/empty-state"
 import { ErrorState } from "@/components/pr/error-state"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -84,7 +86,8 @@ type Loaded = NonNullable<ReturnType<typeof useChapter>["data"]>
 function NovelReaderBody({ series, chapter, total, font }: Loaded & { font: "sans" | "serif" }) {
   const t = useTranslations("reader")
   const n = chapter.n
-  const { go, listEpisodes, coins, dialog } = useReaderNav(series, n, total)
+  const { go, list, listEpisodes, isLocked, coins, dialog } = useReaderNav(series, n, total)
+  const nextEpisode = list.find((e) => e.n === n + 1)
 
   return (
     <>
@@ -98,6 +101,7 @@ function NovelReaderBody({ series, chapter, total, font }: Loaded & { font: "san
         onPrev={() => go(n - 1)}
         onNext={() => go(n + 1)}
         listSlot={<EpisodeListPopover tone="themed" kind="chapter" episodes={listEpisodes} current={n} coins={coins} onSelect={go} />}
+        trailingSlot={<ReadingSettingsPopover />}
       />
       <article className="mx-auto w-full max-w-[720px] px-4 pt-12 pb-16">
         <header className="mb-8 flex flex-col gap-2">
@@ -114,6 +118,14 @@ function NovelReaderBody({ series, chapter, total, font }: Loaded & { font: "san
             <NovelBody blocks={chapter.blocks} />
           </div>
         )}
+        <NovelEndSection
+          series={series}
+          chapter={chapter}
+          total={total}
+          nextLocked={!!nextEpisode && isLocked(nextEpisode)}
+          onPrev={() => go(n - 1)}
+          onNext={() => go(n + 1)}
+        />
       </article>
       {dialog}
     </>

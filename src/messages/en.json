@@ -164,7 +164,26 @@
     "minRead": "{count} min read",
     "chapterLabel": "Chapter {n}",
     "noText": "This chapter has no text yet",
-    "noTextDesc": "Check back soon."
+    "noTextDesc": "Check back soon.",
+    "bookmark": "Bookmark",
+    "endOfChapter": "End of chapter {n}",
+    "creatorNote": "Creator's note",
+    "previous": "Previous",
+    "nextChapterBtn": "Next chapter",
+    "nextCoins": "Next · {price, plural, one {# coin} other {# coins}}",
+    "allChapters": "All chapters of {title}",
+    "textSize": "Text size",
+    "sizeLabel": "{size} px",
+    "decrease": "Decrease text size",
+    "increase": "Increase text size",
+    "theme": "Theme",
+    "themeLight": "Light",
+    "themeSepia": "Sepia",
+    "themeDark": "Dark",
+    "font": "Font",
+    "fontSans": "Sans",
+    "fontSerif": "Serif",
+    "wide": "Wide line spacing"
   },
   "auth": {
     "back": "Back to PhumReader",
@@ -208,7 +227,9 @@
     "episodeUnlocked": "Episode {n} unlocked",
     "chapterUnlocked": "Chapter {n} unlocked",
     "unlockFailed": "Couldn't unlock. Please try again.",
-    "loginToComment": "Log in to comment"
+    "loginToComment": "Log in to comment",
+    "bookmarked": "Bookmarked",
+    "bookmarkRemoved": "Bookmark removed"
   },
   "home": {
     "heroLabel": "Featured series",

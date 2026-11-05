@@ -164,7 +164,26 @@
     "minRead": "អាន {count} នាទី",
     "chapterLabel": "ជំពូក {n}",
     "noText": "ជំពូកនេះមិនទាន់មានអត្ថបទទេ",
-    "noTextDesc": "សូមត្រឡប់មកវិញឆាប់ៗនេះ។"
+    "noTextDesc": "សូមត្រឡប់មកវិញឆាប់ៗនេះ។",
+    "bookmark": "ចំណាំ",
+    "endOfChapter": "ចុងបញ្ចប់នៃជំពូក {n}",
+    "creatorNote": "កំណត់ចំណាំពីអ្នកបង្កើត",
+    "previous": "មុន",
+    "nextChapterBtn": "ជំពូកបន្ទាប់",
+    "nextCoins": "បន្ទាប់ · {price} កាក់",
+    "allChapters": "គ្រប់ជំពូករបស់ {title}",
+    "textSize": "ទំហំអក្សរ",
+    "sizeLabel": "{size} px",
+    "decrease": "បន្ថយទំហំអក្សរ",
+    "increase": "បង្កើនទំហំអក្សរ",
+    "theme": "ស្បែក",
+    "themeLight": "ភ្លឺ",
+    "themeSepia": "សេពៀ",
+    "themeDark": "ងងឹត",
+    "font": "ពុម្ពអក្សរ",
+    "fontSans": "គ្មានជើង",
+    "fontSerif": "មានជើង",
+    "wide": "គម្លាតបន្ទាត់ធំ"
   },
   "auth": {
     "back": "ត្រឡប់ទៅ PhumReader",
@@ -208,7 +227,9 @@
     "episodeUnlocked": "បានដោះសោវគ្គ {n}",
     "chapterUnlocked": "បានដោះសោជំពូក {n}",
     "unlockFailed": "មិនអាចដោះសោបានទេ។ សូមព្យាយាមម្ដងទៀត។",
-    "loginToComment": "ចូលគណនីដើម្បីបញ្ចេញមតិ"
+    "loginToComment": "ចូលគណនីដើម្បីបញ្ចេញមតិ",
+    "bookmarked": "បានចំណាំ",
+    "bookmarkRemoved": "បានលុបការចំណាំ"
   },
   "home": {
     "heroLabel": "រឿងពិសេស",
