@@ -29,7 +29,7 @@ npm run test:e2e     # Playwright, available after T52
 - Components in Part 2 and Part 3 are presentational (props + callbacks). Part 4 adds data, the fake API and the store, and wires them in. Part 5 builds the pages with all interactions. Part 6 completes loading / empty / error states on every page.
 - A temporary preview page at `/dev/kit` is used to check components in Parts 2–4. It is deleted in T53.
 
-Progress: 26 / 53
+Progress: 27 / 53
 
 ---
 
@@ -181,7 +181,7 @@ Progress: 26 / 53
   - Look at: `02-series-unlock-dialog-desktop.png`, `02-series-unlock-not-enough-coins-phone.png`; `design/spec.md` §2 Unlock dialog, §7 flows 2–3.
   - Done when: with 3 coins the dialog shows the not-enough state; after adding coins the unlock succeeds and the row shows "Unlocked"; coming back from `/login` or `/coins` reopens the dialog automatically.
 
-- [ ] **T27 Series: Comments tab** (≈30 min)
+- [x] **T27 Series: Comments tab** (≈30 min)
   - Build: composer card ("Add a comment", placeholder "What did you think?", "0/500 · Be kind. Spoilers go in a spoiler tag.", dark "Post" button; logged out → toast "Log in to comment"; posting prepends the comment with the user's initials and "now"); list from `comments.series` with "Top" on the first; like toggle (count ± 1, persisted); Reply prefills the composer with "@Name " and focuses it.
   - Look at: `02-series-comments-tab-desktop.png`; `design/spec.md` §2 Comments.
   - Done when: the counter updates while typing and blocks more than 500 characters; a posted comment appears immediately; a like survives reload.
@@ -406,3 +406,4 @@ Progress: 26 / 53
 72. **Underline tabs scroll horizontally** when they do not fit (320 px), and the series layout uses an explicit `minmax(0, 1fr)` column so wide children never overflow the page.
 73. **Episodes tab**: row state comes from the store: Fast Pass episodes are `locked` until unlocked, then `unlocked` (the "Unlocked" badge stays even after reading); free episodes with `n ≤ lastRead` are `read` (and then lose their UP badge). The sort toggle keeps the number of visible rows; "Show N more" shows at most 12 at a time. The tab has its own loading (skeleton rows), empty ("No episodes yet" under `?demo=empty`) and error (Retry) states. Locked-row taps are collected in `SeriesPage` (`unlockTarget`) for the dialog added in T26.
 74. **Unlock flow** (`series-unlock.tsx`, `useSeriesUnlock`): logged out saves `returnTo` + `pendingUnlock` and goes to `/login`; not enough coins saves `shopReturn` {page, episode, title} + `pendingUnlock` and goes to `/coins`; enough coins calls `unlock()` (0.7 s spinner), then `spendCoins`, `unlockEpisode`, the toast "Episode N unlocked" (or "Chapter N") and opens the reader. The reopen-after-return check runs once per visit after the store hydrates (a request saved while the page is open must not be cleared at once: this was a bug found while testing), and only for logged-in readers.
+75. **Comments**: `CommentsSection` (`kind`, `slug`) is reusable (the comic reader's end card uses it in T29). Likes are stored under `comment:<kind>:<slug>:<id>` (persisted); comments the reader posts live in component state, so they disappear on reload (there is no backend). The demo thread is shared by every series / episode (Assumption 16 style), and a logged-out Post shows the toast "Log in to comment" without clearing the draft.

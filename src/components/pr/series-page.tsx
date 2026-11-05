@@ -2,6 +2,7 @@
 
 import { notFound } from "next/navigation"
 import { useTranslations } from "next-intl"
+import { CommentsSection } from "@/components/pr/comments-section"
 import { EpisodesTab } from "@/components/pr/episodes-tab"
 import { ErrorState } from "@/components/pr/error-state"
 import { SeriesAbout } from "@/components/pr/series-about"
@@ -77,7 +78,9 @@ function SeriesBody({ series, synopsis, stats, related, creatorSeriesCount }: De
           <TabsContent value="about">
             <SeriesAbout series={series} synopsis={synopsis} />
           </TabsContent>
-          <TabsContent value="comments" />
+          <TabsContent value="comments">
+            <CommentsSection kind="series" slug={series.slug} />
+          </TabsContent>
         </Tabs>
         <SeriesSidebar series={series} related={related} creatorSeriesCount={creatorSeriesCount} />
       </div>

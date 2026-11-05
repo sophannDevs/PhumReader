@@ -70,7 +70,10 @@
     "reply": "Reply",
     "like": "Like",
     "likeCount": "Like, {count} likes",
-    "avatarOf": "{name}"
+    "avatarOf": "{name}",
+    "empty": "Be the first to comment",
+    "emptyDesc": "Share what you thought about this story.",
+    "now": "now"
   },
   "nav": {
     "home": "Home",
@@ -181,7 +184,8 @@
     "unfollowed": "Unfollowed {name}",
     "episodeUnlocked": "Episode {n} unlocked",
     "chapterUnlocked": "Chapter {n} unlocked",
-    "unlockFailed": "Couldn't unlock. Please try again."
+    "unlockFailed": "Couldn't unlock. Please try again.",
+    "loginToComment": "Log in to comment"
   },
   "home": {
     "heroLabel": "Featured series",
