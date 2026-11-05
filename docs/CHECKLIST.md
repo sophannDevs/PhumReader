@@ -29,7 +29,7 @@ npm run test:e2e     # Playwright, available after T52
 - Components in Part 2 and Part 3 are presentational (props + callbacks). Part 4 adds data, the fake API and the store, and wires them in. Part 5 builds the pages with all interactions. Part 6 completes loading / empty / error states on every page.
 - A temporary preview page at `/dev/kit` is used to check components in Parts 2–4. It is deleted in T53.
 
-Progress: 25 / 53
+Progress: 26 / 53
 
 ---
 
@@ -176,7 +176,7 @@ Progress: 25 / 53
   - Look at: `02-series-desktop.png`, `02-series-phone.png`; `design/spec.md` §2 Episodes.
   - Done when: newest first shows 68, 67, 66 locked and 65 with UP; "Show 12 more" extends to 24, 36 …; sorting flips the order; the coin count in the alert is live.
 
-- [ ] **T26 Series: unlock flow** (≈45 min)
+- [x] **T26 Series: unlock flow** (≈45 min)
   - Build: wire `UnlockDialog`: logged out → "Log in to unlock" saves `returnTo` (series URL) + `pendingUnlock`, goes to `/login`; enough coins → "Unlock for 5 coins": 0.7 s spinner, `spendCoins(5)`, `unlockEpisode`, toast "Episode N unlocked", navigate to the reader; not enough → "You need N more coins." + "Get coins" saves `shopReturn` {page, episode, title} + `pendingUnlock`, goes to `/coins`; "Wait for the free release" closes. On mount, when `pendingUnlock` matches this series and the user is logged in, reopen the dialog and clear `pendingUnlock`.
   - Look at: `02-series-unlock-dialog-desktop.png`, `02-series-unlock-not-enough-coins-phone.png`; `design/spec.md` §2 Unlock dialog, §7 flows 2–3.
   - Done when: with 3 coins the dialog shows the not-enough state; after adding coins the unlock succeeds and the row shows "Unlocked"; coming back from `/login` or `/coins` reopens the dialog automatically.
@@ -405,3 +405,4 @@ Progress: 25 / 53
 71. **Series page** (`/series/[slug]`): the server page statically generates every slug in both locales and returns 404 for unknown slugs using the static `getSeriesBySlug` selector (a status-correct 404, not the fake API); the client `SeriesPage` loads details through `useSeries`. Next's dev overlay shows a non-blocking "Insight" that `params` is awaited outside Suspense (it only concerns instant client navigations); the production build is fine. "Continue episode N" uses `lastRead + 1` when it is free or unlocked, otherwise `lastRead`. About tab: the "tags" are the genre, the format and the languages (the data has no tag list); the details list shows English / ខ្មែរ for languages and "All ages" for rating `all`. Series breadcrumb genre links go to `/genres/<slug>` (`genreHref`, page in T43).
 72. **Underline tabs scroll horizontally** when they do not fit (320 px), and the series layout uses an explicit `minmax(0, 1fr)` column so wide children never overflow the page.
 73. **Episodes tab**: row state comes from the store: Fast Pass episodes are `locked` until unlocked, then `unlocked` (the "Unlocked" badge stays even after reading); free episodes with `n ≤ lastRead` are `read` (and then lose their UP badge). The sort toggle keeps the number of visible rows; "Show N more" shows at most 12 at a time. The tab has its own loading (skeleton rows), empty ("No episodes yet" under `?demo=empty`) and error (Retry) states. Locked-row taps are collected in `SeriesPage` (`unlockTarget`) for the dialog added in T26.
+74. **Unlock flow** (`series-unlock.tsx`, `useSeriesUnlock`): logged out saves `returnTo` + `pendingUnlock` and goes to `/login`; not enough coins saves `shopReturn` {page, episode, title} + `pendingUnlock` and goes to `/coins`; enough coins calls `unlock()` (0.7 s spinner), then `spendCoins`, `unlockEpisode`, the toast "Episode N unlocked" (or "Chapter N") and opens the reader. The reopen-after-return check runs once per visit after the store hydrates (a request saved while the page is open must not be cleared at once: this was a bug found while testing), and only for logged-in readers.

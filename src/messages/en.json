@@ -178,7 +178,10 @@
     "unsubscribed": "Unsubscribed",
     "linkCopied": "Link copied",
     "followed": "Following {name}",
-    "unfollowed": "Unfollowed {name}"
+    "unfollowed": "Unfollowed {name}",
+    "episodeUnlocked": "Episode {n} unlocked",
+    "chapterUnlocked": "Chapter {n} unlocked",
+    "unlockFailed": "Couldn't unlock. Please try again."
   },
   "home": {
     "heroLabel": "Featured series",

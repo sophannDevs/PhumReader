@@ -178,7 +178,10 @@
     "unsubscribed": "បានឈប់តាមដាន",
     "linkCopied": "បានចម្លងតំណ",
     "followed": "កំពុងតាមដាន {name}",
-    "unfollowed": "បានឈប់តាមដាន {name}"
+    "unfollowed": "បានឈប់តាមដាន {name}",
+    "episodeUnlocked": "បានដោះសោវគ្គ {n}",
+    "chapterUnlocked": "បានដោះសោជំពូក {n}",
+    "unlockFailed": "មិនអាចដោះសោបានទេ។ សូមព្យាយាមម្ដងទៀត។"
   },
   "home": {
     "heroLabel": "រឿងពិសេស",

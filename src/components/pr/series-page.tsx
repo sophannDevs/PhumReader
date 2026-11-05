@@ -2,12 +2,11 @@
 
 import { notFound } from "next/navigation"
 import { useTranslations } from "next-intl"
-import { useState } from "react"
-import type { Episode } from "@/data"
 import { EpisodesTab } from "@/components/pr/episodes-tab"
 import { ErrorState } from "@/components/pr/error-state"
 import { SeriesAbout } from "@/components/pr/series-about"
 import { SeriesHero } from "@/components/pr/series-hero"
+import { useSeriesUnlock } from "@/components/pr/series-unlock"
 import { SeriesSidebar } from "@/components/pr/series-sidebar"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Tabs, TabsContent, TabsCount, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -42,16 +41,21 @@ function SeriesSkeleton() {
 
 /** Series page: hero, underline tabs (Episodes / About / Comments) and the sidebar. */
 export function SeriesPage({ slug }: { slug: string }) {
-  const t = useTranslations("series")
   const query = useSeries(slug)
-  // The locked episode the reader tapped; T26 opens the UnlockDialog for it.
-  const [, setUnlockTarget] = useState<Episode | null>(null)
 
   if (query.isPending) return <SeriesSkeleton />
   if (query.isError) return <ErrorState className="container" onRetry={() => void query.refetch()} />
   if (!query.data) notFound()
 
   const { series, synopsis, stats, related, creatorSeriesCount } = query.data
+  return <SeriesBody series={series} synopsis={synopsis} stats={stats} related={related} creatorSeriesCount={creatorSeriesCount} />
+}
+
+type Detail = NonNullable<ReturnType<typeof useSeries>["data"]>
+
+function SeriesBody({ series, synopsis, stats, related, creatorSeriesCount }: Detail) {
+  const t = useTranslations("series")
+  const { request, dialog } = useSeriesUnlock(series)
 
   return (
     <>
@@ -68,7 +72,7 @@ export function SeriesPage({ slug }: { slug: string }) {
             </TabsTrigger>
           </TabsList>
           <TabsContent value="episodes">
-            <EpisodesTab series={series} onLockedClick={setUnlockTarget} />
+            <EpisodesTab series={series} onLockedClick={request} />
           </TabsContent>
           <TabsContent value="about">
             <SeriesAbout series={series} synopsis={synopsis} />
@@ -77,6 +81,7 @@ export function SeriesPage({ slug }: { slug: string }) {
         </Tabs>
         <SeriesSidebar series={series} related={related} creatorSeriesCount={creatorSeriesCount} />
       </div>
+      {dialog}
     </>
   )
 }
