@@ -29,7 +29,7 @@ npm run test:e2e     # Playwright, available after T52
 - Components in Part 2 and Part 3 are presentational (props + callbacks). Part 4 adds data, the fake API and the store, and wires them in. Part 5 builds the pages with all interactions. Part 6 completes loading / empty / error states on every page.
 - A temporary preview page at `/dev/kit` is used to check components in Parts 2–4. It is deleted in T53.
 
-Progress: 6 / 53
+Progress: 7 / 53
 
 ---
 
@@ -69,7 +69,7 @@ Progress: 6 / 53
   - Look at: `design/foundations.md` §4; `00-foundations-desktop.png` (Button, Badge, Alert rows).
   - Done when: `/dev/kit` reproduces the Button, Badge and Alert rows of the foundations screen; no green button ever shows white text; every variant shows the 2 px `--ring` focus ring when tabbed to.
 
-- [ ] **T07 Remaining component styles** (≈45 min)
+- [x] **T07 Remaining component styles** (≈45 min)
   - Build: Tabs pill variant (muted track, white active, xs shadow) and underline variant with a count-badge slot; Toggle chips (round, selected = dark fill); Dialog 440 px / 24 px padding / 14 px radius / lg shadow; DropdownMenu with a label block; Command 560 px; Popover; Input and Textarea with error state (`aria-invalid`, red helper text under the field); Checkbox and Switch in green; RadioGroup "card" style (checked = green border + ring + `#F6FEF9`); InputOTP slots 48×56 (44×52 phone) with an error (red) state; Progress green 6 px; Accordion; Table; Skeleton; Avatar with a `brand` variant (green, dark initials); Sonner toaster: white card, green check dot, md shadow, 2.6 s, bottom-right (bottom-centre above the tab bar on phone).
   - Look at: `design/foundations.md` §3–4; `00-foundations-desktop.png` (Forms, Alert · Toast · Progress rows).
   - Done when: `/dev/kit` shows every component above in default, hover, focus, disabled and error states; a demo toast matches "Episode 49 unlocked" on the foundations screen.
@@ -365,3 +365,7 @@ Progress: 6 / 53
 31. **Fonts**: Inter (400–700), Kantumruy Pro (variable, Khmer + Latin subsets) and Noto Serif (400, 700) via `next/font`. `font-sans` is `Inter, Kantumruy Pro, system` so Khmer falls back automatically. The serif is used with the `font-novel` class. Geist Mono was removed; code uses the system monospace stack.
 32. **shadcn `form`**: the shadcn CLI 4.x no longer ships a `form` component (it was skipped when running `add`). Forms use `react-hook-form` + `zod` directly with `Input`, `Label` and our own error text (`aria-invalid` + `aria-describedby`), added in T07 / T32.
 33. **Generated shadcn files** (`src/components/ui/*`) still use the neutral shadcn styling until T07 restyles them. `sonner.tsx` imports `next-themes`, which is replaced in T07 (the site is light only). `carousel.tsx` has one targeted `eslint-disable` for the setState-in-effect rule (initial Embla sync).
+34. **Tabs / Toggle API**: `TabsList` takes `variant="pill"` (default) or `"line"` (underline, with a `TabsCount` slot). `Toggle` is the round chip (pressed = dark fill). The unused shadcn `Toggle` outline/size-lg variants and the `InputOTPSeparator` were removed.
+35. **Radio cards**: `radioCardClassName` (exported from `radio-group.tsx`) styles a `<label>` that wraps a `RadioGroupItem`: checked = green border + 1 px ring + `--selected` background. Used by PackCard and PaymentMethodCard (T10).
+36. **OTP error state**: wrap the `InputOTP` in an element with `data-invalid="true"` (and set `aria-invalid` on the input) to turn the slots red.
+37. **Toaster** is light-only (no `next-themes`), 2.6 s, bottom-right; on phones it sits 72 px above the bottom so it clears the tab bar. It is mounted in `Providers` in T17 (until then only on `/dev/kit`).

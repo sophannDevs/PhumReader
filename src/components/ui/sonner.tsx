@@ -1,44 +1,47 @@
 "use client"
 
-import { useTheme } from "next-themes"
 import { Toaster as Sonner, type ToasterProps } from "sonner"
-import { CircleCheckIcon, InfoIcon, TriangleAlertIcon, OctagonXIcon, Loader2Icon } from "lucide-react"
+import { CheckIcon, InfoIcon, TriangleAlertIcon, XIcon, Loader2Icon } from "lucide-react"
 
-const Toaster = ({ ...props }: ToasterProps) => {
-  const { theme = "system" } = useTheme()
-
+/**
+ * White card, green check dot, md shadow, 2.6 s, bottom-right
+ * (bottom-centre above the tab bar on phones). Light theme only.
+ * Use `toast.success(...)` for the green check, `toast.error(...)` for
+ * cancelled / failed.
+ */
+const Toaster = (props: ToasterProps) => {
   return (
     <Sonner
-      theme={theme as ToasterProps["theme"]}
+      theme="light"
+      position="bottom-right"
+      duration={2600}
       className="toaster group"
       icons={{
         success: (
-          <CircleCheckIcon className="size-4" />
+          <span className="flex size-5 items-center justify-center rounded-full bg-primary text-primary-foreground">
+            <CheckIcon className="size-3" strokeWidth={3} />
+          </span>
         ),
-        info: (
-          <InfoIcon className="size-4" />
-        ),
-        warning: (
-          <TriangleAlertIcon className="size-4" />
-        ),
+        info: <InfoIcon className="size-4" />,
+        warning: <TriangleAlertIcon className="size-4 text-warning" />,
         error: (
-          <OctagonXIcon className="size-4" />
+          <span className="flex size-5 items-center justify-center rounded-full bg-destructive text-destructive-foreground">
+            <XIcon className="size-3" strokeWidth={3} />
+          </span>
         ),
-        loading: (
-          <Loader2Icon className="size-4 animate-spin" />
-        ),
+        loading: <Loader2Icon className="size-4 animate-spin" />,
       }}
       style={
         {
           "--normal-bg": "var(--popover)",
           "--normal-text": "var(--popover-foreground)",
           "--normal-border": "var(--border)",
-          "--border-radius": "var(--radius)",
+          "--border-radius": "var(--radius-card)",
         } as React.CSSProperties
       }
       toastOptions={{
         classNames: {
-          toast: "cn-toast",
+          toast: "!shadow-md !text-sm !font-medium !gap-2.5 max-md:!bottom-[72px]",
         },
       }}
       {...props}
