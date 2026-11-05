@@ -41,7 +41,10 @@ Key tokens: --primary #00DC64, --primary-foreground #04210F (never white text on
 --brand-ink #047A3A, zinc neutrals, --radius 10px, Inter + Kantumruy Pro.
 
 ## Scope rules
-- NO database, backend, real API, real payments, real auth or deployment.
+- Phase 1 (frontend, docs/CHECKLIST.md, finished): NO database, backend, real API, real payments, real auth or deployment.
+- Phase 2 (backend, docs/BACKEND_CHECKLIST.md, design in docs/BACKEND.md): a real backend is allowed only as
+  described there, one Bxx task at a time. Demo mode (`NEXT_PUBLIC_DEMO=1`, demo-api.ts, local store) must keep working until B50.
+  The rules below that say "demo" describe Phase 1 and demo mode.
 - All content comes from design/demo-data.json (copied to src/data/). Keep it consistent everywhere.
 - Every "server" call goes through src/lib/demo-api.ts:
   - adds a 300–800 ms delay
