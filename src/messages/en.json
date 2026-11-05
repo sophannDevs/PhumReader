@@ -270,6 +270,18 @@
     "follow": "Follow creator",
     "following": "Following",
     "related": "You may also like",
-    "notFoundTitle": "Series not found"
+    "notFoundTitle": "Series not found",
+    "fastPassTitle": "Fast Pass: read {count, plural, one {# episode} other {# episodes}} early",
+    "fastPassTitleChapter": "Fast Pass: read {count, plural, one {# chapter} other {# chapters}} early",
+    "fastPassBody": "Unlock for {price, plural, one {# coin} other {# coins}} each, or wait — one becomes free every week. You have {coins, plural, one {# coin} other {# coins}}.",
+    "getCoins": "Get coins",
+    "episodesLine": "{count, plural, one {# episode} other {# episodes}} · new every {day}",
+    "chaptersLine": "{count, plural, one {# chapter} other {# chapters}} · new every {day}",
+    "sortNewest": "Newest first",
+    "sortOldest": "Oldest first",
+    "showMore": "Show {count} more",
+    "noEpisodes": "No episodes yet",
+    "noEpisodesDesc": "New episodes will show up here.",
+    "noChapters": "No chapters yet"
   }
 }

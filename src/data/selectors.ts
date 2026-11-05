@@ -193,3 +193,6 @@ export function derivedStats(series: Series): { subscribers: string; comments: s
 
 /** Day of the week "today" falls on (Thursday for the pinned date). */
 export const todayWeekday = (): Weekday => weekdayOf(today)
+
+/** Fast Pass price in coins. */
+export const fastPassPrice = (): number => demoData.fastPass.price

@@ -2,6 +2,9 @@
 
 import { notFound } from "next/navigation"
 import { useTranslations } from "next-intl"
+import { useState } from "react"
+import type { Episode } from "@/data"
+import { EpisodesTab } from "@/components/pr/episodes-tab"
 import { ErrorState } from "@/components/pr/error-state"
 import { SeriesAbout } from "@/components/pr/series-about"
 import { SeriesHero } from "@/components/pr/series-hero"
@@ -41,13 +44,14 @@ function SeriesSkeleton() {
 export function SeriesPage({ slug }: { slug: string }) {
   const t = useTranslations("series")
   const query = useSeries(slug)
+  // The locked episode the reader tapped; T26 opens the UnlockDialog for it.
+  const [, setUnlockTarget] = useState<Episode | null>(null)
 
   if (query.isPending) return <SeriesSkeleton />
   if (query.isError) return <ErrorState className="container" onRetry={() => void query.refetch()} />
   if (!query.data) notFound()
 
   const { series, synopsis, stats, related, creatorSeriesCount } = query.data
-  const novel = series.type === "novel"
 
   return (
     <>
@@ -64,9 +68,7 @@ export function SeriesPage({ slug }: { slug: string }) {
             </TabsTrigger>
           </TabsList>
           <TabsContent value="episodes">
-            <p className="type-body text-muted-foreground">
-              {series.totalEpisodes} {t(novel ? "chapters" : "episodes")} · {series.schedule}
-            </p>
+            <EpisodesTab series={series} onLockedClick={setUnlockTarget} />
           </TabsContent>
           <TabsContent value="about">
             <SeriesAbout series={series} synopsis={synopsis} />

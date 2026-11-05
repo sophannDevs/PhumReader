@@ -270,6 +270,18 @@
     "follow": "តាមដានអ្នកបង្កើត",
     "following": "កំពុងតាមដាន",
     "related": "អ្នកប្រហែលជាចូលចិត្ត",
-    "notFoundTitle": "រកមិនឃើញរឿង"
+    "notFoundTitle": "រកមិនឃើញរឿង",
+    "fastPassTitle": "Fast Pass: អានមុន {count} វគ្គ",
+    "fastPassTitleChapter": "Fast Pass: អានមុន {count} ជំពូក",
+    "fastPassBody": "ដោះសោដោយ {price} កាក់ក្នុងមួយ ឬរង់ចាំ — មួយនឹងឥតគិតថ្លៃរៀងរាល់សប្តាហ៍។ អ្នកមាន {coins} កាក់។",
+    "getCoins": "ទិញកាក់",
+    "episodesLine": "{count} វគ្គ · វគ្គថ្មីរៀងរាល់{day}",
+    "chaptersLine": "{count} ជំពូក · ជំពូកថ្មីរៀងរាល់{day}",
+    "sortNewest": "ថ្មីបំផុតមុន",
+    "sortOldest": "ចាស់បំផុតមុន",
+    "showMore": "បង្ហាញបន្ថែម {count}",
+    "noEpisodes": "មិនទាន់មានវគ្គទេ",
+    "noEpisodesDesc": "វគ្គថ្មីនឹងបង្ហាញនៅទីនេះ។",
+    "noChapters": "មិនទាន់មានជំពូកទេ"
   }
 }
