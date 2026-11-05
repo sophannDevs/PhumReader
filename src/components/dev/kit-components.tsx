@@ -3,6 +3,11 @@
 import { useState } from "react"
 import { toast } from "sonner"
 import { LogOutIcon, SettingsIcon, UserIcon } from "lucide-react"
+import { CoinChip } from "@/components/pr/coin-chip"
+import { CoinIcon } from "@/components/pr/coin-icon"
+import { EmptyState } from "@/components/pr/empty-state"
+import { ErrorState } from "@/components/pr/error-state"
+import { SkeletonCard, SkeletonRow, SkeletonText } from "@/components/pr/skeletons"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
@@ -229,6 +234,39 @@ export function KitComponents() {
             <Avatar>
               <AvatarFallback>SC</AvatarFallback>
             </Avatar>
+          </div>
+        </div>
+      </Section>
+
+      <Section title="Small patterns">
+        <div className="flex flex-col gap-5">
+          <div className="flex flex-wrap items-center gap-4 rounded-card border bg-card p-5 shadow-xs">
+            <CoinIcon size={14} />
+            <CoinIcon size={16} />
+            <CoinIcon size={20} />
+            <CoinIcon size={32} />
+            <CoinChip count={3} />
+            <CoinChip count={1250} />
+          </div>
+          <div className="grid gap-5 md:grid-cols-2">
+            <div className="rounded-card border bg-card shadow-xs">
+              <EmptyState
+                title="No purchases yet"
+                description="Your coin purchases will show up here."
+                action={<Button variant="outline">Back to Home</Button>}
+              />
+            </div>
+            <div className="rounded-card border bg-card shadow-xs">
+              <ErrorState onRetry={() => toast.success("Retry clicked")} />
+            </div>
+          </div>
+          <div className="grid gap-5 rounded-card border bg-card p-5 shadow-xs md:grid-cols-[160px_1fr_1fr]">
+            <SkeletonCard />
+            <div className="flex flex-col gap-4">
+              <SkeletonRow />
+              <SkeletonRow thumb="h-16 w-12" />
+            </div>
+            <SkeletonText />
           </div>
         </div>
       </Section>

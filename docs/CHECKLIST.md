@@ -29,7 +29,7 @@ npm run test:e2e     # Playwright, available after T52
 - Components in Part 2 and Part 3 are presentational (props + callbacks). Part 4 adds data, the fake API and the store, and wires them in. Part 5 builds the pages with all interactions. Part 6 completes loading / empty / error states on every page.
 - A temporary preview page at `/dev/kit` is used to check components in Parts 2–4. It is deleted in T53.
 
-Progress: 7 / 53
+Progress: 8 / 53
 
 ---
 
@@ -74,7 +74,7 @@ Progress: 7 / 53
   - Look at: `design/foundations.md` §3–4; `00-foundations-desktop.png` (Forms, Alert · Toast · Progress rows).
   - Done when: `/dev/kit` shows every component above in default, hover, focus, disabled and error states; a demo toast matches "Episode 49 unlocked" on the foundations screen.
 
-- [ ] **T08 Small patterns: CoinIcon, CoinChip, EmptyState, ErrorState, skeleton helpers** (≈30 min)
+- [x] **T08 Small patterns: CoinIcon, CoinChip, EmptyState, ErrorState, skeleton helpers** (≈30 min)
   - Build in `src/components/pr/`: `CoinIcon` (amber circle, dark "C", sizes 14 / 16 / 20 / 32); `CoinChip` (pill with CoinIcon + tabular count, links to `/coins`, `aria-label="N coins"`); `EmptyState` (muted icon tile, title, description, optional action); `ErrorState` (destructive icon, "Something went wrong", description, Retry button); `SkeletonCard`, `SkeletonRow`, `SkeletonText` sized to the patterns that follow.
   - Look at: `design/foundations.md` §1 (Coin), §4 (Skeleton, Alert); `01-home-desktop.png` (header coin chip).
   - Done when: all five render on `/dev/kit`; ErrorState's Retry calls its callback; EmptyState and ErrorState text comes from next-intl keys.
