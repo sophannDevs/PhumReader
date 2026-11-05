@@ -65,14 +65,14 @@ export function EpisodeRow({
 
       <div className="flex min-w-0 flex-1 flex-col gap-0.5">
         <div className="flex min-w-0 items-center gap-2">
-          <h3
+          <p
             className={cn(
               "type-h4 truncate",
               state === "read" && "font-medium text-muted-foreground"
             )}
           >
             {episode.title}
-          </h3>
+          </p>
           {state === "free" && episode.isUp ? <Badge variant="up">{tcards("up")}</Badge> : null}
         </div>
         <p className="type-small flex items-center gap-3 font-normal text-muted-foreground tabular-nums">
@@ -104,10 +104,10 @@ export function EpisodeRow({
         <button
           type="button"
           className={rowClass}
-          aria-label={`${episode.title}. ${t("locked", { count: price })}`}
           onClick={() => onLockedClick?.(episode)}
         >
           {body}
+          <span className="sr-only">{t("locked", { count: price })}</span>
         </button>
       ) : (
         <Link href={readerHref(series, episode.n)} className={rowClass}>

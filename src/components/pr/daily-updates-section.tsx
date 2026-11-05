@@ -32,7 +32,7 @@ export function DailyUpdatesSection({ daily }: { daily: Record<Weekday, Series[]
           <div className="overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             <TabsList className="w-max">
               {DAYS.map((d) => (
-                <TabsTrigger key={d} value={d} className="px-3.5">
+                <TabsTrigger key={d} value={d} className="px-3.5" aria-controls={undefined}>
                   {d === todayDay ? t("today") : t(`days.${d}`)}
                 </TabsTrigger>
               ))}

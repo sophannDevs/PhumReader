@@ -69,7 +69,7 @@ export function ReadingSettingsControls({ themed = false, className }: { themed?
         <Tabs value={settings.theme} onValueChange={(v) => set({ theme: v as NovelSettings["theme"] })}>
           <TabsList className={cn("w-full", track)}>
             {(["light", "sepia", "dark"] as const).map((v) => (
-              <TabsTrigger key={v} value={v} className={active}>
+              <TabsTrigger key={v} value={v} className={active} aria-controls={undefined}>
                 {t(`theme${v[0].toUpperCase()}${v.slice(1)}`)}
               </TabsTrigger>
             ))}
@@ -81,10 +81,10 @@ export function ReadingSettingsControls({ themed = false, className }: { themed?
         <span className="text-sm font-semibold">{t("font")}</span>
         <Tabs value={settings.font} onValueChange={(v) => set({ font: v as NovelSettings["font"] })}>
           <TabsList className={cn("w-full", track)}>
-            <TabsTrigger value="sans" className={active}>
+            <TabsTrigger value="sans" className={active} aria-controls={undefined}>
               {t("fontSans")}
             </TabsTrigger>
-            <TabsTrigger value="serif" className={cn(active, "font-novel")}>
+            <TabsTrigger value="serif" className={cn(active, "font-novel")} aria-controls={undefined}>
               {t("fontSerif")}
             </TabsTrigger>
           </TabsList>

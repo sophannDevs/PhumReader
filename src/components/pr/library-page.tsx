@@ -37,11 +37,11 @@ function UnlockedGroup({ series, numbers }: { series: Series; numbers: number[] 
   if (episodes.length === 0) return null
   return (
     <section aria-labelledby={`unlocked-${series.id}`} className="flex flex-col gap-3">
-      <h3 id={`unlocked-${series.id}`} className="type-h4">
+      <h2 id={`unlocked-${series.id}`} className="type-h4">
         <Link href={`/series/${series.slug}`} className="rounded-sm hover:text-brand-ink focus-visible:ring-2 focus-visible:ring-ring">
           {series.title}
         </Link>
-      </h3>
+      </h2>
       <EpisodeList>
         {episodes.map((e) => (
           <EpisodeRow key={e.n} series={series} episode={e} state="unlocked" />

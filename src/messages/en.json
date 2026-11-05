@@ -344,6 +344,7 @@
   },
   "home": {
     "emptyLink": "Explore genres",
+    "heroControls": "Slide controls",
     "heroLabel": "Featured series",
     "readEpisode": "Read episode 1",
     "readChapter": "Read chapter 1",

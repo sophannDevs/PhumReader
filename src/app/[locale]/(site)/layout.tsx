@@ -1,4 +1,5 @@
-import { getTranslations, setRequestLocale } from "next-intl/server"
+import { setRequestLocale } from "next-intl/server"
+import { SkipLink } from "@/components/layout/skip-link"
 import { SearchProvider } from "@/components/layout/search-provider"
 import { SiteFooter } from "@/components/layout/site-footer"
 import { ConnectedHeader, ConnectedTabBar } from "@/components/layout/site-chrome"
@@ -9,17 +10,11 @@ export default async function SiteLayout({ children, params }: LayoutProps<"/[lo
   // Layouts render in parallel with the root layout, so each one sets the locale itself.
   const { locale } = await params
   setRequestLocale(locale)
-  const t = await getTranslations("nav")
   return (
     <SearchProvider>
-      <a
-        href="#main"
-        className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50 focus:rounded-control focus:bg-foreground focus:px-4 focus:py-2 focus:text-sm focus:text-background"
-      >
-        {t("skip")}
-      </a>
+      <SkipLink />
       <ConnectedHeader />
-      <main id="main" className="flex flex-1 flex-col">
+      <main id="main" tabIndex={-1} className="flex flex-1 flex-col outline-none">
         {children}
       </main>
       <SiteFooter />

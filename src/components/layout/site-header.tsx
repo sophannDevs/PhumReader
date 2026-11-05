@@ -102,11 +102,11 @@ export function SiteHeader({
           {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger
-                aria-label={t("accountMenu")}
+                aria-label={`${initials(user.name)} · ${t("accountMenu")}`}
                 className="rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
               >
                 <Avatar variant="brand">
-                  <AvatarFallback>{initials(user.name)}</AvatarFallback>
+                  <AvatarFallback aria-hidden>{initials(user.name)}</AvatarFallback>
                 </Avatar>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-60">

@@ -48,8 +48,8 @@ export function AuthFlow() {
           </div>
           <Tabs value={view} onValueChange={(v) => setView(v as View)}>
             <TabsList className="w-full" aria-label={t("modes")}>
-              <TabsTrigger value="login">{t("login")}</TabsTrigger>
-              <TabsTrigger value="signup">{t("signup")}</TabsTrigger>
+              <TabsTrigger value="login" aria-controls={undefined}>{t("login")}</TabsTrigger>
+              <TabsTrigger value="signup" aria-controls={undefined}>{t("signup")}</TabsTrigger>
             </TabsList>
           </Tabs>
         </>

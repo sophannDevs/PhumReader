@@ -10,13 +10,16 @@ import { NovelsSection, NovelsSkeleton } from "@/components/pr/novels-section"
 import { TrendingSection, TrendingSkeleton } from "@/components/pr/trending-section"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useHome } from "@/lib/queries"
+import { useTranslations } from "next-intl"
 
 /** Home page body. Sections are added one task at a time (T20-T23); T46 completes their states. */
 export function HomeContent() {
   const home = useHome()
+  const tc = useTranslations("common")
 
   return (
     <div className="container flex flex-col gap-14 pt-6">
+      <h1 className="sr-only">{tc("siteName")} · {tc("tagline")}</h1>
       {home.isPending ? (
         <>
           <Skeleton className="h-[560px] rounded-[16px] md:h-[470px] md:rounded-hero" />

@@ -59,7 +59,7 @@ export function ComicEndSection({
             variant="outline"
             size="sm"
             aria-pressed={liked}
-            aria-label={t("likeLabel", { count: likeCount.toLocaleString("en-US") })}
+            aria-label={`${formatCount(likeCount)} · ${t("likeLabel", { count: likeCount.toLocaleString("en-US") })}`}
             className={cn(pill, "tabular-nums")}
             onClick={() => useAppStore.getState().toggleLike(key)}
           >

@@ -173,7 +173,7 @@ export function HeroCarousel({ slides }: { slides: HeroSlideView[] }) {
   )
 
   return (
-    <section aria-roledescription="carousel" aria-label={t("heroLabel")} className="relative">
+    <section className="relative">
       <div
         className="overflow-hidden rounded-[16px] md:rounded-hero"
         onKeyDown={(e) => {
@@ -196,7 +196,7 @@ export function HeroCarousel({ slides }: { slides: HeroSlideView[] }) {
       </div>
 
       <div className="pointer-events-none absolute inset-x-5 bottom-6 flex items-center justify-between md:inset-x-14">
-        <div className="pointer-events-auto flex items-center gap-2" role="group" aria-label={t("heroLabel")}>
+        <div className="pointer-events-auto flex items-center gap-2" role="group" aria-label={t("heroControls")}>
           {slides.map((slide, i) => (
             <button
               key={slide.series}

@@ -1,6 +1,7 @@
 import Image from "next/image"
 import { useLocale, useTranslations } from "next-intl"
 import { AuthBackLink } from "@/components/auth/auth-back-link"
+import { SkipLink } from "@/components/layout/skip-link"
 import { LanguageSwitch } from "@/components/layout/language-switch"
 import { Logo } from "@/components/layout/logo"
 import { demoData } from "@/data"
@@ -76,20 +77,21 @@ export function AuthSplitLayout({
         </figure>
       </aside>
 
-      <div className="flex min-w-0 flex-col px-4 py-4 md:px-10 md:py-6">
+      <main id="main" tabIndex={-1} className="flex min-w-0 flex-col px-4 py-4 outline-none md:px-10 md:py-6">
+        <SkipLink />
         <div className="flex items-center justify-between">
           <Logo size="header" className="md:hidden" />
           <AuthBackLink fallbackHref={backHref} label={t("back")} lang={locale} />
           <LanguageSwitch variant="segmented" />
         </div>
 
-        <main id="main" className="mx-auto flex w-full max-w-[380px] flex-1 flex-col pt-10 pb-10 md:pt-20">
+        <div className="mx-auto flex w-full max-w-[380px] flex-1 flex-col pt-10 pb-10 md:pt-20">
           {children}
           <p lang={locale} className="type-small mt-5 text-center font-normal text-muted-foreground">
             {t("legal")}
           </p>
-        </main>
-      </div>
+        </div>
+      </main>
     </div>
   )
 }

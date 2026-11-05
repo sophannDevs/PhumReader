@@ -51,6 +51,7 @@ export function Logo({
         {khmer ? (
           <span
             lang="km"
+            aria-hidden
             className={cn(
               "mt-1 text-[10px] leading-none font-medium",
               tone === "light" ? "text-surface-quiet" : "text-muted-foreground"
@@ -68,7 +69,6 @@ export function Logo({
   return (
     <Link
       href="/"
-      aria-label={t("siteName")}
       className={cn(
         base,
         "rounded-control outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"

@@ -31,10 +31,10 @@ export function TrendingSection({ comics, novels }: { comics: RankingEntry[]; no
         </div>
         <Tabs value={kind} onValueChange={(v) => setKind(v as "comics" | "novels")}>
           <TabsList>
-            <TabsTrigger value="comics" className="px-3.5">
+            <TabsTrigger value="comics" className="px-3.5" aria-controls={undefined}>
               {t("comics")}
             </TabsTrigger>
-            <TabsTrigger value="novels" className="px-3.5">
+            <TabsTrigger value="novels" className="px-3.5" aria-controls={undefined}>
               {t("novels")}
             </TabsTrigger>
           </TabsList>
