@@ -29,7 +29,7 @@ npm run test:e2e     # Playwright, available after T52
 - Components in Part 2 and Part 3 are presentational (props + callbacks). Part 4 adds data, the fake API and the store, and wires them in. Part 5 builds the pages with all interactions. Part 6 completes loading / empty / error states on every page.
 - A temporary preview page at `/dev/kit` is used to check components in Parts 2–4. It is deleted in T53.
 
-Progress: 14 / 53
+Progress: 15 / 53
 
 ---
 
@@ -113,7 +113,7 @@ Progress: 14 / 53
   - Look at: `03-episode-viewer-desktop.png`, `03-episode-viewer-phone.png` (top bar), `04-novel-reader-desktop.png`, `04-novel-reader-settings-dark-desktop.png`.
   - Done when: both bars render on `/dev/kit` with stub data, the novel bar in all three themes; icon buttons have `aria-label`s; previous / next are disabled at the ends.
 
-- [ ] **T15 AuthSplitLayout and (auth) layout** (≈45 min)
+- [x] **T15 AuthSplitLayout and (auth) layout** (≈45 min)
   - Build: `AuthSplitLayout`: desktop left 46% dark panel with a rotated collage of covers (grid, gradient fade), white Logo, creator quote from `authQuote` with "— Chan Sreyleak, creator of *Lantern Alley*"; right side: "← Back to PhumReader" (→ `returnTo` or `/`), EN / ខ្មែរ segmented switch, centred 380 px form column, legal line "By continuing you agree to PhumReader's Terms and Privacy Policy." Phone: Logo + language switch row, then the form only. `(auth)/layout.tsx` uses it; no header, footer or tab bar.
   - Look at: `05-login-desktop.png`, `05-login-phone.png`; `design/spec.md` §5.
   - Done when: layout matches at 1440 and 390 px with a placeholder form; collage covers have empty alt (decorative); the language switch toggles the locale and stays on `/login`.
@@ -387,3 +387,5 @@ Progress: 14 / 53
 53. **Reader bars** (`reader-bar.tsx`): `ComicReaderBar` is always dark (surface tokens); `NovelReaderBar` uses the `--reader-*` tokens, so a page must set `data-reader-theme` on an ancestor. Both take `listSlot` (an `EpisodeListPopover`, `tone="dark"` or `"themed"`), `trailingSlot` (the "Aa" popover, T31), `onPrev` / `onNext` with `prevDisabled` / `nextDisabled`, and `progress` (0..1, the 2 px green line, also a `role="progressbar"`). The bar content is centred in an 832 px row to line up with the 800 px comic strip.
 54. **EpisodeListPopover** shows the 9 episodes around the current one (newest first); rows call `onSelect(n)`, so the reader page decides between navigating and opening the UnlockDialog (T28). The header coin count is the reader's balance.
 55. **`(reader)/layout.tsx`** only sets the locale and renders a full-height flex wrapper (no header, footer or tab bar, no background): each reader page sets its own colours.
+56. **AuthSplitLayout** takes the "Back to PhumReader", legal and quote strings from `demoData.loginPageStrings[locale]` (the `quote` field) and the byline from `authQuote.by` (English only; the series name is italic). The collage is the first 16 series covers, rotated -8°, with empty alt text inside an `aria-hidden` wrapper. `/login` is a placeholder page (title and subtitle only) until T32-T35; `backHref` defaults to `/` until `returnTo` exists (T19 / T35).
+57. **Cache Components keeps the previous route mounted but hidden** (`display: none`) after a client-side navigation (for example after switching language), so the DOM briefly holds two copies of a page. Tests must filter for visible elements (e2e in T52), and `id="main"` / `id="skip"` targets can appear twice: handle this in the T50 skip-link work.
