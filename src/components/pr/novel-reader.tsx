@@ -19,7 +19,7 @@ import { useReaderNav } from "@/lib/use-reader-nav"
 import { cn } from "@/lib/utils"
 import { useLocalize } from "@/lib/localize"
 
-function NovelSkeleton() {
+export function NovelSkeleton() {
   const theme = useAppStore((s) => s.novelSettings.theme)
   return (
     <div className="flex flex-1 flex-col bg-reader-page" data-reader-theme={theme} aria-hidden>

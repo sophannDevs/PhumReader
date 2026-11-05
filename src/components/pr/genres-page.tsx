@@ -15,6 +15,17 @@ import { useLocalize } from "@/lib/localize"
 
 const GRID = "grid grid-cols-3 gap-3 md:grid-cols-4 md:gap-4 lg:grid-cols-6 lg:gap-5"
 
+/** Static-shell placeholder shown while the route params resolve. */
+export function GenresFallback() {
+  return (
+    <div className={GRID} aria-hidden>
+      {Array.from({ length: 6 }, (_, i) => (
+        <SkeletonCard key={i} />
+      ))}
+    </div>
+  )
+}
+
 /** Genres: 8 chips (links, so the URL reflects the genre), "N series in <genre>" and the card grid. */
 export function GenresPage({ genre }: { genre: Genre }) {
   const t = useTranslations("genresPage")

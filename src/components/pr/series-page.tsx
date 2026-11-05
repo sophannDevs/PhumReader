@@ -13,7 +13,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Tabs, TabsContent, TabsCount, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useSeries } from "@/lib/queries"
 
-function SeriesSkeleton() {
+export function SeriesSkeleton() {
   return (
     <div aria-hidden>
       <div className="bg-surface">

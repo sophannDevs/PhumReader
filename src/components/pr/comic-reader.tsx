@@ -17,7 +17,7 @@ import { seriesHref } from "@/lib/routes"
 import { useReaderNav } from "@/lib/use-reader-nav"
 import { useLocalize } from "@/lib/localize"
 
-function ReaderSkeleton() {
+export function ReaderSkeleton() {
   return (
     <div className="flex-1 bg-surface" aria-hidden>
       <Skeleton className="h-14 rounded-none bg-surface-panel" />

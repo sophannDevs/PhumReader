@@ -1,7 +1,8 @@
 import type { Metadata } from "next"
+import { Suspense } from "react"
 import { notFound } from "next/navigation"
 import { getTranslations, setRequestLocale } from "next-intl/server"
-import { GenresPage } from "@/components/pr/genres-page"
+import { GenresFallback, GenresPage } from "@/components/pr/genres-page"
 import { genres } from "@/data"
 import { routing } from "@/i18n/routing"
 import { genreFromSlug, genreSlug } from "@/lib/routes"
@@ -18,10 +19,18 @@ export async function generateMetadata({ params }: PageProps<"/[locale]/genres/[
   return { title: `${t("title")} · ${name}` }
 }
 
-export default async function Page({ params }: PageProps<"/[locale]/genres/[genre]">) {
+async function GenreContent({ params }: { params: PageProps<"/[locale]/genres/[genre]">["params"] }) {
   const { locale, genre } = await params
   setRequestLocale(locale)
   const name = genreFromSlug(genre, genres())
   if (!name) notFound()
   return <GenresPage genre={name} />
+}
+
+export default function Page({ params }: PageProps<"/[locale]/genres/[genre]">) {
+  return (
+    <Suspense fallback={<GenresFallback />}>
+      <GenreContent params={params} />
+    </Suspense>
+  )
 }

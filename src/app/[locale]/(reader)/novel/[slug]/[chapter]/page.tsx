@@ -1,7 +1,8 @@
 import type { Metadata } from "next"
+import { Suspense } from "react"
 import { notFound } from "next/navigation"
 import { getTranslations, setRequestLocale } from "next-intl/server"
-import { NovelReader } from "@/components/pr/novel-reader"
+import { NovelReader, NovelSkeleton } from "@/components/pr/novel-reader"
 import { episodesFor, getSeries, getSeriesBySlug } from "@/data"
 import { redirect } from "@/i18n/navigation"
 import { routing } from "@/i18n/routing"
@@ -23,7 +24,7 @@ export async function generateMetadata({ params }: PageProps<"/[locale]/novel/[s
   return { title: `${series.title} · ${t("chapterLabel", { n: chapter })}` }
 }
 
-export default async function Page({ params }: PageProps<"/[locale]/novel/[slug]/[chapter]">) {
+async function NovelContent({ params }: { params: PageProps<"/[locale]/novel/[slug]/[chapter]">["params"] }) {
   const { locale, slug, chapter } = await params
   setRequestLocale(locale)
 
@@ -34,4 +35,12 @@ export default async function Page({ params }: PageProps<"/[locale]/novel/[slug]
   if (series.type === "comic") redirect({ href: `/read/${slug}/${n}`, locale })
 
   return <NovelReader slug={slug} n={n} />
+}
+
+export default function Page({ params }: PageProps<"/[locale]/novel/[slug]/[chapter]">) {
+  return (
+    <Suspense fallback={<NovelSkeleton />}>
+      <NovelContent params={params} />
+    </Suspense>
+  )
 }
