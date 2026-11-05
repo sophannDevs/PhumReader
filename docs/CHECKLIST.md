@@ -1,0 +1,361 @@
+# PhumReader web: implementation checklist
+
+Frontend only, demo data only. No database, backend, real API, real payments, real auth or deployment.
+
+Sources of truth: `CLAUDE.md`, `design/foundations.md`, `design/spec.md`, `design/demo-data.json`, `design/screens/*.png`.
+The design files still say "Toonwave". The product is **PhumReader** everywhere in UI, metadata, copy and code names.
+The only "toonwave" strings that stay are the demo credentials (`reader@toonwave.app` / `Toonwave1!`), as fixed in `CLAUDE.md`.
+
+## How to run
+
+```bash
+npm install
+npm run dev          # http://localhost:3000
+npm run lint
+npm run typecheck
+npm run build
+npm run test:e2e     # Playwright, available after T52
+```
+
+- Demo login: `reader@toonwave.app` / `Toonwave1!`, email code `123456`.
+- State flags: add `?demo=empty`, `?demo=error` or `?demo=slow` to any page URL to see that state.
+- Reset the demo: clear localStorage keys starting with `phumreader.` (or Settings > Reset demo data, after T41).
+
+## How to work through this list
+
+- One task at a time, in order (`/next-task`). Each task is sized for about 30–60 minutes.
+- Before every UI task open the screens listed under **Look at** and match them at 1440 px and 390 px.
+- Every task ends with `npm run lint && npm run typecheck && npm run build` passing, the box ticked, and a commit `Txx: <short description>`.
+- Components in Part 2 and Part 3 are presentational (props + callbacks). Part 4 adds data, the fake API and the store, and wires them in. Part 5 builds the pages with all interactions. Part 6 completes loading / empty / error states on every page.
+- A temporary preview page at `/dev/kit` is used to check components in Parts 2–4. It is deleted in T53.
+
+Progress: 1 / 53
+
+---
+
+## Part 1: Project setup
+
+- [x] **T01 Scaffold the Next.js app** (≈30 min)
+  - Build: run `npx create-next-app@latest .` (TypeScript, ESLint, Tailwind CSS, App Router, `src/` directory, import alias `@/*`). If it refuses because the folder is not empty, generate in a temporary sibling folder and move the generated files in. Never delete or overwrite `CLAUDE.md`, `.claude/` or `design/`. Add `"typecheck": "tsc --noEmit"` to `package.json` scripts; set the package name to `phumreader-web`. Check `.gitignore` covers `node_modules`, `.next`, `.env*`. First commit.
+  - Look at: `CLAUDE.md` (Stack, Commands).
+  - Done when: `npm run dev` serves the default page; `npm run lint`, `npm run typecheck` and `npm run build` all pass; `git status` shows `CLAUDE.md`, `.claude/` and `design/` untouched; `tsconfig.json` has `"strict": true`.
+
+- [ ] **T02 Dependencies, assets and demo data** (≈45 min)
+  - Build: `npx shadcn@latest init` (style New York, base colour Zinc, CSS variables). Install `lucide-react`, `next-intl`, `zustand`, `@tanstack/react-query`, `react-hook-form`, `zod`, `@hookform/resolvers`, `sonner`, `input-otp`, `embla-carousel-react`. Copy `design/assets/covers/*` to `public/covers/` and `design/assets/panels/*` to `public/panels/`. Copy `design/demo-data.json` to `src/data/demo-data.json`, replacing "Toonwave" with "PhumReader" inside strings (`_note`, `loginPageStrings` en + km `back` and `legal`) but leaving `demoAccount` untouched. Create `src/data/types.ts` with types for every top-level key (`Series`, `Episode`, `HeroSlide`, `ContinueEntry`, `Panel`, `NovelBlock`, `Comment`, `CoinPack`, `PaymentMethod`, `Purchase`, `FaqItem`, `AuthStrings`, `DemoData` …) and `src/data/index.ts` exporting a typed `demoData` (`satisfies DemoData`).
+  - Look at: `design/README.md`, `design/demo-data.json`, `CLAUDE.md` (Scope rules).
+  - Done when: `/covers/<id>.svg` and `/panels/<id>.svg` open in the browser; `import { demoData } from "@/data"` is fully typed with no `any`; `grep -ri toonwave src/` only hits `demoAccount`; lint, typecheck, build pass.
+
+- [ ] **T03 next-intl (en, km) and route groups** (≈45 min)
+  - Build: `src/i18n/routing.ts` (locales `en`, `km`; default `en`; `localePrefix: "as-needed"` so English URLs match `spec.md` and Khmer lives under `/km/...`), `src/i18n/request.ts`, `src/i18n/navigation.ts` (`Link`, `useRouter`, `usePathname`, `redirect`), `src/middleware.ts` (or `src/proxy.ts` on Next 16). Move the app under `src/app/[locale]/` with route groups `(site)`, `(reader)`, `(auth)`, each with a placeholder `layout.tsx`. Root `[locale]/layout.tsx`: `<html lang={locale}>`, `NextIntlClientProvider`, `generateStaticParams` for both locales, metadata title "PhumReader" + description "Read and share stories in Khmer and English." `src/messages/en.json` and `km.json` with a `common` namespace (`siteName`, `tagline`).
+  - Look at: `CLAUDE.md` (Stack, Folder structure).
+  - Done when: `/` renders in English with `<html lang="en">`; `/km` renders with `lang="km"`; `/fr` returns 404; lint, typecheck, build pass.
+
+---
+
+## Part 2: Design system (from foundations.md)
+
+- [ ] **T04 Colour tokens, radius, shadows, Tailwind theme** (≈45 min)
+  - Build: `globals.css` with every shadcn variable from foundations §1 (`--background`, `--foreground`, `--card`, `--popover`, `--muted`, `--muted-foreground`, `--secondary`, `--accent`, `--border`, `--input`, `--ring #00A650`, `--primary #00DC64`, `--primary-hover #00C85A`, `--primary-foreground #04210F`, `--brand-ink #047A3A`, `--brand-soft #E8FBF0` + border `#BBF0D0`, destructive set, warning set, coin `#FBBF24` / `#78350F`, UP badge `#FEE2E2` / `#B91C1C`, selected card `#F6FEF9`), dark-surface tokens (`#09090B`, `#18181B`, `#27272A`, `#3F3F46`, `#FAFAFA`, `#A1A1AA`) and the three novel-reader themes scoped to `[data-reader-theme="light|sepia|dark"]`. `--radius: 10px` plus named radii (buttons/inputs 8, cards 12, dialogs 14, hero 20 / 16 phone, badges 6, chips round). Shadows xs / md / lg. Container 1280 px with 32 px padding (16 on phone). Expose all of it to Tailwind (`@theme inline` on Tailwind v4, or `tailwind.config.ts` on v3, whichever `create-next-app` generated).
+  - Look at: `design/foundations.md` §1, §3; `design/screens/00-foundations-desktop.png` (Color tokens, Layout & spacing).
+  - Done when: `/dev/kit` shows the token swatches with their hex values; computed `--primary` is `#00DC64`; no hex colour appears in a component file outside `globals.css`.
+
+- [ ] **T05 Fonts, type scale, motion rules** (≈30 min)
+  - Build: `next/font` for Inter (400/500/600/700), Kantumruy Pro and Noto Serif as `--font-inter`, `--font-khmer`, `--font-serif`; body stack `Inter, "Kantumruy Pro", sans-serif` so Khmer falls back automatically. Type utilities from foundations §2 (hero 48/52, h1 36/42 → 26/32 phone, series-title 40/46 → 26/30, h2 24/30 → 20/26, h3 18/26, h4 15/22, card-title 14/20, lead, body 14/20, small 13/18, caption 12/16, eyebrow 12/16 uppercase brand-ink 0.06em; novel text 18 px / 1.85). `tabular-nums` helper for coins, counts and timers. Motion: 150 ms colour transitions, 200 ms switches, cover hover zoom 1.04 over 300 ms, all disabled under `prefers-reduced-motion`.
+  - Look at: `design/foundations.md` §2, §7; `00-foundations-desktop.png` (Typography row).
+  - Done when: `/dev/kit` reproduces the Typography row including the Khmer sample in Kantumruy Pro; the network tab shows self-hosted font files, no Google Fonts request.
+
+- [ ] **T06 shadcn components + Button, Badge, Alert variants** (≈45 min)
+  - Build: `npx shadcn@latest add button badge card tabs toggle dialog dropdown-menu command popover input textarea label form checkbox switch radio-group input-otp progress accordion table alert sonner skeleton avatar separator breadcrumb carousel tooltip scroll-area sheet`. Button variants: `default` (dark), `brand` (green, 600 weight, `--primary-foreground` text, hover `--primary-hover`), `secondary`, `outline`, `ghost`, `link` (brand-ink, underline), `destructive`; sizes `sm` 32, default 36, `lg` 44, `icon` 36, `icon-sm` 32; `loading` prop (spinner + disabled). Badge variants `default`, `secondary`, `outline`, `brand`, `up`, `new`, `warn`, `dark` (`rgba(9,9,11,.72)` on covers), 6 px radius, 14 px icons. Alert variants `default`, `brand`, `destructive`, `warning` with icon + title + description.
+  - Look at: `design/foundations.md` §4; `00-foundations-desktop.png` (Button, Badge, Alert rows).
+  - Done when: `/dev/kit` reproduces the Button, Badge and Alert rows of the foundations screen; no green button ever shows white text; every variant shows the 2 px `--ring` focus ring when tabbed to.
+
+- [ ] **T07 Remaining component styles** (≈45 min)
+  - Build: Tabs pill variant (muted track, white active, xs shadow) and underline variant with a count-badge slot; Toggle chips (round, selected = dark fill); Dialog 440 px / 24 px padding / 14 px radius / lg shadow; DropdownMenu with a label block; Command 560 px; Popover; Input and Textarea with error state (`aria-invalid`, red helper text under the field); Checkbox and Switch in green; RadioGroup "card" style (checked = green border + ring + `#F6FEF9`); InputOTP slots 48×56 (44×52 phone) with an error (red) state; Progress green 6 px; Accordion; Table; Skeleton; Avatar with a `brand` variant (green, dark initials); Sonner toaster: white card, green check dot, md shadow, 2.6 s, bottom-right (bottom-centre above the tab bar on phone).
+  - Look at: `design/foundations.md` §3–4; `00-foundations-desktop.png` (Forms, Alert · Toast · Progress rows).
+  - Done when: `/dev/kit` shows every component above in default, hover, focus, disabled and error states; a demo toast matches "Episode 49 unlocked" on the foundations screen.
+
+- [ ] **T08 Small patterns: CoinIcon, CoinChip, EmptyState, ErrorState, skeleton helpers** (≈30 min)
+  - Build in `src/components/pr/`: `CoinIcon` (amber circle, dark "C", sizes 14 / 16 / 20 / 32); `CoinChip` (pill with CoinIcon + tabular count, links to `/coins`, `aria-label="N coins"`); `EmptyState` (muted icon tile, title, description, optional action); `ErrorState` (destructive icon, "Something went wrong", description, Retry button); `SkeletonCard`, `SkeletonRow`, `SkeletonText` sized to the patterns that follow.
+  - Look at: `design/foundations.md` §1 (Coin), §4 (Skeleton, Alert); `01-home-desktop.png` (header coin chip).
+  - Done when: all five render on `/dev/kit`; ErrorState's Retry calls its callback; EmptyState and ErrorState text comes from next-intl keys.
+
+- [ ] **T09 SeriesCard, NovelCard, ContinueCard, RankRow** (≈60 min)
+  - Build: `SeriesCard` (3:4 cover, 12 px radius, top-left UP / NEW badges, title 14/20 600, "creator · genre", ♡ likes, hover zoom, the whole card is one link, novels get a "Novel" badge); `NovelCard` (card with 84 px cover, genre badge, title, "creator · N chapters"); `ContinueCard` (48×64 cover, title, "Episode N · 62%" or "Chapter N · 85%", 6 px Progress, chevron icon button); `RankRow` (rank number, green for 1–3, 40×52 cover, title, "creator · views", movement ▲ n green / ▼ n red / NEW / —). All typed with `src/data/types.ts`.
+  - Look at: `01-home-desktop.png`, `01-home-phone.png`; `design/foundations.md` §5.
+  - Done when: `/dev/kit` shows a 6-column SeriesCard grid, 6 NovelCards, 4 ContinueCards and 8 RankRows that match the Home screen at 1440 and 390 px; covers have alt text; cards are keyboard-focusable links.
+
+- [ ] **T10 EpisodeRow, UnlockDialog, PackCard, PaymentMethodCard, CommentList** (≈60 min)
+  - Build: `EpisodeRow` states free / free + UP / read (grey title + "✓ Read") / locked (dimmed thumb with lock icon, warn badge "⚡ 5 coins") / unlocked ("Unlocked" brand badge), 64 px thumb, date, ♡ likes, chevron. `UnlockDialog` with thumb, "⚡ Fast Pass" badge, "Unlock Episode N", "Free for everyone on <date>.", Price / Your balance box, and three states: logged out (info alert + "Log in to unlock"), enough coins ("Unlock for 5 coins" with loading), not enough (warning "You need N more coins." + "Get coins"); always "Wait for the free release" (closes). `PackCard` (radio card: coins, bonus line, Popular green / Best value dark badge, `[PRICE USD]` / `[PRICE KHR]`, disabled state). `PaymentMethodCard` (radio card: KHQR / ABA / CARD label tile, label, description, "Recommended" badge, disabled state). `CommentList` + `CommentComposer` (textarea, 500-char counter, Post button; rows with initials avatar, name · time, "Top" badge, like toggle with count, Reply).
+  - Look at: `02-series-desktop.png`, `02-series-unlock-dialog-desktop.png`, `02-series-unlock-not-enough-coins-phone.png`, `02-series-comments-tab-desktop.png`, `06-coins-desktop.png`; `design/foundations.md` §5.
+  - Done when: `/dev/kit` shows all EpisodeRow states and the three UnlockDialog states; the dialog traps focus, closes on Esc and returns focus; pack and method cards are a real RadioGroup navigable with arrow keys.
+
+---
+
+## Part 3: Layouts
+
+- [ ] **T11 Logo, app metadata, SiteHeader** (≈60 min)
+  - Build: `Logo` (green rounded mark from the design + wordmark "Phum" in `--brand-ink` and "Reader" in `--foreground`, optional small ភូមិ underneath with `lang="km"`; header / footer / auth sizes). `app/manifest.ts` (name "PhumReader", short_name "Phum", theme `#00DC64`), favicon and app icon from the mark, metadata title template `%s · PhumReader`. `SiteHeader`: 64 px (56 phone), sticky, white at 92% with blur, bottom border; Logo → `/`; nav Home, Rankings, Genres, Web novels (current item bold; targets per spec §0 until the pages exist); search trigger "Search series, creators…" with ⌘K hint (icon button on phone); `CoinChip`; logged out: "Log in" ghost + "Sign up" brand (phone: Log in only); logged in: Avatar initials → DropdownMenu with name + "N coins" label, My library, Get coins, Creator dashboard, Settings, Log out. Props-driven (`user`, `coins`) until T19.
+  - Look at: `01-home-desktop.png`, `01-home-phone.png`, `01-home-logged-in-menu-desktop.png`; `design/foundations.md` §3; `design/spec.md` §0 Header.
+  - Done when: header matches both screens; the current nav item is bold; the menu opens and navigates by keyboard; `/manifest.webmanifest` has short name "Phum"; the browser tab shows the PhumReader icon.
+
+- [ ] **T12 SiteFooter, MobileTabBar, (site) layout** (≈45 min)
+  - Build: `SiteFooter`: Logo + "Comics and web novels from Cambodia and beyond, in Khmer and English." + 3 social icon buttons; columns Read (Originals, Rankings, Genres, Web novels), Create (Creator dashboard, Creator guidelines, Earnings), Help (Help center, Terms, Privacy, Contact); bottom line "© 2026 PhumReader · [YOUR COMPANY NAME]. All series shown are placeholders." + language switch "English · ខ្មែរ". `MobileTabBar` (< 768 px, sticky bottom, safe-area padding): Home, Search (opens the ⌘K palette), Library, Coins, Me (→ Settings when logged in, else "Log in"); 20 px icons, 11 px labels, current dark, others muted. `(site)/layout.tsx` = header + main + footer + tab bar, with bottom padding on phone so the tab bar never covers content.
+  - Look at: `01-home-desktop.png` (footer), `01-home-phone.png` (footer + tab bar), `06-coins-phone.png`.
+  - Done when: footer matches at 1440 and 390 px; the tab bar only shows below 768 px with the current tab highlighted; the language switch changes the locale; all links point to the routes in spec §0.
+
+- [ ] **T13 ⌘K search palette** (≈45 min)
+  - Build: `SearchCommand` (shadcn Command inside a Dialog, 560 px, near the top): opens on ⌘K / Ctrl+K, the header trigger and the phone Search tab; empty query → "Popular now" group with the first 6 series; typing filters title, creator or genre (max 8) under a "Series" group; result row: 28×36 cover, title, "creator · genre", "Novel" badge for novels; Enter or click → series page; "No results. Try a title, creator or genre."; Esc hint; Esc / outside click closes. Client-side filter over `demoData.series`.
+  - Look at: `01-home-search-open-desktop.png`; `design/spec.md` §0 Search.
+  - Done when: typing "gl" shows only Glass Compass; arrow keys + Enter navigate; focus returns to the trigger on close; works on the phone layout.
+
+- [ ] **T14 Reader bars and (reader) layout** (≈45 min)
+  - Build: `ComicReaderBar` (dark: back arrow → series, series title small + episode title, "Episodes" popover slot, previous / next icon buttons with disabled state, 2 px green progress line at the bottom). `NovelReaderBar` (same structure, coloured by the reader theme tokens, "Chapters" popover slot + "Aa" settings popover slot). `EpisodeListPopover` (header "N episodes · N coins", 9 nearby rows newest first, current row marked "Now", locked rows with a lock icon). `(reader)/layout.tsx`: no site header, footer or tab bar; full-bleed.
+  - Look at: `03-episode-viewer-desktop.png`, `03-episode-viewer-phone.png` (top bar), `04-novel-reader-desktop.png`, `04-novel-reader-settings-dark-desktop.png`.
+  - Done when: both bars render on `/dev/kit` with stub data, the novel bar in all three themes; icon buttons have `aria-label`s; previous / next are disabled at the ends.
+
+- [ ] **T15 AuthSplitLayout and (auth) layout** (≈45 min)
+  - Build: `AuthSplitLayout`: desktop left 46% dark panel with a rotated collage of covers (grid, gradient fade), white Logo, creator quote from `authQuote` with "— Chan Sreyleak, creator of *Lantern Alley*"; right side: "← Back to PhumReader" (→ `returnTo` or `/`), EN / ខ្មែរ segmented switch, centred 380 px form column, legal line "By continuing you agree to PhumReader's Terms and Privacy Policy." Phone: Logo + language switch row, then the form only. `(auth)/layout.tsx` uses it; no header, footer or tab bar.
+  - Look at: `05-login-desktop.png`, `05-login-phone.png`; `design/spec.md` §5.
+  - Done when: layout matches at 1440 and 390 px with a placeholder form; collage covers have empty alt (decorative); the language switch toggles the locale and stays on `/login`.
+
+---
+
+## Part 4: Data and simulated backend
+
+- [ ] **T16 Typed demo-data helpers** (≈60 min)
+  - Build: `src/data/index.ts` selectors: `getSeries()`, `getSeriesBySlug`, `getSeriesById`, `seriesByGenre`, `seriesByDay`, `novels()`, `heroSlides()` (joined with series), `continueReading()` (joined), `rankings("comics" | "novels")` (order per Assumptions, with `rankingMovement`), `relatedSeries(series, 4)`, `creatorSeriesCount(creator)`, `synopsisFor(series)`, `episodesFor(slug)` → `episodesSample[slug]` when present, otherwise generated from `episodeRule` (titles "Episode N", "(S2) Episode N" from 80, "Chapter N: <name>" cycling `chapterNames`; weekly dates ending at `today` for episode `freeEpisodes`, which gets `isUp`; the next 3 are `fastpass` dated +7 days each; likes and thumbs deterministic, thumbs cycling the 24 covers), `episode(slug, n)`, `freeOnDate(episode)`, `comicPanels()`, `novelChapter(slug, n)` (title, date, body from `novelChapterText`), `comments(kind)`, `coinPacks()`, `paymentMethods()`, `purchaseHistory()`, `faq()`, `derivedStats(series)` (subscribers, comment count, see Assumptions). `src/lib/format.ts`: `today` pinned to `demoData.today`, `formatDate`, `formatCount`, `firstName`, `initials`.
+  - Look at: `design/demo-data.json` (`episodeRule`, `chapterNames`, `episodesSample`); `design/spec.md` §1–2.
+  - Done when: a small script (`npx tsx scripts/check-data.ts`, dev-only) prints 68 episodes for `glass-compass`, 15 for `the-last-archivist` titled "Chapter N: …", 3 fastpass per series, episode `freeEpisodes` marked UP and dated Nov 5, 2026; typecheck passes.
+
+- [ ] **T17 Fake API (`src/lib/demo-api.ts`) and TanStack Query** (≈45 min)
+  - Build: `withDemo(fn)` wrapper adding a random 300–800 ms delay and reading `?demo=` from `window.location.search` (`empty` → empty lists / null, `error` → throws `DemoApiError`, `slow` → +3000 ms). Functions: `fetchHome`, `fetchSeries(slug)`, `fetchEpisodes(slug)`, `fetchEpisode(slug, n)`, `fetchChapter(slug, n)`, `fetchComments(kind, slug)`, `fetchRankings(kind)`, `fetchGenre(genre)`, `search(q)`, `fetchCoinsPage`, `login(email, password)`, `socialLogin(provider)`, `signUp(data)`, `verifyCode(code)`, `sendResetLink(email)`, `unlock(seriesId, n)`, `pay(order, outcome)`. `src/lib/query.tsx`: QueryClient (retry 0, staleTime 30 s), `Providers` client component (QueryClientProvider + Sonner `Toaster`) mounted in the root layout; hooks in `src/lib/queries.ts` (`useHome`, `useSeries`, `useEpisodes`, …) whose keys include the demo flag so changing the flag refetches.
+  - Look at: `design/spec.md` §0 Fake API; `CLAUDE.md` Scope rules.
+  - Done when: `useSeries("glass-compass")` resolves after 300–800 ms; with `?demo=slow` after more than 3 s; `?demo=error` gives `isError`; `?demo=empty` gives empty arrays; nothing imports `demoData` directly from a page.
+
+- [ ] **T18 zustand store persisted to localStorage** (≈60 min)
+  - Build: `src/lib/store.ts` with `persist` (key `phumreader.app`, localStorage) holding `user` ({name, email} | null), `coins` (3), `subscriptions` (series ids), `follows` (creator names), `unlocked` ({[seriesId]: n[]}), `lastRead` ({[seriesId]: n}), `purchases` (seeded from the 2 demo rows), `returnTo`, `shopReturn` ({page, episode, title}), `pendingUnlock` ({seriesId, episode}), `novelSettings` ({size 18, theme "light", font "sans", wide true}), `lang` ("en"), `accounts` ([]), `likes` (episode / comment toggles), `checkoutDraft` ({pack, method}). Actions: `login`, `logout`, `addCoins`, `spendCoins`, `toggleSubscription`, `toggleFollow`, `unlockEpisode`, `markRead`, `addPurchase`, `setReturnTo` / `clearReturnTo`, `setShopReturn` / `clearShopReturn`, `setPendingUnlock` / `clearPendingUnlock`, `setNovelSettings`, `setLang`, `addAccount`, `toggleLike`, `resetDemo`. `useHydrated()` guard (`skipHydration` + rehydrate on mount) so server markup matches. Selectors `useUser`, `useCoins`, `useIsUnlocked(seriesId, n)`, `useIsRead(seriesId, n)`.
+  - Look at: `design/spec.md` §0 Simulated state; `CLAUDE.md` Scope rules.
+  - Done when: DevTools shows a single `phumreader.app` key; a change survives reload; no hydration warning in the console; `resetDemo()` restores 3 coins, logged out, 2 purchases, default novel settings.
+
+- [ ] **T19 Wire layouts and chrome to the store** (≈30 min)
+  - Build: `SiteHeader`, `MobileTabBar` and `CoinChip` read `user` / `coins`; Log in / Sign up links and the Me tab save `returnTo` = current path before navigating; avatar menu Log out → `logout()` + toast "You're logged out"; footer / login / settings language switches call `setLang` and navigate to the other locale; `Providers` + `Toaster` live in the root layout; temporary "Log in as Sokha" and "Add 37 coins" buttons on `/dev/kit`.
+  - Look at: `01-home-logged-in-menu-desktop.png`; `design/spec.md` §0 Header, Phone tab bar, Toasts.
+  - Done when: logging in on `/dev/kit` swaps the header to the avatar menu showing "Sokha Chan · 3 coins"; Log out shows the toast; clicking Log in from `/coins` stores `returnTo = "/coins"`.
+
+---
+
+## Part 5: Pages
+
+- [ ] **T20 Home: hero carousel** (≈60 min)
+  - Build: `HeroCarousel` (shadcn Carousel / Embla): 3 slides from `heroSlides()`, dark banner, 20 px radius (16 on phone), blurred cover background, badges (tag in green, genre; "Web novel" for novels), hero title, blurb, "creator · ♡ likes · 📅 schedule", "Read episode 1" / "Read chapter 1" (brand lg → reader at 1), "+ Subscribe" ⇄ "✓ Subscribed" (toasts "Subscribed to <title>" / "Unsubscribed"), "Series details →" link; cover art on the right tilted 2° (desktop); dots + prev / next buttons; autoplay every 7 s, stopped by any manual control; phone: cover on top, text below.
+  - Look at: `01-home-desktop.png`, `01-home-phone.png`; `design/spec.md` §1.1.
+  - Done when: all three slides cycle; clicking a dot or arrow stops autoplay; Subscribe persists after reload; autoplay is off under `prefers-reduced-motion`; arrows are reachable by keyboard.
+
+- [ ] **T21 Home: Continue reading + Daily updates** (≈45 min)
+  - Build: Continue reading: 4 ContinueCards from the demo entries (episode replaced by `lastRead` when the user has read further) → reader at that episode; subtitle "Pick up where you left off." when logged in, "Your reading history on this device." when logged out; "My library ›" link; section hidden when empty. Daily updates: "New episodes every day. Today is Thursday."; pill Tabs Mon–Sun with Thu labelled "Today" and selected; grid of the first 6 SeriesCards for that day (filled with UP series when fewer than 6); 6 / 4 / 3 columns.
+  - Look at: `01-home-desktop.png`, `01-home-phone.png`; `design/spec.md` §1.2–1.3.
+  - Done when: Thursday shows Paper Tigers, The Quiet Kingdom, Little Thunder, Wolves of Wren Street, Lantern Alley, Hollow Signal in that order; switching days changes the grid; arrow keys move between day tabs.
+
+- [ ] **T22 Home: Trending now + Browse by genre** (≈45 min)
+  - Build: Trending card (↗ "Trending now", "Updated every hour", pill Tabs Comics / Web novels, 8 RankRows with movement). Browse by genre (8 Toggle chips in `genres` order, Fantasy selected, "N series in <genre>", 3×2 SeriesCard grid). Two columns on desktop, stacked on phone.
+  - Look at: `01-home-desktop.png`, `01-home-phone.png`; `design/spec.md` §1.4–1.5.
+  - Done when: the Comics ranking matches the screen (Paper Tigers ▲ 2 … Salt & Thunder —); the Web novels tab lists the novels; selecting a chip updates the count and the grid.
+
+- [ ] **T23 Home: Web novels + Creator CTA** (≈30 min)
+  - Build: Web novels section ("Stories to read, in Khmer and English.", brand badge "Reader with adjustable text", 6 NovelCards in 3 columns → 1 on phone). Creator CTA card (green-to-white gradient, eyebrow "FOR CREATORS", "Publish your own series", "Upload comics or write web novels, grow your readers, and earn from Fast Pass episodes.", "Start publishing" brand + "Creator guidelines" outline → `/creator`, 3 fanned covers on desktop). Home metadata.
+  - Look at: `01-home-desktop.png`, `01-home-phone.png`; `design/spec.md` §1.6–1.7.
+  - Done when: the full Home page matches the desktop and phone screens section by section with 56 px between sections; every link resolves.
+
+- [ ] **T24 Series: hero, tabs shell, About tab, sidebar** (≈60 min)
+  - Build: `/series/[slug]` (`notFound()` for unknown slugs): dark hero with blurred cover, breadcrumb Home › Genre › Title, 240 px cover (132 on phone), badges genre / Comic or Web novel / 📅 schedule / green "Ongoing", series title, creator avatar + name, synopsis from `synopsisByGenre`, stats Views · Likes · Subscribers · Episodes, "Read episode 1" or "Continue episode N" (brand lg → reader), Subscribe toggle, Share icon button (copies the URL, toast "Link copied"). Underline Tabs: Episodes [count] · About · Comments [2.4K]. About: synopsis + "New episodes every <day>.", details list (Genre, Format, Schedule, Status, Language, Age rating), tag badges. Sidebar (below content on phone): About the creator (avatar, name, "N series on PhumReader", Follow ⇄ Following with toast) and You may also like (4 same-genre series).
+  - Look at: `02-series-desktop.png`, `02-series-phone.png`; `design/spec.md` §2.
+  - Done when: `/series/glass-compass` matches both screens; a novel series says "Web novel" and links to `/novel/...`; Follow persists; Share copies the URL.
+
+- [ ] **T25 Series: Episodes tab** (≈45 min)
+  - Build: brand Alert "⚡ Fast Pass: read 3 episodes early — Unlock for 5 coins each, or wait — one becomes free every week. You have N coins." with "Get coins" outline button → `/coins`; row "68 episodes · new every Sun" + sort button "⇅ Newest first" ⇄ "Oldest first"; EpisodeRow list 12 at a time with a full-width "Show 12 more" outline button; row state from the store (read = n ≤ `lastRead`, unlocked, locked, UP on the latest free episode). Free and unlocked rows open the reader; locked rows open the UnlockDialog (T26).
+  - Look at: `02-series-desktop.png`, `02-series-phone.png`; `design/spec.md` §2 Episodes.
+  - Done when: newest first shows 68, 67, 66 locked and 65 with UP; "Show 12 more" extends to 24, 36 …; sorting flips the order; the coin count in the alert is live.
+
+- [ ] **T26 Series: unlock flow** (≈45 min)
+  - Build: wire `UnlockDialog`: logged out → "Log in to unlock" saves `returnTo` (series URL) + `pendingUnlock`, goes to `/login`; enough coins → "Unlock for 5 coins": 0.7 s spinner, `spendCoins(5)`, `unlockEpisode`, toast "Episode N unlocked", navigate to the reader; not enough → "You need N more coins." + "Get coins" saves `shopReturn` {page, episode, title} + `pendingUnlock`, goes to `/coins`; "Wait for the free release" closes. On mount, when `pendingUnlock` matches this series and the user is logged in, reopen the dialog and clear `pendingUnlock`.
+  - Look at: `02-series-unlock-dialog-desktop.png`, `02-series-unlock-not-enough-coins-phone.png`; `design/spec.md` §2 Unlock dialog, §7 flows 2–3.
+  - Done when: with 3 coins the dialog shows the not-enough state; after adding coins the unlock succeeds and the row shows "Unlocked"; coming back from `/login` or `/coins` reopens the dialog automatically.
+
+- [ ] **T27 Series: Comments tab** (≈30 min)
+  - Build: composer card ("Add a comment", placeholder "What did you think?", "0/500 · Be kind. Spoilers go in a spoiler tag.", dark "Post" button; logged out → toast "Log in to comment"; posting prepends the comment with the user's initials and "now"); list from `comments.series` with "Top" on the first; like toggle (count ± 1, persisted); Reply prefills the composer with "@Name " and focuses it.
+  - Look at: `02-series-comments-tab-desktop.png`; `design/spec.md` §2 Comments.
+  - Done when: the counter updates while typing and blocks more than 500 characters; a posted comment appears immediately; a like survives reload.
+
+- [ ] **T28 Comic reader: page and navigation** (≈60 min)
+  - Build: `/read/[slug]/[episode]` (dark page; a novel slug redirects to `/novel/...`; unknown slug or episode → 404): `ComicReaderBar` wired (Episodes popover with 9 nearby episodes, "Now", locks, header "68 episodes · 5 coins"; previous / next disabled at 1 and at the last episode; progress line n / total); image strip from `comicPanels`, max 800 px wide, white background, `next/image` with width and height, lazy below the fold, alt text; keyboard ← / →; opening calls `markRead(seriesId, n)`; moving to a locked episode (next, list, keyboard) opens the UnlockDialog instead of navigating.
+  - Look at: `03-episode-viewer-desktop.png`, `03-episode-viewer-phone.png`; `design/spec.md` §3.
+  - Done when: `/read/glass-compass/1` matches; → opens episode 2; at episode 65 next opens the unlock dialog; the series page then offers "Continue episode 2".
+
+- [ ] **T29 Comic reader: end section** (≈45 min)
+  - Build: card "END OF EPISODE N" + title + pills ♡ Like (count, heart fills red, persisted), 🔔 Subscribe toggle, Share (toast); Next-episode card (thumb, "Next episode", title, Fast Pass badge when locked, "Read next →" brand or "Unlock"); "You're all caught up" on the last episode; Comments card in the dark variant ("Comments 1.2K", "Top", input "Log in to comment" / "Add a comment" + Post, the 3 `comments.episode`); "☰ All episodes of <series>" outline button → series page.
+  - Look at: `03-episode-viewer-desktop.png`, `03-episode-viewer-phone.png` (bottom); `design/spec.md` §3.
+  - Done when: the end section matches both screens; Like increments once and persists; "Unlock" opens the dialog; posting a comment works when logged in.
+
+- [ ] **T30 Novel reader: page, chapters, navigation** (≈45 min)
+  - Build: `/novel/[slug]/[chapter]` (a comic slug redirects to `/read/...`; unknown → 404): `NovelReaderBar` wired (Chapters popover, previous / next, progress line); article in a 720 px column: eyebrow "CHAPTER N" (brand-ink), chapter name, "creator · date · 6 min read", body from `novelChapterText` (paragraphs; quotes italic with a green left border; centred "* * *" scene breaks); keyboard ← / →; `markRead`; locked chapter → UnlockDialog.
+  - Look at: `04-novel-reader-desktop.png`, `04-novel-reader-phone.png`; `design/spec.md` §4.
+  - Done when: `/novel/letters-to-tuesday/1` matches ("Flour and Ink", Sep 12, 2024); chapter 114 opens the unlock dialog; ← / → navigate.
+
+- [ ] **T31 Novel reader: settings popover + end section** (≈60 min)
+  - Build: "Aa" popover: Text size − / + over 14, 16, 18, 20, 22, 24 with "18 px" label and a Progress bar; Theme Light / Sepia / Dark (pill tabs); Font Sans / Serif (Noto Serif); "Wide line spacing" Switch (1.85 vs 1.6). Applied instantly via `data-reader-theme` + CSS variables on the reader root and persisted in `novelSettings`. End: "END OF CHAPTER N" card with ♡ Like, 🔖 Bookmark (toasts "Bookmarked" / "Bookmark removed"), Share; Creator's note card (avatar + `creatorNote`); Previous / Next chapter buttons (Previous disabled at 1; Next brand; "Next · 5 coins" when locked → dialog); "All chapters of <series>" link.
+  - Look at: `04-novel-reader-settings-dark-desktop.png`, `04-novel-reader-sepia-phone.png`; `design/spec.md` §4; `design/foundations.md` novel themes.
+  - Done when: Sepia + Serif + size 22 survive a reload; Dark matches the screen (page `#111113`); the switch and tabs work by keyboard; the bar follows the theme.
+
+- [ ] **T32 Log in** (≈60 min)
+  - Build: `/login` inside `AuthSplitLayout`: "Welcome back" + "Log in to keep reading and use your coins.", pill Tabs Log in / Sign up (`?mode=signup` preselects Sign up), Google + Facebook outline buttons (1 s spinner → `login({ name: "Sokha Chan" })`), "OR WITH EMAIL" divider, react-hook-form + zod: Email (required, valid), Password (required, show / hide eye button with `aria-pressed`), "Forgot password?" link → forgot view (T35), "Keep me logged in" checkbox (on), "Log in" brand lg with 0.9 s spinner; wrong credentials → destructive Alert "Email or password is incorrect — Check them and try again, or reset your password."; demo hint "Demo: reader@toonwave.app · Toonwave1!"; legal line. Valid credentials: the demo account or any `accounts` entry. Success → Done view (T35) → `returnTo`.
+  - Look at: `05-login-desktop.png`, `05-login-phone.png`, `05-login-error-phone.png`; `design/spec.md` §5 Log in.
+  - Done when: an empty submit shows errors under both fields with `aria-invalid`; a wrong password shows the alert; demo credentials log in and return to the page you came from.
+
+- [ ] **T33 Sign up** (≈45 min)
+  - Build: Sign up view: Display name (2+ characters), Email (valid, not already in `accounts`), Password with a 4-segment strength bar (amber below 3 rules, green at 3+) and live rule list (8+ characters, Upper and lower case, A number, A symbol, each with check / circle icon), Terms checkbox (required, error when unchecked), "Create account" brand lg → Verify view (T34) with the entered email and name held in page state.
+  - Look at: `05-signup-desktop.png`; `design/spec.md` §5 Sign up; `demo-data.passwordRules`.
+  - Done when: typing "Toonwave1!" lights all 4 segments green and ticks all rules; submitting without accepting the terms shows an error; a valid form moves to Verify.
+
+- [ ] **T34 Verify code** (≈45 min)
+  - Build: Verify view: mail icon tile, "Check your email", "We sent a 6-digit code to <email>", InputOTP with 6 slots (autofocus, paste supported), "Verify email" brand lg, "Didn't get it? Resend in 30s" countdown → "Resend code" link (toast "Code sent"), "Demo code: 123456", wrong code → red slots + "That code isn't right. Check the email and try again.", "← Use a different email" back to Sign up. Correct code → `addAccount`, `login`, Done view (T35).
+  - Look at: `05-verify-code-phone.png`; `design/spec.md` §5 Verify.
+  - Done when: "123456" creates the account and logs in; "000000" shows the red state and keeps focus in the OTP; the countdown reaches 0 and Resend works; a signed-up account can log in afterwards.
+
+- [ ] **T35 Forgot password, Done screen, login language switch** (≈45 min)
+  - Build: Forgot view: "Reset your password" + "Enter your email and we'll send you a reset link.", Email, "Send reset link" (spinner) → sent state ("Check your inbox", "We sent a reset link to <email>.", "It expires in 30 minutes.") → "← Back to log in". Done view: green check circle, "Welcome, <first name>", "Taking you back…", redirect to `returnTo` (default `/`) after 1.2 s, then clear it. Language switch EN / ខ្មែរ: every `/login` string comes from the `auth` namespace in `en.json` / `km.json` (seeded from `loginPageStrings` with PhumReader naming), Khmer text carries `lang="km"`, switching keeps the current view.
+  - Look at: `05-forgot-password-desktop.png`; `design/spec.md` §5 Forgot, Done; `demo-data.loginPageStrings`.
+  - Done when: the forgot flow works end to end; logging in from a series page lands back on that series page; switching to ខ្មែរ translates every visible string on `/login`.
+
+- [ ] **T36 Coins: page header, alerts, packs, payment methods** (≈45 min)
+  - Build: `/coins`: "Coins" + "Unlock Fast Pass episodes and chapters before they're free." + balance card (CoinIcon 32, "Your balance", "N coins"); outline Alert "⚡ Get coins for episode N of <title> — After your purchase we'll take you straight back." with "Go back" (when `shopReturn` is set); brand Alert "🎁 First purchase: double coins — Your first pack of any size comes with the same number of coins again, free." (while the offer is active, see Assumptions); "1. Choose a pack": 5 PackCards (bonus line "+20 bonus · +120 first" during the offer, "No bonus · +10 first" for the 10 pack, Popular / Best value badges), 120 selected by default, 5 columns → 2 on phone; "2. Pay with": KHQR (Recommended), ABA Pay, Credit or debit card. Selection kept in `checkoutDraft`.
+  - Look at: `06-coins-desktop.png`, `06-coins-phone.png`; `design/spec.md` §6.
+  - Done when: layout matches both screens; "Go back" returns to the series page; selection survives a reload.
+
+- [ ] **T37 Coins: order summary (Review step), purchase history, FAQ** (≈45 min)
+  - Build: Checkout card (right column, below packs on phone) Review step: "Order summary", "120 coin pack · 120 coins", "Pack bonus +20", "First-purchase bonus +120" (during the offer), "You get 260 coins", "Total [PRICE USD] / [PRICE KHR]", "Paying with KHQR", "Continue to payment" brand (logged out → save `returnTo = "/coins"` → `/login`), "Balance after: N coins · Coins don't expire". "Purchase history" Table (Date, Item, Method hidden on phone, Coins "+33", Status badge Paid green / Failed red / Cancelled grey) from `purchases`, newest first. "Questions" Accordion from `coinsFaq` (first item open). Line "Prototype only: prices and payment screens are placeholders. No real payment is taken."
+  - Look at: `06-coins-desktop.png`, `06-coins-phone.png`; `design/spec.md` §6.
+  - Done when: totals update when changing pack or method (120 pack → 260 during the offer, 140 after); history shows the 2 demo rows; the accordion works by keyboard.
+
+- [ ] **T38 Coins: Pay step (KHQR, ABA Pay, card placeholders)** (≈45 min)
+  - Build: step machine `review → pay → confirming → success | failed`. Pay step: title by method ("Scan to pay" / "Confirm in ABA Mobile" / "Card details"), "260 coins · KHQR", 10:00 countdown badge (`khqrExpiryMinutes`, tabular, `aria-live="polite"`); KHQR: red "KHQR" header, QR placeholder graphic, "[KHQR PLACEHOLDER] · PhumReader", `[PRICE KHR]`, steps "1. Open any Bakong-member banking app / 2. Scan the code and confirm / 3. Keep this page open — it updates on its own"; ABA: "[ABA PAY HANDOFF PLACEHOLDER]"; Card: dashed box "[PAYMENT PROVIDER FORM] — Secure card fields from the payment provider go here" (never real card inputs). Buttons "I've paid (simulate)" (KHQR / ABA) or "Pay now" (card), "Cancel" (toast "Payment cancelled", back to Review, history row Cancelled), "Simulate failed payment". Pack and method cards disabled while in pay / confirming.
+  - Look at: `06-coins-khqr-payment-desktop.png`, `06-coins-card-payment-phone.png`; `design/spec.md` §6 step 2.
+  - Done when: each method shows its placeholder; the countdown runs; Cancel records a Cancelled row and re-enables the cards; no input accepts a card number anywhere.
+
+- [ ] **T39 Coins: Confirming, Success, Failed, return to the episode** (≈45 min)
+  - Build: Confirming: 1.5 s spinner. Success: green check, "+N coins", "Payment received. Your balance is now N coins.", "Order PR-xxxxxxxx · KHQR", "Back to episode N of <title> →" brand (when `shopReturn`: navigates there, clears `shopReturn`, keeps `pendingUnlock` so the dialog reopens) + "Buy more coins" outline (back to Review); toast "+N coins added"; `addCoins`, `addPurchase(Paid)`; the first-purchase offer ends. Failed: red X; "Payment didn't go through" (declined, history row Failed) or "The code expired — KHQR codes are valid for 10 minutes. Make a new one to try again." (countdown reached 0); "Try again" brand → Pay step with a fresh timer, "Choose another method" → Review.
+  - Look at: `06-coins-success-desktop.png`, `06-coins-failed-phone.png`; `design/spec.md` §6 steps 3–5, §7 flow 3.
+  - Done when: flow 3 of spec §7 works end to end (3 coins → KHQR, 120 pack → Back to episode → dialog shows enough coins → Unlock → reader); Simulate failed adds a Failed row; the expired state appears when the countdown hits 0 (test with a short timer in dev).
+
+- [ ] **T40 My library** (≈45 min)
+  - Build: `/library` in V2 style: H1 "My library"; logged out → EmptyState "Log in to see your library" + Log in button (saves `returnTo`); pill Tabs: Continue reading (ContinueCards from the demo entries merged with `lastRead`), Subscribed (SeriesCard grid from `subscriptions`), Unlocked (EpisodeRows grouped by series from `unlocked`); every tab has an EmptyState linking to Home.
+  - Look at: `01-home-desktop.png` (Continue reading, card grid) for patterns; `design/spec.md` §0 routes.
+  - Done when: subscribing on Home shows the series here; unlocking shows the episode; empty tabs show EmptyStates; the phone Library tab lands here.
+
+- [ ] **T41 Settings** (≈45 min)
+  - Build: `/settings`: cards for Profile (initials avatar, display name, email; logged out → prompt with Log in), Language (EN / ខ្មែរ RadioGroup → `setLang` + locale navigation), Reading (novel reader defaults reusing the T31 controls), Notifications ("New-episode alerts" and "Fast Pass reminders" switches, local only), Account (Log out; "Reset demo data" with a confirm Dialog → `resetDemo()` + toast "Demo data reset"). The phone "Me" tab lands here when logged in.
+  - Look at: `00-foundations-desktop.png` (Forms column); `design/foundations.md` §4.
+  - Done when: changing the language here switches the whole site; reset restores 3 coins and logs out; every control works by keyboard.
+
+- [ ] **T42 Creator dashboard** (≈45 min)
+  - Build: `/creator`: eyebrow "FOR CREATORS", H1 "Creator dashboard", intro, "Start publishing" brand (toast "Publishing opens soon") + "Creator guidelines" outline (anchor `#guidelines`); 4 stat cards (Series, Readers, Likes, Fast Pass earnings shown as "[AMOUNT]"); "Your series" list using RankRows for the stand-in creator Chan Sreyleak; `#guidelines` section with 3 short cards; `#earnings` section with a brand Alert "Earnings are paid monthly · [PAYOUT DETAILS]". Logged out → EmptyState with Log in.
+  - Look at: `01-home-desktop.png` (Creator CTA card); `design/foundations.md`.
+  - Done when: the page renders logged in and out; the Home CTA and the avatar menu land here; no money value other than "[AMOUNT]" placeholders.
+
+- [ ] **T43 Rankings and Genres pages** (≈45 min)
+  - Build: `/rankings`: H1 "Rankings", pill Tabs Comics / Web novels, full numbered RankRow list (order per Assumptions); header nav "Rankings" now points here. `/genres` and `/genres/[genre]`: H1 "Genres", 8 Toggle chips (`[genre]` preselected; slug ↔ name mapping for "Slice of life" and "Sci-fi"), "N series in <genre>", SeriesCard grid 6 / 4 / 3; header nav "Genres" → `/genres`; the Series breadcrumb genre link → `/genres/[genre]`; unknown genre → 404.
+  - Look at: `01-home-desktop.png` (Trending now, Browse by genre); `design/spec.md` §0 routes.
+  - Done when: both pages work in `en` and `km`; the header marks the current nav item; `/genres/slice-of-life` lists 6 series.
+
+- [ ] **T44 Search page, 404, error and "Coming soon" pages** (≈45 min)
+  - Build: `/search?q=`: H1 "Search", Input prefilled from `q` (Enter updates the URL), SeriesCard grid via `search(q)`, EmptyState "No results. Try a title, creator or genre."; the ⌘K palette gets a footer row "See all results for <q>" → this page. `[locale]/not-found.tsx` in V2 style inside the site layout (muted icon tile, "Page not found", copy, "Back to Home" brand + "Browse genres" outline). `[locale]/error.tsx` (client, ErrorState with Retry calling `reset()`) and `global-error.tsx`. `/coming-soon?topic=<slug>` page ("<Topic> is coming soon", back to Home) used by footer Help links, Creator guidelines and Earnings links where no page exists.
+  - Look at: `design/foundations.md` (EmptyState / ErrorState patterns); `design/spec.md` §0 routes.
+  - Done when: `/series/nope` shows the 404 page with header and footer; an error thrown in a page shows the error page and Retry recovers; `/search?q=glass` lists Glass Compass.
+
+- [ ] **T45 Navigation audit and the six key flows** (≈45 min)
+  - Build: walk every link and button in `spec.md` and fix targets: header nav + current state on every page, footer links, "Back to PhumReader" → `returnTo` or `/`, phone tab bar current state, Series ↔ reader links, "All episodes of …", hero / continue / rank / novel / genre cards, every "Get coins" (series alert, dialog, avatar menu) → `/coins` with `shopReturn` where relevant, "Go back" on Coins. Then run flows 1–6 from spec §7 manually.
+  - Look at: `design/spec.md` §7 Key flows, §0 routes.
+  - Done when: all six key flows pass at 1440 and 390 px in Chrome; no link reaches a dead route; browser Back behaves sensibly after each flow.
+
+---
+
+## Part 6: States
+
+- [ ] **T46 Home and Series states** (≈60 min)
+  - Build: skeletons that mirror the layout (hero banner, 4 continue cards, 6 cards, 8 rank rows, 6 novel cards; series hero, 12 rows, sidebar) with `Skeleton`; `?demo=empty` → each Home section shows an EmptyState ("Nothing here yet" + link), Continue reading hidden, Series Episodes tab "No episodes yet", Comments "Be the first to comment"; `?demo=error` → ErrorState with Retry (refetch) in place of the section or page; `?demo=slow` keeps skeletons for at least 3 s. Query keys include the flag so Retry works after removing it.
+  - Look at: `design/foundations.md` §4 (Skeleton); `design/spec.md` §1 States, §0 Fake API.
+  - Done when: `/?demo=empty`, `/?demo=error`, `/?demo=slow` and the same on `/series/glass-compass` each show the intended state with no layout jump; Retry recovers.
+
+- [ ] **T47 Reader states and not found** (≈45 min)
+  - Build: comic reader: bar skeleton + 3 grey panel blocks while loading, dark ErrorState with Retry and "Back to series", EmptyState "This episode has no pages yet" for `?demo=empty`; novel reader: text-line skeleton and the same error / empty treatment in the current theme; unknown slug or number → 404; a locked episode opened by URL → redirect to the series page with the unlock dialog open (via `pendingUnlock`).
+  - Look at: `03-episode-viewer-*.png`, `04-novel-reader-*.png`; `design/spec.md` §3–4.
+  - Done when: both readers handle the three flags; `/read/glass-compass/66` while locked lands on the series page with the dialog open.
+
+- [ ] **T48 Auth, Coins and simple-page states + toast audit** (≈60 min)
+  - Build: loading / disabled states on every async button (social 1 s, log in 0.9 s, verify, send link, unlock 0.7 s, continue to payment, pay, confirming 1.5 s); field errors with `aria-invalid` everywhere; Coins: skeletons for packs / methods / history, `?demo=empty` → history EmptyState "No purchases yet", `?demo=error` → ErrorState with Retry for the page body; Library / Rankings / Genres / Search skeleton + empty + error; success screens (Done, payment Success) checked against the screens. Toast audit, all present and styled (white card, green check dot, 2.6 s; destructive variant for cancelled / failed): Subscribed / Unsubscribed, Episode N unlocked, Link copied, Following / Unfollowed, Bookmarked / Bookmark removed, Code sent, Log in to comment, Payment cancelled, +N coins added, You're logged out, Demo data reset, Publishing opens soon.
+  - Look at: `06-coins-success-desktop.png`, `06-coins-failed-phone.png`, `05-verify-code-phone.png`; `design/spec.md` §0 Toasts, §5–6.
+  - Done when: every route in spec §0 shows loading, empty, error and success states via the flags; no async button can be double-submitted; toasts match the design.
+
+---
+
+## Part 7: Responsive and accessibility
+
+- [ ] **T49 Responsive pass** (≈60 min)
+  - Build: check every route at 320, 390, 768, 1024, 1440 and 1920 px: no horizontal scroll (`overflow-x` audit, long titles truncate, tables scroll inside their card), container 1280 / 32 px (16 on phone), header 64 / 56, card grids 6 / 4 / 3, hero stacking on phone, series sidebar below content, coins packs in 2 columns and checkout below on phone, purchase table hides Method below 768, reader strip 800 px, novel column 720 px, tab bar with safe-area, dialogs full-width with 16 px gutters on phone, popovers and the Command dialog stay on screen.
+  - Look at: every `*-phone.png` against its `*-desktop.png`; `design/foundations.md` §3.
+  - Done when: a DevTools width sweep from 320 to 1920 px shows no horizontal scrollbar on any page; phone screens match at 390 px; tablet (768 px) uses the desktop layout with 4 columns.
+
+- [ ] **T50 Accessibility pass** (≈60 min)
+  - Build: visible 2 px `--ring` focus ring with a 2 px offset on every interactive element (cards, chips, carousel controls, OTP slots included); keyboard: tab order, carousel arrows, tabs with arrow keys, chips, dropdown, popovers, dialog focus trap + Esc + focus return, OTP paste, reader ← / →; `aria-label` on icon-only buttons (search, share, previous / next, eye, close, like); `aria-current="page"` on nav and tab bar; `aria-live="polite"` for toasts, countdowns and the coin balance; `aria-invalid` + `aria-describedby` on form errors; alt text on covers and panels, empty alt on decorative images; `lang="km"` on every Khmer string and `<html lang="km">` for the km locale; `prefers-reduced-motion` honoured; contrast: green text uses brand-ink, muted text at least 4.5:1; skip-to-content link.
+  - Look at: `design/foundations.md` §7; `CLAUDE.md` Working rules.
+  - Done when: every key flow can be completed with the keyboard only; axe DevTools (or Lighthouse accessibility) reports no critical issues on Home, Series, both readers, Login and Coins.
+
+---
+
+## Part 8: Localisation, tests and final QA
+
+- [ ] **T51 Khmer translation sweep** (≈60 min)
+  - Build: move every UI string from Parts 3–6 into `en.json` namespaces (`common`, `nav`, `home`, `series`, `reader`, `auth`, `coins`, `library`, `settings`, `creator`, `states`, `toasts`) and fill `km.json` with Khmer; demo content (titles, synopses, comments, chapter text) stays English; dates and counts formatted with `useFormatter`; Khmer renders in Kantumruy Pro with `lang="km"`; every language switch (footer, login, settings, phone) navigates to the other locale on the same page and persists `lang`.
+  - Look at: `demo-data.loginPageStrings.km` for tone and vocabulary; `CLAUDE.md` Stack.
+  - Done when: `/km` shows no English chrome strings (a key diff between `en.json` and `km.json` is empty); switching language anywhere keeps you on the same page; `npm run build` logs no missing-message warnings.
+
+- [ ] **T52 Playwright e2e for the key flows** (≈60 min)
+  - Build: `npm i -D @playwright/test`, `npx playwright install chromium`, script `"test:e2e": "playwright test"`, `playwright.config.ts` (webServer `npm run dev`, baseURL `http://localhost:3000`, a desktop project and a 390 px mobile project); tests for spec §7 flows 1–6, `?demo=empty` / `error` / `slow` on Home and Series, and the 404 page; a helper that seeds `phumreader.app` in localStorage.
+  - Look at: `design/spec.md` §7; `CLAUDE.md` Commands.
+  - Done when: `npm run test:e2e` passes locally on Windows in both projects; tests are stable on a cold run (no fixed sleeps longer than the fake API delay).
+
+- [ ] **T53 Final QA, brand sweep and cleanup** (≈45 min)
+  - Build: `grep -ri toonwave` across the repo (excluding `design/`) and fix everything except the demo credentials; delete `/dev/kit`, `scripts/check-data.ts` and dev-only buttons; metadata / Open Graph title, description and icons; `README.md` (how to run, demo flags, demo account, folder structure); walk this checklist and re-verify every "Done when"; run lint, typecheck, build and e2e; final commit.
+  - Look at: `CLAUDE.md` (Brand name, Scope rules); this whole file.
+  - Done when: all 53 boxes are ticked; the only "toonwave" strings in `src/` are the demo email and password; `npm ci && npm run lint && npm run typecheck && npm run build && npm run test:e2e` passes on a clean clone.
+
+---
+
+## Assumptions (not covered by the design)
+
+1. **URL locales.** next-intl uses `localePrefix: "as-needed"`: English routes are exactly the ones in `spec.md` (`/series/glass-compass`), Khmer routes get a `/km` prefix. The store's `lang` mirrors the URL locale.
+2. **"Today" is pinned** to `demo-data.today` (2026-11-05, a Thursday) rather than the real clock, so the "Today" tab, UP badges, episode dates and "Free for everyone on …" always match the screens.
+3. **Episode lists** exist only for 3 series. All others are generated from `episodeRule`: weekly dates ending at `today`, UP on episode `freeEpisodes`, 3 Fast Pass episodes dated +7 days each, titles per the rule, likes and thumbnails deterministic from the series id.
+4. **Ranking order** is not in the data. Comics: the 8 series shown on the Home screen (Paper Tigers, Neon Monsoon, Tiny Dragon Café, The Orchard Pact, Summer Index, Ember & Co., Captain Nobody, Salt & Thunder) with `rankingMovement`, then the remaining comics by views. Web novels: the 7 novels by views with `rankingMovement`.
+5. **Subscribers and comment counts** are not in the data; they are derived deterministically from the series (e.g. subscribers ≈ 4.7% of likes, comments "2.4K" style), formatted like the screens.
+6. **Creator series count** is computed from the data (each creator has 6 series) instead of the hard-coded "3 series" on the screen.
+7. **Read episodes** are every episode with number ≤ `lastRead[seriesId]`. "Continue episode N" on the series hero uses `lastRead + 1` when that episode is readable, otherwise `lastRead`.
+8. **Continue reading progress** (62%, 30% …) comes from the demo entries; the reader does not track scroll position. When `lastRead` is higher than the demo episode, the card shows `lastRead`.
+9. **First-purchase offer** is active until a Paid purchase is completed in this browser. The two demo history rows do not end it, which matches the Coins screens (offer visible with a Paid row in history).
+10. **Order ids** use the format `PR-########` instead of the design's `TW-…`.
+11. **Reply** on a comment prefills the composer with "@Name " and focuses it. There is no threaded reply UI.
+12. **Undesigned pages** (My library, Settings, Creator dashboard, Rankings, Genres, Search, 404, error, Coming soon) are composed from existing V2 patterns only: site header + container + H1 + pill tabs + cards / grids / EmptyStates. Footer Help, Terms, Privacy, Contact, Creator guidelines and Earnings links go to the "Coming soon" page.
+13. **Khmer UI strings** outside `/login` are not in the design pack and are written during T51; demo content stays in English. Only `/login` uses the Khmer strings supplied in `demo-data.json`.
+14. **Coins, unlocks, subscriptions and reading history are per device**, not per account. Logging out only clears `user`; "Reset demo data" in Settings clears everything.
+15. **Demo credentials** keep the `reader@toonwave.app` / `Toonwave1!` values from `CLAUDE.md`; these are the only "Toonwave" strings left in the app. Social login buttons do no real OAuth and always log in as Sokha Chan.
+16. **Comic panels and novel text** are the same 9 panels / 15 blocks for every episode and chapter; only the title, number and date change.
+17. **Share** copies the current URL with the Clipboard API and shows "Link copied"; no native share sheet.
+18. **Logo**: the green rounded mark from the design is kept; the wordmark becomes "Phum" (brand-ink) + "Reader" (foreground) with a small ភូមិ underneath on the auth panel and footer only, so the 64 px header stays uncluttered.
+19. **Header nav**: Rankings → `/rankings` and Genres → `/genres` once those pages exist (T43); Web novels stays `/#novels` because no novels page is designed.
+20. **Search page** is reached from the ⌘K palette ("See all results") and from `/search?q=` directly; the phone Search tab still opens the palette.
+21. **Countdown** applies to all three payment methods (the card screen shows 7:00). Reaching 0 shows the "The code expired" failure for every method.
+22. **Opening a locked episode by URL** redirects to the series page and opens the unlock dialog instead of rendering the content.
+23. **Wrong reader type**: a comic opened under `/novel/...` redirects to `/read/...` and vice versa.
+24. **Checkout selection** (pack, method) is stored in the zustand store so it survives the log-in round trip from "Continue to payment".
+25. **Reduced motion** disables carousel autoplay and hover zoom; everything else remains usable.
+26. **`/dev/kit`** is a temporary, development-only preview page for Parts 2–4 and is removed in T53.
+27. **Typecheck script** runs `next typegen && tsc --noEmit` (not plain `tsc --noEmit`): Next 16 declares the global `LayoutProps` / `PageProps` route types in `.next/types`, so `tsc` alone fails on a clean clone until those types are generated.
