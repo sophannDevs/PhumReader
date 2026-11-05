@@ -88,6 +88,30 @@
     "creatorDashboard": "Creator dashboard",
     "settings": "Settings",
     "logOut": "Log out",
-    "skip": "Skip to content"
+    "skip": "Skip to content",
+    "tabs": "Main tabs",
+    "tabLibrary": "Library",
+    "tabCoins": "Coins",
+    "tabMe": "Me"
+  },
+  "footer": {
+    "description": "Comics and web novels from Cambodia and beyond, in Khmer and English.",
+    "read": "Read",
+    "create": "Create",
+    "help": "Help",
+    "originals": "Originals",
+    "creatorDashboard": "Creator dashboard",
+    "creatorGuidelines": "Creator guidelines",
+    "earnings": "Earnings",
+    "helpCenter": "Help center",
+    "terms": "Terms",
+    "privacy": "Privacy",
+    "contact": "Contact",
+    "copyright": "© 2026 PhumReader · [YOUR COMPANY NAME]. All series shown are placeholders.",
+    "social": "Social links",
+    "facebook": "Facebook",
+    "twitter": "X (Twitter)",
+    "youtube": "YouTube",
+    "language": "Language"
   }
 }

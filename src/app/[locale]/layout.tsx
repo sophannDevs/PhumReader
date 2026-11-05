@@ -50,6 +50,9 @@ export default async function LocaleLayout({
   const { locale } = await params;
   if (!hasLocale(routing.locales, locale)) notFound();
   setRequestLocale(locale);
+  // Explicit locale + messages: the provider then needs no request-time lookup,
+  // which keeps the route prerenderable under Cache Components.
+  const messages = (await import(`@/messages/${locale}.json`)).default;
 
   return (
     <html
@@ -57,7 +60,9 @@ export default async function LocaleLayout({
       className={cn("h-full antialiased font-sans", inter.variable, kantumruy.variable, notoSerif.variable)}
     >
       <body className="min-h-full flex flex-col">
-        <NextIntlClientProvider>{children}</NextIntlClientProvider>
+        <NextIntlClientProvider locale={locale} messages={messages}>
+          {children}
+        </NextIntlClientProvider>
       </body>
     </html>
   );

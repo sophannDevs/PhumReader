@@ -1,0 +1,82 @@
+"use client"
+
+import { GlobeIcon } from "lucide-react"
+import { useLocale, useTranslations } from "next-intl"
+import { usePathname, useRouter } from "@/i18n/navigation"
+import { routing, type Locale } from "@/i18n/routing"
+import { cn } from "@/lib/utils"
+
+const labels: Record<Locale, string> = { en: "English", km: "ខ្មែរ" }
+
+/**
+ * Switches the locale and stays on the same page (path and query kept).
+ * `inline` = "English · ខ្មែរ" text with a globe (footer); `segmented` = EN / ខ្មែរ
+ * pill switch (auth pages, settings). T19 also persists `lang` in the store.
+ */
+export function LanguageSwitch({
+  variant = "inline",
+  className,
+  onChange,
+}: {
+  variant?: "inline" | "segmented"
+  className?: string
+  onChange?: (locale: Locale) => void
+}) {
+  const locale = useLocale() as Locale
+  const pathname = usePathname()
+  const router = useRouter()
+  const t = useTranslations("footer")
+
+  function switchTo(next: Locale) {
+    if (next === locale) return
+    onChange?.(next)
+    router.replace(`${pathname}${window.location.search}`, { locale: next })
+  }
+
+  const buttons = routing.locales.map((l) => {
+    const current = l === locale
+    return (
+      <button
+        key={l}
+        type="button"
+        lang={l}
+        aria-current={current ? "true" : undefined}
+        onClick={() => switchTo(l)}
+        className={cn(
+          "outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+          variant === "inline"
+            ? cn("rounded-sm text-sm hover:text-foreground", current ? "font-semibold text-foreground" : "text-muted-foreground")
+            : cn(
+                "h-[30px] rounded-md px-3 text-sm font-medium transition-colors",
+                current ? "bg-background text-foreground shadow-xs" : "text-muted-foreground hover:text-foreground"
+              )
+        )}
+      >
+        {variant === "segmented" && l === "en" ? "EN" : labels[l]}
+      </button>
+    )
+  })
+
+  if (variant === "segmented") {
+    return (
+      <div
+        role="group"
+        aria-label={t("language")}
+        className={cn("inline-flex gap-0.5 rounded-lg bg-muted p-[3px]", className)}
+      >
+        {buttons}
+      </div>
+    )
+  }
+
+  return (
+    <div role="group" aria-label={t("language")} className={cn("flex items-center gap-2 text-sm", className)}>
+      <GlobeIcon className="size-4 text-muted-foreground" aria-hidden />
+      {buttons[0]}
+      <span aria-hidden className="text-muted-foreground">
+        ·
+      </span>
+      {buttons[1]}
+    </div>
+  )
+}

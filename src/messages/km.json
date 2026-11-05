@@ -88,6 +88,30 @@
     "creatorDashboard": "ផ្ទាំងគ្រប់គ្រងអ្នកបង្កើត",
     "settings": "ការកំណត់",
     "logOut": "ចាកចេញ",
-    "skip": "រំលងទៅមាតិកា"
+    "skip": "រំលងទៅមាតិកា",
+    "tabs": "ថេបចម្បង",
+    "tabLibrary": "បណ្ណាល័យ",
+    "tabCoins": "កាក់",
+    "tabMe": "ខ្ញុំ"
+  },
+  "footer": {
+    "description": "កំប្លែង និងប្រលោមលោកអនឡាញពីកម្ពុជា និងពិភពលោក ជាភាសាខ្មែរ និងអង់គ្លេស។",
+    "read": "អាន",
+    "create": "បង្កើត",
+    "help": "ជំនួយ",
+    "originals": "ស្នាដៃដើម",
+    "creatorDashboard": "ផ្ទាំងគ្រប់គ្រងអ្នកបង្កើត",
+    "creatorGuidelines": "គោលការណ៍ណែនាំអ្នកបង្កើត",
+    "earnings": "ប្រាក់ចំណូល",
+    "helpCenter": "មជ្ឈមណ្ឌលជំនួយ",
+    "terms": "លក្ខខណ្ឌ",
+    "privacy": "ឯកជនភាព",
+    "contact": "ទាក់ទង",
+    "copyright": "© 2026 PhumReader · [ឈ្មោះក្រុមហ៊ុនរបស់អ្នក]។ រឿងទាំងអស់ដែលបង្ហាញគឺជាគំរូ។",
+    "social": "តំណភ្ជាប់បណ្តាញសង្គម",
+    "facebook": "Facebook",
+    "twitter": "X (Twitter)",
+    "youtube": "YouTube",
+    "language": "ភាសា"
   }
 }

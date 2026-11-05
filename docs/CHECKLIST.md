@@ -29,7 +29,7 @@ npm run test:e2e     # Playwright, available after T52
 - Components in Part 2 and Part 3 are presentational (props + callbacks). Part 4 adds data, the fake API and the store, and wires them in. Part 5 builds the pages with all interactions. Part 6 completes loading / empty / error states on every page.
 - A temporary preview page at `/dev/kit` is used to check components in Parts 2–4. It is deleted in T53.
 
-Progress: 11 / 53
+Progress: 12 / 53
 
 ---
 
@@ -98,7 +98,7 @@ Progress: 11 / 53
   - Look at: `01-home-desktop.png`, `01-home-phone.png`, `01-home-logged-in-menu-desktop.png`; `design/foundations.md` §3; `design/spec.md` §0 Header.
   - Done when: header matches both screens; the current nav item is bold; the menu opens and navigates by keyboard; `/manifest.webmanifest` has short name "Phum"; the browser tab shows the PhumReader icon.
 
-- [ ] **T12 SiteFooter, MobileTabBar, (site) layout** (≈45 min)
+- [x] **T12 SiteFooter, MobileTabBar, (site) layout** (≈45 min)
   - Build: `SiteFooter`: Logo + "Comics and web novels from Cambodia and beyond, in Khmer and English." + 3 social icon buttons; columns Read (Originals, Rankings, Genres, Web novels), Create (Creator dashboard, Creator guidelines, Earnings), Help (Help center, Terms, Privacy, Contact); bottom line "© 2026 PhumReader · [YOUR COMPANY NAME]. All series shown are placeholders." + language switch "English · ខ្មែរ". `MobileTabBar` (< 768 px, sticky bottom, safe-area padding): Home, Search (opens the ⌘K palette), Library, Coins, Me (→ Settings when logged in, else "Log in"); 20 px icons, 11 px labels, current dark, others muted. `(site)/layout.tsx` = header + main + footer + tab bar, with bottom padding on phone so the tab bar never covers content.
   - Look at: `01-home-desktop.png` (footer), `01-home-phone.png` (footer + tab bar), `06-coins-phone.png`.
   - Done when: footer matches at 1440 and 390 px; the tab bar only shows below 768 px with the current tab highlighted; the language switch changes the locale; all links point to the routes in spec §0.
@@ -379,3 +379,6 @@ Progress: 11 / 53
 45. **App icon**: the favicon is `src/app/icon.svg` (the green mark); `favicon.ico` was removed. The web manifest (`src/app/manifest.ts`) uses the SVG icon (`sizes: any`), short name "Phum" and theme colour `#00DC64`. No PNG icons are generated.
 46. **Header nav current state**: Home is current on `/`; Rankings and Genres become current on `/rankings` and `/genres/...` after T43. "Web novels" (`/#novels`) is never marked current. The header's ⌘K hint is always "⌘K" (no OS detection).
 47. **Logo** takes `size` (header / footer / auth), `tone` (`light` for dark backgrounds) and `khmer` (small ភូមិ underneath). Per assumption 18, ភូមិ is only used in the footer and on the auth panel.
+48. **Every layout and page under `[locale]` must be async and call `setRequestLocale(locale)`** (after `await params`) before using `useTranslations` / `getTranslations`. Layouts render in parallel with the root layout, so without it next-intl reads request headers and `next build` fails under Cache Components ("encountered uncached or runtime data"). `[locale]/layout.tsx` also passes `locale` and `messages` to `NextIntlClientProvider` explicitly.
+49. **Footer links**: Help links, the Creator guidelines / Earnings anchors and the three social buttons point to `/creator#...` and `/coming-soon?topic=...` (page added in T44; they 404 until then). The social buttons use "f" / "t" / play glyphs as in the design because lucide-react v1 has no brand icons.
+50. **Phone tab bar** is `sticky bottom-0` at the end of the page (not fixed), so it never covers content; `LanguageSwitch` (`inline` for the footer, `segmented` for auth in T15) keeps the path and query string when switching.
