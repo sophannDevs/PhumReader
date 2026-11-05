@@ -10,17 +10,22 @@ import { formatDate } from "@/lib/format"
 import { useDemoFlag } from "@/lib/queries"
 import { useAppStore } from "@/lib/store"
 import { ReceiptIcon } from "lucide-react"
+import { useLocalize } from "@/lib/localize"
 
 const statusVariant = { Paid: "brand", Failed: "danger", Cancelled: "secondary" } as const
 
 /** Purchase history from the store (newest first); `?demo=empty` shows the empty state. */
 export function PurchaseHistory({ methods }: { methods: PaymentMethod[] }) {
   const t = useTranslations("coins")
+  const loc = useLocalize()
   const locale = useLocale()
   const flag = useDemoFlag()
   const purchases = useAppStore((s) => s.purchases)
   const rows = flag === "empty" ? [] : purchases
-  const label = (id: string) => methods.find((m) => m.id === id)?.label ?? id
+  const label = (id: string) => {
+    const m = methods.find((x) => x.id === id)
+    return m ? loc.method(id, m).label : id
+  }
   const statusLabel = (s: PurchaseStatus) => t(`status${s}`)
 
   return (
@@ -48,7 +53,7 @@ export function PurchaseHistory({ methods }: { methods: PaymentMethod[] }) {
               {rows.map((p, i) => (
                 <TableRow key={`${p.date}-${p.orderId ?? i}`}>
                   <TableCell className="text-muted-foreground">{formatDate(p.date, locale)}</TableCell>
-                  <TableCell>{p.pack}</TableCell>
+                  <TableCell>{loc.pack(p.pack)}</TableCell>
                   <TableCell className="hidden text-muted-foreground md:table-cell">{label(p.method)}</TableCell>
                   <TableCell className="text-right tabular-nums">+{p.coins}</TableCell>
                   <TableCell>

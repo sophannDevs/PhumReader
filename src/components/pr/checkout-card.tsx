@@ -3,6 +3,7 @@
 import { CheckIcon, ClockIcon, SmartphoneIcon, XIcon } from "lucide-react"
 import { ArrowRightIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
+import { useLocalize } from "@/lib/localize"
 import { type Flow, packTotal } from "@/components/pr/checkout-flow"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -77,6 +78,8 @@ export function CheckoutCard({
   onReset: () => void
 }) {
   const t = useTranslations("coins")
+  const loc = useLocalize()
+  const methodName = loc.method(method.id, method).label
   const router = useRouter()
   const user = useUser()
   const balance = useCoins()
@@ -115,7 +118,7 @@ export function CheckoutCard({
         <p className="type-body text-muted-foreground">
           {t("successBody", { balance: t("balanceLabel", { count: flow.balance }) })}
         </p>
-        <p className="type-caption font-normal text-muted-foreground">{t("orderLine", { id: flow.orderId, method: flow.method })}</p>
+        <p className="type-caption font-normal text-muted-foreground">{t("orderLine", { id: flow.orderId, method: loc.method(flow.method, { label: flow.method, desc: "" }).label })}</p>
         <div className="mt-2 flex w-full flex-col gap-2">
           {shopReturn ? (
             <Button
@@ -174,7 +177,7 @@ export function CheckoutCard({
           </Badge>
         </div>
         <p className="type-small mt-1 font-normal text-muted-foreground tabular-nums">
-          {t("paySub", { coins: total, method: method.label })}
+          {t("paySub", { coins: total, method: methodName })}
         </p>
 
         <div className="mt-4">
@@ -245,7 +248,7 @@ export function CheckoutCard({
             </span>
           }
         />
-        <Row label={t("payingWith")} value={method.label} className="[&_dd]:text-foreground" />
+        <Row label={t("payingWith")} value={methodName} className="[&_dd]:text-foreground" />
       </dl>
       <Button variant="brand" size="lg" className="mt-6 w-full" onClick={proceed}>
         {t("continuePay")}

@@ -1,21 +1,23 @@
 import { useTranslations } from "next-intl"
 import { Badge } from "@/components/ui/badge"
 import type { Series } from "@/data"
+import { useLocalize } from "@/lib/localize"
 
 /** About tab: synopsis, "New episodes every <day>.", details list and tag badges. */
 export function SeriesAbout({ series, synopsis }: { series: Series; synopsis: string }) {
   const t = useTranslations("series")
+  const loc = useLocalize()
   const th = useTranslations("home")
 
   const details: [string, string][] = [
-    [t("genre"), series.genre],
+    [t("genre"), loc.genre(series.genre)],
     [t("format"), t(series.type === "novel" ? "novel" : "comic")],
-    [t("schedule"), series.schedule],
+    [t("schedule"), loc.schedule(series.schedule)],
     [t("status"), t(series.status === "completed" ? "completed" : "ongoing")],
     [t("language"), series.language.map((l) => t(l === "km" ? "khmer" : "english")).join(", ")],
     [t("ageRating"), series.ageRating === "all" ? t("allAges") : series.ageRating],
   ]
-  const tags = [series.genre, t(series.type === "novel" ? "novel" : "comic"), ...series.language.map((l) => t(l === "km" ? "khmer" : "english"))]
+  const tags = [loc.genre(series.genre), t(series.type === "novel" ? "novel" : "comic"), ...series.language.map((l) => t(l === "km" ? "khmer" : "english"))]
 
   return (
     <div className="flex flex-col gap-6">

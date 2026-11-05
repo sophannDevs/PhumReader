@@ -16,9 +16,17 @@ export function addDays(iso: string, days: number): string {
   return new Date(toUtc(iso) + days * MS_PER_DAY).toISOString().slice(0, 10)
 }
 
+const KHMER_MONTHS = ["មករា", "កុម្ភៈ", "មីនា", "មេសា", "ឧសភា", "មិថុនា", "កក្កដា", "សីហា", "កញ្ញា", "តុលា", "វិច្ឆិកា", "ធ្នូ"]
+const khmerDigits = (n: number) => String(n).replace(/\d/g, (c) => "០១២៣៤៥៦៧៨៩"[Number(c)])
+
 /** "2026-11-05" -> "Nov 5, 2026" (en) or the Khmer equivalent. */
 export function formatDate(iso: string, locale: string = "en"): string {
-  return new Intl.DateTimeFormat(locale === "km" ? "km-KH" : "en-US", {
+  if (locale === "km") {
+    // Own formatting: not every browser ships Khmer date data (it silently falls back to English).
+    const [y, m, d] = iso.split("-").map(Number)
+    return `${khmerDigits(d)} ${KHMER_MONTHS[m - 1]} ${khmerDigits(y)}`
+  }
+  return new Intl.DateTimeFormat("en-US", {
     month: "short",
     day: "numeric",
     year: "numeric",

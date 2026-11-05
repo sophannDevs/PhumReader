@@ -6,6 +6,7 @@ import type { Episode, Series } from "@/data/types"
 import { Link } from "@/i18n/navigation"
 import { readerHref } from "@/lib/routes"
 import { cn } from "@/lib/utils"
+import { useLocalize } from "@/lib/localize"
 
 export type EpisodeState = "free" | "read" | "locked" | "unlocked"
 
@@ -42,6 +43,7 @@ export function EpisodeRow({
   onLockedClick?: (episode: Episode) => void
 }) {
   const t = useTranslations("episodes")
+  const loc = useLocalize()
   const tc = useTranslations("coins")
   const tcards = useTranslations("cards")
   const locked = state === "locked"
@@ -71,12 +73,12 @@ export function EpisodeRow({
               state === "read" && "font-medium text-muted-foreground"
             )}
           >
-            {episode.title}
+            {loc.title(episode.title)}
           </p>
           {state === "free" && episode.isUp ? <Badge variant="up">{tcards("up")}</Badge> : null}
         </div>
         <p className="type-small flex items-center gap-3 font-normal text-muted-foreground tabular-nums">
-          <span>{episode.date}</span>
+          <span>{loc.date(episode.date)}</span>
           <span aria-label={t("likes", { count: episode.likes })}>♡ {episode.likes}</span>
         </p>
       </div>

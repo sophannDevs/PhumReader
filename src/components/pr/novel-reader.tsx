@@ -17,6 +17,7 @@ import { seriesHref } from "@/lib/routes"
 import { useAppStore } from "@/lib/store"
 import { useReaderNav } from "@/lib/use-reader-nav"
 import { cn } from "@/lib/utils"
+import { useLocalize } from "@/lib/localize"
 
 function NovelSkeleton() {
   const theme = useAppStore((s) => s.novelSettings.theme)
@@ -102,6 +103,7 @@ type Loaded = NonNullable<ReturnType<typeof useChapter>["data"]>
 
 function NovelReaderBody({ series, chapter, total, font }: Loaded & { font: "sans" | "serif" }) {
   const t = useTranslations("reader")
+  const loc = useLocalize()
   const n = chapter.n
   const { go, list, listEpisodes, isLocked, coins, dialog, gated } = useReaderNav(series, n, total)
   if (gated) return <NovelSkeleton />
@@ -126,7 +128,7 @@ function NovelReaderBody({ series, chapter, total, font }: Loaded & { font: "san
           <p className="type-eyebrow">{t("chapterEyebrow", { n })}</p>
           <h1 className="type-h1">{chapter.name}</h1>
           <p className="type-small font-normal text-reader-quiet">
-            {series.creator} · {chapter.date} · {t("minRead", { count: READ_MINUTES })}
+            {series.creator} · {loc.date(chapter.date)} · {t("minRead", { count: READ_MINUTES })}
           </p>
         </header>
         {chapter.blocks.length === 0 ? (

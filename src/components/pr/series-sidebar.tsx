@@ -10,6 +10,7 @@ import { Link } from "@/i18n/navigation"
 import { initials } from "@/lib/format"
 import { seriesHref } from "@/lib/routes"
 import { useAppStore } from "@/lib/store"
+import { useLocalize } from "@/lib/localize"
 
 const cardClass = "rounded-card border bg-card p-5 shadow-xs"
 
@@ -24,6 +25,7 @@ export function SeriesSidebar({
   creatorSeriesCount: number
 }) {
   const t = useTranslations("series")
+  const loc = useLocalize()
   const tt = useTranslations("toasts")
   const following = useAppStore((s) => s.follows.includes(series.creator))
 
@@ -75,7 +77,7 @@ export function SeriesSidebar({
                   <span className="flex min-w-0 flex-col">
                     <span className="type-card-title truncate">{s.title}</span>
                     <span className="type-caption truncate font-normal text-muted-foreground">
-                      {s.creator} · {s.genre}
+                      {s.creator} · {loc.genre(s.genre)}
                     </span>
                   </span>
                 </Link>

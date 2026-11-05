@@ -13,6 +13,7 @@ import { formatCount, parseCount } from "@/lib/format"
 import { readerHref, seriesHref } from "@/lib/routes"
 import { likeKey, useAppStore } from "@/lib/store"
 import { cn } from "@/lib/utils"
+import { useLocalize } from "@/lib/localize"
 
 const card = "rounded-card border border-surface-border bg-surface-panel p-5"
 const pill =
@@ -34,6 +35,7 @@ export function ComicEndSection({
   onUnlockNext: () => void
 }) {
   const t = useTranslations("reader")
+  const loc = useLocalize()
   const tt = useTranslations("toasts")
   const key = likeKey.episode(series.id, episode.n)
   const liked = useAppStore((s) => !!s.likes[key])
@@ -53,7 +55,7 @@ export function ComicEndSection({
     <div className="mx-auto flex w-full max-w-[600px] flex-col gap-3 px-4 py-6">
       <section className={cn(card, "flex flex-col items-center gap-3 text-center")}>
         <p className="type-eyebrow text-surface-quiet">{t("endOf", { n: episode.n })}</p>
-        <h2 className="type-h3">{episode.title}</h2>
+        <h2 className="type-h3">{loc.title(episode.title)}</h2>
         <div className="flex flex-wrap items-center justify-center gap-2">
           <Button
             variant="outline"
@@ -93,7 +95,7 @@ export function ComicEndSection({
           </div>
           <div className="flex min-w-0 flex-1 flex-col items-start gap-0.5">
             <p className="type-caption text-surface-quiet">{t("nextEpisode_card")}</p>
-            <h3 className="type-h4 truncate">{next.title}</h3>
+            <h3 className="type-h4 truncate">{loc.title(next.title)}</h3>
             {nextLocked ? (
               <Badge variant="warn">
                 <ZapIcon /> Fast Pass

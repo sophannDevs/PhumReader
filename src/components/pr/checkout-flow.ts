@@ -95,7 +95,7 @@ export function useCheckout({
         orderId: result.orderId,
         added: result.coins,
         balance: useAppStore.getState().coins,
-        method: method.label,
+        method: method.id,
       })
     } catch (e) {
       if (e instanceof DemoApiError) record("Failed", `PR-FAILED${Date.now() % 100000}`)

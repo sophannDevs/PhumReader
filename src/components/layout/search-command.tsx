@@ -13,6 +13,7 @@ import type { Series } from "@/data/types"
 import { useRouter } from "@/i18n/navigation"
 import { seriesHref } from "@/lib/routes"
 import { useRestoreFocus } from "@/lib/use-restore-focus"
+import { useLocalize } from "@/lib/localize"
 
 const MAX_RESULTS = 8
 const POPULAR_COUNT = 6
@@ -34,6 +35,7 @@ export function SearchCommand({
   onOpenChange: (open: boolean) => void
 }) {
   const t = useTranslations("search")
+  const loc = useLocalize()
   const tn = useTranslations("cards")
   const router = useRouter()
   const restoreFocus = useRestoreFocus()
@@ -94,7 +96,7 @@ export function SearchCommand({
                   <span className="flex min-w-0 flex-1 flex-col">
                     <span className="truncate text-sm font-medium">{s.title}</span>
                     <span className="type-caption truncate font-normal text-muted-foreground">
-                      {s.creator} · {s.genre}
+                      {s.creator} · {loc.genre(s.genre)}
                     </span>
                   </span>
                   {s.type === "novel" ? <Badge variant="secondary">{tn("novel")}</Badge> : null}

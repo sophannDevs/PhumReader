@@ -5,10 +5,12 @@ import type { Series } from "@/data/types"
 import { Link } from "@/i18n/navigation"
 import { seriesHref } from "@/lib/routes"
 import { cn } from "@/lib/utils"
+import { useLocalize } from "@/lib/localize"
 
 /** Bordered card: 84 px cover, genre badge, title, "creator · N chapters". */
 export function NovelCard({ series, className }: { series: Series; className?: string }) {
   const t = useTranslations("cards")
+  const loc = useLocalize()
 
   return (
     <Link
@@ -28,7 +30,7 @@ export function NovelCard({ series, className }: { series: Series; className?: s
         />
       </div>
       <div className="flex min-w-0 flex-col items-start gap-1">
-        <Badge variant="secondary">{series.genre}</Badge>
+        <Badge variant="secondary">{loc.genre(series.genre)}</Badge>
         <h3 className="type-h4 w-full truncate">{series.title}</h3>
         <p className="type-small w-full truncate font-normal text-muted-foreground">
           {series.creator} · {t("chapters", { count: series.freeEpisodes })}

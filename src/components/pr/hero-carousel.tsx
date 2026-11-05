@@ -13,6 +13,7 @@ import { Link } from "@/i18n/navigation"
 import { readerHref, seriesHref } from "@/lib/routes"
 import { useAppStore } from "@/lib/store"
 import { cn } from "@/lib/utils"
+import { useLocalize } from "@/lib/localize"
 
 type EmblaApi = Parameters<NonNullable<React.ComponentProps<typeof Carousel>["setApi"]>>[0]
 
@@ -66,6 +67,7 @@ function SubscribeButton({ slide }: { slide: HeroSlideView }) {
 
 function Slide({ slide, priority }: { slide: HeroSlideView; priority: boolean }) {
   const t = useTranslations("home")
+  const loc = useLocalize()
   const s = slide.seriesData
 
   return (
@@ -83,8 +85,8 @@ function Slide({ slide, priority }: { slide: HeroSlideView; priority: boolean })
 
       <div className="relative order-2 flex max-w-xl flex-1 flex-col items-start gap-4 md:order-1">
         <div className="flex flex-wrap items-center gap-2">
-          <Badge variant="new">{slide.tag}</Badge>
-          <Badge variant="dark">{s.genre}</Badge>
+          <Badge variant="new">{loc.tag(slide.tag)}</Badge>
+          <Badge variant="dark">{loc.genre(s.genre)}</Badge>
         </div>
         <h2 className="type-hero">{s.title}</h2>
         <p className="type-lead text-surface-foreground/80">{slide.blurb}</p>
@@ -99,7 +101,7 @@ function Slide({ slide, priority }: { slide: HeroSlideView; priority: boolean })
           </span>
           <span className="inline-flex items-center gap-1.5">
             <CalendarIcon className="size-3.5" aria-hidden />
-            {s.schedule}
+            {loc.schedule(s.schedule)}
           </span>
         </p>
         <div className="mt-2 flex flex-wrap items-center gap-2">

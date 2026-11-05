@@ -4,6 +4,7 @@ import { useTranslations } from "next-intl"
 import { Badge } from "@/components/ui/badge"
 import { RadioGroupItem, radioCardClassName } from "@/components/ui/radio-group"
 import type { PaymentMethod } from "@/data/types"
+import { useLocalize } from "@/lib/localize"
 import { cn } from "@/lib/utils"
 
 const tileLabel = { khqr: "KHQR", aba: "ABA", card: "CARD" } as const
@@ -19,6 +20,7 @@ export function PaymentMethodCard({
   className?: string
 }) {
   const t = useTranslations("packs.method")
+  const text = useLocalize().method(method.id, method)
   const id = `method-${method.id}`
 
   return (
@@ -31,8 +33,8 @@ export function PaymentMethodCard({
         {tileLabel[method.id]}
       </span>
       <span className="flex min-w-0 flex-1 flex-col">
-        <span className="text-sm font-semibold">{method.label}</span>
-        <span className="type-caption font-normal text-muted-foreground">{method.desc}</span>
+        <span className="text-sm font-semibold">{text.label}</span>
+        <span className="type-caption font-normal text-muted-foreground">{text.desc}</span>
       </span>
       {method.recommended ? <Badge variant="brand">{t("recommended")}</Badge> : null}
     </label>

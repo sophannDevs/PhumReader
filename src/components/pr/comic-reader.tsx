@@ -15,6 +15,7 @@ import { Link } from "@/i18n/navigation"
 import { useEpisode } from "@/lib/queries"
 import { seriesHref } from "@/lib/routes"
 import { useReaderNav } from "@/lib/use-reader-nav"
+import { useLocalize } from "@/lib/localize"
 
 function ReaderSkeleton() {
   return (
@@ -56,6 +57,7 @@ type Data = NonNullable<ReturnType<typeof useEpisode>["data"]>
 function ComicReaderBody({ series, episode, total, panels }: { series: Series; episode: Episode; total: number; panels: Data["panels"] }) {
   const n = episode.n
   const t = useTranslations("reader")
+  const loc = useLocalize()
   const { go, list, listEpisodes, isLocked, coins, dialog, gated } = useReaderNav(series, n, total)
   if (gated) return <ReaderSkeleton />
 
@@ -64,7 +66,7 @@ function ComicReaderBody({ series, episode, total, panels }: { series: Series; e
       <ComicReaderBar
         backHref={seriesHref(series)}
         seriesTitle={series.title}
-        itemTitle={episode.title}
+        itemTitle={loc.title(episode.title)}
         progress={n / total}
         prevDisabled={n <= 1}
         nextDisabled={n >= total}

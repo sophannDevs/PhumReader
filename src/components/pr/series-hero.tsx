@@ -12,6 +12,7 @@ import type { Series } from "@/data"
 import { initials } from "@/lib/format"
 import { genreHref, readerHref } from "@/lib/routes"
 import { useAppStore } from "@/lib/store"
+import { useLocalize } from "@/lib/localize"
 
 const ghostDark =
   "border-surface-border-strong bg-surface-panel/60 text-surface-foreground hover:bg-surface-panel hover:text-surface-foreground focus-visible:ring-offset-surface"
@@ -36,6 +37,7 @@ export function SeriesHero({
   stats: { subscribers: string; comments: string }
 }) {
   const t = useTranslations("series")
+  const loc = useLocalize()
   const tt = useTranslations("toasts")
   const subscribed = useAppStore((s) => s.subscriptions.includes(series.id))
   const { episode, continuing } = useContinueTarget(series)
@@ -87,7 +89,7 @@ export function SeriesHero({
                 href={genreHref(series.genre)}
                 className="rounded-sm outline-none hover:text-surface-foreground focus-visible:ring-2 focus-visible:ring-ring"
               >
-                {series.genre}
+                {loc.genre(series.genre)}
               </Link>
             </li>
             <ChevronRightIcon className="size-3.5" aria-hidden />
@@ -113,10 +115,10 @@ export function SeriesHero({
 
           <div className="flex min-w-0 flex-1 flex-col items-start gap-4">
             <div className="flex flex-wrap items-center gap-2">
-              <Badge variant="dark">{series.genre}</Badge>
+              <Badge variant="dark">{loc.genre(series.genre)}</Badge>
               <Badge variant="dark">{t(novel ? "novel" : "comic")}</Badge>
               <Badge variant="dark">
-                <CalendarIcon /> {series.schedule}
+                <CalendarIcon /> {loc.schedule(series.schedule)}
               </Badge>
               <Badge variant="new">{t(series.status === "completed" ? "completed" : "ongoing")}</Badge>
             </div>

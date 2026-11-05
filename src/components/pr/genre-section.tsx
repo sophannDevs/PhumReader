@@ -8,12 +8,14 @@ import { SeriesCard } from "@/components/pr/series-card"
 import { SkeletonCard } from "@/components/pr/skeletons"
 import { Toggle } from "@/components/ui/toggle"
 import type { Genre, Series } from "@/data"
+import { useLocalize } from "@/lib/localize"
 
 const GRID = "grid grid-cols-3 gap-3 md:gap-4 lg:gap-5"
 
 /** Browse by genre: 8 round chips (one selected), "N series in <genre>", 3 x 2 grid. */
 export function GenreSection({ genres, byGenre }: { genres: Genre[]; byGenre: Record<Genre, Series[]> }) {
   const t = useTranslations("home")
+  const loc = useLocalize()
   const [genre, setGenre] = useState<Genre>(genres.includes("Fantasy") ? "Fantasy" : genres[0])
   const list = byGenre[genre] ?? []
 
@@ -22,12 +24,12 @@ export function GenreSection({ genres, byGenre }: { genres: Genre[]; byGenre: Re
       <SectionHeader
         id="genre-title"
         title={t("genreTitle")}
-        subtitle={t("genreCount", { count: list.length, genre })}
+        subtitle={t("genreCount", { count: list.length, genre: loc.genre(genre) })}
       />
       <div role="group" aria-label={t("genres")} className="flex flex-wrap gap-2">
         {genres.map((g) => (
           <Toggle key={g} pressed={g === genre} onPressedChange={() => setGenre(g)}>
-            {g}
+            {loc.genre(g)}
           </Toggle>
         ))}
       </div>

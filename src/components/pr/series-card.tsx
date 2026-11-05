@@ -6,6 +6,7 @@ import type { Series } from "@/data/types"
 import { Link } from "@/i18n/navigation"
 import { seriesHref } from "@/lib/routes"
 import { cn } from "@/lib/utils"
+import { useLocalize } from "@/lib/localize"
 
 /** 3:4 cover, UP / NEW / Novel badges top-left, title, "creator · genre", likes. */
 export function SeriesCard({
@@ -18,6 +19,7 @@ export function SeriesCard({
   priority?: boolean
 }) {
   const t = useTranslations("cards")
+  const loc = useLocalize()
   const showBadges = series.badges.up || series.badges.isNew || series.type === "novel"
 
   return (
@@ -48,7 +50,7 @@ export function SeriesCard({
       <div className="flex min-w-0 flex-col gap-0.5">
         <h3 className="type-card-title truncate">{series.title}</h3>
         <p className="type-small truncate font-normal text-muted-foreground">
-          {series.creator} · {series.genre}
+          {series.creator} · {loc.genre(series.genre)}
         </p>
         <p className="type-small flex items-center gap-1 font-normal text-muted-foreground tabular-nums">
           <HeartIcon className="size-3.5" aria-hidden />

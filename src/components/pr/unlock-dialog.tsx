@@ -16,6 +16,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { useRestoreFocus } from "@/lib/use-restore-focus"
+import { useLocalize } from "@/lib/localize"
 
 export type UnlockState = "logged-out" | "enough" | "not-enough"
 
@@ -51,6 +52,7 @@ export function UnlockDialog({
   onGetCoins?: () => void
 }) {
   const t = useTranslations("unlock")
+  const loc = useLocalize()
   const tc = useTranslations("coins")
   const restoreFocus = useRestoreFocus()
   const state: UnlockState = !loggedIn ? "logged-out" : balance >= price ? "enough" : "not-enough"
@@ -67,7 +69,7 @@ export function UnlockDialog({
               <ZapIcon /> {t("fastPass")}
             </Badge>
             <DialogTitle>{t(kind === "chapter" ? "titleChapter" : "titleEpisode", { n: episode.n })}</DialogTitle>
-            <DialogDescription>{t("freeOn", { date: episode.freeDate })}</DialogDescription>
+            <DialogDescription>{t("freeOn", { date: loc.date(episode.freeDate) })}</DialogDescription>
           </div>
         </DialogHeader>
 

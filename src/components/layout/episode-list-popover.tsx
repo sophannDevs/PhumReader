@@ -3,6 +3,7 @@
 import { ListIcon, LockIcon } from "lucide-react"
 import Image from "next/image"
 import { useTranslations } from "next-intl"
+import { useLocalize } from "@/lib/localize"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
@@ -60,6 +61,7 @@ export function EpisodeListPopover({
   onSelect: (n: number) => void
 }) {
   const t = useTranslations("reader")
+  const loc = useLocalize()
   const s = tones[tone]
   const rows = nearby(episodes, current)
   // The popover renders in a portal, outside the reader root: carry the theme with it.
@@ -110,7 +112,7 @@ export function EpisodeListPopover({
                       </span>
                     ) : null}
                   </span>
-                  <span className="min-w-0 flex-1 truncate text-sm font-medium">{e.title}</span>
+                  <span className="min-w-0 flex-1 truncate text-sm font-medium">{loc.title(e.title)}</span>
                   {isCurrent ? <Badge variant="new">{t("now")}</Badge> : null}
                   {e.locked ? <span className="sr-only">{t("locked")}</span> : null}
                 </button>
