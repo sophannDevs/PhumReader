@@ -17,15 +17,19 @@ export function CommentList({
   comments,
   onToggleLike,
   onReply,
+  tone = "light",
   className,
 }: {
   comments: CommentView[]
   onToggleLike: (id: string) => void
   /** Receives the author's name; the page prefills the composer with "@Name ". */
   onReply: (name: string) => void
+  /** "dark" for the comic reader (surface colours). */
+  tone?: "light" | "dark"
   className?: string
 }) {
   const t = useTranslations("comments")
+  const dark = tone === "dark"
 
   return (
     <ul className={cn("flex flex-col gap-6", className)}>
@@ -34,12 +38,12 @@ export function CommentList({
         return (
           <li key={c.id} className="flex gap-3">
             <Avatar>
-              <AvatarFallback>{initials(c.name)}</AvatarFallback>
+              <AvatarFallback className={cn(dark && "bg-surface-border text-surface-foreground")}>{initials(c.name)}</AvatarFallback>
             </Avatar>
             <div className="flex min-w-0 flex-1 flex-col gap-1">
               <div className="flex flex-wrap items-center gap-2 text-sm">
                 <span className="font-semibold">{c.name}</span>
-                <span className="text-muted-foreground">· {c.when}</span>
+                <span className={dark ? "text-surface-quiet" : "text-muted-foreground"}>· {c.when}</span>
                 {c.top ? <Badge variant="brand">{t("top")}</Badge> : null}
               </div>
               <p className="text-sm break-words">{c.text}</p>
@@ -49,13 +53,13 @@ export function CommentList({
                   size="sm"
                   aria-pressed={!!c.liked}
                   aria-label={t("likeCount", { count })}
-                  className={cn("gap-1.5 px-2 tabular-nums", c.liked && "text-brand-ink")}
+                  className={cn("gap-1.5 px-2 tabular-nums", dark && "text-surface-quiet hover:bg-surface-border hover:text-surface-foreground focus-visible:ring-offset-surface", c.liked && (dark ? "text-primary" : "text-brand-ink"))}
                   onClick={() => onToggleLike(c.id)}
                 >
                   <ThumbsUpIcon className={cn(c.liked && "fill-primary")} />
                   {count}
                 </Button>
-                <Button variant="ghost" size="sm" className="px-2" onClick={() => onReply(c.name)}>
+                <Button variant="ghost" size="sm" className={cn("px-2", dark && "text-surface-quiet hover:bg-surface-border hover:text-surface-foreground focus-visible:ring-offset-surface")} onClick={() => onReply(c.name)}>
                   {t("reply")}
                 </Button>
               </div>

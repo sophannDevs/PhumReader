@@ -5,6 +5,7 @@ import Image from "next/image"
 import { useEffect } from "react"
 import { EpisodeListPopover, type ListEpisode } from "@/components/layout/episode-list-popover"
 import { ComicReaderBar } from "@/components/layout/reader-bar"
+import { ComicEndSection } from "@/components/pr/comic-end-section"
 import { ErrorState } from "@/components/pr/error-state"
 import { useSeriesUnlock } from "@/components/pr/series-unlock"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -105,6 +106,16 @@ function ComicReaderBody({ series, episode, total, panels }: { series: Series; e
           />
         ))}
       </article>
+      <ComicEndSection
+        series={series}
+        episode={episode}
+        next={list.find((e) => e.n === n + 1)}
+        nextLocked={(() => {
+          const nx = list.find((e) => e.n === n + 1)
+          return !!nx && isLocked(nx)
+        })()}
+        onUnlockNext={() => go(n + 1)}
+      />
       {dialog}
     </div>
   )

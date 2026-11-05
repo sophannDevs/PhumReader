@@ -29,7 +29,7 @@ npm run test:e2e     # Playwright, available after T52
 - Components in Part 2 and Part 3 are presentational (props + callbacks). Part 4 adds data, the fake API and the store, and wires them in. Part 5 builds the pages with all interactions. Part 6 completes loading / empty / error states on every page.
 - A temporary preview page at `/dev/kit` is used to check components in Parts 2–4. It is deleted in T53.
 
-Progress: 28 / 53
+Progress: 29 / 53
 
 ---
 
@@ -191,7 +191,7 @@ Progress: 28 / 53
   - Look at: `03-episode-viewer-desktop.png`, `03-episode-viewer-phone.png`; `design/spec.md` §3.
   - Done when: `/read/glass-compass/1` matches; → opens episode 2; at episode 65 next opens the unlock dialog; the series page then offers "Continue episode 2".
 
-- [ ] **T29 Comic reader: end section** (≈45 min)
+- [x] **T29 Comic reader: end section** (≈45 min)
   - Build: card "END OF EPISODE N" + title + pills ♡ Like (count, heart fills red, persisted), 🔔 Subscribe toggle, Share (toast); Next-episode card (thumb, "Next episode", title, Fast Pass badge when locked, "Read next →" brand or "Unlock"); "You're all caught up" on the last episode; Comments card in the dark variant ("Comments 1.2K", "Top", input "Log in to comment" / "Add a comment" + Post, the 3 `comments.episode`); "☰ All episodes of <series>" outline button → series page.
   - Look at: `03-episode-viewer-desktop.png`, `03-episode-viewer-phone.png` (bottom); `design/spec.md` §3.
   - Done when: the end section matches both screens; Like increments once and persists; "Unlock" opens the dialog; posting a comment works when logged in.
@@ -408,3 +408,4 @@ Progress: 28 / 53
 74. **Unlock flow** (`series-unlock.tsx`, `useSeriesUnlock`): logged out saves `returnTo` + `pendingUnlock` and goes to `/login`; not enough coins saves `shopReturn` {page, episode, title} + `pendingUnlock` and goes to `/coins`; enough coins calls `unlock()` (0.7 s spinner), then `spendCoins`, `unlockEpisode`, the toast "Episode N unlocked" (or "Chapter N") and opens the reader. The reopen-after-return check runs once per visit after the store hydrates (a request saved while the page is open must not be cleared at once: this was a bug found while testing), and only for logged-in readers.
 75. **Comments**: `CommentsSection` (`kind`, `slug`) is reusable (the comic reader's end card uses it in T29). Likes are stored under `comment:<kind>:<slug>:<id>` (persisted); comments the reader posts live in component state, so they disappear on reload (there is no backend). The demo thread is shared by every series / episode (Assumption 16 style), and a logged-out Post shows the toast "Log in to comment" without clearing the draft.
 76. **Comic reader** (`/read/[slug]/[episode]`): the server page 404s for unknown slugs or numbers outside 1..total and redirects web novels to `/novel/...` (locale-aware `redirect`); only episode 1 of each comic is statically generated, the rest render on request. The client reader reuses `useSeriesUnlock` (so the UnlockDialog, login and coin round trips behave as on the series page) and the T14 bar / popover. ← / → are ignored while typing or while a dialog or menu is open. A locked episode opened directly by URL is not blocked yet (T47 adds the redirect with the dialog).
+77. **Comic end section**: the episode Like count is shown compact ("47K") but the exact figure is in the button's `aria-label` ("Like, 47,001 likes"), because a +1 does not change the compact text; the heart fills red and the state is persisted under `episode:<seriesId>:<n>`. The episode comment count (not in the data) is derived as 2.55% of the episode's likes ("47K" -> "1.2K", `episodeCommentCount`). The reader's comments card is `CommentsSection variant="reader"` (one-line composer, dark `CommentList tone="dark"`); the thread is the shared `comments.episode` list.

@@ -196,3 +196,6 @@ export const todayWeekday = (): Weekday => weekdayOf(today)
 
 /** Fast Pass price in coins. */
 export const fastPassPrice = (): number => demoData.fastPass.price
+
+/** Not in the data: an episode thread is about 2.55% of the episode's likes ("47K" likes -> "1.2K" comments). */
+export const episodeCommentCount = (e: Episode): string => formatCount(parseCount(e.likes) * 0.0255)
