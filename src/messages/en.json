@@ -171,5 +171,8 @@
     "taking": "Taking you back…",
     "legal": "By continuing you agree to PhumReader’s Terms and Privacy Policy.",
     "quote": "I posted my first episode on a Tuesday night. By Friday, readers in Battambang and Seoul were asking for the next one."
+  },
+  "toasts": {
+    "loggedOut": "You're logged out"
   }
 }

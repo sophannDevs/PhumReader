@@ -4,6 +4,7 @@ import { GlobeIcon } from "lucide-react"
 import { useLocale, useTranslations } from "next-intl"
 import { usePathname, useRouter } from "@/i18n/navigation"
 import { routing, type Locale } from "@/i18n/routing"
+import { useAppStore } from "@/lib/store"
 import { cn } from "@/lib/utils"
 
 const labels: Record<Locale, string> = { en: "English", km: "ខ្មែរ" }
@@ -11,7 +12,7 @@ const labels: Record<Locale, string> = { en: "English", km: "ខ្មែរ" }
 /**
  * Switches the locale and stays on the same page (path and query kept).
  * `inline` = "English · ខ្មែរ" text with a globe (footer); `segmented` = EN / ខ្មែរ
- * pill switch (auth pages, settings). T19 also persists `lang` in the store.
+ * pill switch (auth pages, settings). Also persists `lang` in the store.
  */
 export function LanguageSwitch({
   variant = "inline",
@@ -29,6 +30,7 @@ export function LanguageSwitch({
 
   function switchTo(next: Locale) {
     if (next === locale) return
+    useAppStore.getState().setLang(next)
     onChange?.(next)
     router.replace(`${pathname}${window.location.search}`, { locale: next })
   }
