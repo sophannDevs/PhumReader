@@ -29,7 +29,7 @@ npm run test:e2e     # Playwright, available after T52
 - Components in Part 2 and Part 3 are presentational (props + callbacks). Part 4 adds data, the fake API and the store, and wires them in. Part 5 builds the pages with all interactions. Part 6 completes loading / empty / error states on every page.
 - A temporary preview page at `/dev/kit` is used to check components in Parts 2–4. It is deleted in T53.
 
-Progress: 15 / 53
+Progress: 16 / 53
 
 ---
 
@@ -122,7 +122,7 @@ Progress: 15 / 53
 
 ## Part 4: Data and simulated backend
 
-- [ ] **T16 Typed demo-data helpers** (≈60 min)
+- [x] **T16 Typed demo-data helpers** (≈60 min)
   - Build: `src/data/index.ts` selectors: `getSeries()`, `getSeriesBySlug`, `getSeriesById`, `seriesByGenre`, `seriesByDay`, `novels()`, `heroSlides()` (joined with series), `continueReading()` (joined), `rankings("comics" | "novels")` (order per Assumptions, with `rankingMovement`), `relatedSeries(series, 4)`, `creatorSeriesCount(creator)`, `synopsisFor(series)`, `episodesFor(slug)` → `episodesSample[slug]` when present, otherwise generated from `episodeRule` (titles "Episode N", "(S2) Episode N" from 80, "Chapter N: <name>" cycling `chapterNames`; weekly dates ending at `today` for episode `freeEpisodes`, which gets `isUp`; the next 3 are `fastpass` dated +7 days each; likes and thumbs deterministic, thumbs cycling the 24 covers), `episode(slug, n)`, `freeOnDate(episode)`, `comicPanels()`, `novelChapter(slug, n)` (title, date, body from `novelChapterText`), `comments(kind)`, `coinPacks()`, `paymentMethods()`, `purchaseHistory()`, `faq()`, `derivedStats(series)` (subscribers, comment count, see Assumptions). `src/lib/format.ts`: `today` pinned to `demoData.today`, `formatDate`, `formatCount`, `firstName`, `initials`.
   - Look at: `design/demo-data.json` (`episodeRule`, `chapterNames`, `episodesSample`); `design/spec.md` §1–2.
   - Done when: a small script (`npx tsx scripts/check-data.ts`, dev-only) prints 68 episodes for `glass-compass`, 15 for `the-last-archivist` titled "Chapter N: …", 3 fastpass per series, episode `freeEpisodes` marked UP and dated Nov 5, 2026; typecheck passes.
@@ -337,7 +337,7 @@ Progress: 15 / 53
 3. **Episode lists** exist only for 3 series. All others are generated from `episodeRule`: weekly dates ending at `today`, UP on episode `freeEpisodes`, 3 Fast Pass episodes dated +7 days each, titles per the rule, likes and thumbnails deterministic from the series id.
 4. **Ranking order** is not in the data. Comics: the 8 series shown on the Home screen (Paper Tigers, Neon Monsoon, Tiny Dragon Café, The Orchard Pact, Summer Index, Ember & Co., Captain Nobody, Salt & Thunder) with `rankingMovement`, then the remaining comics by views. Web novels: the 7 novels by views with `rankingMovement`.
 5. **Subscribers and comment counts** are not in the data; they are derived deterministically from the series (e.g. subscribers ≈ 4.7% of likes, comments "2.4K" style), formatted like the screens.
-6. **Creator series count** is computed from the data (each creator has 6 series) instead of the hard-coded "3 series" on the screen.
+6. **Creator series count** is computed from the data (each of the 12 creators has 4 series; the screen hard-codes "3 series") via `creatorSeriesCount()`.
 7. **Read episodes** are every episode with number ≤ `lastRead[seriesId]`. "Continue episode N" on the series hero uses `lastRead + 1` when that episode is readable, otherwise `lastRead`.
 8. **Continue reading progress** (62%, 30% …) comes from the demo entries; the reader does not track scroll position. When `lastRead` is higher than the demo episode, the card shows `lastRead`.
 9. **First-purchase offer** is active until a Paid purchase is completed in this browser. The two demo history rows do not end it, which matches the Coins screens (offer visible with a Paid row in history).
@@ -389,3 +389,5 @@ Progress: 15 / 53
 55. **`(reader)/layout.tsx`** only sets the locale and renders a full-height flex wrapper (no header, footer or tab bar, no background): each reader page sets its own colours.
 56. **AuthSplitLayout** takes the "Back to PhumReader", legal and quote strings from `demoData.loginPageStrings[locale]` (the `quote` field) and the byline from `authQuote.by` (English only; the series name is italic). The collage is the first 16 series covers, rotated -8°, with empty alt text inside an `aria-hidden` wrapper. `/login` is a placeholder page (title and subtitle only) until T32-T35; `backHref` defaults to `/` until `returnTo` exists (T19 / T35).
 57. **Cache Components keeps the previous route mounted but hidden** (`display: none`) after a client-side navigation (for example after switching language), so the DOM briefly holds two copies of a page. Tests must filter for visible elements (e2e in T52), and `id="main"` / `id="skip"` targets can appear twice: handle this in the T50 skip-link work.
+58. **Data layer**: `src/data/demo.ts` parses the JSON; `src/data/selectors.ts` holds the typed helpers (re-exported from `@/data`); `src/lib/format.ts` has `today`, `addDays`, `formatDate`, `formatCount`, `parseCount`, `initials`, `firstName`. Generated episodes (series without a hand-written sample) use the sample thumbnail cycle (24 covers), chapter names `chapterNames[n % 12]`, weekly dates ending at `today`, and deterministic likes (about 40-50K, Fast Pass episodes about half). `scripts/check-data.ts` (run with `npx tsx scripts/check-data.ts`) checks the data and selectors; `tsx` is a dev dependency.
+59. **`dailyUpdates(day)`** fills a short day with UP series; `seriesByDay` returns the raw list. `rankings("novels")` sorts the 7 novels by views (ties keep data order) and puts the first 7 `rankingMovement` values on them.
