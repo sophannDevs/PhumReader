@@ -29,7 +29,7 @@ npm run test:e2e     # Playwright, available after T52
 - Components in Part 2 and Part 3 are presentational (props + callbacks). Part 4 adds data, the fake API and the store, and wires them in. Part 5 builds the pages with all interactions. Part 6 completes loading / empty / error states on every page.
 - A temporary preview page at `/dev/kit` is used to check components in Parts 2–4. It is deleted in T53.
 
-Progress: 42 / 53
+Progress: 43 / 53
 
 ---
 
@@ -261,7 +261,7 @@ Progress: 42 / 53
   - Look at: `01-home-desktop.png` (Creator CTA card); `design/foundations.md`.
   - Done when: the page renders logged in and out; the Home CTA and the avatar menu land here; no money value other than "[AMOUNT]" placeholders.
 
-- [ ] **T43 Rankings and Genres pages** (≈45 min)
+- [x] **T43 Rankings and Genres pages** (≈45 min)
   - Build: `/rankings`: H1 "Rankings", pill Tabs Comics / Web novels, full numbered RankRow list (order per Assumptions); header nav "Rankings" now points here. `/genres` and `/genres/[genre]`: H1 "Genres", 8 Toggle chips (`[genre]` preselected; slug ↔ name mapping for "Slice of life" and "Sci-fi"), "N series in <genre>", SeriesCard grid 6 / 4 / 3; header nav "Genres" → `/genres`; the Series breadcrumb genre link → `/genres/[genre]`; unknown genre → 404.
   - Look at: `01-home-desktop.png` (Trending now, Browse by genre); `design/spec.md` §0 routes.
   - Done when: both pages work in `en` and `km`; the header marks the current nav item; `/genres/slice-of-life` lists 6 series.
@@ -350,7 +350,7 @@ Progress: 42 / 53
 16. **Comic panels and novel text** are the same 9 panels / 15 blocks for every episode and chapter; only the title, number and date change.
 17. **Share** copies the current URL with the Clipboard API and shows "Link copied"; no native share sheet.
 18. **Logo**: the green rounded mark from the design is kept; the wordmark becomes "Phum" (brand-ink) + "Reader" (foreground) with a small ភូមិ underneath on the auth panel and footer only, so the 64 px header stays uncluttered.
-19. **Header nav**: Rankings → `/rankings` and Genres → `/genres` once those pages exist (T43); Web novels stays `/#novels` because no novels page is designed.
+19. **Header nav**: Rankings → `/rankings` and Genres → `/genres` (T43, done); Web novels stays `/#novels` because no novels page is designed.
 20. **Search page** is reached from the ⌘K palette ("See all results") and from `/search?q=` directly; the phone Search tab still opens the palette.
 21. **Countdown** applies to all three payment methods (the card screen shows 7:00). Reaching 0 shows the "The code expired" failure for every method.
 22. **Opening a locked episode by URL** redirects to the series page and opens the unlock dialog instead of rendering the content.
@@ -421,3 +421,4 @@ Progress: 42 / 53
 87. **My library** (`/library`): logged out shows an EmptyState with a Log in button (saves `returnTo`). Continue reading = the 4 demo entries with the episode raised to `lastRead`, plus any other series the reader has opened (progress = `lastRead / total`, since the reader does not track scroll: Assumption 8). Subscribed = `SeriesCard`s from `subscriptions`; Unlocked = `EpisodeRow`s (state `unlocked`) grouped by series. Each empty tab links to Home ("Browse series"). Data comes from `fetchLibrary` / `useLibrary`.
 88. **Settings** (`/settings`): Profile (initials avatar, name, email; a Log in prompt when logged out), Language (a RadioGroup that calls `setLang` and replaces the route with the other locale, keeping the query), Reading (the T31 `ReadingSettingsControls`, unthemed), Notifications (two Switches stored in the new `notifications` field of the store, so they persist on this device) and Account (Log out when logged in; "Reset demo data" behind a confirm dialog that restores the defaults and shows "Demo data reset"). Added `notifications: { episodes: true, fastPass: false }` to the store (no version bump needed: persist merges missing keys).
 89. **Creator dashboard** (`/creator`): there are no creator accounts, so the page always shows the series of the stand-in creator Chan Sreyleak (`STAND_IN_CREATOR` in `demo-api.ts`, as `RankRow`s with "—" movement). The Series count, total views ("Readers") and total likes are derived from the data; Fast Pass earnings and the payout details are the placeholders `[AMOUNT]` / `[PAYOUT DETAILS]` (no money values anywhere). "Start publishing" only shows the toast "Publishing opens soon"; the three guideline cards are my own short copy (not in the design). Logged out shows an EmptyState with Log in.
+90. **Rankings / Genres** (T43): `/rankings` lists every comic (41, in the Home order then by views) or the 7 novels; the header and footer links now point to `/rankings` and `/genres`. `/genres` opens on Fantasy (the Home default), `/genres/[genre]` is statically generated for all 8 genres and the chips are links (so the URL shows the genre; unknown genre = 404). Slug mapping: `genreSlug` / `genreFromSlug` in `src/lib/routes.ts` ("Slice of life" <-> `slice-of-life`, "Sci-fi" <-> `sci-fi`).

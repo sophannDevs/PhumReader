@@ -20,11 +20,11 @@ import { cn } from "@/lib/utils"
 
 export type HeaderUser = { name: string }
 
-// Targets per design/spec.md §0 until the pages exist (T43 moves Rankings / Genres).
+// Rankings and Genres have their own pages (T43); Web novels stays on the Home section.
 const navItems = [
   { key: "home", href: "/", current: (p: string) => p === "/" },
-  { key: "rankings", href: "/#rank", current: (p: string) => p.startsWith("/rankings") },
-  { key: "genres", href: "/#genres", current: (p: string) => p.startsWith("/genres") },
+  { key: "rankings", href: "/rankings", current: (p: string) => p.startsWith("/rankings") },
+  { key: "genres", href: "/genres", current: (p: string) => p.startsWith("/genres") },
   { key: "novels", href: "/#novels", current: () => false },
 ] as const
 

@@ -508,5 +508,16 @@
     "login": "Log in",
     "empty": "No series yet",
     "emptyDesc": "Your published series will show up here."
+  },
+  "rankings": {
+    "title": "Rankings",
+    "subtitle": "The most-read series right now. Updated every hour.",
+    "empty": "No rankings yet",
+    "emptyDesc": "Check back soon."
+  },
+  "genresPage": {
+    "title": "Genres",
+    "empty": "No series in this genre yet",
+    "emptyDesc": "Try another genre."
   }
 }

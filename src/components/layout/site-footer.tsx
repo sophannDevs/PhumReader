@@ -11,8 +11,8 @@ const columns: { title: string; links: FooterLink[] }[] = [
     title: "read",
     links: [
       { key: "originals", href: "/" },
-      { key: "rankings", href: "/#rank" },
-      { key: "genres", href: "/#genres" },
+      { key: "rankings", href: "/rankings" },
+      { key: "genres", href: "/genres" },
       { key: "novels", href: "/#novels" },
     ],
   },
