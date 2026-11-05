@@ -29,7 +29,7 @@ npm run test:e2e     # Playwright, available after T52
 - Components in Part 2 and Part 3 are presentational (props + callbacks). Part 4 adds data, the fake API and the store, and wires them in. Part 5 builds the pages with all interactions. Part 6 completes loading / empty / error states on every page.
 - A temporary preview page at `/dev/kit` is used to check components in Parts 2–4. It is deleted in T53.
 
-Progress: 35 / 53
+Progress: 36 / 53
 
 ---
 
@@ -226,7 +226,7 @@ Progress: 35 / 53
   - Look at: `05-forgot-password-desktop.png`; `design/spec.md` §5 Forgot, Done; `demo-data.loginPageStrings`.
   - Done when: the forgot flow works end to end; logging in from a series page lands back on that series page; switching to ខ្មែរ translates every visible string on `/login`.
 
-- [ ] **T36 Coins: page header, alerts, packs, payment methods** (≈45 min)
+- [x] **T36 Coins: page header, alerts, packs, payment methods** (≈45 min)
   - Build: `/coins`: "Coins" + "Unlock Fast Pass episodes and chapters before they're free." + balance card (CoinIcon 32, "Your balance", "N coins"); outline Alert "⚡ Get coins for episode N of <title> — After your purchase we'll take you straight back." with "Go back" (when `shopReturn` is set); brand Alert "🎁 First purchase: double coins — Your first pack of any size comes with the same number of coins again, free." (while the offer is active, see Assumptions); "1. Choose a pack": 5 PackCards (bonus line "+20 bonus · +120 first" during the offer, "No bonus · +10 first" for the 10 pack, Popular / Best value badges), 120 selected by default, 5 columns → 2 on phone; "2. Pay with": KHQR (Recommended), ABA Pay, Credit or debit card. Selection kept in `checkoutDraft`.
   - Look at: `06-coins-desktop.png`, `06-coins-phone.png`; `design/spec.md` §6.
   - Done when: layout matches both screens; "Go back" returns to the series page; selection survives a reload.
@@ -415,3 +415,4 @@ Progress: 35 / 53
 81. **Sign up**: the password must meet at least 3 of the 4 rules (the strength bar turns green at 3; below that it is amber); the rule labels are `auth.rule0..3` (English and Khmer) instead of `passwordRules` in the data. The email is checked against the demo account and the store's `accounts` through `signUp()` (error `email_taken` -> "That email already has an account"). A valid form keeps `{name, email, password}` in the flow state and moves to Verify.
 82. **Verify code**: digits only (`input-otp` pattern), autofocus, paste supported. The Verify button stays disabled until 6 digits are typed. A wrong code keeps the digits (shown red through `data-invalid` on the wrapper and `aria-invalid`), refocuses the OTP and clears the error as soon as the code changes. The resend countdown is 30 s (`aria-live="polite"`), "Resend code" shows the toast "Code sent" and restarts it. A correct code (123456) calls `addAccount` + `login`, then shows the Done view.
 83. **Forgot password**: the "sent" confirmation is a state inside `ForgotView` (not a separate flow view). The language switch opens the other locale's route, which would reset the page state, so Log in / Sign up / Forgot are mirrored in `?mode=` (via `history.replaceState`) and the switch keeps the query string; Verify and Done are not persisted (Verify without its data would need the sign-up form again). All `/login` strings come from the `auth` namespace in both languages; only the brand name, the email placeholder, the demo credentials and "Fast Pass" stay in Latin script in Khmer.
+84. **Coins page** (`/coins`, `coins-page.tsx`): header + balance card (`aria-live`), the "Get coins for episode N" alert (only with `shopReturn`; "Go back" clears `shopReturn` and `pendingUnlock` and returns to the saved page) and the first-purchase alert (`useFirstPurchaseOffer`: active until a Paid purchase *with an `orderId`* exists, so the two seeded demo rows never end it). Pack and method pickers are RadioGroups bound to `checkoutDraft` in the store. The right column (order summary) and the history / FAQ row are added in T37.

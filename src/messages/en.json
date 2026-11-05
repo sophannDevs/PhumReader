@@ -5,7 +5,20 @@
     "logoKhmer": "ភូមិ"
   },
   "coins": {
-    "balanceLabel": "{count, plural, one {# coin} other {# coins}}"
+    "balanceLabel": "{count, plural, one {# coin} other {# coins}}",
+    "title": "Coins",
+    "subtitle": "Unlock Fast Pass episodes and chapters before they're free.",
+    "yourBalance": "Your balance",
+    "shopTitleEpisode": "Get coins for episode {n} of {title}",
+    "shopTitleChapter": "Get coins for chapter {n} of {title}",
+    "shopBody": "After your purchase we'll take you straight back.",
+    "goBack": "Go back",
+    "firstTitle": "First purchase: double coins",
+    "firstBody": "Your first pack of any size comes with the same number of coins again, free.",
+    "step1": "1. Choose a pack",
+    "step2": "2. Pay with",
+    "packs": "Coin packs",
+    "methods": "Payment methods"
   },
   "states": {
     "emptyTitle": "Nothing here yet",
