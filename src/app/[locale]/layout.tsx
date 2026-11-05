@@ -44,6 +44,15 @@ export async function generateMetadata({
   return {
     title: { default: t("siteName"), template: `%s · ${t("siteName")}` },
     description: t("tagline"),
+    applicationName: t("siteName"),
+    openGraph: {
+      type: "website",
+      siteName: t("siteName"),
+      title: t("siteName"),
+      description: t("tagline"),
+      locale: locale === "km" ? "km_KH" : "en_US",
+    },
+    twitter: { card: "summary", title: t("siteName"), description: t("tagline") },
   };
 }
 
