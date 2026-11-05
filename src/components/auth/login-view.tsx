@@ -2,13 +2,12 @@
 
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useMutation } from "@tanstack/react-query"
-import { AlertCircleIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { Controller, useForm } from "react-hook-form"
+import { toast } from "sonner"
 import { FacebookIcon, GoogleIcon } from "@/components/auth/social-icons"
 import { loginSchema, type LoginValues } from "@/components/auth/auth-schemas"
 import { PasswordInput } from "@/components/auth/password-input"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
@@ -42,12 +41,17 @@ export function LoginView({
   const emailLogin = useMutation({
     mutationFn: (v: LoginValues) => login(v.email, v.password, useAppStore.getState().accounts),
     onSuccess: finish,
+    onError: (e) =>
+      e instanceof DemoApiError && e.code === "invalid_credentials"
+        ? toast.error(t("errorTitle"), { description: t("errorBody"), duration: 5000 })
+        : toast.error(ts("errorTitle"), { description: ts("errorDescription"), duration: 5000 }),
   })
-  const social = useMutation({ mutationFn: socialLogin, onSuccess: finish })
+  const social = useMutation({
+    mutationFn: socialLogin,
+    onSuccess: finish,
+    onError: () => toast.error(ts("errorTitle"), { description: ts("errorDescription"), duration: 5000 }),
+  })
   const busy = emailLogin.isPending || social.isPending
-
-  const wrongCredentials = emailLogin.error instanceof DemoApiError && emailLogin.error.code === "invalid_credentials"
-  const otherError = emailLogin.isError && !wrongCredentials
 
   return (
     <div className="flex flex-col gap-5">
@@ -81,14 +85,6 @@ export function LoginView({
         {t("orEmail")}
         <span className="h-px flex-1 bg-border" />
       </div>
-
-      {wrongCredentials || otherError ? (
-        <Alert variant="destructive">
-          <AlertCircleIcon />
-          <AlertTitle>{wrongCredentials ? t("errorTitle") : ts("errorTitle")}</AlertTitle>
-          <AlertDescription>{wrongCredentials ? t("errorBody") : ts("errorDescription")}</AlertDescription>
-        </Alert>
-      ) : null}
 
       <form noValidate className="flex flex-col gap-4" onSubmit={form.handleSubmit((v) => emailLogin.mutate(v))}>
         <div className="flex flex-col gap-1.5">

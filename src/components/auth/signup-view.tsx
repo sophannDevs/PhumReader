@@ -5,6 +5,7 @@ import { useMutation } from "@tanstack/react-query"
 import { CheckIcon, CircleIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { Controller, useForm, useWatch } from "react-hook-form"
+import { toast } from "sonner"
 import { passwordChecks, signupSchema, type SignupValues } from "@/components/auth/auth-schemas"
 import { PasswordInput } from "@/components/auth/password-input"
 import { Button } from "@/components/ui/button"
@@ -20,6 +21,7 @@ export type SignupData = { name: string; email: string; password: string }
 /** Sign up: name, email, password with a strength bar and live rules, terms. Next: Verify. */
 export function SignupView({ onSubmitted }: { onSubmitted: (data: SignupData) => void }) {
   const t = useTranslations("auth")
+  const ts = useTranslations("states")
   const form = useForm<SignupValues>({
     resolver: zodResolver(signupSchema),
     defaultValues: { name: "", email: "", password: "", terms: false },
@@ -38,6 +40,7 @@ export function SignupView({ onSubmitted }: { onSubmitted: (data: SignupData) =>
     onSuccess: (_, v) => onSubmitted({ name: v.name.trim(), email: v.email.trim(), password: v.password }),
     onError: (e) => {
       if (e instanceof DemoApiError && e.code === "email_taken") form.setError("email", { message: "emailTaken" })
+      else toast.error(ts("errorTitle"), { description: ts("errorDescription"), duration: 5000 })
     },
   })
 

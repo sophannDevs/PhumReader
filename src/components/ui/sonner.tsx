@@ -4,8 +4,8 @@ import { Toaster as Sonner, type ToasterProps } from "sonner"
 import { CheckIcon, InfoIcon, TriangleAlertIcon, XIcon, Loader2Icon } from "lucide-react"
 
 /**
- * White card, green check dot, md shadow, 2.6 s, bottom-right
- * (bottom-centre above the tab bar on phones). Light theme only.
+ * White card, green check dot, md shadow, top-right. Light theme only.
+ * Errors stay a little longer (5 s) so they can be read.
  * Use `toast.success(...)` for the green check, `toast.error(...)` for
  * cancelled / failed.
  */
@@ -13,7 +13,7 @@ const Toaster = (props: ToasterProps) => {
   return (
     <Sonner
       theme="light"
-      position="bottom-right"
+      position="top-right"
       duration={2600}
       className="toaster group"
       icons={{
@@ -41,7 +41,7 @@ const Toaster = (props: ToasterProps) => {
       }
       toastOptions={{
         classNames: {
-          toast: "!shadow-md !text-sm !font-medium !gap-2.5 max-md:!bottom-[72px]",
+          toast: "!shadow-md !text-sm !font-medium !gap-2.5",
         },
       }}
       {...props}

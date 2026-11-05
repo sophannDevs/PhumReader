@@ -27,6 +27,7 @@ export function VerifyView({
 }) {
   const t = useTranslations("auth")
   const tt = useTranslations("toasts")
+  const ts = useTranslations("states")
   const [code, setCode] = useState("")
   const [seconds, setSeconds] = useState(RESEND_SECONDS)
   const otpRef = useRef<HTMLInputElement>(null)
@@ -46,7 +47,10 @@ export function VerifyView({
       onDone()
     },
     // Keep the typed code (shown red) and the focus in the OTP so the reader can edit it.
-    onError: () => requestAnimationFrame(() => otpRef.current?.focus()),
+    onError: (e) => {
+      toast.error(e instanceof DemoApiError && e.code === "invalid_code" ? t("wrongCode") : ts("errorTitle"), { duration: 5000 })
+      requestAnimationFrame(() => otpRef.current?.focus())
+    },
   })
 
   const wrong = verify.error instanceof DemoApiError && verify.error.code === "invalid_code"
@@ -80,7 +84,6 @@ export function VerifyView({
           autoComplete="one-time-code"
           aria-label={t("codeLabel")}
           aria-invalid={wrong}
-          aria-describedby={wrong ? "otp-error" : undefined}
           onChange={(v) => {
             setCode(v)
             if (verify.isError) verify.reset()
@@ -92,11 +95,6 @@ export function VerifyView({
             ))}
           </InputOTPGroup>
         </InputOTP>
-        {wrong ? (
-          <p id="otp-error" role="alert" className="text-[13px] text-destructive">
-            {t("wrongCode")}
-          </p>
-        ) : null}
       </div>
 
       <Button type="submit" variant="brand" size="lg" className="w-full" loading={verify.isPending} disabled={code.length < 6}>
