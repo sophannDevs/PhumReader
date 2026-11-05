@@ -29,7 +29,7 @@ npm run test:e2e     # Playwright, available after T52
 - Components in Part 2 and Part 3 are presentational (props + callbacks). Part 4 adds data, the fake API and the store, and wires them in. Part 5 builds the pages with all interactions. Part 6 completes loading / empty / error states on every page.
 - A temporary preview page at `/dev/kit` is used to check components in Parts 2–4. It is deleted in T53.
 
-Progress: 32 / 53
+Progress: 33 / 53
 
 ---
 
@@ -211,7 +211,7 @@ Progress: 32 / 53
   - Look at: `05-login-desktop.png`, `05-login-phone.png`, `05-login-error-phone.png`; `design/spec.md` §5 Log in.
   - Done when: an empty submit shows errors under both fields with `aria-invalid`; a wrong password shows the alert; demo credentials log in and return to the page you came from.
 
-- [ ] **T33 Sign up** (≈45 min)
+- [x] **T33 Sign up** (≈45 min)
   - Build: Sign up view: Display name (2+ characters), Email (valid, not already in `accounts`), Password with a 4-segment strength bar (amber below 3 rules, green at 3+) and live rule list (8+ characters, Upper and lower case, A number, A symbol, each with check / circle icon), Terms checkbox (required, error when unchecked), "Create account" brand lg → Verify view (T34) with the entered email and name held in page state.
   - Look at: `05-signup-desktop.png`; `design/spec.md` §5 Sign up; `demo-data.passwordRules`.
   - Done when: typing "Toonwave1!" lights all 4 segments green and ticks all rules; submitting without accepting the terms shows an error; a valid form moves to Verify.
@@ -412,3 +412,4 @@ Progress: 32 / 53
 78. **Novel reader** (`/novel/[slug]/[chapter]`): same route rules as the comic reader (404, comic -> `/read/...`, chapter 1 prerendered). Navigation logic is shared in `useReaderNav` (`src/lib/use-reader-nav.ts`: `markRead`, locked-aware `go`, ← / →, popover list) and used by both readers. The novel bar has no previous / next arrows (the design shows only Chapters and Aa); the chapter buttons come with the end section (T31). The reader root applies the saved `novelSettings` (theme via `data-reader-theme`, size and line height via `--novel-size` / `--novel-leading`, serif via `font-novel`); the "Aa" controls arrive in T31. "6 min read" is a fixed value (the demo text is the same in every chapter and the design shows 6).
 79. **Reading settings** (`reading-settings.tsx`): `ReadingSettingsControls` (text size stepper over 14-24 with a progress bar, Light / Sepia / Dark tabs, Sans / Serif tabs, wide line spacing switch) writes `novelSettings` in the store, and the reader root re-renders instantly; `themed` colours it with the reader tokens (the popover) and the unthemed variant is for the Settings page (T41). Popovers render in a portal outside the reader root, so `ReadingSettingsPopover` and the chapters `EpisodeListPopover` set `data-reader-theme` on their own content. The chapter Like and Bookmark use the persisted `likes` keys `episode:<id>:<n>` and `bookmark:<id>:<n>`.
 80. **Auth flow** (`src/components/auth/`): `/login` renders `AuthFlow`, one small state machine (`login | signup | verify | forgot | sent | done`) inside a Suspense boundary (it reads `?mode=signup`). The Log in view uses react-hook-form + zod (messages are `auth.*` keys, translated in the view) and `useMutation` over the fake API (0.9 s email login, 1 s social). Social buttons have no OAuth (always Sokha Chan); the Google / Facebook marks use `--social-*` tokens in `globals.css`. A wrong password shows the destructive alert; with `?demo=error` any failure shows the generic "Something went wrong" text. The Done view welcomes the first name and replaces the route with `returnTo` (default Home) after 1.2 s, clearing it; "Back to PhumReader" also goes to `returnTo`.
+81. **Sign up**: the password must meet at least 3 of the 4 rules (the strength bar turns green at 3; below that it is amber); the rule labels are `auth.rule0..3` (English and Khmer) instead of `passwordRules` in the data. The email is checked against the demo account and the store's `accounts` through `signUp()` (error `email_taken` -> "That email already has an account"). A valid form keeps `{name, email, password}` in the flow state and moves to Verify.

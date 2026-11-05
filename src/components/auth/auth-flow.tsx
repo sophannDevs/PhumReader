@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl"
 import { useState } from "react"
 import { DoneView } from "@/components/auth/done-view"
 import { LoginView } from "@/components/auth/login-view"
+import { SignupView, type SignupData } from "@/components/auth/signup-view"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 type View = "login" | "signup" | "verify" | "forgot" | "sent" | "done"
@@ -17,6 +18,8 @@ export function AuthFlow() {
   const t = useTranslations("auth")
   const params = useSearchParams()
   const [view, setView] = useState<View>(params.get("mode") === "signup" ? "signup" : "login")
+  // The sign-up details held while the reader verifies the email code (T34).
+  const [pending, setPending] = useState<SignupData | null>(null)
 
   if (view === "done") return <DoneView />
 
@@ -40,7 +43,16 @@ export function AuthFlow() {
       ) : null}
 
       {view === "login" ? <LoginView onForgot={() => setView("forgot")} onDone={() => setView("done")} /> : null}
-      {/* signup / verify / forgot / sent views arrive in T33-T35 */}
+      {view === "signup" ? (
+        <SignupView
+          onSubmitted={(data) => {
+            setPending(data)
+            setView("verify")
+          }}
+        />
+      ) : null}
+      {view === "verify" && pending ? <p className="text-center text-sm">{pending.email}</p> : null}
+      {/* verify / forgot / sent views arrive in T34-T35 */}
     </div>
   )
 }

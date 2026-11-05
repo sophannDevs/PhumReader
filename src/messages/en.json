@@ -228,7 +228,19 @@
     "errorBody": "Check them and try again, or reset your password.",
     "demoHint": "Demo: {email} · {password}",
     "welcome": "Welcome, {name}",
-    "emailPlaceholder": "you@example.com"
+    "emailPlaceholder": "you@example.com",
+    "nameRequired": "Enter at least 2 characters.",
+    "emailTaken": "That email already has an account. Log in instead.",
+    "passwordWeak": "Choose a stronger password: meet at least 3 of the rules below.",
+    "termsRequired": "Accept the terms to continue.",
+    "strength": "Password strength: {count} of 4 rules met",
+    "rule0": "8+ characters",
+    "rule1": "Upper and lower case",
+    "rule2": "A number",
+    "rule3": "A symbol",
+    "ruleMet": "met",
+    "ruleUnmet": "not met",
+    "namePlaceholder": "Sokha Chan"
   },
   "toasts": {
     "loggedOut": "You're logged out",
