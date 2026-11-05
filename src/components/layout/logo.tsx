@@ -43,7 +43,7 @@ export function Logo({
   const content = (
     <>
       <LogoMark className={s.mark} />
-      <span className="flex flex-col leading-none">
+      <span className="flex flex-col leading-none max-[359px]:hidden">
         <span className={cn("font-bold tracking-tight", s.text)}>
           <span className={tone === "light" ? "text-primary" : "text-brand-ink"}>Phum</span>
           <span className={tone === "light" ? "text-surface-foreground" : "text-foreground"}>Reader</span>

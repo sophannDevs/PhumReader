@@ -85,7 +85,7 @@ export function SiteHeader({
           <button
             type="button"
             onClick={onSearchOpen}
-            className="hidden h-9 w-72 items-center gap-2 rounded-control border bg-muted/60 px-3 text-sm text-muted-foreground transition-colors outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background lg:flex"
+            className="hidden h-9 w-48 items-center xl:w-72 gap-2 rounded-control border bg-muted/60 px-3 text-sm text-muted-foreground transition-colors outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background lg:flex"
           >
             <SearchIcon className="size-4" aria-hidden />
             <span className="flex-1 truncate text-left">{t("searchPlaceholder")}</span>
@@ -145,17 +145,17 @@ export function SiteHeader({
             </DropdownMenu>
           ) : (
             <>
-              <Button asChild variant="ghost" className="hidden md:inline-flex">
+              <Button asChild variant="ghost" className="hidden lg:inline-flex">
                 <Link href="/login" onClick={onLogin}>
                   {t("logIn")}
                 </Link>
               </Button>
-              <Button asChild variant="brand" size="sm" className="md:hidden">
+              <Button asChild variant="brand" size="sm" className="lg:hidden">
                 <Link href="/login" onClick={onLogin}>
                   {t("logIn")}
                 </Link>
               </Button>
-              <Button asChild variant="brand" className="hidden md:inline-flex">
+              <Button asChild variant="brand" className="hidden lg:inline-flex">
                 <Link href="/login?mode=signup" onClick={onLogin}>
                   {t("signUp")}
                 </Link>

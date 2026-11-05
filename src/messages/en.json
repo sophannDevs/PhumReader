@@ -173,6 +173,19 @@
     "quote": "I posted my first episode on a Tuesday night. By Friday, readers in Battambang and Seoul were asking for the next one."
   },
   "toasts": {
-    "loggedOut": "You're logged out"
+    "loggedOut": "You're logged out",
+    "subscribed": "Subscribed to {title}",
+    "unsubscribed": "Unsubscribed"
+  },
+  "home": {
+    "heroLabel": "Featured series",
+    "readEpisode": "Read episode 1",
+    "readChapter": "Read chapter 1",
+    "subscribe": "Subscribe",
+    "subscribed": "Subscribed",
+    "details": "Series details",
+    "prev": "Previous slide",
+    "next": "Next slide",
+    "goTo": "Go to slide {n}"
   }
 }
