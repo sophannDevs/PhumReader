@@ -29,7 +29,7 @@ npm run test:e2e     # Playwright, available after T52
 - Components in Part 2 and Part 3 are presentational (props + callbacks). Part 4 adds data, the fake API and the store, and wires them in. Part 5 builds the pages with all interactions. Part 6 completes loading / empty / error states on every page.
 - A temporary preview page at `/dev/kit` is used to check components in Parts 2–4. It is deleted in T53.
 
-Progress: 4 / 53
+Progress: 5 / 53
 
 ---
 
@@ -59,7 +59,7 @@ Progress: 4 / 53
   - Look at: `design/foundations.md` §1, §3; `design/screens/00-foundations-desktop.png` (Color tokens, Layout & spacing).
   - Done when: `/dev/kit` shows the token swatches with their hex values; computed `--primary` is `#00DC64`; no hex colour appears in a component file outside `globals.css`.
 
-- [ ] **T05 Fonts, type scale, motion rules** (≈30 min)
+- [x] **T05 Fonts, type scale, motion rules** (≈30 min)
   - Build: `next/font` for Inter (400/500/600/700), Kantumruy Pro and Noto Serif as `--font-inter`, `--font-khmer`, `--font-serif`; body stack `Inter, "Kantumruy Pro", sans-serif` so Khmer falls back automatically. Type utilities from foundations §2 (hero 48/52, h1 36/42 → 26/32 phone, series-title 40/46 → 26/30, h2 24/30 → 20/26, h3 18/26, h4 15/22, card-title 14/20, lead, body 14/20, small 13/18, caption 12/16, eyebrow 12/16 uppercase brand-ink 0.06em; novel text 18 px / 1.85). `tabular-nums` helper for coins, counts and timers. Motion: 150 ms colour transitions, 200 ms switches, cover hover zoom 1.04 over 300 ms, all disabled under `prefers-reduced-motion`.
   - Look at: `design/foundations.md` §2, §7; `00-foundations-desktop.png` (Typography row).
   - Done when: `/dev/kit` reproduces the Typography row including the Khmer sample in Kantumruy Pro; the network tab shows self-hosted font files, no Google Fonts request.
@@ -361,3 +361,5 @@ Progress: 4 / 53
 27. **Typecheck script** runs `next typegen && tsc --noEmit` (not plain `tsc --noEmit`): Next 16 declares the global `LayoutProps` / `PageProps` route types in `.next/types`, so `tsc` alone fails on a clean clone until those types are generated.
 28. **shadcn CLI 4.x** no longer offers the "New York / Zinc" init prompts. The project uses the `vega` preset (Lucide + Inter, the classic shadcn look) on the Radix base; T04 replaces the preset's neutral palette with the zinc tokens from foundations.md. `src/lib/utils.ts` re-exports `cn` from the `cn` package, as the CLI generates it.
 29. **Demo data typing**: `src/data` validates the JSON with a zod schema at module load and infers the types from it (`z.infer`) instead of a plain `satisfies` cast, so literal unions such as `type: "comic" | "novel"` are real types and any drift between the JSON and the schema fails loudly in development.
+30. **Type utilities** are named `type-hero`, `type-h1`, `type-series-title`, `type-h2`, `type-h3`, `type-h4`, `type-card-title`, `type-lead`, `type-body`, `type-small`, `type-caption`, `type-eyebrow`, `type-novel` (in `globals.css`). Sizes switch to the phone values below 768 px. The hero title has no phone size in the design, so it uses 30 / 34 (measured from `01-home-phone.png`). `tabular-nums` is Tailwind's built-in class, not a custom helper.
+31. **Fonts**: Inter (400–700), Kantumruy Pro (variable, Khmer + Latin subsets) and Noto Serif (400, 700) via `next/font`. `font-sans` is `Inter, Kantumruy Pro, system` so Khmer falls back automatically. The serif is used with the `font-novel` class. Geist Mono was removed; code uses the system monospace stack.
