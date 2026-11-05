@@ -29,7 +29,7 @@ npm run test:e2e     # Playwright, available after T52
 - Components in Part 2 and Part 3 are presentational (props + callbacks). Part 4 adds data, the fake API and the store, and wires them in. Part 5 builds the pages with all interactions. Part 6 completes loading / empty / error states on every page.
 - A temporary preview page at `/dev/kit` is used to check components in Parts 2–4. It is deleted in T53.
 
-Progress: 34 / 53
+Progress: 35 / 53
 
 ---
 
@@ -221,7 +221,7 @@ Progress: 34 / 53
   - Look at: `05-verify-code-phone.png`; `design/spec.md` §5 Verify.
   - Done when: "123456" creates the account and logs in; "000000" shows the red state and keeps focus in the OTP; the countdown reaches 0 and Resend works; a signed-up account can log in afterwards.
 
-- [ ] **T35 Forgot password, Done screen, login language switch** (≈45 min)
+- [x] **T35 Forgot password, Done screen, login language switch** (≈45 min)
   - Build: Forgot view: "Reset your password" + "Enter your email and we'll send you a reset link.", Email, "Send reset link" (spinner) → sent state ("Check your inbox", "We sent a reset link to <email>.", "It expires in 30 minutes.") → "← Back to log in". Done view: green check circle, "Welcome, <first name>", "Taking you back…", redirect to `returnTo` (default `/`) after 1.2 s, then clear it. Language switch EN / ខ្មែរ: every `/login` string comes from the `auth` namespace in `en.json` / `km.json` (seeded from `loginPageStrings` with PhumReader naming), Khmer text carries `lang="km"`, switching keeps the current view.
   - Look at: `05-forgot-password-desktop.png`; `design/spec.md` §5 Forgot, Done; `demo-data.loginPageStrings`.
   - Done when: the forgot flow works end to end; logging in from a series page lands back on that series page; switching to ខ្មែរ translates every visible string on `/login`.
@@ -414,3 +414,4 @@ Progress: 34 / 53
 80. **Auth flow** (`src/components/auth/`): `/login` renders `AuthFlow`, one small state machine (`login | signup | verify | forgot | sent | done`) inside a Suspense boundary (it reads `?mode=signup`). The Log in view uses react-hook-form + zod (messages are `auth.*` keys, translated in the view) and `useMutation` over the fake API (0.9 s email login, 1 s social). Social buttons have no OAuth (always Sokha Chan); the Google / Facebook marks use `--social-*` tokens in `globals.css`. A wrong password shows the destructive alert; with `?demo=error` any failure shows the generic "Something went wrong" text. The Done view welcomes the first name and replaces the route with `returnTo` (default Home) after 1.2 s, clearing it; "Back to PhumReader" also goes to `returnTo`.
 81. **Sign up**: the password must meet at least 3 of the 4 rules (the strength bar turns green at 3; below that it is amber); the rule labels are `auth.rule0..3` (English and Khmer) instead of `passwordRules` in the data. The email is checked against the demo account and the store's `accounts` through `signUp()` (error `email_taken` -> "That email already has an account"). A valid form keeps `{name, email, password}` in the flow state and moves to Verify.
 82. **Verify code**: digits only (`input-otp` pattern), autofocus, paste supported. The Verify button stays disabled until 6 digits are typed. A wrong code keeps the digits (shown red through `data-invalid` on the wrapper and `aria-invalid`), refocuses the OTP and clears the error as soon as the code changes. The resend countdown is 30 s (`aria-live="polite"`), "Resend code" shows the toast "Code sent" and restarts it. A correct code (123456) calls `addAccount` + `login`, then shows the Done view.
+83. **Forgot password**: the "sent" confirmation is a state inside `ForgotView` (not a separate flow view). The language switch opens the other locale's route, which would reset the page state, so Log in / Sign up / Forgot are mirrored in `?mode=` (via `history.replaceState`) and the switch keeps the query string; Verify and Done are not persisted (Verify without its data would need the sign-up form again). All `/login` strings come from the `auth` namespace in both languages; only the brand name, the email placeholder, the demo credentials and "Fast Pass" stay in Latin script in Khmer.

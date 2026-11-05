@@ -30,3 +30,6 @@ export const signupSchema = z.object({
   terms: z.boolean().refine((v) => v, "termsRequired"),
 })
 export type SignupValues = z.infer<typeof signupSchema>
+
+export const forgotSchema = z.object({ email })
+export type ForgotValues = z.infer<typeof forgotSchema>
