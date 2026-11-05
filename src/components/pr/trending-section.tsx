@@ -4,6 +4,7 @@ import { TrendingUpIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useState } from "react"
 import { RankRow } from "@/components/pr/rank-row"
+import { SectionEmpty } from "@/components/pr/section-empty"
 import { SkeletonRow } from "@/components/pr/skeletons"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import type { RankingEntry } from "@/data"
@@ -39,13 +40,17 @@ export function TrendingSection({ comics, novels }: { comics: RankingEntry[]; no
           </TabsList>
         </Tabs>
       </div>
-      <ol className="mt-4 flex flex-col gap-1">
-        {rows.map((r) => (
-          <li key={r.series.id}>
-            <RankRow rank={r.rank} series={r.series} movement={r.movement} />
-          </li>
-        ))}
-      </ol>
+      {rows.length === 0 ? (
+        <SectionEmpty className="mt-4 rounded-card border border-dashed py-10" />
+      ) : (
+        <ol className="mt-4 flex flex-col gap-1">
+          {rows.map((r) => (
+            <li key={r.series.id}>
+              <RankRow rank={r.rank} series={r.series} movement={r.movement} />
+            </li>
+          ))}
+        </ol>
+      )}
     </section>
   )
 }

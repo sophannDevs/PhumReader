@@ -3,6 +3,7 @@
 import { BookOpenIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { NovelCard } from "@/components/pr/novel-card"
+import { SectionEmpty } from "@/components/pr/section-empty"
 import { SectionHeader } from "@/components/pr/section-header"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Badge } from "@/components/ui/badge"
@@ -13,7 +14,6 @@ const GRID = "grid gap-3 md:grid-cols-2 md:gap-4 lg:grid-cols-3"
 /** Web novels: 6 NovelCards (3 columns on desktop, 1 on phones) and the reader badge. */
 export function NovelsSection({ novels }: { novels: Series[] }) {
   const t = useTranslations("home")
-  if (novels.length === 0) return null
 
   return (
     <section id="novels" aria-labelledby="novels-title" className="scroll-mt-24 flex flex-col gap-5">
@@ -27,11 +27,15 @@ export function NovelsSection({ novels }: { novels: Series[] }) {
           </Badge>
         }
       />
-      <div className={GRID}>
-        {novels.map((s) => (
-          <NovelCard key={s.id} series={s} />
-        ))}
-      </div>
+      {novels.length === 0 ? (
+        <SectionEmpty />
+      ) : (
+        <div className={GRID}>
+          {novels.map((s) => (
+            <NovelCard key={s.id} series={s} />
+          ))}
+        </div>
+      )}
     </section>
   )
 }

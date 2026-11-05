@@ -29,7 +29,7 @@ npm run test:e2e     # Playwright, available after T52
 - Components in Part 2 and Part 3 are presentational (props + callbacks). Part 4 adds data, the fake API and the store, and wires them in. Part 5 builds the pages with all interactions. Part 6 completes loading / empty / error states on every page.
 - A temporary preview page at `/dev/kit` is used to check components in Parts 2–4. It is deleted in T53.
 
-Progress: 45 / 53
+Progress: 46 / 53
 
 ---
 
@@ -280,7 +280,7 @@ Progress: 45 / 53
 
 ## Part 6: States
 
-- [ ] **T46 Home and Series states** (≈60 min)
+- [x] **T46 Home and Series states** (≈60 min)
   - Build: skeletons that mirror the layout (hero banner, 4 continue cards, 6 cards, 8 rank rows, 6 novel cards; series hero, 12 rows, sidebar) with `Skeleton`; `?demo=empty` → each Home section shows an EmptyState ("Nothing here yet" + link), Continue reading hidden, Series Episodes tab "No episodes yet", Comments "Be the first to comment"; `?demo=error` → ErrorState with Retry (refetch) in place of the section or page; `?demo=slow` keeps skeletons for at least 3 s. Query keys include the flag so Retry works after removing it.
   - Look at: `design/foundations.md` §4 (Skeleton); `design/spec.md` §1 States, §0 Fake API.
   - Done when: `/?demo=empty`, `/?demo=error`, `/?demo=slow` and the same on `/series/glass-compass` each show the intended state with no layout jump; Retry recovers.

@@ -2,6 +2,7 @@
 
 import { useTranslations } from "next-intl"
 import { useState } from "react"
+import { SectionEmpty } from "@/components/pr/section-empty"
 import { SectionHeader } from "@/components/pr/section-header"
 import { SeriesCard } from "@/components/pr/series-card"
 import { SkeletonCard } from "@/components/pr/skeletons"
@@ -39,11 +40,15 @@ export function DailyUpdatesSection({ daily }: { daily: Record<Weekday, Series[]
           </div>
         </Tabs>
       </div>
-      <div className={seriesGridClass}>
-        {(daily[day] ?? []).map((s) => (
-          <SeriesCard key={s.id} series={s} />
-        ))}
-      </div>
+      {(daily[day] ?? []).length === 0 ? (
+        <SectionEmpty />
+      ) : (
+        <div className={seriesGridClass}>
+          {daily[day].map((s) => (
+            <SeriesCard key={s.id} series={s} />
+          ))}
+        </div>
+      )}
     </section>
   )
 }

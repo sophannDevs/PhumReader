@@ -2,6 +2,7 @@
 
 import { useTranslations } from "next-intl"
 import { useState } from "react"
+import { SectionEmpty } from "@/components/pr/section-empty"
 import { SectionHeader } from "@/components/pr/section-header"
 import { SeriesCard } from "@/components/pr/series-card"
 import { SkeletonCard } from "@/components/pr/skeletons"
@@ -30,11 +31,15 @@ export function GenreSection({ genres, byGenre }: { genres: Genre[]; byGenre: Re
           </Toggle>
         ))}
       </div>
-      <div className={GRID}>
-        {list.slice(0, 6).map((s) => (
-          <SeriesCard key={s.id} series={s} />
-        ))}
-      </div>
+      {list.length === 0 ? (
+        <SectionEmpty />
+      ) : (
+        <div className={GRID}>
+          {list.slice(0, 6).map((s) => (
+            <SeriesCard key={s.id} series={s} />
+          ))}
+        </div>
+      )}
     </section>
   )
 }
