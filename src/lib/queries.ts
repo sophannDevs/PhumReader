@@ -12,6 +12,7 @@ import {
   fetchEpisodes,
   fetchGenre,
   fetchHome,
+  fetchLibrary,
   fetchRankings,
   fetchSeries,
   getDemoFlag,
@@ -81,4 +82,9 @@ export const useSearchSeries = (query: string) => {
 export const useCoinsPage = () => {
   const flag = useDemoFlag()
   return useQuery({ queryKey: ["coins-page", flag], queryFn: fetchCoinsPage })
+}
+
+export const useLibrary = () => {
+  const flag = useDemoFlag()
+  return useQuery({ queryKey: ["library", flag], queryFn: fetchLibrary })
 }

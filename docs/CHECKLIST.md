@@ -29,7 +29,7 @@ npm run test:e2e     # Playwright, available after T52
 - Components in Part 2 and Part 3 are presentational (props + callbacks). Part 4 adds data, the fake API and the store, and wires them in. Part 5 builds the pages with all interactions. Part 6 completes loading / empty / error states on every page.
 - A temporary preview page at `/dev/kit` is used to check components in Parts 2–4. It is deleted in T53.
 
-Progress: 39 / 53
+Progress: 40 / 53
 
 ---
 
@@ -246,7 +246,7 @@ Progress: 39 / 53
   - Look at: `06-coins-success-desktop.png`, `06-coins-failed-phone.png`; `design/spec.md` §6 steps 3–5, §7 flow 3.
   - Done when: flow 3 of spec §7 works end to end (3 coins → KHQR, 120 pack → Back to episode → dialog shows enough coins → Unlock → reader); Simulate failed adds a Failed row; the expired state appears when the countdown hits 0 (test with a short timer in dev).
 
-- [ ] **T40 My library** (≈45 min)
+- [x] **T40 My library** (≈45 min)
   - Build: `/library` in V2 style: H1 "My library"; logged out → EmptyState "Log in to see your library" + Log in button (saves `returnTo`); pill Tabs: Continue reading (ContinueCards from the demo entries merged with `lastRead`), Subscribed (SeriesCard grid from `subscriptions`), Unlocked (EpisodeRows grouped by series from `unlocked`); every tab has an EmptyState linking to Home.
   - Look at: `01-home-desktop.png` (Continue reading, card grid) for patterns; `design/spec.md` §0 routes.
   - Done when: subscribing on Home shows the series here; unlocking shows the episode; empty tabs show EmptyStates; the phone Library tab lands here.
@@ -418,3 +418,4 @@ Progress: 39 / 53
 84. **Coins page** (`/coins`, `coins-page.tsx`): header + balance card (`aria-live`), the "Get coins for episode N" alert (only with `shopReturn`; "Go back" clears `shopReturn` and `pendingUnlock` and returns to the saved page) and the first-purchase alert (`useFirstPurchaseOffer`: active until a Paid purchase *with an `orderId`* exists, so the two seeded demo rows never end it). Pack and method pickers are RadioGroups bound to `checkoutDraft` in the store. The right column (order summary) and the history / FAQ row are added in T37.
 85. **Order summary / history / FAQ** (`checkout-card.tsx`, `purchase-history.tsx`, `coins-faq.tsx`): the total is coins + pack bonus + first-purchase bonus while the offer lasts (`packTotal`); "Balance after" is balance + total. Logged-out "Continue to payment" saves `returnTo = "/coins"` and goes to `/login` (pack and method stay in `checkoutDraft`). History comes from the store (newest first, seeded with the 2 demo rows), the Method column is hidden below 768 px, a new `danger` Badge variant is used for Failed, and `?demo=empty` shows "No purchases yet". The FAQ accordion is single / collapsible with the first item open.
 86. **Checkout flow** (`checkout-flow.ts`, `checkout-card.tsx`): `useCheckout` is the state machine `review -> pay -> confirming -> success | failed`, owned by `CoinsBody` so the pack and method pickers are disabled while paying / confirming. The countdown (10 min from `khqrExpiryMinutes`) applies to every method; reaching 0 shows "The code expired" without a history row. In dev, `?expiry=<seconds>` shortens it for testing. Cancel records a Cancelled row (toast "Payment cancelled", error style); a declined payment records a Failed row; success adds the coins, records a Paid row with a `PR-########` order id (which ends the first-purchase offer) and shows "+N coins added". Rows for cancelled / failed attempts show the coins that would have been added. "Back to episode N" clears `shopReturn` but keeps `pendingUnlock`, so the unlock dialog reopens with the new balance. The card step shows only `[PAYMENT PROVIDER FORM]`; the page has no card number input anywhere. The QR is a decorative placeholder drawing, not a real code.
+87. **My library** (`/library`): logged out shows an EmptyState with a Log in button (saves `returnTo`). Continue reading = the 4 demo entries with the episode raised to `lastRead`, plus any other series the reader has opened (progress = `lastRead / total`, since the reader does not track scroll: Assumption 8). Subscribed = `SeriesCard`s from `subscriptions`; Unlocked = `EpisodeRow`s (state `unlocked`) grouped by series. Each empty tab links to Home ("Browse series"). Data comes from `fetchLibrary` / `useLibrary`.

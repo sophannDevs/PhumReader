@@ -133,6 +133,14 @@ export const fetchHome = () =>
     }
   )
 
+export type LibraryData = { series: Series[]; continueReading: ContinueView[] }
+
+/** All series (the page filters by the store's ids) and the demo "continue reading" entries. */
+export const fetchLibrary = () =>
+  withDemo<LibraryData>(() => ({ series: getSeries(), continueReading: continueReading() }), {
+    empty: () => ({ series: getSeries(), continueReading: [] }),
+  })
+
 export type SeriesDetail = {
   series: Series
   synopsis: string

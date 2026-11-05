@@ -434,5 +434,22 @@
     "noEpisodes": "No episodes yet",
     "noEpisodesDesc": "New episodes will show up here.",
     "noChapters": "No chapters yet"
+  },
+  "library": {
+    "title": "My library",
+    "loginTitle": "Log in to see your library",
+    "loginDesc": "Your subscriptions, reading history and unlocked episodes live here.",
+    "login": "Log in",
+    "tabContinue": "Continue reading",
+    "tabSubscribed": "Subscribed",
+    "tabUnlocked": "Unlocked",
+    "emptyContinue": "Nothing to continue yet",
+    "emptyContinueDesc": "Open an episode and it will show up here.",
+    "emptySubscribed": "No subscriptions yet",
+    "emptySubscribedDesc": "Subscribe to a series to follow its new episodes.",
+    "emptyUnlocked": "No unlocked episodes yet",
+    "emptyUnlockedDesc": "Episodes you unlock with coins stay here.",
+    "browse": "Browse series",
+    "tabs": "Library sections"
   }
 }
