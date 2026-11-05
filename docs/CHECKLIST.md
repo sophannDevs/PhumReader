@@ -29,7 +29,7 @@ npm run test:e2e     # Playwright, available after T52
 - Components in Part 2 and Part 3 are presentational (props + callbacks). Part 4 adds data, the fake API and the store, and wires them in. Part 5 builds the pages with all interactions. Part 6 completes loading / empty / error states on every page.
 - A temporary preview page at `/dev/kit` is used to check components in Parts 2–4. It is deleted in T53.
 
-Progress: 41 / 53
+Progress: 42 / 53
 
 ---
 
@@ -256,7 +256,7 @@ Progress: 41 / 53
   - Look at: `00-foundations-desktop.png` (Forms column); `design/foundations.md` §4.
   - Done when: changing the language here switches the whole site; reset restores 3 coins and logs out; every control works by keyboard.
 
-- [ ] **T42 Creator dashboard** (≈45 min)
+- [x] **T42 Creator dashboard** (≈45 min)
   - Build: `/creator`: eyebrow "FOR CREATORS", H1 "Creator dashboard", intro, "Start publishing" brand (toast "Publishing opens soon") + "Creator guidelines" outline (anchor `#guidelines`); 4 stat cards (Series, Readers, Likes, Fast Pass earnings shown as "[AMOUNT]"); "Your series" list using RankRows for the stand-in creator Chan Sreyleak; `#guidelines` section with 3 short cards; `#earnings` section with a brand Alert "Earnings are paid monthly · [PAYOUT DETAILS]". Logged out → EmptyState with Log in.
   - Look at: `01-home-desktop.png` (Creator CTA card); `design/foundations.md`.
   - Done when: the page renders logged in and out; the Home CTA and the avatar menu land here; no money value other than "[AMOUNT]" placeholders.
@@ -420,3 +420,4 @@ Progress: 41 / 53
 86. **Checkout flow** (`checkout-flow.ts`, `checkout-card.tsx`): `useCheckout` is the state machine `review -> pay -> confirming -> success | failed`, owned by `CoinsBody` so the pack and method pickers are disabled while paying / confirming. The countdown (10 min from `khqrExpiryMinutes`) applies to every method; reaching 0 shows "The code expired" without a history row. In dev, `?expiry=<seconds>` shortens it for testing. Cancel records a Cancelled row (toast "Payment cancelled", error style); a declined payment records a Failed row; success adds the coins, records a Paid row with a `PR-########` order id (which ends the first-purchase offer) and shows "+N coins added". Rows for cancelled / failed attempts show the coins that would have been added. "Back to episode N" clears `shopReturn` but keeps `pendingUnlock`, so the unlock dialog reopens with the new balance. The card step shows only `[PAYMENT PROVIDER FORM]`; the page has no card number input anywhere. The QR is a decorative placeholder drawing, not a real code.
 87. **My library** (`/library`): logged out shows an EmptyState with a Log in button (saves `returnTo`). Continue reading = the 4 demo entries with the episode raised to `lastRead`, plus any other series the reader has opened (progress = `lastRead / total`, since the reader does not track scroll: Assumption 8). Subscribed = `SeriesCard`s from `subscriptions`; Unlocked = `EpisodeRow`s (state `unlocked`) grouped by series. Each empty tab links to Home ("Browse series"). Data comes from `fetchLibrary` / `useLibrary`.
 88. **Settings** (`/settings`): Profile (initials avatar, name, email; a Log in prompt when logged out), Language (a RadioGroup that calls `setLang` and replaces the route with the other locale, keeping the query), Reading (the T31 `ReadingSettingsControls`, unthemed), Notifications (two Switches stored in the new `notifications` field of the store, so they persist on this device) and Account (Log out when logged in; "Reset demo data" behind a confirm dialog that restores the defaults and shows "Demo data reset"). Added `notifications: { episodes: true, fastPass: false }` to the store (no version bump needed: persist merges missing keys).
+89. **Creator dashboard** (`/creator`): there are no creator accounts, so the page always shows the series of the stand-in creator Chan Sreyleak (`STAND_IN_CREATOR` in `demo-api.ts`, as `RankRow`s with "—" movement). The Series count, total views ("Readers") and total likes are derived from the data; Fast Pass earnings and the payout details are the placeholders `[AMOUNT]` / `[PAYOUT DETAILS]` (no money values anywhere). "Start publishing" only shows the toast "Publishing opens soon"; the three guideline cards are my own short copy (not in the design). Logged out shows an EmptyState with Log in.

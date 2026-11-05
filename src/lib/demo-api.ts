@@ -1,3 +1,4 @@
+import { formatCount, parseCount } from "@/lib/format"
 import {
   coinPacks,
   comicPanels,
@@ -140,6 +141,31 @@ export const fetchLibrary = () =>
   withDemo<LibraryData>(() => ({ series: getSeries(), continueReading: continueReading() }), {
     empty: () => ({ series: getSeries(), continueReading: [] }),
   })
+
+export type CreatorData = {
+  name: string
+  series: Series[]
+  totals: { views: string; likes: string }
+}
+
+/** The demo has no creator accounts: the dashboard shows Chan Sreyleak's series. */
+export const STAND_IN_CREATOR = "Chan Sreyleak"
+
+export const fetchCreator = () =>
+  withDemo<CreatorData>(
+    () => {
+      const series = getSeries().filter((s) => s.creator === STAND_IN_CREATOR)
+      return {
+        name: STAND_IN_CREATOR,
+        series,
+        totals: {
+          views: formatCount(series.reduce((n, s) => n + parseCount(s.views), 0)),
+          likes: formatCount(series.reduce((n, s) => n + parseCount(s.likes), 0)),
+        },
+      }
+    },
+    { empty: () => ({ name: STAND_IN_CREATOR, series: [], totals: { views: "0", likes: "0" } }) }
+  )
 
 export type SeriesDetail = {
   series: Series

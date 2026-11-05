@@ -330,7 +330,8 @@
     "coinsAdded": "+{count} coins added",
     "paymentCancelled": "Payment cancelled",
     "paymentFailed": "Payment didn't go through",
-    "demoReset": "Demo data reset"
+    "demoReset": "Demo data reset",
+    "publishingSoon": "Publishing opens soon"
   },
   "home": {
     "heroLabel": "Featured series",
@@ -479,5 +480,33 @@
     "resetBody": "Your coins go back to 3, you are logged out and your unlocks, subscriptions and reading progress are cleared.",
     "cancel": "Cancel",
     "confirmReset": "Reset"
+  },
+  "creator": {
+    "eyebrow": "For creators",
+    "title": "Creator dashboard",
+    "intro": "Publish comics and web novels, see how your readers respond and earn from Fast Pass episodes.",
+    "start": "Start publishing",
+    "guidelines": "Creator guidelines",
+    "statSeries": "Series",
+    "statReaders": "Readers",
+    "statLikes": "Likes",
+    "statEarnings": "Fast Pass earnings",
+    "amount": "[AMOUNT]",
+    "yourSeries": "Your series",
+    "yourSeriesDesc": "Showing the series of {name}, the stand-in creator for this demo.",
+    "g1Title": "Original work",
+    "g1Body": "Share stories you made yourself, in Khmer, English or both.",
+    "g2Title": "Be kind and safe",
+    "g2Body": "Keep it respectful. Mark mature themes so readers can choose.",
+    "g3Title": "Keep a schedule",
+    "g3Body": "Regular updates help readers come back. Pick a day and stick to it.",
+    "earnings": "Earnings",
+    "earningsTitle": "Earnings are paid monthly",
+    "earningsBody": "[PAYOUT DETAILS]",
+    "loginTitle": "Log in to open your dashboard",
+    "loginDesc": "Creators can publish series and follow how readers respond.",
+    "login": "Log in",
+    "empty": "No series yet",
+    "emptyDesc": "Your published series will show up here."
   }
 }

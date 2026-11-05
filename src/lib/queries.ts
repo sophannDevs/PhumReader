@@ -8,6 +8,7 @@ import {
   fetchChapter,
   fetchCoinsPage,
   fetchComments,
+  fetchCreator,
   fetchEpisode,
   fetchEpisodes,
   fetchGenre,
@@ -87,4 +88,9 @@ export const useCoinsPage = () => {
 export const useLibrary = () => {
   const flag = useDemoFlag()
   return useQuery({ queryKey: ["library", flag], queryFn: fetchLibrary })
+}
+
+export const useCreator = () => {
+  const flag = useDemoFlag()
+  return useQuery({ queryKey: ["creator", flag], queryFn: fetchCreator })
 }
