@@ -42,3 +42,18 @@ export function SkeletonText({ lines = 3, className }: { lines?: number; classNa
     </div>
   )
 }
+
+/** Route-level fallback for list pages: title line, tab row and a series card grid. */
+export function SkeletonPage({ cards = 12 }: { cards?: number }) {
+  return (
+    <div className="container flex flex-col gap-6 py-6" aria-busy="true" aria-hidden>
+      <Skeleton className="h-9 w-48" />
+      <Skeleton className="h-9 w-72 max-w-full rounded-full" />
+      <div className="grid grid-cols-3 gap-3 md:grid-cols-4 md:gap-4 lg:grid-cols-6 lg:gap-5">
+        {Array.from({ length: cards }, (_, i) => (
+          <SkeletonCard key={i} />
+        ))}
+      </div>
+    </div>
+  )
+}

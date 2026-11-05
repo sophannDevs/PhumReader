@@ -6,6 +6,7 @@ import { useState } from "react"
 import { RankRow } from "@/components/pr/rank-row"
 import { SectionEmpty } from "@/components/pr/section-empty"
 import { SkeletonRow } from "@/components/pr/skeletons"
+import { ViewAllLink } from "@/components/pr/view-all-link"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import type { RankingEntry } from "@/data"
 
@@ -21,7 +22,7 @@ export function TrendingSection({ comics, novels }: { comics: RankingEntry[]; no
       aria-labelledby="trending-title"
       className="scroll-mt-24 rounded-card border bg-card p-5 shadow-xs md:p-6"
     >
-      <div className="flex flex-wrap items-start justify-between gap-3">
+      <div className="flex items-start justify-between gap-3">
         <div className="flex flex-col gap-1">
           <h2 id="trending-title" className="type-h3 flex items-center gap-2">
             <TrendingUpIcon className="size-[18px]" aria-hidden />
@@ -29,17 +30,18 @@ export function TrendingSection({ comics, novels }: { comics: RankingEntry[]; no
           </h2>
           <p className="type-small font-normal text-muted-foreground">{t("trendingSubtitle")}</p>
         </div>
-        <Tabs value={kind} onValueChange={(v) => setKind(v as "comics" | "novels")}>
-          <TabsList>
-            <TabsTrigger value="comics" className="px-3.5" aria-controls={undefined}>
-              {t("comics")}
-            </TabsTrigger>
-            <TabsTrigger value="novels" className="px-3.5" aria-controls={undefined}>
-              {t("novels")}
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
+        <ViewAllLink href="/rankings" label={t("viewAll")} />
       </div>
+      <Tabs value={kind} onValueChange={(v) => setKind(v as "comics" | "novels")} className="mt-4">
+        <TabsList>
+          <TabsTrigger value="comics" className="px-3.5" aria-controls={undefined}>
+            {t("comics")}
+          </TabsTrigger>
+          <TabsTrigger value="novels" className="px-3.5" aria-controls={undefined}>
+            {t("novels")}
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>
       {rows.length === 0 ? (
         <SectionEmpty className="mt-4 rounded-card border border-dashed py-10" />
       ) : (

@@ -13,10 +13,13 @@ export function SeriesCard({
   series,
   className,
   priority = false,
+  sizes = "(min-width: 1280px) 190px, (min-width: 768px) 25vw, 33vw",
 }: {
   series: Series
   className?: string
   priority?: boolean
+  /** Rendered width hint for next/image; the default matches the 3 / 4 / 6 column grids. */
+  sizes?: string
 }) {
   const t = useTranslations("cards")
   const loc = useLocalize()
@@ -36,6 +39,7 @@ export function SeriesCard({
           alt={t("cover", { title: series.title })}
           width={360}
           height={480}
+          sizes={sizes}
           priority={priority}
           className="cover-zoom size-full object-cover"
         />

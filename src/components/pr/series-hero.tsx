@@ -107,6 +107,7 @@ export function SeriesHero({
                 alt={`${series.title} cover`}
                 width={480}
                 height={640}
+                sizes="(min-width: 768px) 240px, 132px"
                 priority
                 className="size-full object-cover"
               />

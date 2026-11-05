@@ -104,6 +104,7 @@ export function EpisodeListPopover({
                       alt=""
                       width={80}
                       height={80}
+                      sizes="40px"
                       className={cn("size-full object-cover", e.locked && "opacity-50")}
                     />
                     {e.locked ? (

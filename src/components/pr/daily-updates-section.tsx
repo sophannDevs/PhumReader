@@ -2,10 +2,12 @@
 
 import { useTranslations } from "next-intl"
 import { useState } from "react"
+import { ScrollRow } from "@/components/pr/scroll-row"
 import { SectionEmpty } from "@/components/pr/section-empty"
 import { SectionHeader } from "@/components/pr/section-header"
 import { SeriesCard } from "@/components/pr/series-card"
 import { SkeletonCard } from "@/components/pr/skeletons"
+import { ViewAllLink } from "@/components/pr/view-all-link"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import type { Series, Weekday } from "@/data"
 import { today, weekdayOf } from "@/lib/format"
@@ -22,8 +24,9 @@ export function DailyUpdatesSection({ daily }: { daily: Record<Weekday, Series[]
 
   return (
     <section aria-labelledby="daily-title" className="flex flex-col gap-5">
-      <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+      <div className="flex flex-col gap-4">
         <SectionHeader
+          action={<ViewAllLink href="/genres" label={t("viewAll")} />}
           id="daily-title"
           title={t("dailyTitle")}
           subtitle={t("dailySubtitle", { day: t(`dayFull.${todayDay}`) })}
@@ -43,11 +46,11 @@ export function DailyUpdatesSection({ daily }: { daily: Record<Weekday, Series[]
       {(daily[day] ?? []).length === 0 ? (
         <SectionEmpty />
       ) : (
-        <div className={seriesGridClass}>
+        <ScrollRow itemClassName="w-[132px] sm:w-[160px] lg:w-[190px]">
           {daily[day].map((s) => (
-            <SeriesCard key={s.id} series={s} />
+            <SeriesCard key={s.id} series={s} sizes="190px" />
           ))}
-        </div>
+        </ScrollRow>
       )}
     </section>
   )

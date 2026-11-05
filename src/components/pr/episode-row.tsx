@@ -56,6 +56,7 @@ export function EpisodeRow({
           alt=""
           width={128}
           height={128}
+          sizes="64px"
           className={cn("size-full object-cover", locked && "opacity-50 saturate-50")}
         />
         {locked ? (

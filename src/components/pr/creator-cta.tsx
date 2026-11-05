@@ -45,7 +45,7 @@ export function CreatorCta({ covers, className }: { covers: Series[]; className?
             key={s.id}
             className={cn("aspect-[3/4] w-32 overflow-hidden rounded-card border bg-muted shadow-md", fan[i])}
           >
-            <Image src={s.cover} alt="" width={256} height={341} className="size-full object-cover" />
+            <Image src={s.cover} alt="" width={256} height={341} sizes="128px" className="size-full object-cover" />
           </div>
         ))}
       </div>

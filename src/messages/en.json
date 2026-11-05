@@ -400,6 +400,9 @@
       "Sun": "Sunday"
     },
     "trendingTitle": "Trending now",
+    "scrollPrev": "Scroll left",
+    "scrollNext": "Scroll right",
+    "viewAll": "View all",
     "trendingSubtitle": "Updated every hour",
     "comics": "Comics",
     "novels": "Web novels",

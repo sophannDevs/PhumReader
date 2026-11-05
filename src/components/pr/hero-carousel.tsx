@@ -135,6 +135,7 @@ function Slide({ slide, priority }: { slide: HeroSlideView; priority: boolean })
             alt={s.title}
             width={540}
             height={720}
+            sizes="(min-width: 768px) 270px, 144px"
             priority={priority}
             className="size-full object-cover"
           />

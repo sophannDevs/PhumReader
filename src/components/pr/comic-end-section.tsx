@@ -91,7 +91,7 @@ export function ComicEndSection({
       {next ? (
         <section className={cn(card, "flex items-center gap-4")}>
           <div className="relative size-12 shrink-0 overflow-hidden rounded-control bg-surface">
-            <Image src={next.thumb} alt="" width={96} height={96} className="size-full object-cover" />
+            <Image src={next.thumb} alt="" width={96} height={96} sizes="48px" className="size-full object-cover" />
           </div>
           <div className="flex min-w-0 flex-1 flex-col items-start gap-0.5">
             <p className="type-caption text-surface-quiet">{t("nextEpisode_card")}</p>

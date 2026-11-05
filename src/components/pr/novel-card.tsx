@@ -26,6 +26,7 @@ export function NovelCard({ series, className }: { series: Series; className?: s
           alt={t("cover", { title: series.title })}
           width={168}
           height={224}
+          sizes="84px"
           className="cover-zoom size-full object-cover"
         />
       </div>

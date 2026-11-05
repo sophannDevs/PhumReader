@@ -2,10 +2,12 @@
 
 import { useTranslations } from "next-intl"
 import { useState } from "react"
+import { ScrollRow } from "@/components/pr/scroll-row"
 import { SectionEmpty } from "@/components/pr/section-empty"
 import { SectionHeader } from "@/components/pr/section-header"
 import { SeriesCard } from "@/components/pr/series-card"
 import { SkeletonCard } from "@/components/pr/skeletons"
+import { ViewAllLink } from "@/components/pr/view-all-link"
 import { Toggle } from "@/components/ui/toggle"
 import type { Genre, Series } from "@/data"
 import { useLocalize } from "@/lib/localize"
@@ -25,6 +27,7 @@ export function GenreSection({ genres, byGenre }: { genres: Genre[]; byGenre: Re
         id="genre-title"
         title={t("genreTitle")}
         subtitle={t("genreCount", { count: list.length, genre: loc.genre(genre) })}
+        action={<ViewAllLink href="/genres" label={t("viewAll")} />}
       />
       <div role="group" aria-label={t("genres")} className="flex flex-wrap gap-2">
         {genres.map((g) => (
@@ -36,11 +39,11 @@ export function GenreSection({ genres, byGenre }: { genres: Genre[]; byGenre: Re
       {list.length === 0 ? (
         <SectionEmpty />
       ) : (
-        <div className={GRID}>
+        <ScrollRow itemClassName="w-[132px] sm:w-[160px] lg:w-[190px]">
           {list.slice(0, 6).map((s) => (
-            <SeriesCard key={s.id} series={s} />
+            <SeriesCard key={s.id} series={s} sizes="190px" />
           ))}
-        </div>
+        </ScrollRow>
       )}
     </section>
   )

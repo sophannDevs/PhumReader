@@ -72,7 +72,7 @@ export function SeriesSidebar({
                   className="group flex items-center gap-3 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                 >
                   <span className="relative h-[52px] w-10 shrink-0 overflow-hidden rounded-md bg-muted">
-                    <Image src={s.cover} alt="" width={80} height={104} className="cover-zoom size-full object-cover" />
+                    <Image src={s.cover} alt="" width={80} height={104} sizes="40px" className="cover-zoom size-full object-cover" />
                   </span>
                   <span className="flex min-w-0 flex-col">
                     <span className="type-card-title truncate">{s.title}</span>

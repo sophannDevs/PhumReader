@@ -72,6 +72,7 @@ export function RankRow({
           alt={t("cover", { title: series.title })}
           width={80}
           height={104}
+          sizes="40px"
           className="cover-zoom size-full object-cover"
         />
       </div>

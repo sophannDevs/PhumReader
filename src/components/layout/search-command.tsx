@@ -91,7 +91,7 @@ export function SearchCommand({
               {results.map((s) => (
                 <CommandItem key={s.id} value={s.id} onSelect={() => go(s)} className="gap-3 py-2">
                   <span className="relative h-9 w-7 shrink-0 overflow-hidden rounded-sm bg-muted">
-                    <Image src={s.cover} alt="" width={56} height={72} className="size-full object-cover" />
+                    <Image src={s.cover} alt="" width={56} height={72} sizes="28px" className="size-full object-cover" />
                   </span>
                   <span className="flex min-w-0 flex-1 flex-col">
                     <span className="truncate text-sm font-medium">{s.title}</span>

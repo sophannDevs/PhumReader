@@ -62,7 +62,7 @@ export function UnlockDialog({
       <DialogContent {...restoreFocus}>
         <DialogHeader className="flex-row items-start gap-4 pr-8">
           <div className="relative size-16 shrink-0 overflow-hidden rounded-control bg-muted">
-            <Image src={episode.thumb} alt="" width={128} height={128} className="size-full object-cover" />
+            <Image src={episode.thumb} alt="" width={128} height={128} sizes="64px" className="size-full object-cover" />
           </div>
           <div className="flex min-w-0 flex-col items-start gap-1">
             <Badge variant="warn">

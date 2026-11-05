@@ -3,8 +3,10 @@
 import { BookOpenIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { NovelCard } from "@/components/pr/novel-card"
+import { ScrollRow } from "@/components/pr/scroll-row"
 import { SectionEmpty } from "@/components/pr/section-empty"
 import { SectionHeader } from "@/components/pr/section-header"
+import { ViewAllLink } from "@/components/pr/view-all-link"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Badge } from "@/components/ui/badge"
 import type { Series } from "@/data"
@@ -22,19 +24,22 @@ export function NovelsSection({ novels }: { novels: Series[] }) {
         title={t("novelsTitle")}
         subtitle={t("novelsSubtitle")}
         action={
-          <Badge variant="brand" className="hidden sm:inline-flex">
-            <BookOpenIcon /> {t("novelsBadge")}
-          </Badge>
+          <div className="flex items-center gap-3">
+            <Badge variant="brand" className="hidden sm:inline-flex">
+              <BookOpenIcon /> {t("novelsBadge")}
+            </Badge>
+            <ViewAllLink href="/rankings" label={t("viewAll")} />
+          </div>
         }
       />
       {novels.length === 0 ? (
         <SectionEmpty />
       ) : (
-        <div className={GRID}>
+        <ScrollRow itemClassName="w-[300px] sm:w-[340px]">
           {novels.map((s) => (
             <NovelCard key={s.id} series={s} />
           ))}
-        </div>
+        </ScrollRow>
       )}
     </section>
   )

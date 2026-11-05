@@ -50,7 +50,7 @@ export function AuthSplitLayout({
                   i % 2 === 1 && "translate-y-14"
                 )}
               >
-                <Image src={s.cover} alt="" width={240} height={320} className="size-full object-cover" />
+                <Image src={s.cover} alt="" width={240} height={320} sizes="(min-width: 1024px) 15vw, 0px" className="size-full object-cover" />
               </div>
             ))}
           </div>

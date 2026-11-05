@@ -41,6 +41,7 @@ export function ContinueCard({
           alt={t("cover", { title: series.title })}
           width={96}
           height={128}
+          sizes="48px"
           className="cover-zoom size-full object-cover"
         />
       </div>
