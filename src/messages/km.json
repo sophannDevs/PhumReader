@@ -1,7 +1,8 @@
 {
   "common": {
     "siteName": "PhumReader",
-    "tagline": "អាន និងចែករំលែករឿងជាភាសាខ្មែរ និងអង់គ្លេស។"
+    "tagline": "អាន និងចែករំលែករឿងជាភាសាខ្មែរ និងអង់គ្លេស។",
+    "logoKhmer": "ភូមិ"
   },
   "coins": {
     "balanceLabel": "{count} កាក់"
@@ -70,5 +71,23 @@
     "like": "ចូលចិត្ត",
     "likeCount": "ចូលចិត្ត {count}",
     "avatarOf": "{name}"
+  },
+  "nav": {
+    "home": "ទំព័រដើម",
+    "rankings": "ចំណាត់ថ្នាក់",
+    "genres": "ប្រភេទ",
+    "novels": "ប្រលោមលោកអនឡាញ",
+    "main": "មឺនុយចម្បង",
+    "searchPlaceholder": "ស្វែងរករឿង អ្នកបង្កើត…",
+    "search": "ស្វែងរក",
+    "logIn": "ចូលគណនី",
+    "signUp": "ចុះឈ្មោះ",
+    "accountMenu": "មឺនុយគណនី",
+    "myLibrary": "បណ្ណាល័យរបស់ខ្ញុំ",
+    "getCoins": "ទិញកាក់",
+    "creatorDashboard": "ផ្ទាំងគ្រប់គ្រងអ្នកបង្កើត",
+    "settings": "ការកំណត់",
+    "logOut": "ចាកចេញ",
+    "skip": "រំលងទៅមាតិកា"
   }
 }

@@ -2,6 +2,8 @@
 
 import { useRef, useState } from "react"
 import { toast } from "sonner"
+import { Logo } from "@/components/layout/logo"
+import { SiteHeader } from "@/components/layout/site-header"
 import { CommentComposer } from "@/components/pr/comment-composer"
 import { CommentList, type CommentView } from "@/components/pr/comment-list"
 import { EpisodeList, EpisodeRow, type EpisodeState } from "@/components/pr/episode-row"
@@ -48,6 +50,28 @@ export function KitPatterns() {
 
   return (
     <>
+      <section className="flex flex-col gap-3">
+        <h2 className="text-2xl font-semibold tracking-tight">Logo and header</h2>
+        <div className="flex flex-wrap items-center gap-8 rounded-card border bg-card p-5 shadow-xs">
+          <Logo size="header" />
+          <Logo size="footer" khmer />
+          <div className="rounded-card bg-surface p-4">
+            <Logo size="auth" tone="light" khmer />
+          </div>
+        </div>
+        <div className="overflow-hidden rounded-card border">
+          <SiteHeader className="static" user={null} coins={3} onSearchOpen={() => toast("Search opens in T13")} />
+        </div>
+        <div className="overflow-hidden rounded-card border">
+          <SiteHeader
+            className="static"
+            user={{ name: "Sokha Chan" }}
+            coins={40}
+            onLogout={() => toast.success("You're logged out")}
+          />
+        </div>
+      </section>
+
       <section className="flex flex-col gap-3">
         <h2 className="text-2xl font-semibold tracking-tight">Episode rows</h2>
         <p className="type-body text-muted-foreground">Locked, locked, unlocked, free + UP, read. Click a locked row.</p>

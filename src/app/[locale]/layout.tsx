@@ -37,7 +37,10 @@ export async function generateMetadata({
   const { locale } = await params;
   if (!hasLocale(routing.locales, locale)) return {};
   const t = await getTranslations({ locale, namespace: "common" });
-  return { title: t("siteName"), description: t("tagline") };
+  return {
+    title: { default: t("siteName"), template: `%s · ${t("siteName")}` },
+    description: t("tagline"),
+  };
 }
 
 export default async function LocaleLayout({

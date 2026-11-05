@@ -1,7 +1,8 @@
 {
   "common": {
     "siteName": "PhumReader",
-    "tagline": "Read and share stories in Khmer and English."
+    "tagline": "Read and share stories in Khmer and English.",
+    "logoKhmer": "ភូមិ"
   },
   "coins": {
     "balanceLabel": "{count, plural, one {# coin} other {# coins}}"
@@ -70,5 +71,23 @@
     "like": "Like",
     "likeCount": "Like, {count} likes",
     "avatarOf": "{name}"
+  },
+  "nav": {
+    "home": "Home",
+    "rankings": "Rankings",
+    "genres": "Genres",
+    "novels": "Web novels",
+    "main": "Main",
+    "searchPlaceholder": "Search series, creators…",
+    "search": "Search",
+    "logIn": "Log in",
+    "signUp": "Sign up",
+    "accountMenu": "Account menu",
+    "myLibrary": "My library",
+    "getCoins": "Get coins",
+    "creatorDashboard": "Creator dashboard",
+    "settings": "Settings",
+    "logOut": "Log out",
+    "skip": "Skip to content"
   }
 }

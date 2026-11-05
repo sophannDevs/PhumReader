@@ -29,7 +29,7 @@ npm run test:e2e     # Playwright, available after T52
 - Components in Part 2 and Part 3 are presentational (props + callbacks). Part 4 adds data, the fake API and the store, and wires them in. Part 5 builds the pages with all interactions. Part 6 completes loading / empty / error states on every page.
 - A temporary preview page at `/dev/kit` is used to check components in Parts 2–4. It is deleted in T53.
 
-Progress: 10 / 53
+Progress: 11 / 53
 
 ---
 
@@ -93,7 +93,7 @@ Progress: 10 / 53
 
 ## Part 3: Layouts
 
-- [ ] **T11 Logo, app metadata, SiteHeader** (≈60 min)
+- [x] **T11 Logo, app metadata, SiteHeader** (≈60 min)
   - Build: `Logo` (green rounded mark from the design + wordmark "Phum" in `--brand-ink` and "Reader" in `--foreground`, optional small ភូមិ underneath with `lang="km"`; header / footer / auth sizes). `app/manifest.ts` (name "PhumReader", short_name "Phum", theme `#00DC64`), favicon and app icon from the mark, metadata title template `%s · PhumReader`. `SiteHeader`: 64 px (56 phone), sticky, white at 92% with blur, bottom border; Logo → `/`; nav Home, Rankings, Genres, Web novels (current item bold; targets per spec §0 until the pages exist); search trigger "Search series, creators…" with ⌘K hint (icon button on phone); `CoinChip`; logged out: "Log in" ghost + "Sign up" brand (phone: Log in only); logged in: Avatar initials → DropdownMenu with name + "N coins" label, My library, Get coins, Creator dashboard, Settings, Log out. Props-driven (`user`, `coins`) until T19.
   - Look at: `01-home-desktop.png`, `01-home-phone.png`, `01-home-logged-in-menu-desktop.png`; `design/foundations.md` §3; `design/spec.md` §0 Header.
   - Done when: header matches both screens; the current nav item is bold; the menu opens and navigates by keyboard; `/manifest.webmanifest` has short name "Phum"; the browser tab shows the PhumReader icon.
@@ -376,3 +376,6 @@ Progress: 10 / 53
 42. **PackCard / PaymentMethodCard** must be rendered inside a `RadioGroup`; item values are `String(pack.coins)` and `method.id`. Pack bonus lines: "+N bonus" (or "No bonus"), plus " · +N first" while `firstPurchaseOffer` is true. Method tile labels (KHQR / ABA / CARD) are fixed.
 43. **CommentList / CommentComposer** are controlled. `CommentView` adds a stable `id` and `liked` to the data `Comment`; the like count shown is `likes + (liked ? 1 : 0)`. The Post button is disabled while the draft is empty, so the "Log in to comment" toast (T27) is triggered from the page when the user is logged out and the draft is not empty.
 44. **`src/lib/format.ts`** currently has `initials` and `firstName`; T16 adds `today`, `formatDate` and `formatCount`.
+45. **App icon**: the favicon is `src/app/icon.svg` (the green mark); `favicon.ico` was removed. The web manifest (`src/app/manifest.ts`) uses the SVG icon (`sizes: any`), short name "Phum" and theme colour `#00DC64`. No PNG icons are generated.
+46. **Header nav current state**: Home is current on `/`; Rankings and Genres become current on `/rankings` and `/genres/...` after T43. "Web novels" (`/#novels`) is never marked current. The header's ⌘K hint is always "⌘K" (no OS detection).
+47. **Logo** takes `size` (header / footer / auth), `tone` (`light` for dark backgrounds) and `khmer` (small ភូមិ underneath). Per assumption 18, ភូមិ is only used in the footer and on the auth panel.
