@@ -2,6 +2,18 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { demoData } from "@/data";
+import {
+  AlertCircleIcon,
+  CheckIcon,
+  GiftIcon,
+  InfoIcon,
+  Share2Icon,
+  TriangleAlertIcon,
+  ZapIcon,
+} from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { TokenSwatch } from "@/components/dev/token-swatch";
 
 // Temporary preview page for Parts 2-4. Deleted in T53.
@@ -188,6 +200,84 @@ export default async function DevKitPage({ params }: PageProps<"/[locale]/dev/ki
             />
           </div>
         </a>
+      </section>
+
+      <section className="flex flex-col gap-3">
+        <h2 className="text-2xl font-semibold tracking-tight">Button</h2>
+        <p className="type-body text-muted-foreground">
+          Variants: default, brand, secondary, outline, ghost, link, destructive. Sizes: sm 32, default 36, lg 44, icon.
+          Tab through them to see the 2 px ring.
+        </p>
+        <div className="flex flex-col gap-4 rounded-card border bg-card p-5 shadow-xs">
+          <div className="flex flex-wrap items-center gap-3">
+            <Button variant="brand">
+              <ZapIcon /> Read episode 1
+            </Button>
+            <Button>Default</Button>
+            <Button variant="secondary">Secondary</Button>
+            <Button variant="outline">Outline</Button>
+            <Button variant="ghost">Ghost</Button>
+            <Button variant="link">Link</Button>
+            <Button variant="destructive">Delete</Button>
+          </div>
+          <div className="flex flex-wrap items-center gap-3">
+            <Button variant="brand" size="sm">Small</Button>
+            <Button variant="brand">Default</Button>
+            <Button variant="brand" size="lg">Large</Button>
+            <Button variant="outline" size="icon" aria-label="Share">
+              <Share2Icon />
+            </Button>
+            <Button variant="outline" size="icon-sm" aria-label="Share (small)">
+              <Share2Icon />
+            </Button>
+            <Button variant="brand" disabled>Disabled</Button>
+            <Button variant="brand" loading>Loading</Button>
+            <Button variant="outline" disabled>Disabled</Button>
+          </div>
+        </div>
+      </section>
+
+      <section className="flex flex-col gap-3">
+        <h2 className="text-2xl font-semibold tracking-tight">Badge</h2>
+        <div className="flex flex-wrap items-center gap-2 rounded-card border bg-card p-5 shadow-xs">
+          <Badge variant="up">UP</Badge>
+          <Badge variant="new">NEW</Badge>
+          <Badge variant="warn"><ZapIcon /> Fast Pass · 5 coins</Badge>
+          <Badge variant="brand">Unlocked</Badge>
+          <Badge variant="outline"><CheckIcon /> Read</Badge>
+          <Badge variant="outline">Fantasy</Badge>
+          <Badge>Best value</Badge>
+          <Badge variant="secondary">Secondary</Badge>
+          <span className="rounded-badge bg-muted p-1">
+            <Badge variant="dark">Novel</Badge>
+          </span>
+        </div>
+      </section>
+
+      <section className="flex flex-col gap-3">
+        <h2 className="text-2xl font-semibold tracking-tight">Alert</h2>
+        <div className="grid gap-3 md:grid-cols-2">
+          <Alert variant="destructive">
+            <AlertCircleIcon />
+            <AlertTitle>Email or password is incorrect</AlertTitle>
+            <AlertDescription>Check them and try again.</AlertDescription>
+          </Alert>
+          <Alert variant="brand" role="status">
+            <GiftIcon />
+            <AlertTitle>First purchase: double coins</AlertTitle>
+            <AlertDescription>Your first pack of any size comes with the same number of coins again, free.</AlertDescription>
+          </Alert>
+          <Alert variant="warning" role="status">
+            <TriangleAlertIcon />
+            <AlertTitle>You need 2 more coins.</AlertTitle>
+            <AlertDescription>Get coins to unlock this episode now.</AlertDescription>
+          </Alert>
+          <Alert role="status">
+            <InfoIcon />
+            <AlertTitle>Log in to unlock</AlertTitle>
+            <AlertDescription>Your coins are saved to your account.</AlertDescription>
+          </Alert>
+        </div>
       </section>
 
       <section className="flex flex-col gap-3">

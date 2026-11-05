@@ -29,7 +29,7 @@ npm run test:e2e     # Playwright, available after T52
 - Components in Part 2 and Part 3 are presentational (props + callbacks). Part 4 adds data, the fake API and the store, and wires them in. Part 5 builds the pages with all interactions. Part 6 completes loading / empty / error states on every page.
 - A temporary preview page at `/dev/kit` is used to check components in Parts 2–4. It is deleted in T53.
 
-Progress: 5 / 53
+Progress: 6 / 53
 
 ---
 
@@ -64,7 +64,7 @@ Progress: 5 / 53
   - Look at: `design/foundations.md` §2, §7; `00-foundations-desktop.png` (Typography row).
   - Done when: `/dev/kit` reproduces the Typography row including the Khmer sample in Kantumruy Pro; the network tab shows self-hosted font files, no Google Fonts request.
 
-- [ ] **T06 shadcn components + Button, Badge, Alert variants** (≈45 min)
+- [x] **T06 shadcn components + Button, Badge, Alert variants** (≈45 min)
   - Build: `npx shadcn@latest add button badge card tabs toggle dialog dropdown-menu command popover input textarea label form checkbox switch radio-group input-otp progress accordion table alert sonner skeleton avatar separator breadcrumb carousel tooltip scroll-area sheet`. Button variants: `default` (dark), `brand` (green, 600 weight, `--primary-foreground` text, hover `--primary-hover`), `secondary`, `outline`, `ghost`, `link` (brand-ink, underline), `destructive`; sizes `sm` 32, default 36, `lg` 44, `icon` 36, `icon-sm` 32; `loading` prop (spinner + disabled). Badge variants `default`, `secondary`, `outline`, `brand`, `up`, `new`, `warn`, `dark` (`rgba(9,9,11,.72)` on covers), 6 px radius, 14 px icons. Alert variants `default`, `brand`, `destructive`, `warning` with icon + title + description.
   - Look at: `design/foundations.md` §4; `00-foundations-desktop.png` (Button, Badge, Alert rows).
   - Done when: `/dev/kit` reproduces the Button, Badge and Alert rows of the foundations screen; no green button ever shows white text; every variant shows the 2 px `--ring` focus ring when tabbed to.
@@ -363,3 +363,5 @@ Progress: 5 / 53
 29. **Demo data typing**: `src/data` validates the JSON with a zod schema at module load and infers the types from it (`z.infer`) instead of a plain `satisfies` cast, so literal unions such as `type: "comic" | "novel"` are real types and any drift between the JSON and the schema fails loudly in development.
 30. **Type utilities** are named `type-hero`, `type-h1`, `type-series-title`, `type-h2`, `type-h3`, `type-h4`, `type-card-title`, `type-lead`, `type-body`, `type-small`, `type-caption`, `type-eyebrow`, `type-novel` (in `globals.css`). Sizes switch to the phone values below 768 px. The hero title has no phone size in the design, so it uses 30 / 34 (measured from `01-home-phone.png`). `tabular-nums` is Tailwind's built-in class, not a custom helper.
 31. **Fonts**: Inter (400–700), Kantumruy Pro (variable, Khmer + Latin subsets) and Noto Serif (400, 700) via `next/font`. `font-sans` is `Inter, Kantumruy Pro, system` so Khmer falls back automatically. The serif is used with the `font-novel` class. Geist Mono was removed; code uses the system monospace stack.
+32. **shadcn `form`**: the shadcn CLI 4.x no longer ships a `form` component (it was skipped when running `add`). Forms use `react-hook-form` + `zod` directly with `Input`, `Label` and our own error text (`aria-invalid` + `aria-describedby`), added in T07 / T32.
+33. **Generated shadcn files** (`src/components/ui/*`) still use the neutral shadcn styling until T07 restyles them. `sonner.tsx` imports `next-themes`, which is replaced in T07 (the site is light only). `carousel.tsx` has one targeted `eslint-disable` for the setState-in-effect rule (initial Embla sync).
