@@ -98,7 +98,12 @@ export type HomeData = {
   genres: Genre[]
   byGenre: Record<Genre, Series[]>
   novels: Series[]
+  /** Three covers for the creator call-to-action card. */
+  creatorCovers: Series[]
 }
+
+const CTA_TITLES = ["Ink Witch", "Sunday Sword", "The Orchard Pact"]
+const ctaCovers = () => CTA_TITLES.flatMap((t) => getSeries().filter((s) => s.title === t))
 
 const WEEKDAYS: Weekday[] = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 
@@ -112,6 +117,7 @@ export const fetchHome = () =>
       genres: genres(),
       byGenre: Object.fromEntries(genres().map((g) => [g, seriesByGenre(g)])) as Record<Genre, Series[]>,
       novels: novels().slice(0, 6),
+      creatorCovers: ctaCovers(),
     }),
     {
       empty: () => ({
@@ -122,6 +128,7 @@ export const fetchHome = () =>
         genres: genres(),
         byGenre: Object.fromEntries(genres().map((g) => [g, []])) as unknown as Record<Genre, Series[]>,
         novels: [],
+        creatorCovers: ctaCovers(),
       }),
     }
   )

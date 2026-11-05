@@ -193,6 +193,132 @@
   }
 }
 
+/* ------------------------------------------------------------------ */
+/* 3. Type scale (design/foundations.md §2). Use as `type-h1` etc.     */
+/*    Phone sizes switch below the md breakpoint (768 px).             */
+/*    Numbers that change (coins, counts, timers): add `tabular-nums`. */
+/* ------------------------------------------------------------------ */
+@utility type-hero {
+  font-size: 30px;
+  line-height: 34px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  @media (min-width: 768px) {
+    font-size: 48px;
+    line-height: 52px;
+  }
+}
+@utility type-h1 {
+  font-size: 26px;
+  line-height: 32px;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  @media (min-width: 768px) {
+    font-size: 36px;
+    line-height: 42px;
+  }
+}
+@utility type-series-title {
+  font-size: 26px;
+  line-height: 30px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  @media (min-width: 768px) {
+    font-size: 40px;
+    line-height: 46px;
+  }
+}
+@utility type-h2 {
+  font-size: 20px;
+  line-height: 26px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  @media (min-width: 768px) {
+    font-size: 24px;
+    line-height: 30px;
+  }
+}
+@utility type-h3 {
+  font-size: 18px;
+  line-height: 26px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+@utility type-h4 {
+  font-size: 15px;
+  line-height: 22px;
+  font-weight: 600;
+}
+@utility type-card-title {
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 600;
+}
+@utility type-lead {
+  font-size: 16px;
+  line-height: 26px;
+  font-weight: 400;
+  color: var(--muted-foreground);
+}
+@utility type-body {
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 400;
+}
+@utility type-small {
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 500;
+}
+@utility type-caption {
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 500;
+}
+@utility type-eyebrow {
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--brand-ink);
+}
+/* Novel text: 18 px default (14-24), line height 1.85 (1.6 with wide spacing off).
+   The reader root sets --novel-size / --novel-leading (T31). */
+@utility type-novel {
+  font-size: var(--novel-size, 18px);
+  line-height: var(--novel-leading, 1.85);
+  font-weight: 400;
+}
+
+/* ------------------------------------------------------------------ */
+/* 4. Motion: cover hover zoom 1.04 over 300 ms (disabled when the     */
+/*    user prefers reduced motion). Put `cover-zoom` on the <img> and  */
+/*    `group` on the card link.                                         */
+/* ------------------------------------------------------------------ */
+@utility cover-zoom {
+  transition: transform 300ms ease;
+  @media (hover: hover) {
+    :where(.group):is(:hover, :focus-visible) & {
+      transform: scale(1.04);
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .cover-zoom {
+    transform: none !important;
+  }
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

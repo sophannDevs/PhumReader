@@ -218,6 +218,14 @@
     "novels": "Web novels",
     "genreTitle": "Browse by genre",
     "genreCount": "{count, plural, one {# series} other {# series}} in {genre}",
-    "genres": "Genres"
+    "genres": "Genres",
+    "novelsTitle": "Web novels",
+    "novelsSubtitle": "Stories to read, in Khmer and English.",
+    "novelsBadge": "Reader with adjustable text",
+    "ctaEyebrow": "For creators",
+    "ctaTitle": "Publish your own series",
+    "ctaBody": "Upload comics or write web novels, grow your readers, and earn from Fast Pass episodes.",
+    "ctaStart": "Start publishing",
+    "ctaGuidelines": "Creator guidelines"
   }
 }

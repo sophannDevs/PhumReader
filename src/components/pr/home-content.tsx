@@ -3,8 +3,10 @@
 import { ErrorState } from "@/components/pr/error-state"
 import { ContinueReadingSection, ContinueReadingSkeleton } from "@/components/pr/continue-reading-section"
 import { DailyUpdatesSection, DailyUpdatesSkeleton } from "@/components/pr/daily-updates-section"
+import { CreatorCta } from "@/components/pr/creator-cta"
 import { GenreSection, GenreSkeleton } from "@/components/pr/genre-section"
 import { HeroCarousel } from "@/components/pr/hero-carousel"
+import { NovelsSection, NovelsSkeleton } from "@/components/pr/novels-section"
 import { TrendingSection, TrendingSkeleton } from "@/components/pr/trending-section"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useHome } from "@/lib/queries"
@@ -24,6 +26,7 @@ export function HomeContent() {
             <TrendingSkeleton />
             <GenreSkeleton />
           </div>
+          <NovelsSkeleton />
         </>
       ) : home.isError ? (
         <ErrorState onRetry={() => void home.refetch()} />
@@ -36,6 +39,8 @@ export function HomeContent() {
             <TrendingSection comics={home.data.rankings.comics} novels={home.data.rankings.novels} />
             <GenreSection genres={home.data.genres} byGenre={home.data.byGenre} />
           </div>
+          <NovelsSection novels={home.data.novels} />
+          <CreatorCta covers={home.data.creatorCovers} />
         </>
       )}
     </div>

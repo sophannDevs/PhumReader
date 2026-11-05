@@ -29,7 +29,7 @@ npm run test:e2e     # Playwright, available after T52
 - Components in Part 2 and Part 3 are presentational (props + callbacks). Part 4 adds data, the fake API and the store, and wires them in. Part 5 builds the pages with all interactions. Part 6 completes loading / empty / error states on every page.
 - A temporary preview page at `/dev/kit` is used to check components in Parts 2–4. It is deleted in T53.
 
-Progress: 22 / 53
+Progress: 23 / 53
 
 ---
 
@@ -161,7 +161,7 @@ Progress: 22 / 53
   - Look at: `01-home-desktop.png`, `01-home-phone.png`; `design/spec.md` §1.4–1.5.
   - Done when: the Comics ranking matches the screen (Paper Tigers ▲ 2 … Salt & Thunder —); the Web novels tab lists the novels; selecting a chip updates the count and the grid.
 
-- [ ] **T23 Home: Web novels + Creator CTA** (≈30 min)
+- [x] **T23 Home: Web novels + Creator CTA** (≈30 min)
   - Build: Web novels section ("Stories to read, in Khmer and English.", brand badge "Reader with adjustable text", 6 NovelCards in 3 columns → 1 on phone). Creator CTA card (green-to-white gradient, eyebrow "FOR CREATORS", "Publish your own series", "Upload comics or write web novels, grow your readers, and earn from Fast Pass episodes.", "Start publishing" brand + "Creator guidelines" outline → `/creator`, 3 fanned covers on desktop). Home metadata.
   - Look at: `01-home-desktop.png`, `01-home-phone.png`; `design/spec.md` §1.6–1.7.
   - Done when: the full Home page matches the desktop and phone screens section by section with 56 px between sections; every link resolves.
@@ -400,3 +400,5 @@ Progress: 22 / 53
 66. **Header widths** (found while checking the hero): below `lg` the header shows only the brand "Log in" button (like the phone); "Log in" + "Sign up" appear from 1024 px, the search bar is 192 px wide at `lg` and 288 px from `xl`, and the logo wordmark is hidden under 360 px so the header never overflows from 320 px to 1920 px.
 67. **Home sections** live in `src/components/pr/` (`continue-reading-section`, `daily-updates-section`, `section-header`) and are composed by `home-content.tsx` from one `useHome()` query. Each section file also exports a layout-matching skeleton used while loading (T46 adds the empty / error variants). Day tabs scroll horizontally on narrow phones; "Today" is derived from the pinned date (`weekdayOf(today)`), not the real clock. Khmer weekday names are my own wording (review in T51).
 68. **Trending / genres**: the Trending card has `id="rank"` and the genre section `id="genres"` (targets of the header and footer `/#rank` and `/#genres` links, with `scroll-mt-24` under the sticky header). Genre chips are `Toggle`s (one pressed at a time, `aria-pressed`); genre names on the chips come from the data (English; not translated).
+69. **Regression note (fixed in T23)**: while removing the unused `rounded-hero` utility in T20, an edit to `globals.css` also deleted the type scale (`type-*`), `cover-zoom` and the reduced-motion rule; they were restored from T05 in the T23 commit. When checking a page, verify computed font sizes (not only text content) and never delete a block from `globals.css` by index range.
+70. **Home**: the Web novels section has `id="novels"` (target of the header link `/#novels`), 6 `NovelCard`s (3 columns from 1024 px, 2 from 768, 1 on phones), and the CTA's three covers come from `fetchHome().creatorCovers` (Ink Witch, Sunday Sword, The Orchard Pact). The page title is "PhumReader · Read and share stories in Khmer and English."; the CTA "Start publishing" button goes to `/creator` (T42), "Creator guidelines" to `/creator#guidelines`.
