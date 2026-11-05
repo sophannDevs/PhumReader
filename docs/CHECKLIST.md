@@ -29,7 +29,7 @@ npm run test:e2e     # Playwright, available after T52
 - Components in Part 2 and Part 3 are presentational (props + callbacks). Part 4 adds data, the fake API and the store, and wires them in. Part 5 builds the pages with all interactions. Part 6 completes loading / empty / error states on every page.
 - A temporary preview page at `/dev/kit` is used to check components in Parts 2–4. It is deleted in T53.
 
-Progress: 1 / 53
+Progress: 2 / 53
 
 ---
 
@@ -40,7 +40,7 @@ Progress: 1 / 53
   - Look at: `CLAUDE.md` (Stack, Commands).
   - Done when: `npm run dev` serves the default page; `npm run lint`, `npm run typecheck` and `npm run build` all pass; `git status` shows `CLAUDE.md`, `.claude/` and `design/` untouched; `tsconfig.json` has `"strict": true`.
 
-- [ ] **T02 Dependencies, assets and demo data** (≈45 min)
+- [x] **T02 Dependencies, assets and demo data** (≈45 min)
   - Build: `npx shadcn@latest init` (style New York, base colour Zinc, CSS variables). Install `lucide-react`, `next-intl`, `zustand`, `@tanstack/react-query`, `react-hook-form`, `zod`, `@hookform/resolvers`, `sonner`, `input-otp`, `embla-carousel-react`. Copy `design/assets/covers/*` to `public/covers/` and `design/assets/panels/*` to `public/panels/`. Copy `design/demo-data.json` to `src/data/demo-data.json`, replacing "Toonwave" with "PhumReader" inside strings (`_note`, `loginPageStrings` en + km `back` and `legal`) but leaving `demoAccount` untouched. Create `src/data/types.ts` with types for every top-level key (`Series`, `Episode`, `HeroSlide`, `ContinueEntry`, `Panel`, `NovelBlock`, `Comment`, `CoinPack`, `PaymentMethod`, `Purchase`, `FaqItem`, `AuthStrings`, `DemoData` …) and `src/data/index.ts` exporting a typed `demoData` (`satisfies DemoData`).
   - Look at: `design/README.md`, `design/demo-data.json`, `CLAUDE.md` (Scope rules).
   - Done when: `/covers/<id>.svg` and `/panels/<id>.svg` open in the browser; `import { demoData } from "@/data"` is fully typed with no `any`; `grep -ri toonwave src/` only hits `demoAccount`; lint, typecheck, build pass.
@@ -359,3 +359,5 @@ Progress: 1 / 53
 25. **Reduced motion** disables carousel autoplay and hover zoom; everything else remains usable.
 26. **`/dev/kit`** is a temporary, development-only preview page for Parts 2–4 and is removed in T53.
 27. **Typecheck script** runs `next typegen && tsc --noEmit` (not plain `tsc --noEmit`): Next 16 declares the global `LayoutProps` / `PageProps` route types in `.next/types`, so `tsc` alone fails on a clean clone until those types are generated.
+28. **shadcn CLI 4.x** no longer offers the "New York / Zinc" init prompts. The project uses the `vega` preset (Lucide + Inter, the classic shadcn look) on the Radix base; T04 replaces the preset's neutral palette with the zinc tokens from foundations.md. `src/lib/utils.ts` re-exports `cn` from the `cn` package, as the CLI generates it.
+29. **Demo data typing**: `src/data` validates the JSON with a zod schema at module load and infers the types from it (`z.infer`) instead of a plain `satisfies` cast, so literal unions such as `type: "comic" | "novel"` are real types and any drift between the JSON and the schema fails loudly in development.
