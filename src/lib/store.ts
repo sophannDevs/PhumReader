@@ -38,6 +38,8 @@ type AppState = {
   /** Toggles keyed by `likeKey.*` (episode likes, comment likes, bookmarks) */
   likes: Record<string, boolean>
   checkoutDraft: { pack: number; method: PaymentMethodId }
+  /** Settings > Notifications (saved on this device only) */
+  notifications: { episodes: boolean; fastPass: boolean }
 }
 
 type AppActions = {
@@ -61,6 +63,7 @@ type AppActions = {
   addAccount: (account: StoredAccount) => void
   toggleLike: (key: string) => void
   setCheckoutDraft: (patch: Partial<AppState["checkoutDraft"]>) => void
+  setNotification: (key: keyof AppState["notifications"], value: boolean) => void
   /** Settings > Reset demo data: back to 3 coins, logged out, the 2 demo purchases, default reader settings. */
   resetDemo: () => void
 }
@@ -89,6 +92,7 @@ const initialState = (): AppState => ({
   accounts: [],
   likes: {},
   checkoutDraft: { pack: defaultPack, method: "khqr" },
+  notifications: { episodes: true, fastPass: false },
 })
 
 const toggleIn = <T,>(list: T[], item: T) => (list.includes(item) ? list.filter((x) => x !== item) : [...list, item])
@@ -123,6 +127,7 @@ export const useAppStore = create<AppState & AppActions>()(
       addAccount: (account) => set((s) => ({ accounts: [...s.accounts.filter((a) => a.email !== account.email), account] })),
       toggleLike: (key) => set((s) => ({ likes: { ...s.likes, [key]: !s.likes[key] } })),
       setCheckoutDraft: (patch) => set((s) => ({ checkoutDraft: { ...s.checkoutDraft, ...patch } })),
+      setNotification: (key, value) => set((s) => ({ notifications: { ...s.notifications, [key]: value } })),
       // The language is a preference tied to the URL locale, so a reset keeps it.
       resetDemo: () => set((s) => ({ ...initialState(), lang: s.lang })),
     }),

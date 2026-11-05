@@ -29,7 +29,7 @@ npm run test:e2e     # Playwright, available after T52
 - Components in Part 2 and Part 3 are presentational (props + callbacks). Part 4 adds data, the fake API and the store, and wires them in. Part 5 builds the pages with all interactions. Part 6 completes loading / empty / error states on every page.
 - A temporary preview page at `/dev/kit` is used to check components in Parts 2–4. It is deleted in T53.
 
-Progress: 40 / 53
+Progress: 41 / 53
 
 ---
 
@@ -251,7 +251,7 @@ Progress: 40 / 53
   - Look at: `01-home-desktop.png` (Continue reading, card grid) for patterns; `design/spec.md` §0 routes.
   - Done when: subscribing on Home shows the series here; unlocking shows the episode; empty tabs show EmptyStates; the phone Library tab lands here.
 
-- [ ] **T41 Settings** (≈45 min)
+- [x] **T41 Settings** (≈45 min)
   - Build: `/settings`: cards for Profile (initials avatar, display name, email; logged out → prompt with Log in), Language (EN / ខ្មែរ RadioGroup → `setLang` + locale navigation), Reading (novel reader defaults reusing the T31 controls), Notifications ("New-episode alerts" and "Fast Pass reminders" switches, local only), Account (Log out; "Reset demo data" with a confirm Dialog → `resetDemo()` + toast "Demo data reset"). The phone "Me" tab lands here when logged in.
   - Look at: `00-foundations-desktop.png` (Forms column); `design/foundations.md` §4.
   - Done when: changing the language here switches the whole site; reset restores 3 coins and logs out; every control works by keyboard.
@@ -419,3 +419,4 @@ Progress: 40 / 53
 85. **Order summary / history / FAQ** (`checkout-card.tsx`, `purchase-history.tsx`, `coins-faq.tsx`): the total is coins + pack bonus + first-purchase bonus while the offer lasts (`packTotal`); "Balance after" is balance + total. Logged-out "Continue to payment" saves `returnTo = "/coins"` and goes to `/login` (pack and method stay in `checkoutDraft`). History comes from the store (newest first, seeded with the 2 demo rows), the Method column is hidden below 768 px, a new `danger` Badge variant is used for Failed, and `?demo=empty` shows "No purchases yet". The FAQ accordion is single / collapsible with the first item open.
 86. **Checkout flow** (`checkout-flow.ts`, `checkout-card.tsx`): `useCheckout` is the state machine `review -> pay -> confirming -> success | failed`, owned by `CoinsBody` so the pack and method pickers are disabled while paying / confirming. The countdown (10 min from `khqrExpiryMinutes`) applies to every method; reaching 0 shows "The code expired" without a history row. In dev, `?expiry=<seconds>` shortens it for testing. Cancel records a Cancelled row (toast "Payment cancelled", error style); a declined payment records a Failed row; success adds the coins, records a Paid row with a `PR-########` order id (which ends the first-purchase offer) and shows "+N coins added". Rows for cancelled / failed attempts show the coins that would have been added. "Back to episode N" clears `shopReturn` but keeps `pendingUnlock`, so the unlock dialog reopens with the new balance. The card step shows only `[PAYMENT PROVIDER FORM]`; the page has no card number input anywhere. The QR is a decorative placeholder drawing, not a real code.
 87. **My library** (`/library`): logged out shows an EmptyState with a Log in button (saves `returnTo`). Continue reading = the 4 demo entries with the episode raised to `lastRead`, plus any other series the reader has opened (progress = `lastRead / total`, since the reader does not track scroll: Assumption 8). Subscribed = `SeriesCard`s from `subscriptions`; Unlocked = `EpisodeRow`s (state `unlocked`) grouped by series. Each empty tab links to Home ("Browse series"). Data comes from `fetchLibrary` / `useLibrary`.
+88. **Settings** (`/settings`): Profile (initials avatar, name, email; a Log in prompt when logged out), Language (a RadioGroup that calls `setLang` and replaces the route with the other locale, keeping the query), Reading (the T31 `ReadingSettingsControls`, unthemed), Notifications (two Switches stored in the new `notifications` field of the store, so they persist on this device) and Account (Log out when logged in; "Reset demo data" behind a confirm dialog that restores the defaults and shows "Demo data reset"). Added `notifications: { episodes: true, fastPass: false }` to the store (no version bump needed: persist merges missing keys).
