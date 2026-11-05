@@ -29,7 +29,7 @@ npm run test:e2e     # Playwright, available after T52
 - Components in Part 2 and Part 3 are presentational (props + callbacks). Part 4 adds data, the fake API and the store, and wires them in. Part 5 builds the pages with all interactions. Part 6 completes loading / empty / error states on every page.
 - A temporary preview page at `/dev/kit` is used to check components in Parts 2–4. It is deleted in T53.
 
-Progress: 21 / 53
+Progress: 22 / 53
 
 ---
 
@@ -156,7 +156,7 @@ Progress: 21 / 53
   - Look at: `01-home-desktop.png`, `01-home-phone.png`; `design/spec.md` §1.2–1.3.
   - Done when: Thursday shows Paper Tigers, The Quiet Kingdom, Little Thunder, Wolves of Wren Street, Lantern Alley, Hollow Signal in that order; switching days changes the grid; arrow keys move between day tabs.
 
-- [ ] **T22 Home: Trending now + Browse by genre** (≈45 min)
+- [x] **T22 Home: Trending now + Browse by genre** (≈45 min)
   - Build: Trending card (↗ "Trending now", "Updated every hour", pill Tabs Comics / Web novels, 8 RankRows with movement). Browse by genre (8 Toggle chips in `genres` order, Fantasy selected, "N series in <genre>", 3×2 SeriesCard grid). Two columns on desktop, stacked on phone.
   - Look at: `01-home-desktop.png`, `01-home-phone.png`; `design/spec.md` §1.4–1.5.
   - Done when: the Comics ranking matches the screen (Paper Tigers ▲ 2 … Salt & Thunder —); the Web novels tab lists the novels; selecting a chip updates the count and the grid.
@@ -399,3 +399,4 @@ Progress: 21 / 53
 65. **Hero carousel**: Embla (shadcn `Carousel`) with `loop`; autoplay is a 7 s `setInterval` that stops for good on any dot / arrow click, drag or ← / → key, and never starts under `prefers-reduced-motion`. The green tag comes from `homeHero[].tag` (for the web-novel slide the tag already reads "Web novel"), next to a dark genre badge. Phone: 144 px cover above the text, 16 px banner radius (20 px from 768 px; the `rounded-hero` utility is the 20 px theme radius, so phones use `rounded-[16px] md:rounded-hero`).
 66. **Header widths** (found while checking the hero): below `lg` the header shows only the brand "Log in" button (like the phone); "Log in" + "Sign up" appear from 1024 px, the search bar is 192 px wide at `lg` and 288 px from `xl`, and the logo wordmark is hidden under 360 px so the header never overflows from 320 px to 1920 px.
 67. **Home sections** live in `src/components/pr/` (`continue-reading-section`, `daily-updates-section`, `section-header`) and are composed by `home-content.tsx` from one `useHome()` query. Each section file also exports a layout-matching skeleton used while loading (T46 adds the empty / error variants). Day tabs scroll horizontally on narrow phones; "Today" is derived from the pinned date (`weekdayOf(today)`), not the real clock. Khmer weekday names are my own wording (review in T51).
+68. **Trending / genres**: the Trending card has `id="rank"` and the genre section `id="genres"` (targets of the header and footer `/#rank` and `/#genres` links, with `scroll-mt-24` under the sticky header). Genre chips are `Toggle`s (one pressed at a time, `aria-pressed`); genre names on the chips come from the data (English; not translated).

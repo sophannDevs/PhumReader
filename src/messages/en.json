@@ -211,6 +211,13 @@
       "Fri": "Friday",
       "Sat": "Saturday",
       "Sun": "Sunday"
-    }
+    },
+    "trendingTitle": "Trending now",
+    "trendingSubtitle": "Updated every hour",
+    "comics": "Comics",
+    "novels": "Web novels",
+    "genreTitle": "Browse by genre",
+    "genreCount": "{count, plural, one {# series} other {# series}} in {genre}",
+    "genres": "Genres"
   }
 }
