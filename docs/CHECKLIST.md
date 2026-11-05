@@ -29,7 +29,7 @@ npm run test:e2e     # Playwright, available after T52
 - Components in Part 2 and Part 3 are presentational (props + callbacks). Part 4 adds data, the fake API and the store, and wires them in. Part 5 builds the pages with all interactions. Part 6 completes loading / empty / error states on every page.
 - A temporary preview page at `/dev/kit` is used to check components in Parts 2–4. It is deleted in T53.
 
-Progress: 9 / 53
+Progress: 10 / 53
 
 ---
 
@@ -84,7 +84,7 @@ Progress: 9 / 53
   - Look at: `01-home-desktop.png`, `01-home-phone.png`; `design/foundations.md` §5.
   - Done when: `/dev/kit` shows a 6-column SeriesCard grid, 6 NovelCards, 4 ContinueCards and 8 RankRows that match the Home screen at 1440 and 390 px; covers have alt text; cards are keyboard-focusable links.
 
-- [ ] **T10 EpisodeRow, UnlockDialog, PackCard, PaymentMethodCard, CommentList** (≈60 min)
+- [x] **T10 EpisodeRow, UnlockDialog, PackCard, PaymentMethodCard, CommentList** (≈60 min)
   - Build: `EpisodeRow` states free / free + UP / read (grey title + "✓ Read") / locked (dimmed thumb with lock icon, warn badge "⚡ 5 coins") / unlocked ("Unlocked" brand badge), 64 px thumb, date, ♡ likes, chevron. `UnlockDialog` with thumb, "⚡ Fast Pass" badge, "Unlock Episode N", "Free for everyone on <date>.", Price / Your balance box, and three states: logged out (info alert + "Log in to unlock"), enough coins ("Unlock for 5 coins" with loading), not enough (warning "You need N more coins." + "Get coins"); always "Wait for the free release" (closes). `PackCard` (radio card: coins, bonus line, Popular green / Best value dark badge, `[PRICE USD]` / `[PRICE KHR]`, disabled state). `PaymentMethodCard` (radio card: KHQR / ABA / CARD label tile, label, description, "Recommended" badge, disabled state). `CommentList` + `CommentComposer` (textarea, 500-char counter, Post button; rows with initials avatar, name · time, "Top" badge, like toggle with count, Reply).
   - Look at: `02-series-desktop.png`, `02-series-unlock-dialog-desktop.png`, `02-series-unlock-not-enough-coins-phone.png`, `02-series-comments-tab-desktop.png`, `06-coins-desktop.png`; `design/foundations.md` §5.
   - Done when: `/dev/kit` shows all EpisodeRow states and the three UnlockDialog states; the dialog traps focus, closes on Esc and returns focus; pack and method cards are a real RadioGroup navigable with arrow keys.
@@ -371,3 +371,8 @@ Progress: 9 / 53
 37. **Toaster** is light-only (no `next-themes`), 2.6 s, bottom-right; on phones it sits 72 px above the bottom so it clears the tab bar. It is mounted in `Providers` in T17 (until then only on `/dev/kit`).
 38. **Demo data slug fix**: `design/demo-data.json` names the Tiny Dragon Café series `tiny-dragon-caf` but its Continue reading entry uses `tiny-dragon-cafe`. `src/data/demo-data.json` (our copy; `design/` is untouched) uses `tiny-dragon-cafe` for both, so every slug reference resolves.
 39. **NovelCard chapter count** shows `freeEpisodes` (e.g. 12 for The Last Archivist), as in the Home screen; the 3 Fast Pass chapters are not counted.
+40. **EpisodeRow / EpisodeList**: `EpisodeList` is the bordered `<ul>`; each `EpisodeRow` renders an `<li>`. `state` is passed in (`free | read | locked | unlocked`); the page computes it from the store. UP only shows on `free` rows. Locked rows are buttons that call `onLockedClick`; the others are links to `readerHref(...)` (`src/lib/routes.ts`).
+41. **UnlockDialog** picks its state from props (`loggedIn`, `balance`, `price`) and handles its own focus return: it is opened from state (no `DialogTrigger`), so it stores the previously focused element on open and refocuses it on close. The logged-out state shows only the Price row (no balance).
+42. **PackCard / PaymentMethodCard** must be rendered inside a `RadioGroup`; item values are `String(pack.coins)` and `method.id`. Pack bonus lines: "+N bonus" (or "No bonus"), plus " · +N first" while `firstPurchaseOffer` is true. Method tile labels (KHQR / ABA / CARD) are fixed.
+43. **CommentList / CommentComposer** are controlled. `CommentView` adds a stable `id` and `liked` to the data `Comment`; the like count shown is `likes + (liked ? 1 : 0)`. The Post button is disabled while the draft is empty, so the "Log in to comment" toast (T27) is triggered from the page when the user is logged out and the draft is not empty.
+44. **`src/lib/format.ts`** currently has `initials` and `firstName`; T16 adds `today`, `formatDate` and `formatCount`.

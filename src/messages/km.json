@@ -28,5 +28,47 @@
     "moveDown": "ចុះ {n}",
     "moveNew": "ថ្មី",
     "moveSame": "មិនប្រែប្រួល"
+  },
+  "episodes": {
+    "read": "បានអាន",
+    "unlocked": "បានដោះសោ",
+    "locked": "ជាប់សោ។ ដោះសោដោយ {count} កាក់",
+    "likes": "ចូលចិត្ត {count}"
+  },
+  "unlock": {
+    "fastPass": "Fast Pass",
+    "titleEpisode": "ដោះសោវគ្គ {n}",
+    "titleChapter": "ដោះសោជំពូក {n}",
+    "freeOn": "ឥតគិតថ្លៃសម្រាប់ទាំងអស់គ្នានៅ {date}។",
+    "price": "តម្លៃ",
+    "balance": "សមតុល្យរបស់អ្នក",
+    "loginAlert": "ចូលគណនីដើម្បីដោះសោដោយប្រើកាក់។",
+    "login": "ចូលគណនីដើម្បីដោះសោ",
+    "unlockFor": "ដោះសោដោយ {count} កាក់",
+    "needMore": "អ្នកត្រូវការកាក់បន្ថែម {count} ទៀត។",
+    "getCoins": "ទិញកាក់",
+    "wait": "រង់ចាំការចេញផ្សាយឥតគិតថ្លៃ"
+  },
+  "packs": {
+    "bonus": "+{count} ប្រាក់រង្វាន់",
+    "noBonus": "គ្មានប្រាក់រង្វាន់",
+    "first": "+{count} ទិញលើកដំបូង",
+    "popular": "ពេញនិយម",
+    "bestValue": "ត្រឹមត្រូវបំផុត",
+    "coinsLabel": "{count} កាក់",
+    "method": {
+      "recommended": "បានណែនាំ"
+    }
+  },
+  "comments": {
+    "add": "បន្ថែមមតិ",
+    "placeholder": "តើអ្នកគិតយ៉ាងដូចម្តេច?",
+    "hint": "សូមមានសុជីវធម៌។ ការបង្ហាញរឿងមុនត្រូវដាក់ក្នុងស្លាកបង្ហាញរឿង។",
+    "post": "បង្ហោះ",
+    "top": "កំពូល",
+    "reply": "ឆ្លើយតប",
+    "like": "ចូលចិត្ត",
+    "likeCount": "ចូលចិត្ត {count}",
+    "avatarOf": "{name}"
   }
 }

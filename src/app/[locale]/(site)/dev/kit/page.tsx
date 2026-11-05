@@ -14,6 +14,7 @@ import {
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { KitPatterns } from "@/components/dev/kit-patterns";
 import { KitComponents } from "@/components/dev/kit-components";
 import { TokenSwatch } from "@/components/dev/token-swatch";
 
@@ -282,6 +283,8 @@ export default async function DevKitPage({ params }: PageProps<"/[locale]/dev/ki
       </section>
 
       <KitComponents />
+
+      <KitPatterns />
 
       <section className="flex flex-col gap-3">
         <h2 className="text-2xl font-semibold tracking-tight">Novel reader themes</h2>
