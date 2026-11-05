@@ -240,7 +240,12 @@
     "rule3": "A symbol",
     "ruleMet": "met",
     "ruleUnmet": "not met",
-    "namePlaceholder": "Sokha Chan"
+    "namePlaceholder": "Sokha Chan",
+    "codeLabel": "Verification code",
+    "demoCode": "Demo code: {code}",
+    "wrongCode": "That code isn't right. Check the email and try again.",
+    "resendIn": "Resend in {seconds}s",
+    "resend": "Resend code"
   },
   "toasts": {
     "loggedOut": "You're logged out",
@@ -254,7 +259,8 @@
     "unlockFailed": "Couldn't unlock. Please try again.",
     "loginToComment": "Log in to comment",
     "bookmarked": "Bookmarked",
-    "bookmarkRemoved": "Bookmark removed"
+    "bookmarkRemoved": "Bookmark removed",
+    "codeSent": "Code sent"
   },
   "home": {
     "heroLabel": "Featured series",

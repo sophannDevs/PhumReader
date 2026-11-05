@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl"
 import { useState } from "react"
 import { DoneView } from "@/components/auth/done-view"
 import { LoginView } from "@/components/auth/login-view"
+import { VerifyView } from "@/components/auth/verify-view"
 import { SignupView, type SignupData } from "@/components/auth/signup-view"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
@@ -51,8 +52,10 @@ export function AuthFlow() {
           }}
         />
       ) : null}
-      {view === "verify" && pending ? <p className="text-center text-sm">{pending.email}</p> : null}
-      {/* verify / forgot / sent views arrive in T34-T35 */}
+      {view === "verify" && pending ? (
+        <VerifyView data={pending} onBack={() => setView("signup")} onDone={() => setView("done")} />
+      ) : null}
+      {/* forgot / sent views arrive in T35 */}
     </div>
   )
 }

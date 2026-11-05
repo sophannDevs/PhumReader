@@ -240,7 +240,12 @@
     "rule3": "និមិត្តសញ្ញាមួយ",
     "ruleMet": "បានបំពេញ",
     "ruleUnmet": "មិនទាន់បំពេញ",
-    "namePlaceholder": "សុខា ចាន់"
+    "namePlaceholder": "សុខា ចាន់",
+    "codeLabel": "កូដផ្ទៀងផ្ទាត់",
+    "demoCode": "កូដសាកល្បង៖ {code}",
+    "wrongCode": "កូដនេះមិនត្រឹមត្រូវទេ។ សូមពិនិត្យអ៊ីមែល ហើយព្យាយាមម្ដងទៀត។",
+    "resendIn": "ផ្ញើម្ដងទៀតក្នុង {seconds}s",
+    "resend": "ផ្ញើកូដម្ដងទៀត"
   },
   "toasts": {
     "loggedOut": "អ្នកបានចាកចេញ",
@@ -254,7 +259,8 @@
     "unlockFailed": "មិនអាចដោះសោបានទេ។ សូមព្យាយាមម្ដងទៀត។",
     "loginToComment": "ចូលគណនីដើម្បីបញ្ចេញមតិ",
     "bookmarked": "បានចំណាំ",
-    "bookmarkRemoved": "បានលុបការចំណាំ"
+    "bookmarkRemoved": "បានលុបការចំណាំ",
+    "codeSent": "បានផ្ញើកូដ"
   },
   "home": {
     "heroLabel": "រឿងពិសេស",

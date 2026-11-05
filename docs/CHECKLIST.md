@@ -29,7 +29,7 @@ npm run test:e2e     # Playwright, available after T52
 - Components in Part 2 and Part 3 are presentational (props + callbacks). Part 4 adds data, the fake API and the store, and wires them in. Part 5 builds the pages with all interactions. Part 6 completes loading / empty / error states on every page.
 - A temporary preview page at `/dev/kit` is used to check components in Parts 2–4. It is deleted in T53.
 
-Progress: 33 / 53
+Progress: 34 / 53
 
 ---
 
@@ -216,7 +216,7 @@ Progress: 33 / 53
   - Look at: `05-signup-desktop.png`; `design/spec.md` §5 Sign up; `demo-data.passwordRules`.
   - Done when: typing "Toonwave1!" lights all 4 segments green and ticks all rules; submitting without accepting the terms shows an error; a valid form moves to Verify.
 
-- [ ] **T34 Verify code** (≈45 min)
+- [x] **T34 Verify code** (≈45 min)
   - Build: Verify view: mail icon tile, "Check your email", "We sent a 6-digit code to <email>", InputOTP with 6 slots (autofocus, paste supported), "Verify email" brand lg, "Didn't get it? Resend in 30s" countdown → "Resend code" link (toast "Code sent"), "Demo code: 123456", wrong code → red slots + "That code isn't right. Check the email and try again.", "← Use a different email" back to Sign up. Correct code → `addAccount`, `login`, Done view (T35).
   - Look at: `05-verify-code-phone.png`; `design/spec.md` §5 Verify.
   - Done when: "123456" creates the account and logs in; "000000" shows the red state and keeps focus in the OTP; the countdown reaches 0 and Resend works; a signed-up account can log in afterwards.
@@ -413,3 +413,4 @@ Progress: 33 / 53
 79. **Reading settings** (`reading-settings.tsx`): `ReadingSettingsControls` (text size stepper over 14-24 with a progress bar, Light / Sepia / Dark tabs, Sans / Serif tabs, wide line spacing switch) writes `novelSettings` in the store, and the reader root re-renders instantly; `themed` colours it with the reader tokens (the popover) and the unthemed variant is for the Settings page (T41). Popovers render in a portal outside the reader root, so `ReadingSettingsPopover` and the chapters `EpisodeListPopover` set `data-reader-theme` on their own content. The chapter Like and Bookmark use the persisted `likes` keys `episode:<id>:<n>` and `bookmark:<id>:<n>`.
 80. **Auth flow** (`src/components/auth/`): `/login` renders `AuthFlow`, one small state machine (`login | signup | verify | forgot | sent | done`) inside a Suspense boundary (it reads `?mode=signup`). The Log in view uses react-hook-form + zod (messages are `auth.*` keys, translated in the view) and `useMutation` over the fake API (0.9 s email login, 1 s social). Social buttons have no OAuth (always Sokha Chan); the Google / Facebook marks use `--social-*` tokens in `globals.css`. A wrong password shows the destructive alert; with `?demo=error` any failure shows the generic "Something went wrong" text. The Done view welcomes the first name and replaces the route with `returnTo` (default Home) after 1.2 s, clearing it; "Back to PhumReader" also goes to `returnTo`.
 81. **Sign up**: the password must meet at least 3 of the 4 rules (the strength bar turns green at 3; below that it is amber); the rule labels are `auth.rule0..3` (English and Khmer) instead of `passwordRules` in the data. The email is checked against the demo account and the store's `accounts` through `signUp()` (error `email_taken` -> "That email already has an account"). A valid form keeps `{name, email, password}` in the flow state and moves to Verify.
+82. **Verify code**: digits only (`input-otp` pattern), autofocus, paste supported. The Verify button stays disabled until 6 digits are typed. A wrong code keeps the digits (shown red through `data-invalid` on the wrapper and `aria-invalid`), refocuses the OTP and clears the error as soon as the code changes. The resend countdown is 30 s (`aria-live="polite"`), "Resend code" shows the toast "Code sent" and restarts it. A correct code (123456) calls `addAccount` + `login`, then shows the Done view.
