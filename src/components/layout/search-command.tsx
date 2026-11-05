@@ -8,7 +8,7 @@ import { useTranslations } from "next-intl"
 import { Badge } from "@/components/ui/badge"
 import { CommandEmpty, CommandGroup, CommandItem, CommandList } from "@/components/ui/command"
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog"
-import { demoData } from "@/data"
+import { getSeries } from "@/data"
 import type { Series } from "@/data/types"
 import { useRouter } from "@/i18n/navigation"
 import { seriesHref } from "@/lib/routes"
@@ -19,8 +19,8 @@ const POPULAR_COUNT = 6
 
 function filterSeries(query: string): Series[] {
   const q = query.trim().toLowerCase()
-  if (!q) return demoData.series.slice(0, POPULAR_COUNT)
-  return demoData.series
+  if (!q) return getSeries().slice(0, POPULAR_COUNT)
+  return getSeries()
     .filter((s) => [s.title, s.creator, s.genre].some((field) => field.toLowerCase().includes(q)))
     .slice(0, MAX_RESULTS)
 }

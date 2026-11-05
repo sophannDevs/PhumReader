@@ -29,7 +29,7 @@ npm run test:e2e     # Playwright, available after T52
 - Components in Part 2 and Part 3 are presentational (props + callbacks). Part 4 adds data, the fake API and the store, and wires them in. Part 5 builds the pages with all interactions. Part 6 completes loading / empty / error states on every page.
 - A temporary preview page at `/dev/kit` is used to check components in Parts 2–4. It is deleted in T53.
 
-Progress: 16 / 53
+Progress: 17 / 53
 
 ---
 
@@ -127,7 +127,7 @@ Progress: 16 / 53
   - Look at: `design/demo-data.json` (`episodeRule`, `chapterNames`, `episodesSample`); `design/spec.md` §1–2.
   - Done when: a small script (`npx tsx scripts/check-data.ts`, dev-only) prints 68 episodes for `glass-compass`, 15 for `the-last-archivist` titled "Chapter N: …", 3 fastpass per series, episode `freeEpisodes` marked UP and dated Nov 5, 2026; typecheck passes.
 
-- [ ] **T17 Fake API (`src/lib/demo-api.ts`) and TanStack Query** (≈45 min)
+- [x] **T17 Fake API (`src/lib/demo-api.ts`) and TanStack Query** (≈45 min)
   - Build: `withDemo(fn)` wrapper adding a random 300–800 ms delay and reading `?demo=` from `window.location.search` (`empty` → empty lists / null, `error` → throws `DemoApiError`, `slow` → +3000 ms). Functions: `fetchHome`, `fetchSeries(slug)`, `fetchEpisodes(slug)`, `fetchEpisode(slug, n)`, `fetchChapter(slug, n)`, `fetchComments(kind, slug)`, `fetchRankings(kind)`, `fetchGenre(genre)`, `search(q)`, `fetchCoinsPage`, `login(email, password)`, `socialLogin(provider)`, `signUp(data)`, `verifyCode(code)`, `sendResetLink(email)`, `unlock(seriesId, n)`, `pay(order, outcome)`. `src/lib/query.tsx`: QueryClient (retry 0, staleTime 30 s), `Providers` client component (QueryClientProvider + Sonner `Toaster`) mounted in the root layout; hooks in `src/lib/queries.ts` (`useHome`, `useSeries`, `useEpisodes`, …) whose keys include the demo flag so changing the flag refetches.
   - Look at: `design/spec.md` §0 Fake API; `CLAUDE.md` Scope rules.
   - Done when: `useSeries("glass-compass")` resolves after 300–800 ms; with `?demo=slow` after more than 3 s; `?demo=error` gives `isError`; `?demo=empty` gives empty arrays; nothing imports `demoData` directly from a page.
@@ -391,3 +391,6 @@ Progress: 16 / 53
 57. **Cache Components keeps the previous route mounted but hidden** (`display: none`) after a client-side navigation (for example after switching language), so the DOM briefly holds two copies of a page. Tests must filter for visible elements (e2e in T52), and `id="main"` / `id="skip"` targets can appear twice: handle this in the T50 skip-link work.
 58. **Data layer**: `src/data/demo.ts` parses the JSON; `src/data/selectors.ts` holds the typed helpers (re-exported from `@/data`); `src/lib/format.ts` has `today`, `addDays`, `formatDate`, `formatCount`, `parseCount`, `initials`, `firstName`. Generated episodes (series without a hand-written sample) use the sample thumbnail cycle (24 covers), chapter names `chapterNames[n % 12]`, weekly dates ending at `today`, and deterministic likes (about 40-50K, Fast Pass episodes about half). `scripts/check-data.ts` (run with `npx tsx scripts/check-data.ts`) checks the data and selectors; `tsx` is a dev dependency.
 59. **`dailyUpdates(day)`** fills a short day with UP series; `seriesByDay` returns the raw list. `rankings("novels")` sorts the 7 novels by views (ties keep data order) and puts the first 7 `rankingMovement` values on them.
+60. **Fake API** (`src/lib/demo-api.ts`): `withDemo(fn, { empty?, delay? })` waits 300-800 ms (the `delay` option fixes it: login 0.9 s, social 1 s, unlock 0.7 s, pay 1.5 s), adds 3 s for `?demo=slow`, throws `DemoApiError` (with a `code`) for `?demo=error`, and returns `empty()` for `?demo=empty` when the call defines one. Lookups return `null` for unknown slugs / numbers (pages call `notFound()`). `fetchSeries` ignores `?demo=empty` (the series page must load; its episodes and comments are the empty parts); `fetchEpisode` / `fetchChapter` return the episode with no panels / no blocks.
+61. **Query hooks** (`src/lib/queries.ts`) put the active `?demo=` flag in every query key (`useDemoFlag()` re-reads it on route changes); `Providers` (`src/lib/query.tsx`: QueryClient with retry 0, staleTime 30 s, plus the Sonner `Toaster`) is mounted in `[locale]/layout.tsx`. Mutations (`login`, `unlock`, `pay`, ...) are plain async functions used with `useMutation` in the pages. Search results for the ⌘K palette still use a synchronous selector (no 300-800 ms delay while typing); `search(q)` / `useSearchSeries` serve the Search page (T44).
+62. **`auth` messages**: `en.json` / `km.json` already contain the whole `auth` namespace copied from `loginPageStrings` (T35 only has to use the remaining keys). `/login` and `AuthSplitLayout` read it through next-intl.

@@ -56,7 +56,6 @@ import { Switch } from "@/components/ui/switch"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Tabs, TabsContent, TabsCount, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
-import { Toaster } from "@/components/ui/sonner"
 import { Toggle } from "@/components/ui/toggle"
 
 const byTitle = (title: string): Series => {
@@ -92,8 +91,6 @@ export function KitComponents() {
 
   return (
     <>
-      <Toaster />
-
       <Section title="Forms">
         <div className="grid gap-5 md:grid-cols-3">
           <div className="flex flex-col gap-4 rounded-card border bg-card p-5 shadow-xs">

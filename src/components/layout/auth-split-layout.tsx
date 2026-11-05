@@ -1,6 +1,6 @@
 import { ArrowLeftIcon } from "lucide-react"
 import Image from "next/image"
-import { useLocale } from "next-intl"
+import { useLocale, useTranslations } from "next-intl"
 import { LanguageSwitch } from "@/components/layout/language-switch"
 import { Logo } from "@/components/layout/logo"
 import { demoData } from "@/data"
@@ -33,7 +33,7 @@ export function AuthSplitLayout({
   className?: string
 }) {
   const locale = useLocale() as Locale
-  const strings = demoData.loginPageStrings[locale]
+  const t = useTranslations("auth")
   const byline = splitByline(demoData.authQuote.by)
 
   return (
@@ -64,7 +64,7 @@ export function AuthSplitLayout({
 
         <figure className="relative flex flex-col gap-3">
           <blockquote className="max-w-md text-2xl leading-8 font-medium tracking-tight text-balance">
-            “{strings.quote}”
+            “{t("quote")}”
           </blockquote>
           <figcaption className="type-small font-normal text-surface-quiet">
             — {byline.name}
@@ -85,7 +85,7 @@ export function AuthSplitLayout({
             className="hidden items-center gap-2 rounded-control text-sm font-medium outline-none hover:text-brand-ink focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background md:inline-flex"
           >
             <ArrowLeftIcon className="size-4" aria-hidden />
-            <span lang={locale}>{strings.back}</span>
+            <span lang={locale}>{t("back")}</span>
           </Link>
           <LanguageSwitch variant="segmented" />
         </div>
@@ -93,7 +93,7 @@ export function AuthSplitLayout({
         <main id="main" className="mx-auto flex w-full max-w-[380px] flex-1 flex-col pt-10 pb-10 md:pt-20">
           {children}
           <p lang={locale} className="type-small mt-5 text-center font-normal text-muted-foreground">
-            {strings.legal}
+            {t("legal")}
           </p>
         </main>
       </div>

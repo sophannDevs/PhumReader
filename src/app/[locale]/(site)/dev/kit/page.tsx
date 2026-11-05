@@ -14,6 +14,7 @@ import {
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { KitQueries } from "@/components/dev/kit-queries";
 import { KitPatterns } from "@/components/dev/kit-patterns";
 import { KitComponents } from "@/components/dev/kit-components";
 import { TokenSwatch } from "@/components/dev/token-swatch";
@@ -281,6 +282,8 @@ export default async function DevKitPage({ params }: PageProps<"/[locale]/dev/ki
           </Alert>
         </div>
       </section>
+
+      <KitQueries />
 
       <KitComponents />
 
