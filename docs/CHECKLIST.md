@@ -29,7 +29,7 @@ npm run test:e2e     # Playwright, available after T52
 - Components in Part 2 and Part 3 are presentational (props + callbacks). Part 4 adds data, the fake API and the store, and wires them in. Part 5 builds the pages with all interactions. Part 6 completes loading / empty / error states on every page.
 - A temporary preview page at `/dev/kit` is used to check components in Parts 2–4. It is deleted in T53.
 
-Progress: 8 / 53
+Progress: 9 / 53
 
 ---
 
@@ -79,7 +79,7 @@ Progress: 8 / 53
   - Look at: `design/foundations.md` §1 (Coin), §4 (Skeleton, Alert); `01-home-desktop.png` (header coin chip).
   - Done when: all five render on `/dev/kit`; ErrorState's Retry calls its callback; EmptyState and ErrorState text comes from next-intl keys.
 
-- [ ] **T09 SeriesCard, NovelCard, ContinueCard, RankRow** (≈60 min)
+- [x] **T09 SeriesCard, NovelCard, ContinueCard, RankRow** (≈60 min)
   - Build: `SeriesCard` (3:4 cover, 12 px radius, top-left UP / NEW badges, title 14/20 600, "creator · genre", ♡ likes, hover zoom, the whole card is one link, novels get a "Novel" badge); `NovelCard` (card with 84 px cover, genre badge, title, "creator · N chapters"); `ContinueCard` (48×64 cover, title, "Episode N · 62%" or "Chapter N · 85%", 6 px Progress, chevron icon button); `RankRow` (rank number, green for 1–3, 40×52 cover, title, "creator · views", movement ▲ n green / ▼ n red / NEW / —). All typed with `src/data/types.ts`.
   - Look at: `01-home-desktop.png`, `01-home-phone.png`; `design/foundations.md` §5.
   - Done when: `/dev/kit` shows a 6-column SeriesCard grid, 6 NovelCards, 4 ContinueCards and 8 RankRows that match the Home screen at 1440 and 390 px; covers have alt text; cards are keyboard-focusable links.
@@ -369,3 +369,5 @@ Progress: 8 / 53
 35. **Radio cards**: `radioCardClassName` (exported from `radio-group.tsx`) styles a `<label>` that wraps a `RadioGroupItem`: checked = green border + 1 px ring + `--selected` background. Used by PackCard and PaymentMethodCard (T10).
 36. **OTP error state**: wrap the `InputOTP` in an element with `data-invalid="true"` (and set `aria-invalid` on the input) to turn the slots red.
 37. **Toaster** is light-only (no `next-themes`), 2.6 s, bottom-right; on phones it sits 72 px above the bottom so it clears the tab bar. It is mounted in `Providers` in T17 (until then only on `/dev/kit`).
+38. **Demo data slug fix**: `design/demo-data.json` names the Tiny Dragon Café series `tiny-dragon-caf` but its Continue reading entry uses `tiny-dragon-cafe`. `src/data/demo-data.json` (our copy; `design/` is untouched) uses `tiny-dragon-cafe` for both, so every slug reference resolves.
+39. **NovelCard chapter count** shows `freeEpisodes` (e.g. 12 for The Last Archivist), as in the Home screen; the 3 Fast Pass chapters are not counted.

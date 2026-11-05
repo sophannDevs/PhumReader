@@ -3,6 +3,12 @@
 import { useState } from "react"
 import { toast } from "sonner"
 import { LogOutIcon, SettingsIcon, UserIcon } from "lucide-react"
+import { ContinueCard } from "@/components/pr/continue-card"
+import { NovelCard } from "@/components/pr/novel-card"
+import { RankRow } from "@/components/pr/rank-row"
+import { SeriesCard } from "@/components/pr/series-card"
+import { demoData } from "@/data"
+import type { Series } from "@/data/types"
 import { CoinChip } from "@/components/pr/coin-chip"
 import { CoinIcon } from "@/components/pr/coin-icon"
 import { EmptyState } from "@/components/pr/empty-state"
@@ -52,6 +58,21 @@ import { Tabs, TabsContent, TabsCount, TabsList, TabsTrigger } from "@/component
 import { Textarea } from "@/components/ui/textarea"
 import { Toaster } from "@/components/ui/sonner"
 import { Toggle } from "@/components/ui/toggle"
+
+const byTitle = (title: string): Series => {
+  const found = demoData.series.find((s) => s.title === title)
+  if (!found) throw new Error(`Unknown series: ${title}`)
+  return found
+}
+const bySlug = (slug: string): Series => {
+  const found = demoData.series.find((s) => s.slug === slug)
+  if (!found) throw new Error(`Unknown series: ${slug}`)
+  return found
+}
+
+const cardSeries = ["Paper Tigers", "The Quiet Kingdom", "Little Thunder", "Wolves of Wren Street", "Lantern Alley", "Hollow Signal"].map(byTitle)
+const novelSeries = demoData.series.filter((s) => s.type === "novel").slice(0, 6)
+const rankSeries = ["Paper Tigers", "Neon Monsoon", "Tiny Dragon Café", "The Orchard Pact", "Summer Index", "Ember & Co.", "Captain Nobody", "Salt & Thunder"].map(byTitle)
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -268,6 +289,39 @@ export function KitComponents() {
             </div>
             <SkeletonText />
           </div>
+        </div>
+      </Section>
+
+      <Section title="Series cards">
+        <div className="grid grid-cols-3 gap-3 md:grid-cols-4 md:gap-5 lg:grid-cols-6">
+          {cardSeries.map((s) => (
+            <SeriesCard key={s.id} series={s} />
+          ))}
+          <SeriesCard series={novelSeries[0]} />
+        </div>
+      </Section>
+
+      <Section title="Novel cards">
+        <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+          {novelSeries.map((s) => (
+            <NovelCard key={s.id} series={s} />
+          ))}
+        </div>
+      </Section>
+
+      <Section title="Continue cards">
+        <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
+          {demoData.continueReading.map((c) => (
+            <ContinueCard key={c.series} series={bySlug(c.series)} episode={c.episode} progress={c.progress} />
+          ))}
+        </div>
+      </Section>
+
+      <Section title="Rank rows">
+        <div className="max-w-xl rounded-card border bg-card p-3 shadow-xs">
+          {rankSeries.map((s, i) => (
+            <RankRow key={s.id} rank={i + 1} series={s} movement={demoData.rankingMovement[i]} />
+          ))}
         </div>
       </Section>
 

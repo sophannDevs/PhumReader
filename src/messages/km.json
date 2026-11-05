@@ -12,5 +12,21 @@
     "errorTitle": "មានបញ្ហាអ្វីមួយ",
     "errorDescription": "យើងមិនអាចផ្ទុកទំព័រនេះបានទេ។ សូមពិនិត្យការតភ្ជាប់ របស់អ្នក ហើយព្យាយាមម្ដងទៀត។",
     "retry": "ព្យាយាមម្ដងទៀត"
+  },
+  "cards": {
+    "novel": "ប្រលោមលោក",
+    "up": "UP",
+    "new": "ថ្មី",
+    "likes": "ចូលចិត្ត {count}",
+    "views": "{views} ដងមើល",
+    "chapters": "{count} ជំពូក",
+    "episodeProgress": "វគ្គ {n} · {percent}%",
+    "chapterProgress": "ជំពូក {n} · {percent}%",
+    "cover": "គម្របរឿង {title}",
+    "rank": "លេខ {rank}",
+    "moveUp": "ឡើង {n}",
+    "moveDown": "ចុះ {n}",
+    "moveNew": "ថ្មី",
+    "moveSame": "មិនប្រែប្រួល"
   }
 }
