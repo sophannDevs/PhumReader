@@ -1,14 +1,15 @@
 "use client"
 
-import { BookmarkIcon, ChevronLeftIcon, ChevronRightIcon, HeartIcon, ListIcon, Share2Icon } from "lucide-react"
+import { BookmarkIcon, ChevronLeftIcon, ChevronRightIcon, HeartIcon, ListIcon, MessageSquareIcon, Share2Icon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { toast } from "sonner"
+import { CommentsSection } from "@/components/pr/comments-section"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
-import { fastPassPrice, type Series } from "@/data"
+import { chapterCommentCount, fastPassPrice, type Series } from "@/data"
 import type { NovelChapter } from "@/data"
 import { Link } from "@/i18n/navigation"
-import { initials } from "@/lib/format"
+import { formatCount, initials, parseCount } from "@/lib/format"
 import { seriesHref } from "@/lib/routes"
 import { likeKey, useAppStore } from "@/lib/store"
 import { cn } from "@/lib/utils"
@@ -40,6 +41,8 @@ export function NovelEndSection({
   const markKey = likeKey.bookmark(series.id, n)
   const liked = useAppStore((s) => !!s.likes[likedKey])
   const bookmarked = useAppStore((s) => !!s.likes[markKey])
+  const likeCount = parseCount(chapter.likes) + (liked ? 1 : 0)
+  const commentCount = chapterCommentCount(chapter)
 
   async function share() {
     try {
@@ -60,10 +63,20 @@ export function NovelEndSection({
             size="sm"
             className={pill}
             aria-pressed={liked}
+            aria-label={`${formatCount(likeCount)} · ${t("likeLabel", { count: likeCount.toLocaleString("en-US") })}`}
             onClick={() => useAppStore.getState().toggleLike(likedKey)}
           >
             <HeartIcon className={cn(liked && "fill-destructive text-destructive")} />
-            {t("like")}
+            <span className="tabular-nums">{formatCount(likeCount)}</span>
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className={pill}
+            onClick={() => document.getElementById("comments")?.scrollIntoView({ behavior: "smooth", block: "start" })}
+          >
+            <MessageSquareIcon />
+            <span className="tabular-nums">{commentCount}</span>
           </Button>
           <Button
             variant="outline"
@@ -94,6 +107,8 @@ export function NovelEndSection({
           <p className="type-small font-normal">{chapter.creatorNote}</p>
         </div>
       </section>
+
+      <CommentsSection kind="episode" slug={`${series.slug}:${n}`} variant="novel" count={commentCount} />
 
       <div className="grid grid-cols-2 gap-3">
         <Button variant="outline" size="lg" className={cn(pill, "text-reader-quiet")} disabled={n <= 1} onClick={onPrev}>

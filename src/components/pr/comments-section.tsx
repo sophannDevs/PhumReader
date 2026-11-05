@@ -13,6 +13,7 @@ import { likeKey, useAppStore, useUser } from "@/lib/store"
 import { MessageSquareIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { cn } from "@/lib/utils"
 
 /**
  * Composer + comment list for a series (or episode). Likes live in the store (persisted);
@@ -26,8 +27,8 @@ export function CommentsSection({
 }: {
   kind: "series" | "episode"
   slug: string
-  /** "reader" = the dark card at the end of a comic episode (one-line composer). */
-  variant?: "page" | "reader"
+  /** "reader" = the dark card at the end of a comic episode (one-line composer); "novel" = the same card in the novel reader theme colours. */
+  variant?: "page" | "reader" | "novel"
   /** Total shown in the reader card header, e.g. "1.2K". */
   count?: string
 }) {
@@ -57,14 +58,21 @@ export function CommentsSection({
     setDraft("")
   }
 
-  if (variant === "reader") {
+  if (variant === "reader" || variant === "novel") {
+    const themed = variant === "novel"
     return (
-      <section className="flex flex-col gap-4 rounded-card border border-surface-border bg-surface-panel p-5 text-surface-foreground">
+      <section
+        id={themed ? "comments" : undefined}
+        className={cn(
+          "flex scroll-mt-20 flex-col gap-4 rounded-card border p-5",
+          themed ? "border-reader-border text-reader-text" : "border-surface-border bg-surface-panel text-surface-foreground",
+        )}
+      >
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-semibold">
-            {tr("commentsTitle")} {count ? <span className="font-normal text-surface-quiet tabular-nums">{count}</span> : null}
+            {tr("commentsTitle")} {count ? <span className={cn("font-normal tabular-nums", themed ? "text-reader-quiet" : "text-surface-quiet")}>{count}</span> : null}
           </h2>
-          <span className="type-caption text-surface-quiet">{tr("topComments")}</span>
+          <span className={cn("type-caption", themed ? "text-reader-quiet" : "text-surface-quiet")}>{tr("topComments")}</span>
         </div>
         <form
           className="flex gap-2"
@@ -80,7 +88,7 @@ export function CommentsSection({
             onChange={(e) => setDraft(e.target.value)}
             placeholder={user ? tr("addComment") : tr("loginToComment")}
             aria-label={tr("addComment")}
-            className="border-surface-border-strong bg-surface text-surface-foreground placeholder:text-surface-quiet focus-visible:ring-offset-surface-panel"
+            className={cn(themed ? "border-reader-border bg-transparent text-reader-text placeholder:text-reader-quiet focus-visible:ring-offset-reader-page" : "border-surface-border-strong bg-surface text-surface-foreground placeholder:text-surface-quiet focus-visible:ring-offset-surface-panel")}
           />
           <Button type="submit" variant="brand" disabled={!draft.trim()}>
             {tr("post")}
@@ -89,14 +97,14 @@ export function CommentsSection({
         {query.isPending ? (
           <div className="flex flex-col gap-3" aria-hidden>
             {Array.from({ length: 3 }, (_, i) => (
-              <Skeleton key={i} className="h-10 bg-surface-border" />
+              <Skeleton key={i} className={cn("h-10", themed ? "bg-reader-border" : "bg-surface-border")} />
             ))}
           </div>
         ) : query.isError ? (
           <ErrorState onRetry={() => void query.refetch()} />
         ) : (
           <CommentList
-            tone="dark"
+            tone={themed ? "themed" : "dark"}
             className="gap-4"
             comments={comments}
             onToggleLike={(id) => useAppStore.getState().toggleLike(likeKey.comment(scope, id))}

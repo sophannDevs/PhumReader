@@ -1,18 +1,20 @@
 "use client"
 
+import { useTheme } from "next-themes"
 import { Toaster as Sonner, type ToasterProps } from "sonner"
 import { CheckIcon, InfoIcon, TriangleAlertIcon, XIcon, Loader2Icon } from "lucide-react"
 
 /**
- * White card, green check dot, md shadow, top-right. Light theme only.
+ * Popover-coloured card (follows the theme), green check dot, md shadow, top-right.
  * Errors stay a little longer (5 s) so they can be read.
  * Use `toast.success(...)` for the green check, `toast.error(...)` for
  * cancelled / failed.
  */
 const Toaster = (props: ToasterProps) => {
+  const { resolvedTheme } = useTheme()
   return (
     <Sonner
-      theme="light"
+      theme={resolvedTheme === "dark" ? "dark" : "light"}
       position="top-right"
       duration={2600}
       className="toaster group"

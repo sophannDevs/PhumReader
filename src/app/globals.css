@@ -2,8 +2,9 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
-/* PhumReader is a light-theme site. The comic reader and heroes use the
-   fixed "surface" tokens below; the novel reader has its own themes. */
+/* Light by default; `.dark` (set by next-themes on <html>) swaps the tokens below.
+   The comic reader and heroes use the fixed "surface" tokens, which stay dark in both
+   themes; the novel reader has its own themes. */
 @custom-variant dark (&:is(.dark *));
 
 /* ------------------------------------------------------------------ */
@@ -76,6 +77,52 @@
   --reader-text: #18181b;
   --reader-quiet: #71717a;
   --reader-border: #e4e4e7;
+}
+
+/* Dark theme: zinc neutrals, same green brand. Only colours change. */
+.dark {
+  color-scheme: dark;
+  --background: #09090b;
+  --foreground: #fafafa;
+  --card: #111113;
+  --card-foreground: #fafafa;
+  --popover: #18181b;
+  --popover-foreground: #fafafa;
+  --muted: #18181b;
+  --muted-foreground: #a1a1aa;
+  --secondary: #27272a;
+  --secondary-foreground: #fafafa;
+  --accent: #27272a;
+  --accent-foreground: #fafafa;
+  --border: #27272a;
+  --input: #3f3f46;
+  --ring: #00dc64;
+
+  --primary-hover: #33e583;
+  --brand-ink: #4ade80; /* green text and links on dark */
+  --brand-soft: #052e16;
+  --brand-soft-border: #14532d;
+  --selected: #0a1f13;
+
+  --destructive: #ef4444;
+  --destructive-soft: #2a0f10;
+  --destructive-border: #7f1d1d;
+  --destructive-ink: #fca5a5;
+  --warning: #f59e0b;
+  --warning-soft: #271a05;
+  --warning-border: #78350f;
+  --warning-ink: #fcd34d;
+
+  --up: #7f1d1d;
+  --up-foreground: #fecaca;
+
+  /* heroes and comic reader sit one step above the page so they stay visible */
+  --surface: #000000;
+  --surface-panel: #18181b;
+
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.6);
 }
 
 /* Novel reader themes, scoped to the reader root only. */

@@ -1,11 +1,12 @@
 "use client"
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
+import { ThemeProvider } from "next-themes"
 import { useState } from "react"
 import { Toaster } from "@/components/ui/sonner"
 import { StoreHydrator } from "@/lib/store-hydrator"
 
-/** TanStack Query + the Sonner toaster, mounted once in the root layout. */
+/** Theme (light / dark / system), TanStack Query + the Sonner toaster, mounted once in the root layout. */
 export function Providers({ children }: { children: React.ReactNode }) {
   const [client] = useState(
     () =>
@@ -14,10 +15,12 @@ export function Providers({ children }: { children: React.ReactNode }) {
       })
   )
   return (
-    <QueryClientProvider client={client}>
-      <StoreHydrator />
-      {children}
-      <Toaster />
-    </QueryClientProvider>
+    <ThemeProvider attribute="class" defaultTheme="system" enableSystem storageKey="phumreader.theme" disableTransitionOnChange>
+      <QueryClientProvider client={client}>
+        <StoreHydrator />
+        {children}
+        <Toaster />
+      </QueryClientProvider>
+    </ThemeProvider>
   )
 }

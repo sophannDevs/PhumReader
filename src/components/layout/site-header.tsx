@@ -4,6 +4,7 @@ import { BookOpenIcon, CoinsIcon, LogOutIcon, PenLineIcon, SearchIcon, SlidersHo
 import { useTranslations } from "next-intl"
 import { CoinChip } from "@/components/pr/coin-chip"
 import { Logo } from "@/components/layout/logo"
+import { ThemeToggle } from "@/components/layout/theme-toggle"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import {
@@ -29,7 +30,7 @@ const navItems = [
 ] as const
 
 /**
- * Sticky site header: 64 px (56 px on phones), white at 92% with blur.
+ * Sticky site header: 64 px (56 px on phones), page colour at 92% with blur.
  * Props-driven (`user`, `coins`); T19 connects it to the store.
  */
 export function SiteHeader({
@@ -97,6 +98,7 @@ export function SiteHeader({
             <SearchIcon />
           </Button>
 
+          <ThemeToggle className="hidden sm:inline-flex" />
           <CoinChip count={coins} />
 
           {user ? (

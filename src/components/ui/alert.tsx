@@ -10,7 +10,7 @@ const alertVariants = cva(
         default: "border-border bg-card text-card-foreground",
         // info / brand notices: Fast Pass, first purchase
         brand:
-          "border-brand-soft-border bg-brand-soft text-primary-foreground *:data-[slot=alert-description]:text-primary-foreground/80 *:[svg]:text-brand-ink",
+          "border-brand-soft-border bg-brand-soft text-primary-foreground dark:text-foreground *:data-[slot=alert-description]:text-primary-foreground/80 dark:*:data-[slot=alert-description]:text-foreground/80 *:[svg]:text-brand-ink",
         destructive:
           "border-destructive-border bg-destructive-soft text-destructive-ink *:data-[slot=alert-description]:text-destructive-ink/80 *:[svg]:text-destructive",
         warning:

@@ -1,7 +1,8 @@
 "use client"
 
 import { useLocale, useTranslations } from "next-intl"
-import { useState } from "react"
+import { useTheme } from "next-themes"
+import { useState, useSyncExternalStore } from "react"
 import { toast } from "sonner"
 import { ReadingSettingsControls } from "@/components/layout/reading-settings"
 import { EmptyState } from "@/components/pr/empty-state"
@@ -20,10 +21,57 @@ import { RadioGroup, RadioGroupItem, radioCardClassName } from "@/components/ui/
 import { Switch } from "@/components/ui/switch"
 import { Link, usePathname, useRouter } from "@/i18n/navigation"
 import { type Locale } from "@/i18n/routing"
+import { cn } from "@/lib/utils"
 import { initials } from "@/lib/format"
 import { useAppStore, useUser } from "@/lib/store"
 import { useRestoreFocus } from "@/lib/use-restore-focus"
-import { UserIcon } from "lucide-react"
+import { MonitorIcon, MoonIcon, SunIcon, UserIcon } from "lucide-react"
+
+function ReadingPreview() {
+  const t = useTranslations("settings")
+  const ns = useAppStore((s) => s.novelSettings)
+  return (
+    <div
+      data-reader-theme={ns.theme}
+      style={{ "--novel-size": `${ns.size}px`, "--novel-leading": ns.wide ? 1.85 : 1.6 } as React.CSSProperties}
+      className="rounded-card border border-reader-border bg-reader-page p-4 text-reader-text"
+    >
+      <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-reader-quiet">{t("preview")}</p>
+      <p className={cn("type-novel", ns.font === "serif" && "font-novel")}>{t("previewText")}</p>
+    </div>
+  )
+}
+
+function ThemeChoice() {
+  const t = useTranslations("settings")
+  const { theme, setTheme } = useTheme()
+  const mounted = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false
+  )
+  const options = [
+    ["system", t("themeSystem"), MonitorIcon],
+    ["light", t("themeLight"), SunIcon],
+    ["dark", t("themeDark"), MoonIcon],
+  ] as const
+  return (
+    <RadioGroup
+      value={mounted ? (theme ?? "system") : ""}
+      onValueChange={setTheme}
+      aria-labelledby="theme-title"
+      className="grid-cols-1 gap-3 sm:grid-cols-3"
+    >
+      {options.map(([value, label, Icon]) => (
+        <label key={value} htmlFor={`theme-${value}`} className={radioCardClassName}>
+          <RadioGroupItem id={`theme-${value}`} value={value} />
+          <Icon className="size-4 text-muted-foreground" aria-hidden />
+          <span className="text-sm font-semibold">{label}</span>
+        </label>
+      ))}
+    </RadioGroup>
+  )
+}
 
 const card = "flex flex-col gap-4 rounded-card border bg-card p-6 shadow-xs"
 
@@ -96,6 +144,10 @@ export function SettingsPage() {
         )}
       </Section>
 
+      <Section id="theme-title" title={t("appearance")} desc={t("appearanceDesc")}>
+        <ThemeChoice />
+      </Section>
+
       <Section id="language-title" title={t("language")} desc={t("languageDesc")}>
         <RadioGroup value={locale} onValueChange={changeLanguage} aria-labelledby="language-title" className="grid-cols-2 gap-3">
           {([
@@ -114,6 +166,7 @@ export function SettingsPage() {
 
       <Section id="reading-title" title={t("reading")} desc={t("readingDesc")}>
         <ReadingSettingsControls />
+        <ReadingPreview />
       </Section>
 
       <Section id="notify-title" title={t("notifications")} desc={t("notifyNote")}>

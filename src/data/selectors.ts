@@ -164,6 +164,8 @@ export type NovelChapter = {
   date: string
   blocks: NovelBlock[]
   creatorNote: string
+  /** Display count, e.g. "12K". */
+  likes: string
 }
 export function novelChapter(slug: string, n: number): NovelChapter | undefined {
   const e = episode(slug, n)
@@ -175,6 +177,7 @@ export function novelChapter(slug: string, n: number): NovelChapter | undefined 
     date: e.date,
     blocks: demoData.novelChapterText,
     creatorNote: demoData.creatorNote,
+    likes: e.likes,
   }
 }
 
@@ -198,4 +201,7 @@ export const todayWeekday = (): Weekday => weekdayOf(today)
 export const fastPassPrice = (): number => demoData.fastPass.price
 
 /** Not in the data: an episode thread is about 2.55% of the episode's likes ("47K" likes -> "1.2K" comments). */
+/** Same ratio as episodes, for a novel chapter. */
+export const chapterCommentCount = (c: { likes: string }): string => formatCount(parseCount(c.likes) * 0.0255)
+
 export const episodeCommentCount = (e: Episode): string => formatCount(parseCount(e.likes) * 0.0255)
