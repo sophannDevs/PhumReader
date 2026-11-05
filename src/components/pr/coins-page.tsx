@@ -89,7 +89,7 @@ function CoinsSkeleton() {
   return (
     <div className="flex flex-col gap-8" aria-hidden>
       <Skeleton className="h-6 w-40" />
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
+      <div className="grid grid-cols-[repeat(2,minmax(0,1fr))] gap-3 md:grid-cols-5">
         {Array.from({ length: 5 }, (_, i) => (
           <Skeleton key={i} className="h-40 rounded-card" />
         ))}
@@ -117,7 +117,7 @@ function CoinsBody({ data }: { data: CoinsData }) {
   const checkout = useCheckout({ pack, method, offer, expiryMinutes: data.khqrExpiryMinutes })
 
   return (
-    <div className="grid gap-x-8 gap-y-10 lg:grid-cols-[minmax(0,1fr)_380px] lg:items-start">
+    <div className="grid grid-cols-[minmax(0,1fr)] gap-x-8 gap-y-10 lg:grid-cols-[minmax(0,1fr)_380px] lg:items-start">
       <div className="flex flex-col gap-8">
         <section aria-labelledby="packs-title" className="flex flex-col gap-3">
           <h2 id="packs-title" className="type-h3">
@@ -128,7 +128,7 @@ function CoinsBody({ data }: { data: CoinsData }) {
             onValueChange={(v) => setDraft({ pack: Number(v) })}
             aria-labelledby="packs-title"
             disabled={checkout.busy}
-            className="grid-cols-2 gap-3 md:grid-cols-5"
+            className="grid-cols-[repeat(2,minmax(0,1fr))] gap-3 md:grid-cols-5"
           >
             {data.packs.map((p) => (
               <PackCard key={p.coins} pack={p} firstPurchaseOffer={offer} disabled={checkout.busy} />

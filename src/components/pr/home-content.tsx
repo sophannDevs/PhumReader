@@ -22,7 +22,7 @@ export function HomeContent() {
           <Skeleton className="h-[560px] rounded-[16px] md:h-[470px] md:rounded-hero" />
           <ContinueReadingSkeleton />
           <DailyUpdatesSkeleton />
-          <div className="grid gap-14 lg:grid-cols-2 lg:items-start lg:gap-8">
+          <div className="grid grid-cols-[minmax(0,1fr)] gap-14 lg:grid-cols-2 lg:items-start lg:gap-8">
             <TrendingSkeleton />
             <GenreSkeleton />
           </div>
@@ -35,7 +35,7 @@ export function HomeContent() {
           {home.data.hero.length > 0 ? <HeroCarousel slides={home.data.hero} /> : null}
           <ContinueReadingSection entries={home.data.continueReading} />
           <DailyUpdatesSection daily={home.data.daily} />
-          <div className="grid gap-14 lg:grid-cols-2 lg:items-start lg:gap-8">
+          <div className="grid grid-cols-[minmax(0,1fr)] gap-14 lg:grid-cols-2 lg:items-start lg:gap-8">
             <TrendingSection comics={home.data.rankings.comics} novels={home.data.rankings.novels} />
             <GenreSection genres={home.data.genres} byGenre={home.data.byGenre} />
           </div>

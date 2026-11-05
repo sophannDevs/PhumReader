@@ -111,9 +111,9 @@ export function LibraryPage() {
       <h1 className="type-h1">{t("title")}</h1>
       <Tabs defaultValue="continue" className="gap-6">
         <TabsList aria-label={t("tabs")} className="w-full max-w-md">
-          <TabsTrigger value="continue">{t("tabContinue")}</TabsTrigger>
-          <TabsTrigger value="subscribed">{t("tabSubscribed")}</TabsTrigger>
-          <TabsTrigger value="unlocked">{t("tabUnlocked")}</TabsTrigger>
+          <TabsTrigger value="continue" className="min-w-0 px-1.5 max-[359px]:text-[13px] sm:px-3">{t("tabContinue")}</TabsTrigger>
+          <TabsTrigger value="subscribed" className="min-w-0 px-1.5 max-[359px]:text-[13px] sm:px-3">{t("tabSubscribed")}</TabsTrigger>
+          <TabsTrigger value="unlocked" className="min-w-0 px-1.5 max-[359px]:text-[13px] sm:px-3">{t("tabUnlocked")}</TabsTrigger>
         </TabsList>
 
         {query.isPending ? (

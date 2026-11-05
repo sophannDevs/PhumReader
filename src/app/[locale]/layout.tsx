@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter, Kantumruy_Pro, Noto_Serif } from "next/font/google";
 import { notFound } from "next/navigation";
 import { hasLocale, NextIntlClientProvider } from "next-intl";
@@ -31,6 +31,9 @@ const notoSerif = Noto_Serif({
 export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));
 }
+
+/** `cover` lets the phone tab bar use `env(safe-area-inset-bottom)` on notched devices. */
+export const viewport: Viewport = { width: "device-width", initialScale: 1, viewportFit: "cover" };
 
 export async function generateMetadata({
   params,
