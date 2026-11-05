@@ -3,6 +3,7 @@
 import { GiftIcon, ZapIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { CheckoutCard } from "@/components/pr/checkout-card"
+import { useCheckout } from "@/components/pr/checkout-flow"
 import { CoinIcon } from "@/components/pr/coin-icon"
 import { CoinsFaq } from "@/components/pr/coins-faq"
 import { ErrorState } from "@/components/pr/error-state"
@@ -103,13 +104,79 @@ function CoinsSkeleton() {
   )
 }
 
-/** Coins page: balance, alerts, pack + payment method pickers (selection kept in `checkoutDraft`). */
+type CoinsData = NonNullable<ReturnType<typeof useCoinsPage>["data"]>
+
+/** Pickers (disabled while paying), the checkout card, purchase history and the FAQ. */
+function CoinsBody({ data }: { data: CoinsData }) {
+  const t = useTranslations("coins")
+  const offer = useFirstPurchaseOffer()
+  const draft = useAppStore((s) => s.checkoutDraft)
+  const setDraft = useAppStore.getState().setCheckoutDraft
+  const pack = data.packs.find((p) => p.coins === draft.pack) ?? data.packs[0]
+  const method = data.methods.find((m) => m.id === draft.method) ?? data.methods[0]
+  const checkout = useCheckout({ pack, method, offer, expiryMinutes: data.khqrExpiryMinutes })
+
+  return (
+    <div className="grid gap-x-8 gap-y-10 lg:grid-cols-[minmax(0,1fr)_380px] lg:items-start">
+      <div className="flex flex-col gap-8">
+        <section aria-labelledby="packs-title" className="flex flex-col gap-3">
+          <h2 id="packs-title" className="type-h3">
+            {t("step1")}
+          </h2>
+          <RadioGroup
+            value={String(draft.pack)}
+            onValueChange={(v) => setDraft({ pack: Number(v) })}
+            aria-labelledby="packs-title"
+            disabled={checkout.busy}
+            className="grid-cols-2 gap-3 md:grid-cols-5"
+          >
+            {data.packs.map((p) => (
+              <PackCard key={p.coins} pack={p} firstPurchaseOffer={offer} disabled={checkout.busy} />
+            ))}
+          </RadioGroup>
+        </section>
+
+        <section aria-labelledby="methods-title" className="flex flex-col gap-3">
+          <h2 id="methods-title" className="type-h3">
+            {t("step2")}
+          </h2>
+          <RadioGroup
+            value={draft.method}
+            onValueChange={(v) => setDraft({ method: v as PaymentMethodId })}
+            aria-labelledby="methods-title"
+            disabled={checkout.busy}
+            className="gap-3"
+          >
+            {data.methods.map((m) => (
+              <PaymentMethodCard key={m.id} method={m} disabled={checkout.busy} />
+            ))}
+          </RadioGroup>
+        </section>
+      </div>
+
+      <CheckoutCard
+        flow={checkout.flow}
+        remaining={checkout.remaining}
+        pack={pack}
+        method={method}
+        offer={offer}
+        expiryMinutes={data.khqrExpiryMinutes}
+        onContinue={checkout.start}
+        onCancel={checkout.cancel}
+        onSubmit={(outcome) => void checkout.submit(outcome)}
+        onReset={checkout.reset}
+      />
+      <PurchaseHistory methods={data.methods} />
+      <CoinsFaq items={data.faq} />
+    </div>
+  )
+}
+
+/** Coins page: balance, alerts, then the loaded body (or skeleton / error). */
 export function CoinsPage() {
   const t = useTranslations("coins")
   const query = useCoinsPage()
   const offer = useFirstPurchaseOffer()
-  const draft = useAppStore((s) => s.checkoutDraft)
-  const setDraft = useAppStore.getState().setCheckoutDraft
 
   return (
     <div className="container flex flex-col gap-6 py-8 md:py-10">
@@ -124,63 +191,13 @@ export function CoinsPage() {
       <ShopReturnAlert />
       {offer ? <FirstPurchaseAlert /> : null}
 
-      <div className="grid gap-x-8 gap-y-10 lg:grid-cols-[minmax(0,1fr)_380px] lg:items-start">
-        <div className="flex flex-col gap-8">
-          {query.isPending ? (
-            <CoinsSkeleton />
-          ) : query.isError ? (
-            <ErrorState onRetry={() => void query.refetch()} />
-          ) : (
-            <>
-              <section aria-labelledby="packs-title" className="flex flex-col gap-3">
-                <h2 id="packs-title" className="type-h3">
-                  {t("step1")}
-                </h2>
-                <RadioGroup
-                  value={String(draft.pack)}
-                  onValueChange={(v) => setDraft({ pack: Number(v) })}
-                  aria-labelledby="packs-title"
-                  className="grid-cols-2 gap-3 md:grid-cols-5"
-                >
-                  {query.data.packs.map((p) => (
-                    <PackCard key={p.coins} pack={p} firstPurchaseOffer={offer} />
-                  ))}
-                </RadioGroup>
-              </section>
-
-              <section aria-labelledby="methods-title" className="flex flex-col gap-3">
-                <h2 id="methods-title" className="type-h3">
-                  {t("step2")}
-                </h2>
-                <RadioGroup
-                  value={draft.method}
-                  onValueChange={(v) => setDraft({ method: v as PaymentMethodId })}
-                  aria-labelledby="methods-title"
-                  className="gap-3"
-                >
-                  {query.data.methods.map((m) => (
-                    <PaymentMethodCard key={m.id} method={m} />
-                  ))}
-                </RadioGroup>
-              </section>
-            </>
-          )}
-        </div>
-        {query.data ? (
-          <>
-            <CheckoutCard
-              pack={query.data.packs.find((p) => p.coins === draft.pack) ?? query.data.packs[0]}
-              method={query.data.methods.find((m) => m.id === draft.method) ?? query.data.methods[0]}
-              offer={offer}
-              onContinue={() => {
-                /* T38: the Pay step */
-              }}
-            />
-            <PurchaseHistory methods={query.data.methods} />
-            <CoinsFaq items={query.data.faq} />
-          </>
-        ) : null}
-      </div>
+      {query.isPending ? (
+        <CoinsSkeleton />
+      ) : query.isError ? (
+        <ErrorState onRetry={() => void query.refetch()} />
+      ) : (
+        <CoinsBody data={query.data} />
+      )}
       <p className="type-small font-normal text-muted-foreground">{t("prototype")}</p>
     </div>
   )

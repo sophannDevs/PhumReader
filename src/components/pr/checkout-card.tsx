@@ -1,14 +1,18 @@
 "use client"
 
+import { CheckIcon, ClockIcon, SmartphoneIcon, XIcon } from "lucide-react"
+import { ArrowRightIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
+import { type Flow, packTotal } from "@/components/pr/checkout-flow"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import type { CoinPack, PaymentMethod } from "@/data"
+import { getSeriesBySlug } from "@/data"
 import { useRouter } from "@/i18n/navigation"
 import { useAppStore, useCoins, useUser } from "@/lib/store"
 import { cn } from "@/lib/utils"
 
-/** Coins the reader gets for a pack: coins + pack bonus + first-purchase bonus (same as the pack). */
-export const packTotal = (pack: CoinPack, offer: boolean) => pack.coins + pack.bonus + (offer ? pack.coins : 0)
+export { packTotal }
 
 function Row({ label, value, className }: { label: string; value: React.ReactNode; className?: string }) {
   return (
@@ -19,23 +23,66 @@ function Row({ label, value, className }: { label: string; value: React.ReactNod
   )
 }
 
-/** Order summary (Review step): totals for the chosen pack and method, then "Continue to payment". */
+const mmss = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`
+
+/** Black-and-white QR-like graphic. A placeholder: it does not encode anything. */
+function QrPlaceholder() {
+  const size = 25
+  const finder = (x: number, y: number) => (
+    <g key={`${x}-${y}`} transform={`translate(${x} ${y})`}>
+      <rect width="7" height="7" />
+      <rect x="1" y="1" width="5" height="5" className="fill-white" />
+      <rect x="2" y="2" width="3" height="3" />
+    </g>
+  )
+  const cells: React.ReactNode[] = []
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
+      const inFinder = (x < 8 && y < 8) || (x > size - 9 && y < 8) || (x < 8 && y > size - 9)
+      if (!inFinder && (x * 7 + y * 13 + x * y) % 5 < 2) cells.push(<rect key={`${x}-${y}`} x={x} y={y} width="1" height="1" />)
+    }
+  }
+  return (
+    <svg viewBox={`0 0 ${size} ${size}`} role="img" aria-label="QR" className="size-40 fill-foreground" shapeRendering="crispEdges">
+      {finder(0, 0)}
+      {finder(size - 7, 0)}
+      {finder(0, size - 7)}
+      {cells}
+    </svg>
+  )
+}
+
+/** The checkout card: Review, Pay, Confirming, Success and Failed. Never has real card fields. */
 export function CheckoutCard({
+  flow,
+  remaining,
   pack,
   method,
   offer,
+  expiryMinutes,
   onContinue,
+  onCancel,
+  onSubmit,
+  onReset,
 }: {
+  flow: Flow
+  remaining: number
   pack: CoinPack
   method: PaymentMethod
   offer: boolean
+  expiryMinutes: number
   onContinue: () => void
+  onCancel: () => void
+  onSubmit: (outcome: "success" | "failed") => void
+  onReset: () => void
 }) {
   const t = useTranslations("coins")
   const router = useRouter()
   const user = useUser()
   const balance = useCoins()
+  const shopReturn = useAppStore((s) => s.shopReturn)
   const total = packTotal(pack, offer)
+  const card = "rounded-card border bg-card p-6 shadow-xs"
 
   function proceed() {
     if (!user) {
@@ -47,8 +94,137 @@ export function CheckoutCard({
     onContinue()
   }
 
+  if (flow.step === "confirming") {
+    return (
+      <section aria-live="polite" className={cn(card, "flex min-h-72 flex-col items-center justify-center gap-4 text-center")}>
+        <span className="size-10 animate-spin rounded-full border-4 border-muted border-t-primary" aria-hidden />
+        <p className="type-body text-muted-foreground">{t("confirming")}</p>
+      </section>
+    )
+  }
+
+  if (flow.step === "success") {
+    const slug = shopReturn?.page.split("/").pop() ?? ""
+    const novel = getSeriesBySlug(slug)?.type === "novel"
+    return (
+      <section aria-live="polite" className={cn(card, "flex flex-col items-center gap-3 py-8 text-center")}>
+        <span className="flex size-14 items-center justify-center rounded-full bg-primary text-primary-foreground">
+          <CheckIcon className="size-7" strokeWidth={3} />
+        </span>
+        <h2 className="text-2xl font-bold tracking-tight tabular-nums">{t("successTitle", { count: flow.added })}</h2>
+        <p className="type-body text-muted-foreground">
+          {t("successBody", { balance: t("balanceLabel", { count: flow.balance }) })}
+        </p>
+        <p className="type-caption font-normal text-muted-foreground">{t("orderLine", { id: flow.orderId, method: flow.method })}</p>
+        <div className="mt-2 flex w-full flex-col gap-2">
+          {shopReturn ? (
+            <Button
+              variant="brand"
+              size="lg"
+              onClick={() => {
+                // Keep `pendingUnlock` so the unlock dialog reopens on the episode page.
+                useAppStore.getState().clearShopReturn()
+                router.push(shopReturn.page)
+              }}
+            >
+              {t(novel ? "backToChapter" : "backToEpisode", { n: shopReturn.episode, title: shopReturn.title })}
+              <ArrowRightIcon />
+            </Button>
+          ) : null}
+          <Button variant="outline" size="lg" onClick={onReset}>
+            {t("buyMore")}
+          </Button>
+        </div>
+      </section>
+    )
+  }
+
+  if (flow.step === "failed") {
+    const expired = flow.reason === "expired"
+    return (
+      <section role="alert" className={cn(card, "flex flex-col items-center gap-3 py-8 text-center")}>
+        <span className="flex size-14 items-center justify-center rounded-full bg-destructive text-destructive-foreground">
+          <XIcon className="size-7" strokeWidth={3} />
+        </span>
+        <h2 className="type-h2">{t(expired ? "expiredTitle" : "failTitle")}</h2>
+        <p className="type-body text-muted-foreground">{expired ? t("expiredBody", { minutes: expiryMinutes }) : t("failBody")}</p>
+        <div className="mt-2 flex w-full flex-col gap-2">
+          <Button variant="brand" size="lg" onClick={onContinue}>
+            {t("tryAgain")}
+          </Button>
+          <Button variant="outline" size="lg" onClick={onReset}>
+            {t("chooseOther")}
+          </Button>
+        </div>
+      </section>
+    )
+  }
+
+  if (flow.step === "pay") {
+    const kind = method.id
+    return (
+      <section aria-labelledby="pay-title" className={card}>
+        <div className="flex items-start justify-between gap-3">
+          <h2 id="pay-title" className="type-h2">
+            {t(kind === "khqr" ? "payTitleKhqr" : kind === "aba" ? "payTitleAba" : "payTitleCard")}
+          </h2>
+          <Badge variant="outline" className="gap-1 tabular-nums" role="timer" aria-live="polite" aria-label={t("expiresIn", { time: mmss(remaining) })}>
+            <ClockIcon />
+            {mmss(remaining)}
+          </Badge>
+        </div>
+        <p className="type-small mt-1 font-normal text-muted-foreground tabular-nums">
+          {t("paySub", { coins: total, method: method.label })}
+        </p>
+
+        <div className="mt-4">
+          {kind === "khqr" ? (
+            <>
+              <div className="overflow-hidden rounded-card border text-center">
+                <div className="bg-destructive py-2 text-sm font-bold tracking-wide text-destructive-foreground">{t("khqrBadge")}</div>
+                <div className="flex flex-col items-center gap-1.5 px-4 py-4">
+                  <QrPlaceholder />
+                  <p className="type-caption font-normal text-muted-foreground">{t("khqrPlaceholder")}</p>
+                  <p className="text-base font-semibold">{pack.priceKHR}</p>
+                </div>
+              </div>
+              <ol className="type-caption mt-3 list-decimal space-y-1 pl-5 font-normal text-muted-foreground">
+                <li>{t("khqrStep1")}</li>
+                <li>{t("khqrStep2")}</li>
+                <li>{t("khqrStep3")}</li>
+              </ol>
+            </>
+          ) : kind === "aba" ? (
+            <div className="flex flex-col items-center gap-2 rounded-card border border-dashed px-4 py-8 text-center">
+              <SmartphoneIcon className="size-8 text-muted-foreground" aria-hidden />
+              <p className="text-sm font-semibold">{t("abaPlaceholder")}</p>
+              <p className="type-caption font-normal text-muted-foreground">{t("abaHint")}</p>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center gap-1.5 rounded-card border border-dashed px-4 py-8 text-center">
+              <p className="text-sm font-semibold">{t("cardPlaceholder")}</p>
+              <p className="type-caption font-normal text-muted-foreground">{t("cardHint")}</p>
+            </div>
+          )}
+        </div>
+
+        <Button variant="brand" size="lg" className="mt-4 w-full" onClick={() => onSubmit("success")}>
+          {t(kind === "card" ? "payNow" : "paid")}
+        </Button>
+        <div className="mt-2 flex items-center justify-between">
+          <Button variant="ghost" size="sm" onClick={onCancel}>
+            {t("cancel")}
+          </Button>
+          <Button variant="ghost" size="sm" onClick={() => onSubmit("failed")}>
+            {t("simulateFail")}
+          </Button>
+        </div>
+      </section>
+    )
+  }
+
   return (
-    <section aria-labelledby="order-title" className="rounded-card border bg-card p-6 shadow-xs">
+    <section aria-labelledby="order-title" className={card}>
       <h2 id="order-title" className="type-h2">
         {t("orderSummary")}
       </h2>
