@@ -141,7 +141,8 @@
     "now": "ឥឡូវ",
     "locked": "ជាប់សោ",
     "progress": "វឌ្ឍនភាពនៃការអាន",
-    "settingsLabel": "Aa"
+    "settingsLabel": "Aa",
+    "episodeLabel": "វគ្គ {n}"
   },
   "auth": {
     "back": "ត្រឡប់ទៅ PhumReader",

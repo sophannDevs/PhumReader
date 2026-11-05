@@ -29,7 +29,7 @@ npm run test:e2e     # Playwright, available after T52
 - Components in Part 2 and Part 3 are presentational (props + callbacks). Part 4 adds data, the fake API and the store, and wires them in. Part 5 builds the pages with all interactions. Part 6 completes loading / empty / error states on every page.
 - A temporary preview page at `/dev/kit` is used to check components in Parts 2–4. It is deleted in T53.
 
-Progress: 27 / 53
+Progress: 28 / 53
 
 ---
 
@@ -186,7 +186,7 @@ Progress: 27 / 53
   - Look at: `02-series-comments-tab-desktop.png`; `design/spec.md` §2 Comments.
   - Done when: the counter updates while typing and blocks more than 500 characters; a posted comment appears immediately; a like survives reload.
 
-- [ ] **T28 Comic reader: page and navigation** (≈60 min)
+- [x] **T28 Comic reader: page and navigation** (≈60 min)
   - Build: `/read/[slug]/[episode]` (dark page; a novel slug redirects to `/novel/...`; unknown slug or episode → 404): `ComicReaderBar` wired (Episodes popover with 9 nearby episodes, "Now", locks, header "68 episodes · 5 coins"; previous / next disabled at 1 and at the last episode; progress line n / total); image strip from `comicPanels`, max 800 px wide, white background, `next/image` with width and height, lazy below the fold, alt text; keyboard ← / →; opening calls `markRead(seriesId, n)`; moving to a locked episode (next, list, keyboard) opens the UnlockDialog instead of navigating.
   - Look at: `03-episode-viewer-desktop.png`, `03-episode-viewer-phone.png`; `design/spec.md` §3.
   - Done when: `/read/glass-compass/1` matches; → opens episode 2; at episode 65 next opens the unlock dialog; the series page then offers "Continue episode 2".
@@ -407,3 +407,4 @@ Progress: 27 / 53
 73. **Episodes tab**: row state comes from the store: Fast Pass episodes are `locked` until unlocked, then `unlocked` (the "Unlocked" badge stays even after reading); free episodes with `n ≤ lastRead` are `read` (and then lose their UP badge). The sort toggle keeps the number of visible rows; "Show N more" shows at most 12 at a time. The tab has its own loading (skeleton rows), empty ("No episodes yet" under `?demo=empty`) and error (Retry) states. Locked-row taps are collected in `SeriesPage` (`unlockTarget`) for the dialog added in T26.
 74. **Unlock flow** (`series-unlock.tsx`, `useSeriesUnlock`): logged out saves `returnTo` + `pendingUnlock` and goes to `/login`; not enough coins saves `shopReturn` {page, episode, title} + `pendingUnlock` and goes to `/coins`; enough coins calls `unlock()` (0.7 s spinner), then `spendCoins`, `unlockEpisode`, the toast "Episode N unlocked" (or "Chapter N") and opens the reader. The reopen-after-return check runs once per visit after the store hydrates (a request saved while the page is open must not be cleared at once: this was a bug found while testing), and only for logged-in readers.
 75. **Comments**: `CommentsSection` (`kind`, `slug`) is reusable (the comic reader's end card uses it in T29). Likes are stored under `comment:<kind>:<slug>:<id>` (persisted); comments the reader posts live in component state, so they disappear on reload (there is no backend). The demo thread is shared by every series / episode (Assumption 16 style), and a logged-out Post shows the toast "Log in to comment" without clearing the draft.
+76. **Comic reader** (`/read/[slug]/[episode]`): the server page 404s for unknown slugs or numbers outside 1..total and redirects web novels to `/novel/...` (locale-aware `redirect`); only episode 1 of each comic is statically generated, the rest render on request. The client reader reuses `useSeriesUnlock` (so the UnlockDialog, login and coin round trips behave as on the series page) and the T14 bar / popover. ← / → are ignored while typing or while a dialog or menu is open. A locked episode opened directly by URL is not blocked yet (T47 adds the redirect with the dialog).

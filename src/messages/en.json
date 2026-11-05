@@ -141,7 +141,8 @@
     "now": "Now",
     "locked": "Locked",
     "progress": "Reading progress",
-    "settingsLabel": "Aa"
+    "settingsLabel": "Aa",
+    "episodeLabel": "Episode {n}"
   },
   "auth": {
     "back": "Back to PhumReader",
