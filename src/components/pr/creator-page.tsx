@@ -60,7 +60,7 @@ export function CreatorPage() {
         <h1 className="type-h1">{t("title")}</h1>
         <p className="type-lead max-w-2xl">{t("intro")}</p>
         <div className="mt-1 flex flex-wrap gap-2">
-          <Button variant="brand" size="lg" onClick={() => toast(tt("publishingSoon"))}>
+          <Button variant="brand" size="lg" onClick={() => toast.success(tt("publishingSoon"))}>
             <PenLineIcon />
             {t("start")}
           </Button>

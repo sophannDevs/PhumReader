@@ -12,10 +12,14 @@ import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import type { ContinueView, Series } from "@/data"
 import { Link, usePathname } from "@/i18n/navigation"
-import { useEpisodes, useLibrary } from "@/lib/queries"
+import { useDemoFlag, useEpisodes, useLibrary } from "@/lib/queries"
 import { useAppStore, useUser } from "@/lib/store"
 
 const GRID = "grid grid-cols-3 gap-3 md:grid-cols-4 md:gap-4 lg:grid-cols-6 lg:gap-5"
+
+const NONE_LIST: string[] = []
+const NONE_MAP: Record<string, number[]> = {}
+const NONE_READ: Record<string, number> = {}
 
 function BrowseButton() {
   const t = useTranslations("library")
@@ -53,9 +57,11 @@ export function LibraryPage() {
   const user = useUser()
   const pathname = usePathname()
   const query = useLibrary()
-  const subscriptions = useAppStore((s) => s.subscriptions)
-  const unlocked = useAppStore((s) => s.unlocked)
-  const lastRead = useAppStore((s) => s.lastRead)
+  // ?demo=empty shows the empty tabs even when this device has reading history.
+  const forcedEmpty = useDemoFlag() === "empty"
+  const subscriptions = useAppStore((s) => (forcedEmpty ? NONE_LIST : s.subscriptions))
+  const unlocked = useAppStore((s) => (forcedEmpty ? NONE_MAP : s.unlocked))
+  const lastRead = useAppStore((s) => (forcedEmpty ? NONE_READ : s.lastRead))
 
   if (!user) {
     return (

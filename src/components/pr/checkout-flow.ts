@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { toast } from "sonner"
 import { useTranslations } from "next-intl"
 import type { CoinPack, PaymentMethod } from "@/data"
@@ -36,6 +36,7 @@ export function useCheckout({
 }) {
   const tt = useTranslations("toasts")
   const [flow, setFlow] = useState<Flow>({ step: "review" })
+  const inFlight = useRef(false)
   const [remaining, setRemaining] = useState(expiryMinutes * 60)
   const total = packTotal(pack, offer)
 
@@ -77,6 +78,8 @@ export function useCheckout({
   }
 
   async function submit(outcome: "success" | "failed") {
+    if (inFlight.current) return // no double submit
+    inFlight.current = true
     setFlow({ step: "confirming" })
     try {
       const result = await pay(
@@ -98,6 +101,8 @@ export function useCheckout({
       if (e instanceof DemoApiError) record("Failed", `PR-FAILED${Date.now() % 100000}`)
       toast.error(tt("paymentFailed"))
       setFlow({ step: "failed", reason: "declined" })
+    } finally {
+      inFlight.current = false
     }
   }
 

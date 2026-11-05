@@ -57,7 +57,7 @@ export function SeriesHero({
       await navigator.clipboard.writeText(window.location.href)
       toast.success(tt("linkCopied"))
     } catch {
-      toast.error(tt("linkCopied"))
+      toast.error(tt("copyFailed"))
     }
   }
 

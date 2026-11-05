@@ -326,6 +326,7 @@
     "subscribed": "បានតាមដាន {title}",
     "unsubscribed": "បានឈប់តាមដាន",
     "linkCopied": "បានចម្លងតំណ",
+    "copyFailed": "មិនអាចចម្លងតំណបានទេ",
     "followed": "កំពុងតាមដាន {name}",
     "unfollowed": "បានឈប់តាមដាន {name}",
     "episodeUnlocked": "បានដោះសោវគ្គ {n}",

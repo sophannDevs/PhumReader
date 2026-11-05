@@ -326,6 +326,7 @@
     "subscribed": "Subscribed to {title}",
     "unsubscribed": "Unsubscribed",
     "linkCopied": "Link copied",
+    "copyFailed": "Couldn't copy the link",
     "followed": "Following {name}",
     "unfollowed": "Unfollowed {name}",
     "episodeUnlocked": "Episode {n} unlocked",

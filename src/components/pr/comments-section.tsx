@@ -50,7 +50,7 @@ export function CommentsSection({
 
   function submit() {
     if (!user) {
-      toast(tt("loginToComment"))
+      toast.success(tt("loginToComment"))
       return
     }
     setPosted((p) => [{ id: `p${p.length}`, name: user.name, when: t("now"), text: draft.trim(), likes: 0 }, ...p])
