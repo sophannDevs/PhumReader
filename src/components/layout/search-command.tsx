@@ -50,6 +50,12 @@ export function SearchCommand({
     router.push(seriesHref(series))
   }
 
+  function seeAll() {
+    const q = query.trim()
+    handleOpenChange(false)
+    router.push(`/search?q=${encodeURIComponent(q)}`)
+  }
+
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent
@@ -95,6 +101,14 @@ export function SearchCommand({
                 </CommandItem>
               ))}
             </CommandGroup>
+            {query.trim() && results.length > 0 ? (
+              <CommandGroup>
+                <CommandItem value="see-all" onSelect={seeAll} className="gap-3 py-2 text-muted-foreground">
+                  <SearchIcon className="size-4" aria-hidden />
+                  {t("seeAll", { q: query.trim() })}
+                </CommandItem>
+              </CommandGroup>
+            ) : null}
           </CommandList>
         </CommandPrimitive>
       </DialogContent>

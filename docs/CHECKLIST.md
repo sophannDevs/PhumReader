@@ -29,7 +29,7 @@ npm run test:e2e     # Playwright, available after T52
 - Components in Part 2 and Part 3 are presentational (props + callbacks). Part 4 adds data, the fake API and the store, and wires them in. Part 5 builds the pages with all interactions. Part 6 completes loading / empty / error states on every page.
 - A temporary preview page at `/dev/kit` is used to check components in Parts 2–4. It is deleted in T53.
 
-Progress: 43 / 53
+Progress: 44 / 53
 
 ---
 
@@ -266,7 +266,7 @@ Progress: 43 / 53
   - Look at: `01-home-desktop.png` (Trending now, Browse by genre); `design/spec.md` §0 routes.
   - Done when: both pages work in `en` and `km`; the header marks the current nav item; `/genres/slice-of-life` lists 6 series.
 
-- [ ] **T44 Search page, 404, error and "Coming soon" pages** (≈45 min)
+- [x] **T44 Search page, 404, error and "Coming soon" pages** (≈45 min)
   - Build: `/search?q=`: H1 "Search", Input prefilled from `q` (Enter updates the URL), SeriesCard grid via `search(q)`, EmptyState "No results. Try a title, creator or genre."; the ⌘K palette gets a footer row "See all results for <q>" → this page. `[locale]/not-found.tsx` in V2 style inside the site layout (muted icon tile, "Page not found", copy, "Back to Home" brand + "Browse genres" outline). `[locale]/error.tsx` (client, ErrorState with Retry calling `reset()`) and `global-error.tsx`. `/coming-soon?topic=<slug>` page ("<Topic> is coming soon", back to Home) used by footer Help links, Creator guidelines and Earnings links where no page exists.
   - Look at: `design/foundations.md` (EmptyState / ErrorState patterns); `design/spec.md` §0 routes.
   - Done when: `/series/nope` shows the 404 page with header and footer; an error thrown in a page shows the error page and Retry recovers; `/search?q=glass` lists Glass Compass.
@@ -422,3 +422,4 @@ Progress: 43 / 53
 88. **Settings** (`/settings`): Profile (initials avatar, name, email; a Log in prompt when logged out), Language (a RadioGroup that calls `setLang` and replaces the route with the other locale, keeping the query), Reading (the T31 `ReadingSettingsControls`, unthemed), Notifications (two Switches stored in the new `notifications` field of the store, so they persist on this device) and Account (Log out when logged in; "Reset demo data" behind a confirm dialog that restores the defaults and shows "Demo data reset"). Added `notifications: { episodes: true, fastPass: false }` to the store (no version bump needed: persist merges missing keys).
 89. **Creator dashboard** (`/creator`): there are no creator accounts, so the page always shows the series of the stand-in creator Chan Sreyleak (`STAND_IN_CREATOR` in `demo-api.ts`, as `RankRow`s with "—" movement). The Series count, total views ("Readers") and total likes are derived from the data; Fast Pass earnings and the payout details are the placeholders `[AMOUNT]` / `[PAYOUT DETAILS]` (no money values anywhere). "Start publishing" only shows the toast "Publishing opens soon"; the three guideline cards are my own short copy (not in the design). Logged out shows an EmptyState with Log in.
 90. **Rankings / Genres** (T43): `/rankings` lists every comic (41, in the Home order then by views) or the 7 novels; the header and footer links now point to `/rankings` and `/genres`. `/genres` opens on Fantasy (the Home default), `/genres/[genre]` is statically generated for all 8 genres and the chips are links (so the URL shows the genre; unknown genre = 404). Slug mapping: `genreSlug` / `genreFromSlug` in `src/lib/routes.ts` ("Slice of life" <-> `slice-of-life`, "Sci-fi" <-> `sci-fi`).
+91. **Search / 404 / error / Coming soon** (T44): `/search?q=` reads the query with `useSearchParams` (inside Suspense) and uses `useSearchSeries` (the fake API's `search`, with delay); the ⌘K palette adds a "See all results for “q”" row (shown only when there are results, so the "No results" text still appears when there are none). 404s: `(site)/not-found.tsx` keeps the header, footer and tab bar, `[locale]/not-found.tsx` serves the reader and login routes, and a catch-all `(site)/[...rest]` page turns any unmatched URL into that 404. Errors: `(site)/error.tsx` and `[locale]/error.tsx` render `ErrorState` whose Retry calls `reset()`; `src/app/global-error.tsx` is the last resort (its own `<html>`, English only). `/coming-soon?topic=<slug>` names the topic through `comingSoon.topics.*`. In dev a normal 404 shows Next's red "1 issue" badge (the intentional `notFound()`).
