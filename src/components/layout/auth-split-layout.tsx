@@ -1,10 +1,9 @@
-import { ArrowLeftIcon } from "lucide-react"
 import Image from "next/image"
 import { useLocale, useTranslations } from "next-intl"
+import { AuthBackLink } from "@/components/auth/auth-back-link"
 import { LanguageSwitch } from "@/components/layout/language-switch"
 import { Logo } from "@/components/layout/logo"
 import { demoData } from "@/data"
-import { Link } from "@/i18n/navigation"
 import type { Locale } from "@/i18n/routing"
 import { cn } from "@/lib/utils"
 
@@ -80,13 +79,7 @@ export function AuthSplitLayout({
       <div className="flex min-w-0 flex-col px-4 py-4 md:px-10 md:py-6">
         <div className="flex items-center justify-between">
           <Logo size="header" className="md:hidden" />
-          <Link
-            href={backHref}
-            className="hidden items-center gap-2 rounded-control text-sm font-medium outline-none hover:text-brand-ink focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background md:inline-flex"
-          >
-            <ArrowLeftIcon className="size-4" aria-hidden />
-            <span lang={locale}>{t("back")}</span>
-          </Link>
+          <AuthBackLink fallbackHref={backHref} label={t("back")} lang={locale} />
           <LanguageSwitch variant="segmented" />
         </div>
 

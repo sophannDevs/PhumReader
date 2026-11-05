@@ -215,7 +215,20 @@
     "sentSub2": "It expires in 30 minutes.",
     "taking": "Taking you back…",
     "legal": "By continuing you agree to PhumReader’s Terms and Privacy Policy.",
-    "quote": "I posted my first episode on a Tuesday night. By Friday, readers in Battambang and Seoul were asking for the next one."
+    "quote": "I posted my first episode on a Tuesday night. By Friday, readers in Battambang and Seoul were asking for the next one.",
+    "modes": "Log in or sign up",
+    "google": "Google",
+    "facebook": "Facebook",
+    "emailRequired": "Enter your email.",
+    "emailInvalid": "Enter a valid email, like you@example.com.",
+    "passwordRequired": "Enter your password.",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
+    "errorTitle": "Email or password is incorrect",
+    "errorBody": "Check them and try again, or reset your password.",
+    "demoHint": "Demo: {email} · {password}",
+    "welcome": "Welcome, {name}",
+    "emailPlaceholder": "you@example.com"
   },
   "toasts": {
     "loggedOut": "You're logged out",

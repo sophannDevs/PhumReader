@@ -64,6 +64,13 @@
 
   --radius: 10px; /* shadcn scale base; named radii live in @theme below */
 
+  /* third-party logo colours (Google / Facebook buttons) */
+  --social-google-blue: #4285f4;
+  --social-google-red: #ea4335;
+  --social-google-yellow: #fbbc05;
+  --social-google-green: #34a853;
+  --social-facebook: #1877f2;
+
   /* novel reader (light theme is the default) */
   --reader-page: #ffffff;
   --reader-text: #18181b;
@@ -141,6 +148,12 @@
   --color-surface-foreground: var(--surface-foreground);
   --color-surface-quiet: var(--surface-quiet);
   --color-scrim: var(--scrim);
+
+  --color-social-google-blue: var(--social-google-blue);
+  --color-social-google-red: var(--social-google-red);
+  --color-social-google-yellow: var(--social-google-yellow);
+  --color-social-google-green: var(--social-google-green);
+  --color-social-facebook: var(--social-facebook);
 
   --color-reader-page: var(--reader-page);
   --color-reader-text: var(--reader-text);
