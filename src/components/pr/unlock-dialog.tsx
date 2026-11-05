@@ -1,6 +1,5 @@
 "use client"
 
-import { useRef } from "react"
 import { CoinsIcon, InfoIcon, TriangleAlertIcon, ZapIcon } from "lucide-react"
 import Image from "next/image"
 import { useTranslations } from "next-intl"
@@ -16,6 +15,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import { useRestoreFocus } from "@/lib/use-restore-focus"
 
 export type UnlockState = "logged-out" | "enough" | "not-enough"
 
@@ -52,22 +52,12 @@ export function UnlockDialog({
 }) {
   const t = useTranslations("unlock")
   const tc = useTranslations("coins")
-  // Opened from state (no DialogTrigger), so Radix can't restore focus on its
-  // own: remember the focused element when the dialog opens and return to it.
-  const openerRef = useRef<HTMLElement | null>(null)
+  const restoreFocus = useRestoreFocus()
   const state: UnlockState = !loggedIn ? "logged-out" : balance >= price ? "enough" : "not-enough"
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent
-        onOpenAutoFocus={() => {
-          openerRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null
-        }}
-        onCloseAutoFocus={(e) => {
-          e.preventDefault()
-          if (openerRef.current?.isConnected) openerRef.current.focus()
-        }}
-      >
+      <DialogContent {...restoreFocus}>
         <DialogHeader className="flex-row items-start gap-4 pr-8">
           <div className="relative size-16 shrink-0 overflow-hidden rounded-control bg-muted">
             <Image src={episode.thumb} alt="" width={128} height={128} className="size-full object-cover" />

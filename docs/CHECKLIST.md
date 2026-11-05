@@ -29,7 +29,7 @@ npm run test:e2e     # Playwright, available after T52
 - Components in Part 2 and Part 3 are presentational (props + callbacks). Part 4 adds data, the fake API and the store, and wires them in. Part 5 builds the pages with all interactions. Part 6 completes loading / empty / error states on every page.
 - A temporary preview page at `/dev/kit` is used to check components in Parts 2–4. It is deleted in T53.
 
-Progress: 12 / 53
+Progress: 13 / 53
 
 ---
 
@@ -103,7 +103,7 @@ Progress: 12 / 53
   - Look at: `01-home-desktop.png` (footer), `01-home-phone.png` (footer + tab bar), `06-coins-phone.png`.
   - Done when: footer matches at 1440 and 390 px; the tab bar only shows below 768 px with the current tab highlighted; the language switch changes the locale; all links point to the routes in spec §0.
 
-- [ ] **T13 ⌘K search palette** (≈45 min)
+- [x] **T13 ⌘K search palette** (≈45 min)
   - Build: `SearchCommand` (shadcn Command inside a Dialog, 560 px, near the top): opens on ⌘K / Ctrl+K, the header trigger and the phone Search tab; empty query → "Popular now" group with the first 6 series; typing filters title, creator or genre (max 8) under a "Series" group; result row: 28×36 cover, title, "creator · genre", "Novel" badge for novels; Enter or click → series page; "No results. Try a title, creator or genre."; Esc hint; Esc / outside click closes. Client-side filter over `demoData.series`.
   - Look at: `01-home-search-open-desktop.png`; `design/spec.md` §0 Search.
   - Done when: typing "gl" shows only Glass Compass; arrow keys + Enter navigate; focus returns to the trigger on close; works on the phone layout.
@@ -382,3 +382,5 @@ Progress: 12 / 53
 48. **Every layout and page under `[locale]` must be async and call `setRequestLocale(locale)`** (after `await params`) before using `useTranslations` / `getTranslations`. Layouts render in parallel with the root layout, so without it next-intl reads request headers and `next build` fails under Cache Components ("encountered uncached or runtime data"). `[locale]/layout.tsx` also passes `locale` and `messages` to `NextIntlClientProvider` explicitly.
 49. **Footer links**: Help links, the Creator guidelines / Earnings anchors and the three social buttons point to `/creator#...` and `/coming-soon?topic=...` (page added in T44; they 404 until then). The social buttons use "f" / "t" / play glyphs as in the design because lucide-react v1 has no brand icons.
 50. **Phone tab bar** is `sticky bottom-0` at the end of the page (not fixed), so it never covers content; `LanguageSwitch` (`inline` for the footer, `segmented` for auth in T15) keeps the path and query string when switching.
+51. **Search palette** filters `demoData.series` client-side (title, creator or genre, max 8; empty query = first 6 series under "Popular now"), as T13 says; `search(q)` through the fake API arrives in T17 and the "See all results" row in T44. `SearchProvider` (in the (site) layout) owns the open state and the ⌘K / Ctrl+K shortcut; `ConnectedHeader` / `ConnectedTabBar` in `site-chrome.tsx` are the only places T19 needs to change to read `user` / `coins` from the store.
+52. **`useRestoreFocus`** (`src/lib/use-restore-focus.ts`) returns the `DialogContent` props that put focus back on the element that opened a dialog; use it for any dialog opened from state (UnlockDialog and SearchCommand do).

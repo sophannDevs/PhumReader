@@ -113,5 +113,15 @@
     "twitter": "X (Twitter)",
     "youtube": "YouTube",
     "language": "Language"
+  },
+  "search": {
+    "title": "Search",
+    "description": "Search series by title, creator or genre.",
+    "placeholder": "Search series, creators…",
+    "popular": "Popular now",
+    "series": "Series",
+    "empty": "No results. Try a title, creator or genre.",
+    "esc": "Esc",
+    "escLabel": "Press Escape to close"
   }
 }
