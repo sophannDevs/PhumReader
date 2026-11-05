@@ -3,6 +3,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { useState } from "react"
 import { Toaster } from "@/components/ui/sonner"
+import { StoreHydrator } from "@/lib/store-hydrator"
 
 /** TanStack Query + the Sonner toaster, mounted once in the root layout. */
 export function Providers({ children }: { children: React.ReactNode }) {
@@ -14,6 +15,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
   )
   return (
     <QueryClientProvider client={client}>
+      <StoreHydrator />
       {children}
       <Toaster />
     </QueryClientProvider>

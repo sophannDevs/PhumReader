@@ -29,7 +29,7 @@ npm run test:e2e     # Playwright, available after T52
 - Components in Part 2 and Part 3 are presentational (props + callbacks). Part 4 adds data, the fake API and the store, and wires them in. Part 5 builds the pages with all interactions. Part 6 completes loading / empty / error states on every page.
 - A temporary preview page at `/dev/kit` is used to check components in Parts 2–4. It is deleted in T53.
 
-Progress: 17 / 53
+Progress: 18 / 53
 
 ---
 
@@ -132,7 +132,7 @@ Progress: 17 / 53
   - Look at: `design/spec.md` §0 Fake API; `CLAUDE.md` Scope rules.
   - Done when: `useSeries("glass-compass")` resolves after 300–800 ms; with `?demo=slow` after more than 3 s; `?demo=error` gives `isError`; `?demo=empty` gives empty arrays; nothing imports `demoData` directly from a page.
 
-- [ ] **T18 zustand store persisted to localStorage** (≈60 min)
+- [x] **T18 zustand store persisted to localStorage** (≈60 min)
   - Build: `src/lib/store.ts` with `persist` (key `phumreader.app`, localStorage) holding `user` ({name, email} | null), `coins` (3), `subscriptions` (series ids), `follows` (creator names), `unlocked` ({[seriesId]: n[]}), `lastRead` ({[seriesId]: n}), `purchases` (seeded from the 2 demo rows), `returnTo`, `shopReturn` ({page, episode, title}), `pendingUnlock` ({seriesId, episode}), `novelSettings` ({size 18, theme "light", font "sans", wide true}), `lang` ("en"), `accounts` ([]), `likes` (episode / comment toggles), `checkoutDraft` ({pack, method}). Actions: `login`, `logout`, `addCoins`, `spendCoins`, `toggleSubscription`, `toggleFollow`, `unlockEpisode`, `markRead`, `addPurchase`, `setReturnTo` / `clearReturnTo`, `setShopReturn` / `clearShopReturn`, `setPendingUnlock` / `clearPendingUnlock`, `setNovelSettings`, `setLang`, `addAccount`, `toggleLike`, `resetDemo`. `useHydrated()` guard (`skipHydration` + rehydrate on mount) so server markup matches. Selectors `useUser`, `useCoins`, `useIsUnlocked(seriesId, n)`, `useIsRead(seriesId, n)`.
   - Look at: `design/spec.md` §0 Simulated state; `CLAUDE.md` Scope rules.
   - Done when: DevTools shows a single `phumreader.app` key; a change survives reload; no hydration warning in the console; `resetDemo()` restores 3 coins, logged out, 2 purchases, default novel settings.
@@ -394,3 +394,4 @@ Progress: 17 / 53
 60. **Fake API** (`src/lib/demo-api.ts`): `withDemo(fn, { empty?, delay? })` waits 300-800 ms (the `delay` option fixes it: login 0.9 s, social 1 s, unlock 0.7 s, pay 1.5 s), adds 3 s for `?demo=slow`, throws `DemoApiError` (with a `code`) for `?demo=error`, and returns `empty()` for `?demo=empty` when the call defines one. Lookups return `null` for unknown slugs / numbers (pages call `notFound()`). `fetchSeries` ignores `?demo=empty` (the series page must load; its episodes and comments are the empty parts); `fetchEpisode` / `fetchChapter` return the episode with no panels / no blocks.
 61. **Query hooks** (`src/lib/queries.ts`) put the active `?demo=` flag in every query key (`useDemoFlag()` re-reads it on route changes); `Providers` (`src/lib/query.tsx`: QueryClient with retry 0, staleTime 30 s, plus the Sonner `Toaster`) is mounted in `[locale]/layout.tsx`. Mutations (`login`, `unlock`, `pay`, ...) are plain async functions used with `useMutation` in the pages. Search results for the ⌘K palette still use a synchronous selector (no 300-800 ms delay while typing); `search(q)` / `useSearchSeries` serve the Search page (T44).
 62. **`auth` messages**: `en.json` / `km.json` already contain the whole `auth` namespace copied from `loginPageStrings` (T35 only has to use the remaining keys). `/login` and `AuthSplitLayout` read it through next-intl.
+63. **Store** (`src/lib/store.ts`): one persisted key `phumreader.app` (version 1) with `skipHydration`; `StoreHydrator` (mounted in `Providers`) calls `persist.rehydrate()` after the first render so server and first client markup match. Until then components see the defaults (logged out, 3 coins); use `useHydrated()` where a flash matters. `likes` holds all toggles keyed by `likeKey.episode / comment / bookmark`. `markRead` only ever raises `lastRead`. `resetDemo()` restores everything except `lang` (the language follows the URL locale). When reading several fields use `useAppStore(s => s.x)` per field: a selector returning a new object loops forever in zustand 5 (use `useShallow` if one is needed).
