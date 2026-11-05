@@ -31,19 +31,31 @@ export function useSeriesUnlock(series: Series) {
   const price = fastPassPrice()
   const novel = series.type === "novel"
 
-  // Back from /login or /coins: reopen the dialog once per visit, then forget the
-  // request. It only looks once (after hydration), so a request saved while this
-  // page is open (Log in / Get coins) is not mistaken for a returning one.
-  const checked = useRef(false)
+  // Back from /login or /coins: reopen the dialog once, then forget the request.
+  // Cache Components keeps this page mounted (hidden) while the reader is on /login or
+  // /coins, so a one-time-per-mount check is not enough. Instead the check is re-armed
+  // whenever the route leaves this page, and `selfRequest` ignores a request this very
+  // page just saved (Log in / Get coins) so it is not mistaken for a returning one.
+  const myPath = useRef(pathname)
+  const selfRequest = useRef(false)
+  // Effect cleanups run when the page is hidden (or unmounted): re-arm for the return trip.
   useEffect(() => {
-    if (!hydrated || !episodes.data || checked.current) return
-    checked.current = true
+    return () => {
+      selfRequest.current = false
+    }
+  }, [])
+  useEffect(() => {
+    if (pathname !== myPath.current) {
+      selfRequest.current = false
+      return
+    }
+    if (!hydrated || !episodes.data || selfRequest.current) return
     if (!user || !pending || pending.seriesId !== series.id) return
     const episode = episodes.data.find((e) => e.n === pending.episode)
     useAppStore.getState().clearPendingUnlock()
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- one-shot reopen after returning from /login or /coins
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- reopen after returning from /login or /coins
     if (episode && episode.access === "fastpass") setTarget(episode)
-  }, [hydrated, user, pending, series.id, episodes.data])
+  }, [pathname, hydrated, user, pending, series.id, episodes.data])
 
   const store = useAppStore.getState
   const here = () => `${pathname}${typeof window === "undefined" ? "" : window.location.search}`
@@ -59,12 +71,14 @@ export function useSeriesUnlock(series: Series) {
       price={price}
       loading={loading}
       onLogin={() => {
+        selfRequest.current = true
         store().setReturnTo(here())
         store().setPendingUnlock({ seriesId: series.id, episode: target.n })
         setTarget(null)
         router.push("/login")
       }}
       onGetCoins={() => {
+        selfRequest.current = true
         store().setShopReturn({ page: seriesHref(series), episode: target.n, title: series.title })
         store().setPendingUnlock({ seriesId: series.id, episode: target.n })
         setTarget(null)
