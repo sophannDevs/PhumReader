@@ -29,7 +29,7 @@ npm run test:e2e     # Playwright, available after T52
 - Components in Part 2 and Part 3 are presentational (props + callbacks). Part 4 adds data, the fake API and the store, and wires them in. Part 5 builds the pages with all interactions. Part 6 completes loading / empty / error states on every page.
 - A temporary preview page at `/dev/kit` is used to check components in Parts 2–4. It is deleted in T53.
 
-Progress: 3 / 53
+Progress: 4 / 53
 
 ---
 
@@ -54,7 +54,7 @@ Progress: 3 / 53
 
 ## Part 2: Design system (from foundations.md)
 
-- [ ] **T04 Colour tokens, radius, shadows, Tailwind theme** (≈45 min)
+- [x] **T04 Colour tokens, radius, shadows, Tailwind theme** (≈45 min)
   - Build: `globals.css` with every shadcn variable from foundations §1 (`--background`, `--foreground`, `--card`, `--popover`, `--muted`, `--muted-foreground`, `--secondary`, `--accent`, `--border`, `--input`, `--ring #00A650`, `--primary #00DC64`, `--primary-hover #00C85A`, `--primary-foreground #04210F`, `--brand-ink #047A3A`, `--brand-soft #E8FBF0` + border `#BBF0D0`, destructive set, warning set, coin `#FBBF24` / `#78350F`, UP badge `#FEE2E2` / `#B91C1C`, selected card `#F6FEF9`), dark-surface tokens (`#09090B`, `#18181B`, `#27272A`, `#3F3F46`, `#FAFAFA`, `#A1A1AA`) and the three novel-reader themes scoped to `[data-reader-theme="light|sepia|dark"]`. `--radius: 10px` plus named radii (buttons/inputs 8, cards 12, dialogs 14, hero 20 / 16 phone, badges 6, chips round). Shadows xs / md / lg. Container 1280 px with 32 px padding (16 on phone). Expose all of it to Tailwind (`@theme inline` on Tailwind v4, or `tailwind.config.ts` on v3, whichever `create-next-app` generated).
   - Look at: `design/foundations.md` §1, §3; `design/screens/00-foundations-desktop.png` (Color tokens, Layout & spacing).
   - Done when: `/dev/kit` shows the token swatches with their hex values; computed `--primary` is `#00DC64`; no hex colour appears in a component file outside `globals.css`.
