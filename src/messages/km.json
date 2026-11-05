@@ -123,5 +123,21 @@
     "empty": "រកមិនឃើញលទ្ធផលទេ។ សូមសាកល្បងចំណងជើង អ្នកបង្កើត ឬប្រភេទ។",
     "esc": "Esc",
     "escLabel": "ចុច Escape ដើម្បីបិទ"
+  },
+  "reader": {
+    "backToSeries": "ត្រឡប់ទៅរឿង",
+    "episodes": "វគ្គ",
+    "chapters": "ជំពូក",
+    "settings": "ការកំណត់ការអាន",
+    "prevEpisode": "វគ្គមុន",
+    "nextEpisode": "វគ្គបន្ទាប់",
+    "prevChapter": "ជំពូកមុន",
+    "nextChapter": "ជំពូកបន្ទាប់",
+    "headerEpisodes": "{count} វគ្គ · {coins} កាក់",
+    "headerChapters": "{count} ជំពូក · {coins} កាក់",
+    "now": "ឥឡូវ",
+    "locked": "ជាប់សោ",
+    "progress": "វឌ្ឍនភាពនៃការអាន",
+    "settingsLabel": "Aa"
   }
 }

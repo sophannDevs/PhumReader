@@ -123,5 +123,21 @@
     "empty": "No results. Try a title, creator or genre.",
     "esc": "Esc",
     "escLabel": "Press Escape to close"
+  },
+  "reader": {
+    "backToSeries": "Back to series",
+    "episodes": "Episodes",
+    "chapters": "Chapters",
+    "settings": "Reading settings",
+    "prevEpisode": "Previous episode",
+    "nextEpisode": "Next episode",
+    "prevChapter": "Previous chapter",
+    "nextChapter": "Next chapter",
+    "headerEpisodes": "{count, plural, one {# episode} other {# episodes}} · {coins, plural, one {# coin} other {# coins}}",
+    "headerChapters": "{count, plural, one {# chapter} other {# chapters}} · {coins, plural, one {# coin} other {# coins}}",
+    "now": "Now",
+    "locked": "Locked",
+    "progress": "Reading progress",
+    "settingsLabel": "Aa"
   }
 }

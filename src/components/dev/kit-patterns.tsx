@@ -2,6 +2,8 @@
 
 import { useRef, useState } from "react"
 import { toast } from "sonner"
+import { EpisodeListPopover, type ListEpisode } from "@/components/layout/episode-list-popover"
+import { ComicReaderBar, NovelReaderBar } from "@/components/layout/reader-bar"
 import { Logo } from "@/components/layout/logo"
 import { SiteHeader } from "@/components/layout/site-header"
 import { CommentComposer } from "@/components/pr/comment-composer"
@@ -27,6 +29,9 @@ const rows: [number, EpisodeState][] = [
   [64, "read"],
 ]
 
+const listEpisodes: ListEpisode[] = samples.map((e) => ({ n: e.n, title: e.title, thumb: e.thumb, locked: e.access === "fastpass" }))
+const themes = ["light", "sepia", "dark"] as const
+
 const initialComments: CommentView[] = demoData.comments.series.map((c, i) => ({ ...c, id: `c${i}` }))
 
 /** Dev-only preview of the T10 patterns. Deleted in T53. */
@@ -38,6 +43,9 @@ export function KitPatterns() {
   const [comments, setComments] = useState(initialComments)
   const [draft, setDraft] = useState("")
   const composerRef = useRef<HTMLTextAreaElement>(null)
+  const [epNo, setEpNo] = useState(1)
+  const last = listEpisodes.length
+  const go = (n: number) => setEpNo(Math.min(Math.max(1, n), last))
 
   const locked = ep(66)
   const dialogProps = {
@@ -70,6 +78,59 @@ export function KitPatterns() {
             onLogout={() => toast.success("You're logged out")}
           />
         </div>
+      </section>
+
+      <section className="flex flex-col gap-3">
+        <h2 className="text-2xl font-semibold tracking-tight">Reader bars</h2>
+        <p className="type-body text-muted-foreground">
+          Episode {epNo} of {last}. Previous / next are disabled at the ends; the progress line follows the episode.
+        </p>
+        <div className="overflow-hidden rounded-card border">
+          <ComicReaderBar
+            className="static"
+            backHref="/series/glass-compass"
+            seriesTitle={series.title}
+            itemTitle={`Episode ${epNo}`}
+            progress={epNo / last}
+            prevDisabled={epNo <= 1}
+            nextDisabled={epNo >= last}
+            onPrev={() => go(epNo - 1)}
+            onNext={() => go(epNo + 1)}
+            listSlot={
+              <EpisodeListPopover episodes={listEpisodes} current={epNo} coins={3} onSelect={go} />
+            }
+          />
+        </div>
+        {themes.map((theme) => (
+          <div key={theme} data-reader-theme={theme} className="overflow-hidden rounded-card border border-reader-border bg-reader-page">
+            <NovelReaderBar
+              className="static"
+              backHref="/series/letters-to-tuesday"
+              seriesTitle="Letters to Tuesday"
+              itemTitle="Flour and Ink"
+              progress={0.35}
+              onPrev={() => {}}
+              onNext={() => {}}
+              prevDisabled
+              listSlot={
+                <EpisodeListPopover
+                  tone="themed"
+                  kind="chapter"
+                  episodes={listEpisodes}
+                  current={5}
+                  coins={3}
+                  onSelect={() => {}}
+                />
+              }
+              trailingSlot={
+                <Button variant="ghost" size="sm" className="text-reader-text hover:bg-reader-border/60">
+                  Aa
+                </Button>
+              }
+            />
+            <p className="px-4 py-6 text-sm text-reader-quiet">{theme} theme</p>
+          </div>
+        ))}
       </section>
 
       <section className="flex flex-col gap-3">
