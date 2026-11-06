@@ -4,6 +4,8 @@ import app.phumreader.common.error.ApiException;
 import app.phumreader.common.paging.CursorPage;
 import app.phumreader.common.paging.Cursors;
 import app.phumreader.config.AppProperties;
+import app.phumreader.search.service.SearchDoc;
+import app.phumreader.search.service.SearchIndex;
 import app.phumreader.series.domain.SeriesOrder;
 import app.phumreader.series.domain.SeriesStatus;
 import app.phumreader.series.domain.SeriesType;
@@ -49,6 +51,10 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 /**
@@ -70,6 +76,8 @@ public class CatalogService {
     static final int HOME_RANKING = 8;
     static final int CREATOR_COVERS = 3;
     static final int RELATED = 4;
+    private static final Logger log = LoggerFactory.getLogger(CatalogService.class);
+
     static final int SEARCH_DEFAULT = 8;
     static final int SEARCH_MAX = 20;
     static final int SEARCH_POPULAR = 6;
@@ -85,10 +93,23 @@ public class CatalogService {
     private final Duration homeCacheTtl;
     private final AtomicReference<CachedHome> cachedHome = new AtomicReference<>();
 
-    public CatalogService(CatalogQueries queries, Clock clock, AppProperties properties) {
+    private final ObjectProvider<SearchIndex> searchIndex;
+
+    @Autowired
+    public CatalogService(
+            CatalogQueries queries,
+            Clock clock,
+            AppProperties properties,
+            ObjectProvider<SearchIndex> searchIndex) {
         this.queries = queries;
         this.clock = clock;
         this.homeCacheTtl = properties.catalog().homeCacheTtl();
+        this.searchIndex = searchIndex;
+    }
+
+    /** Without a search index: search uses PostgreSQL. */
+    public CatalogService(CatalogQueries queries, Clock clock, AppProperties properties) {
+        this(queries, clock, properties, null);
     }
 
     /** Kinds of ranking ("comics", "novels"). */
@@ -365,8 +386,8 @@ public class CatalogService {
     }
 
     /**
-     * Search by title, creator or genre (PostgreSQL stand-in for P3-15). An empty query returns the
-     * most viewed series ("Popular now").
+     * Search by title, creator or genre (Meilisearch when configured, PostgreSQL otherwise). An
+     * empty query returns the most viewed series ("Popular now").
      */
     public List<SeriesCard> search(@Nullable String query, @Nullable Integer limit) {
         Instant now = clock.instant();
@@ -377,7 +398,25 @@ public class CatalogService {
             return cards.of(queries.mostViewed(null, SEARCH_POPULAR, at));
         }
         int size = limit == null ? SEARCH_DEFAULT : Math.clamp(limit, 1, SEARCH_MAX);
+        SearchIndex index = searchIndex == null ? null : searchIndex.getIfAvailable();
+        if (index != null) {
+            try {
+                List<UUID> ids = index.search(q, size);
+                return cards.of(queries.seriesByIds(ids, at));
+            } catch (RuntimeException e) {
+                log.warn("Search index unavailable, using PostgreSQL: {}", e.toString());
+            }
+        }
         return cards.of(queries.search(q, size, at));
+    }
+
+    /** Published series for the search index: all of them, or just these ids. */
+    public List<SearchDoc> searchDocuments(@Nullable Collection<UUID> ids) {
+        return queries.searchRows(ids).stream()
+                .map(r ->
+                        new SearchDoc(
+                                r.id(), r.title(), r.penName(), r.genre(), r.type(), r.views()))
+                .toList();
     }
 
     // ---------- rules ----------

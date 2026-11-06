@@ -87,6 +87,17 @@ deployment and no Docker. A step is done when its checks pass; tick the plan tas
     the provider, A13); without it the console sender stays in dev. `SmtpEmailSenderTest`, `./gradlew check` green.
     Real check: sign-up on Supabase put "Your PhumReader code: 123456" in Mailpit (http://127.0.0.1:8025), nothing in
     the console. Plain text only; HTML templates come with P3-16.
+  - Done 2026-11-06 (part 2c, search, P3-15 first half): `search/service` has `SearchIndex`, `MeilisearchIndex`
+    (plain HTTP, waits for each Meilisearch task; searches title, creator, genre with typos and prefixes, ties ranked by
+    views), `SearchSyncService` (full sync at startup in the background, then `outbox_events` topic SEARCH every 5 s with
+    `for update skip locked`, 5 attempts then left alone) and `OutboxEvents` (`add(type, seriesId)` for the writers).
+    On when `MEILI_URL` is set; `CatalogService.search` uses it and falls back to PostgreSQL (with a warning) if the
+    index is down or unset. Empty query still returns Popular now from PostgreSQL. Tests: `SearchSyncTest` (3, fake
+    index on embedded PostgreSQL), `MeilisearchIndexTest` (3, real Meilisearch, skipped when none), check green. Real
+    check on Supabase + local Meilisearch: 48 series indexed at startup; "glass", "compas" (typo), creator and genre
+    searches answer from Meilisearch. Not done yet: nothing writes SEARCH events until the creator pages exist
+    (P3-14: call `OutboxEvents.add` in the same transaction as a publish / unpublish / edit); the ranking uses the views
+    from the last sync (refreshed with view counters); suggestions and filters beyond `type`.
   - 2026-11-06: the company PC may not download programs, so Step 4 runs first with built-in stand-ins
     (rate limits and codes in memory, search in PostgreSQL, JWT signed with the JDK). At home: install the
     services, fill in `backend/.env`, swap the stand-ins (and optionally the JWT code for a JWT library), add

@@ -23,6 +23,10 @@ spring:
       url: ${REDIS_URL:}
 
 phumreader:
+  search:
+    # Empty: search uses PostgreSQL. With Meilisearch: http://127.0.0.1:7700 and its master key.
+    url: ${MEILI_URL:}
+    key: ${MEILI_MASTER_KEY:}
   mail:
     host: ${MAIL_HOST:}
     from: ${MAIL_FROM:PhumReader <no-reply@phumreader.local>}

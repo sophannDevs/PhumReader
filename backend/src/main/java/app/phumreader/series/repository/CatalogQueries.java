@@ -337,6 +337,52 @@ public class CatalogQueries {
                 .list();
     }
 
+    /** What the search index needs for published series: all of them, or just these ids. */
+    public List<SearchRow> searchRows(@Nullable Collection<UUID> ids) {
+        String where = "s.visibility = 'PUBLISHED'" + (ids == null ? "" : " and s.id in (:ids)");
+        var statement =
+                jdbc.sql(
+                        "select s.id, s.title, p.pen_name, g.name as genre, s.type, s.view_count"
+                                + " from series s join genres g on g.id = s.genre_id"
+                                + " join creator_profiles p on p.user_id = s.creator_id where "
+                                + where);
+        if (ids != null) {
+            if (ids.isEmpty()) {
+                return List.of();
+            }
+            statement = statement.param("ids", ids);
+        }
+        return statement
+                .query((rs, n) ->
+                        new SearchRow(
+                                rs.getObject("id", UUID.class),
+                                rs.getString("title"),
+                                rs.getString("pen_name"),
+                                rs.getString("genre"),
+                                rs.getString("type"),
+                                rs.getLong("view_count")))
+                .list();
+    }
+
+    /** Published series by id, as cards, in the order of {@code ids}. */
+    public List<SeriesRow> seriesByIds(List<UUID> ids, OffsetDateTime now) {
+        if (ids.isEmpty()) {
+            return List.of();
+        }
+        Map<UUID, SeriesRow> byId = new LinkedHashMap<>();
+        jdbc.sql(cards("select * from series where visibility = 'PUBLISHED' and id in (:ids)"))
+                .param("ids", ids)
+                .param("now", now)
+                .query(SERIES)
+                .list()
+                .forEach(r -> byId.put(r.id(), r));
+        return ids.stream().map(byId::get).filter(java.util.Objects::nonNull).toList();
+    }
+
+    /** One published series as the search index sees it. */
+    public record SearchRow(
+            UUID id, String title, String penName, String genre, String type, long views) {}
+
     // ---------- episodes ----------
 
     /**

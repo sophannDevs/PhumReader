@@ -19,6 +19,9 @@ spring:
       url: ${REDIS_URL}
 
 phumreader:
+  search:
+    url: ${MEILI_URL:}
+    key: ${MEILI_MASTER_KEY:}
   mail:
     host: ${MAIL_HOST:}
     from: ${MAIL_FROM:}
