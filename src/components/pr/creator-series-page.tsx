@@ -1,11 +1,11 @@
 "use client"
 
-import { CheckCircle2Icon, LogInIcon, PenLineIcon, PlusIcon, SearchIcon } from "lucide-react"
+import { CheckCircle2Icon, PenLineIcon, PlusIcon, SearchIcon } from "lucide-react"
 import { useSearchParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useEffect, useState } from "react"
 import { toast } from "sonner"
-import { BecomeCreatorDialog } from "@/components/pr/become-creator-dialog"
+import { CreatorGate } from "@/components/pr/creator-gate"
 import { EmptyState } from "@/components/pr/empty-state"
 import { ErrorState } from "@/components/pr/error-state"
 import { SkeletonRow } from "@/components/pr/skeletons"
@@ -14,14 +14,13 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Link, usePathname } from "@/i18n/navigation"
+import { Link } from "@/i18n/navigation"
 import { DEMO_MODE } from "@/lib/api/config"
 import type { MySeries, Visibility } from "@/lib/api/creator"
 import { useMySeries } from "@/lib/creator"
 import { formatCount } from "@/lib/format"
 import { useCreator } from "@/lib/queries"
 import { seriesHref } from "@/lib/routes"
-import { useAppStore, useUser } from "@/lib/store"
 
 type Filter = "" | Visibility
 const FILTERS: Filter[] = ["", "published", "draft"]
@@ -142,11 +141,17 @@ function Skeleton() {
 /** /creator/series: the creator's own series with search, a status filter, Create series and Add episode. */
 export function CreatorSeriesPage() {
   const t = useTranslations("creatorSeries")
+  return (
+    <CreatorGate title={t("title")} eyebrow={t("eyebrow")}>
+      <SeriesList />
+    </CreatorGate>
+  )
+}
+
+function SeriesList() {
+  const t = useTranslations("creatorSeries")
   const tt = useTranslations("toasts")
-  const user = useUser()
-  const pathname = usePathname()
   const dashboard = useCreator()
-  const [becoming, setBecoming] = useState(false)
   const [search, setSearch] = useState("")
   const [q, setQ] = useState("")
   const [filter, setFilter] = useState<Filter>("")
@@ -157,70 +162,7 @@ export function CreatorSeriesPage() {
     return () => clearTimeout(id)
   }, [search])
 
-  const isCreator = DEMO_MODE || dashboard.data?.isCreator === true
-  const real = useMySeries({ q, visibility: filter }, isCreator)
-
-  if (!user) {
-    return (
-      <div className="container py-10">
-        <p className="type-eyebrow">{t("eyebrow")}</p>
-        <h1 className="type-h1">{t("title")}</h1>
-        <EmptyState
-          icon={LogInIcon}
-          title={t("loginTitle")}
-          description={t("loginDesc")}
-          className="py-16"
-          action={
-            <Button asChild variant="brand" size="lg">
-              <Link href="/login" onClick={() => useAppStore.getState().setReturnTo(pathname)}>
-                {t("login")}
-              </Link>
-            </Button>
-          }
-        />
-      </div>
-    )
-  }
-
-  const shell = (children: React.ReactNode) => (
-    <div className="container flex flex-col gap-6 py-8 md:py-10">{children}</div>
-  )
-
-  if (!DEMO_MODE && dashboard.isPending) {
-    return shell(
-      <>
-        <h1 className="type-h1">{t("title")}</h1>
-        <Skeleton />
-      </>
-    )
-  }
-  if (!DEMO_MODE && dashboard.isError) {
-    return shell(
-      <>
-        <h1 className="type-h1">{t("title")}</h1>
-        <ErrorState onRetry={() => void dashboard.refetch()} />
-      </>
-    )
-  }
-  if (!isCreator) {
-    return shell(
-      <>
-        <h1 className="type-h1">{t("title")}</h1>
-        <EmptyState
-          icon={PenLineIcon}
-          title={t("notCreatorTitle")}
-          description={t("notCreatorDesc")}
-          className="py-16"
-          action={
-            <Button variant="brand" size="lg" onClick={() => setBecoming(true)}>
-              {t("becomeStart")}
-            </Button>
-          }
-        />
-        <BecomeCreatorDialog open={becoming} onOpenChange={setBecoming} />
-      </>
-    )
-  }
+  const real = useMySeries({ q, visibility: filter }, true)
 
   // The demo shows the stand-in creator's series, filtered here; the real API filters on the server.
   const demoItems: MySeries[] = (dashboard.data?.series ?? [])
@@ -231,8 +173,8 @@ export function CreatorSeriesPage() {
   const error = DEMO_MODE ? dashboard.isError : real.isError
   const filtering = q.trim() !== "" || filter !== ""
 
-  return shell(
-    <>
+  return (
+    <div className="container flex flex-col gap-6 py-8 md:py-10">
       <Header onCreate={() => toast.success(tt("publishingSoon"))} />
       <Notice />
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
@@ -291,6 +233,6 @@ export function CreatorSeriesPage() {
           ))}
         </ul>
       )}
-    </>
+    </div>
   )
 }

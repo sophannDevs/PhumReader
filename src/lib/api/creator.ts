@@ -37,3 +37,14 @@ export async function becomeCreator(penName: string): Promise<string> {
   await refreshSession()
   return res.penName
 }
+
+// ---------------------------------------------------------------- one series (create and edit)
+
+export type SeriesEdit = Schemas["SeriesEdit"]
+export type SeriesInput = Schemas["SeriesInput"]
+
+export const fetchSeriesEdit = (id: string) => api.get<SeriesEdit>(`/creator/series/${id}`)
+export const createSeries = (input: SeriesInput) => api.post<SeriesEdit>("/creator/series", input)
+export const updateSeries = (id: string, input: SeriesInput) => api.put<SeriesEdit>(`/creator/series/${id}`, input)
+export const publishSeries = (id: string) => api.post<SeriesEdit>(`/creator/series/${id}/publish`)
+export const unpublishSeries = (id: string) => api.post<SeriesEdit>(`/creator/series/${id}/unpublish`)

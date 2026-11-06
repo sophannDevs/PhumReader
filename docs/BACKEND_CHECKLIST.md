@@ -495,11 +495,22 @@ wiring them are fixed in P5-07.
     keeps the reader's own comments. The "404 page" demo test (`/series/nope` answers 200 in dev) already fails on a
     clean checkout; not caused by this task.
 
-- [ ] **P4-14 Create / edit series** `/creator/series/new`, `/creator/series/[id]/edit` (A1)
+- [x] **P4-14 Create / edit series** `/creator/series/new`, `/creator/series/[id]/edit` (A1)
   - Build: title, genres, type (comic or novel), language, summary, tags, schedule, rating (A10), cover and banner
     upload, terms, save draft or publish.
   - Depends on: P2-03 (T09–T10)
   - Done when: validation matches the API rules; a draft can be reopened.
+  - Done (2026-11-06): `src/components/pr/series-form.tsx` with the two pages (`series-form-pages.tsx`), the shared
+    `CreatorGate` (login / become a creator) and `ImageUploadField` (type, size and width checked in the browser, real
+    upload progress, cancel, the API's reasons). Fields: type, title, genre, language, summary, tags, schedule, age
+    rating (A10), cover, banner, terms, and for editing the story status. Save draft / Publish (summary, cover and terms
+    needed) / Save changes / Unpublish; the API's field errors show next to their fields; a draft reopens with its
+    values and cover; another creator's series says so (403), an unknown id says not found; English and Khmer.
+    Tests: real-mode Playwright test 9 (validation, 599 / 700 px images refused in the browser, real uploads to MinIO,
+    draft, edit, publish, edit while live, unpublish, public API checks, no sideways scroll at 320 / 390 / 768 / 1440 px),
+    demo spec for the demo notice. Assumptions 106 and 107 in docs/CHECKLIST.md.
+  - Notes: the browser PUTs to MinIO directly (works: MinIO allows any origin); Cloudflare R2 needs a CORS rule on the
+    bucket for the site's origin (Phase 7). The pen name from "Become a creator" is not editable yet.
 
 - [ ] **P4-15 Upload episode** `/creator/series/[id]/episodes/new` (A1)
   - Build: breadcrumb, auto number, title; comic: drag-and-drop, reorder by drag and up / down, delete, file rules,

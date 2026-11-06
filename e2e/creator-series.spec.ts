@@ -36,4 +36,13 @@ test.describe("My series (demo)", () => {
     await page.goto("/km/creator/series")
     await expect(page.getByText("ចូលគណនីដើម្បីមើលរឿងរបស់អ្នក")).toBeVisible()
   })
+
+  test("the create and edit pages say the demo cannot save series", async ({ page }) => {
+    await seed(page, { user: SOKHA })
+    await page.goto("/creator/series/new")
+    await expect(page.getByText("Not available in the demo")).toBeVisible()
+    await page.goto("/creator/series/00000000-0000-0000-0000-000000000000/edit")
+    await expect(page.getByText("Not available in the demo")).toBeVisible()
+    await expect(page.getByRole("link", { name: "Back to My series" })).toBeVisible()
+  })
 })

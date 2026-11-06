@@ -30,3 +30,14 @@ export function useBecomeCreator() {
     onSuccess: () => qc.invalidateQueries({ queryKey: creatorKeys.all }),
   })
 }
+
+/** One of the creator's series as the edit form needs it (403 for another creator's, 404 when unknown). */
+export function useSeriesEdit(id: string) {
+  const email = useAccountEmail()
+  return useQuery({
+    queryKey: ["creator", "series-edit", email ?? "", id] as const,
+    queryFn: () => real.fetchSeriesEdit(id),
+    enabled: !DEMO_MODE && !!email,
+    retry: false,
+  })
+}

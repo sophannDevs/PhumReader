@@ -1,5 +1,5 @@
 import { deflateSync, crc32 } from "node:zlib"
-import { expect, request as playwrightRequest, test, type Page } from "@playwright/test"
+import { expect, request as playwrightRequest, test, type Locator, type Page } from "@playwright/test"
 
 /**
  * Key flows against the real API (the local Spring Boot backend on :8080, dev payment simulator
@@ -287,7 +287,119 @@ test("8. My series: become a creator in the dialog, then the list with search, f
   expect((await page.request.post(`/api/v1/creator/series/${alpha}/unpublish`, { headers })).status()).toBe(200)
 })
 
-test("9. creator image upload: presigned upload to storage, WebP variants, 799 px refused", async () => {
+test("9. Create and edit a series in the form: validation, uploads with rules, draft, publish, unpublish", async () => {
+  test.setTimeout(120_000)
+  const slugOf = async (id: string) => (await (await page.request.get(`/api/v1/creator/series/${id}`)).json()).slug as string
+  const anonymous = await playwrightRequest.newContext({ baseURL: "http://localhost:3100" })
+  const title = `E2E Form ${stamp}`
+  // The "new series" page stays mounted (hidden) behind later pages, so only look at what is on screen.
+  const on = (locator: Locator) => locator.and(page.locator(":visible"))
+  const titleField = () => on(page.getByLabel("Title", { exact: true }))
+  const genre = () => on(page.getByLabel("Genre"))
+  const tag = () => on(page.getByPlaceholder("For example: sea, mystery"))
+  const day = () => on(page.getByLabel("Update schedule"))
+  const terms = () => on(page.getByRole("checkbox", { name: /I own this work/ }))
+
+  await page.goto("/creator/series")
+  await page.getByRole("link", { name: "Create series" }).first().click()
+  await expect(page).toHaveURL(/\/creator\/series\/new$/)
+  await page.waitForLoadState("networkidle")
+
+  // An empty form says what is missing, next to the fields.
+  await page.getByRole("button", { name: "Save draft" }).click()
+  await expect(page.getByText("Enter a title.")).toBeVisible()
+  await expect(page.getByText("Choose a genre.")).toBeVisible()
+
+  await titleField().fill(title)
+  await genre().selectOption("fantasy")
+  await tag().fill("sea")
+  await tag().press("Enter")
+  await tag().fill("glass")
+  await tag().press("Enter")
+  await page.getByRole("button", { name: "Remove tag glass" }).click()
+  await expect(page.getByRole("list", { name: "Tags" }).getByRole("listitem")).toHaveCount(1)
+  await day().selectOption("Fri")
+  await page.getByRole("radio", { name: /Teen/ }).click()
+
+  // Publishing needs a summary, a cover and the terms.
+  await page.getByRole("button", { name: "Publish" }).click()
+  await expect(page.getByText("Write a summary to publish.")).toBeVisible()
+  await expect(page.getByText("Add a cover to publish.")).toBeVisible()
+  await expect(page.getByText("Accept the terms to publish.")).toBeVisible()
+  await expect(page).toHaveURL(/\/creator\/series\/new$/)
+
+  // Image rules are checked before the file is sent; a good file uploads straight to storage.
+  const files = page.locator("input[type=file]")
+  const file = (name: string, w: number, h: number) => ({ name, mimeType: "image/png", buffer: png(w, h) })
+  await files.nth(0).setInputFiles(file("narrow.png", 599, 800))
+  await expect(page.getByText("This image is 599 px wide; the minimum is 600 px.")).toBeVisible()
+  await files.nth(0).setInputFiles({ name: "notes.txt", mimeType: "text/plain", buffer: Buffer.from("hello") })
+  await expect(page.getByText("Use a JPG or PNG image.")).toBeVisible()
+  await files.nth(0).setInputFiles(file("cover.png", 600, 800))
+  await expect(page.getByRole("button", { name: "Replace image" }).first()).toBeVisible()
+  await expect(page.getByAltText("Cover preview")).toBeVisible()
+  await files.nth(1).setInputFiles(file("banner.png", 700, 300))
+  await expect(page.getByText("This image is 700 px wide; the minimum is 800 px.")).toBeVisible()
+  await files.nth(1).setInputFiles(file("banner.png", 800, 300))
+  await expect(page.getByAltText("Banner (optional) preview")).toBeVisible()
+
+  // The filled form never scrolls sideways, from a small phone to a desktop.
+  for (const width of [320, 390, 768, 1440]) {
+    await page.setViewportSize({ width, height: 900 })
+    expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth), `${width}px`).toBeLessThanOrEqual(0)
+  }
+  await page.setViewportSize({ width: 1280, height: 900 })
+
+  // Save as a draft: back on My series with the next step.
+  await on(page.getByLabel("Summary")).fill("A sea made of glass, and the people who cross it.")
+  await page.getByRole("button", { name: "Save draft" }).click()
+  await expect(page).toHaveURL(/\/creator\/series\?notice=series-created&series=/)
+  await expect(page.getByText("Series created")).toBeVisible()
+  const row = page.getByRole("list", { name: "My series" }).getByRole("listitem").filter({ hasText: title })
+  await expect(row.getByText("Draft")).toBeVisible()
+  const id = new URL(page.url()).searchParams.get("series") as string
+  const slug = await slugOf(id)
+  expect((await anonymous.get(`/api/v1/series/${slug}`)).status()).toBe(404)
+
+  // Edit: the saved values come back, the type is fixed, publishing needs the terms again.
+  await row.getByRole("link", { name: "Edit" }).click()
+  await expect(page).toHaveURL(new RegExp(`/creator/series/${id}/edit$`))
+  await expect(titleField()).toHaveValue(title)
+  await expect(genre()).toHaveValue("fantasy")
+  await expect(day()).toHaveValue("Fri")
+  await expect(page.getByRole("radio", { name: /Teen/ })).toBeChecked()
+  await expect(page.getByRole("radio", { name: "Comic" })).toBeDisabled()
+  await expect(on(page.getByAltText("Cover preview"))).toHaveAttribute("src", /127\.0\.0\.1:9000.*\.webp$/)
+
+  // Opening "Create series" again starts from a blank form, not from the series just saved.
+  await page.goto("/creator/series/new")
+  await expect(titleField()).toHaveValue("")
+  await page.goBack()
+  await titleField().fill(`${title} Edited`)
+  await page.getByRole("button", { name: "Publish" }).click()
+  await expect(page.getByText("Accept the terms to publish.")).toBeVisible()
+  await terms().click()
+  await page.getByRole("button", { name: "Publish" }).click()
+  await expect(page.getByText("Your series is live.")).toBeVisible()
+  await expect(page.getByRole("link", { name: "View public page" })).toBeVisible()
+  expect((await anonymous.get(`/api/v1/series/${slug}`)).status()).toBe(200)
+
+  // A live series can be edited and taken back to a draft.
+  await titleField().fill(`${title} Live`)
+  await page.getByRole("button", { name: "Save changes" }).click()
+  await expect(page.getByText("Changes saved.")).toBeVisible()
+  expect((await (await anonymous.get(`/api/v1/series/${slug}`)).json()).series.title).toBe(`${title} Live`)
+  await page.getByRole("button", { name: "Unpublish" }).click()
+  await expect(page.getByText("Your series is a draft again.")).toBeVisible()
+  expect((await anonymous.get(`/api/v1/series/${slug}`)).status()).toBe(404)
+
+  // An unknown id says so.
+  await page.goto("/creator/series/00000000-0000-0000-0000-000000000000/edit")
+  await expect(page.getByText("Series not found")).toBeVisible()
+  await anonymous.dispose()
+})
+
+test("10. creator image upload: presigned upload to storage, WebP variants, 799 px refused", async () => {
   // The signed-in browser's cookies; writes need the CSRF header.
   await page.request.get("/api/v1/auth/csrf")
   const xsrf = (await page.context().cookies()).find((c) => c.name === "XSRF-TOKEN")?.value ?? ""
@@ -334,7 +446,7 @@ test("9. creator image upload: presigned upload to storage, WebP variants, 799 p
   expect((await fake.complete()).status()).toBe(422)
 })
 
-test("10. creator writes: draft series, publish, free and Fast Pass episodes, a scheduled episode goes live by itself", async () => {
+test("11. creator writes: draft series, publish, free and Fast Pass episodes, a scheduled episode goes live by itself", async () => {
   test.setTimeout(150_000)
   await page.request.get("/api/v1/auth/csrf")
   const xsrf = (await page.context().cookies()).find((c) => c.name === "XSRF-TOKEN")?.value ?? ""
@@ -406,7 +518,7 @@ test("10. creator writes: draft series, publish, free and Fast Pass episodes, a 
   await anonymous.dispose()
 })
 
-test("11. delete the account: signed out everywhere, wrong password refused first", async () => {
+test("12. delete the account: signed out everywhere, wrong password refused first", async () => {
   await page.goto("/settings")
   await page.getByRole("button", { name: "Delete account" }).first().click()
   const dialog = page.getByRole("dialog")
