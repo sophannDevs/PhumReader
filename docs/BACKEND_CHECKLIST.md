@@ -81,7 +81,12 @@ deployment and no Docker. A step is done when its checks pass; tick the plan tas
     down; store: SET with TTL, errors are not hidden. New `RedisStandInsTest` (3 tests, runs against a real Redis,
     skipped when none is on 6379), `./gradlew check` green. Real check on Supabase + local Redis: 5 wrong passwords
     then 429 and the keys `phumreader:rl:*` with TTL ~600 s; sign-up put `phumreader:kv:verify:<email>` (TTL 600 s) and
-    verifying removed it. Not done yet: view counters and the job queue (Redis, with P3-14), Meilisearch, Mailpit SMTP.
+    verifying removed it. Not done yet: view counters and the job queue (Redis, with P3-14).
+  - Done 2026-11-06 (part 2b, email): `SmtpEmailSender` (`notification/service`) sends plain-text mail over SMTP when
+    `MAIL_HOST` is set (`phumreader.mail.host`; `MAIL_FROM`, `MAIL_PORT`; prod also `MAIL_USERNAME` / `MAIL_PASSWORD` for
+    the provider, A13); without it the console sender stays in dev. `SmtpEmailSenderTest`, `./gradlew check` green.
+    Real check: sign-up on Supabase put "Your PhumReader code: 123456" in Mailpit (http://127.0.0.1:8025), nothing in
+    the console. Plain text only; HTML templates come with P3-16.
   - 2026-11-06: the company PC may not download programs, so Step 4 runs first with built-in stand-ins
     (rate limits and codes in memory, search in PostgreSQL, JWT signed with the JDK). At home: install the
     services, fill in `backend/.env`, swap the stand-ins (and optionally the JWT code for a JWT library), add

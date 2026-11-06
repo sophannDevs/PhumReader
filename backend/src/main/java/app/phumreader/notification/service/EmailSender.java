@@ -1,8 +1,10 @@
 package app.phumreader.notification.service;
 
 /**
- * Sends an email. Development prints it in the backend console ({@link ConsoleEmailSender}); a real
- * provider (Resend, A13) comes later. There is deliberately no implementation for production yet.
+ * Sends an email. With {@code phumreader.mail.host} set it goes over SMTP ({@link SmtpEmailSender}:
+ * Mailpit in development, the provider in production); in development without it, it is printed in
+ * the backend console ({@link ConsoleEmailSender}). Production with no mail host has no sender on
+ * purpose.
  */
 public interface EmailSender {
 

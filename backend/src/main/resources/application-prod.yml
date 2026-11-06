@@ -5,11 +5,23 @@ spring:
     username: ${DB_USER}
     password: ${DB_PASSWORD}
 
+  mail:
+    # SMTP of the email provider (Resend, A13). Set MAIL_USERNAME / MAIL_PASSWORD and MAIL_STARTTLS if needed.
+    host: ${MAIL_HOST:}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail.smtp.auth: ${MAIL_AUTH:true}
+      mail.smtp.starttls.enable: true
   data:
     redis:
       url: ${REDIS_URL}
 
 phumreader:
+  mail:
+    host: ${MAIL_HOST:}
+    from: ${MAIL_FROM:}
   redis:
     url: ${REDIS_URL}
   frontend-url: ${FRONTEND_URL}
