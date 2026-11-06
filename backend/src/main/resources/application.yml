@@ -22,6 +22,9 @@ spring:
 server:
   port: ${PORT:8080}
   shutdown: graceful
+  # Client IPs (rate limits) come from X-Forwarded-For when a trusted proxy (localhost, private
+  # networks: the website's /api rewrite) sends the request.
+  forward-headers-strategy: native
 
 phumreader:
   frontend-url: ${FRONTEND_URL:}

@@ -15,6 +15,14 @@ spring:
 
 phumreader:
   frontend-url: ${FRONTEND_URL:http://localhost:3000}
+  auth:
+    # Throw-away signing key; set PHUMREADER_JWT_PRIVATE_KEY to keep sign-ins across restarts.
+    jwt-private-key: ${PHUMREADER_JWT_PRIVATE_KEY:}
+    generate-dev-keys: true
+    # Plain http://localhost: cookies without the Secure flag.
+    secure-cookies: false
+    # Every email code is 123456 in development (as in the demo), so end-to-end tests can sign up.
+    fixed-verification-code: "123456"
 
 management:
   endpoint:

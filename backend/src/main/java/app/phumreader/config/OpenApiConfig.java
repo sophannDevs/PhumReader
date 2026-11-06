@@ -1,5 +1,6 @@
 package app.phumreader.config;
 
+import io.swagger.v3.core.converter.ModelConverter;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.servers.Server;
@@ -14,6 +15,12 @@ import org.springframework.context.annotation.Configuration;
  */
 @Configuration
 class OpenApiConfig {
+
+    /** Record fields are required unless {@code @Nullable} (exact TypeScript types). */
+    @Bean
+    ModelConverter recordFieldsRequiredConverter() {
+        return new RecordFieldsRequiredConverter();
+    }
 
     @Bean
     OpenAPI phumReaderOpenApi() {

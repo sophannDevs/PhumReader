@@ -8,6 +8,7 @@ import java.util.Locale;
 import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
@@ -46,7 +47,15 @@ public class GlobalExceptionHandler {
                             mediaType = "application/json",
                             schema = @Schema(implementation = ErrorResponse.class)))
     ResponseEntity<ErrorResponse> api(ApiException ex) {
-        return body(ex.status(), ex.code(), ex.getMessage(), Map.of());
+        return body(ex.status(), ex.code(), ex.getMessage(), ex.fields());
+    }
+
+    @ExceptionHandler(RateLimitedException.class)
+    ResponseEntity<ErrorResponse> rateLimited(RateLimitedException ex) {
+        long seconds = Math.max(1, ex.retryAfter().toSeconds());
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                .header(HttpHeaders.RETRY_AFTER, String.valueOf(seconds))
+                .body(ErrorResponse.tooManyRequests(ex.code(), ex.getMessage(), seconds));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

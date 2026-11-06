@@ -37,7 +37,7 @@ Sources of truth: the plan doc, `CLAUDE.md`, `docs/BACKEND.md` (decisions and lo
 - Money: balances change only through the ledger, in one transaction with a wallet row lock; every payment and
   unlock call is idempotent. Never build card number fields: cards use the PayWay hosted page.
 
-Progress: 3 / 51 tasks (P1-05, P1-07, P1-08) · Stage 1: step 2 of 5 · milestones M1, M3, M4, M5, M6, M7
+Progress: 3 / 51 tasks (P1-05, P1-07, P1-08) · Stage 1: step 4 of 5, part 1 of 5 done · milestones M1, M3, M4, M5, M6, M7
 
 ---
 
@@ -65,14 +65,30 @@ deployment and no Docker. A step is done when its checks pass; tick the plan tas
     (41 comics, 7 novels), 3,956 episodes, 30,303 panels, 589 chapters, 12,012 comments, 5 packs, 3 hero slides,
     48 ranking rows; a second run changed nothing (18 users, 1 ledger row). Health through the website: UP.
     41 backend tests green. Staging (P3-01's second half) waits for P1-10.
-- [ ] **Step 3: Other local services** (P1-02 rest)
+- [ ] **Step 3: Other local services** (P1-02 rest) — **moved after Step 4, to be done on the home PC**
   - Upstash Redis, Meilisearch (`meilisearch.exe`), email printed in the backend console; a services check.
   - Check: the services check shows every service healthy.
+  - 2026-11-06: the company PC may not download programs, so Step 4 runs first with built-in stand-ins
+    (rate limits and codes in memory, search in PostgreSQL, JWT signed with the JDK). At home: install the
+    services, fill in `backend/.env`, swap the stand-ins (and optionally the JWT code for a JWT library), add
+    Google / Facebook login (P3-04).
 - [ ] **Step 4: API for every existing page** (P3-02 – P3-06, P3-09 – P3-13, P3-15, P3-17; P3-05/P3-14 stats only)
   - Header, auth (sign up, code, log in, refresh, log out, forgot, reset, rate limits; Google / Facebook only with
     dev app keys), Home, Rankings, Genres, Search, Series, comic and novel readers, Coins (PayWay sandbox if keys
     exist, otherwise a dev-only payment simulator), Library, Settings, Creator dashboard.
   - Check: every endpoint has tests (success, validation, permission, double submit where relevant).
+  - Done in five parts, stopping after each:
+    - [x] Part 1, sign-in (P3-02, P3-03 in memory): `/api/v1/auth` csrf, signup, verify, resend-code, login,
+      refresh, logout, logout-all, forgot-password, reset-password; `GET /api/v1/me`.
+      Done 2026-11-06: 25 sign-in tests (66 backend tests green). Real check through
+      `http://localhost:3000/api/v1` on Supabase: wrong password 401, log in, `/me`, refresh, log out with the same
+      CSRF token (it stays the same for the browser), then `/me` and refresh 401; 6 wrong passwords for one email
+      give 429 with `retryAfterSeconds`. Fixed on the way: the CSRF token used to change after every signed-in
+      request, so a page that read it earlier got 403 on log out.
+    - [ ] Part 2, catalog: home, rankings, genres, series and episodes, search (PostgreSQL for now)
+    - [ ] Part 3, reading: episode content (402 when locked), progress, library, likes, bookmarks, follows, comments
+    - [ ] Part 4, coins: balance, unlocks, packs, orders with a dev-only payment simulator, history
+    - [ ] Part 5, settings and the creator dashboard
 - [ ] **Step 5: Connect the frontend** (P5-01, P5-06, parts of P5-04, P5-05, P5-07; `/reset` from P4-09)
   - Fetch wrapper (cookies, CSRF, silent refresh, `ApiError`); every `demo-api.ts` call has a real-API path; server
     state for logged-in users; 401 / 402 / 429 handling; payment status polling; `/reset` page.
@@ -528,3 +544,21 @@ All 74 plan tasks, and where each one lives.
    before the demo's today. "UP" will be computed from release dates in Step 4, so it may not match the demo's
    hand-set flags exactly.
 7. **Subscriber counts** are seeded as 4.68% of likes, the website's own rule (frontend Assumption 5).
+8. **Access tokens without a JWT library (for now).** RS256 tokens are signed and checked with the JDK's own
+   crypto (`auth/service/JwtService`): only RS256, our issuer and unexpired tokens pass. Dev and tests use a
+   throw-away key; production needs `PHUMREADER_JWT_PRIVATE_KEY` (PKCS#8 PEM).
+9. **Two tabs refreshing at once.** A rotated refresh token still works for 20 seconds
+   (`refresh-reuse-grace`); used later, it signs that device out. Tests use 0 seconds.
+10. **Dev email code is always 123456** (as in the demo), so the Playwright flows can sign up against the real
+    API. Production refuses to start when `phumreader.auth.fixed-verification-code` is set. Codes and reset
+    links are printed in the backend console in dev; there is no email sender for production yet (A13).
+11. **Signing up again with an unconfirmed email** replaces the name and password and sends a new code; a
+    confirmed email gets 409 `email_taken`. Logging in before confirming answers 403 `email_not_verified` and
+    sends a new code. A reset link also confirms the email (it proves the mailbox).
+12. **Rate limits (in memory until Step 3):** 5 wrong passwords per email per 10 minutes, 30 logins per client
+    address per 10 minutes, 10 sign-ups and 10 forgot-password requests per client address per hour (at most
+    3 reset emails per email address per hour), one code per 30 seconds per email, 10 password resets per
+    client address per 10 minutes. 429 answers carry
+    `Retry-After` and `retryAfterSeconds`.
+13. **"Remember me" off** gives browser-session cookies (no Max-Age); the choice is kept on the refresh token
+    (V2 migration), so refreshes keep it.

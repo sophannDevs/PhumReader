@@ -10,6 +10,319 @@
     "description" : "Same origin as the website"
   } ],
   "paths" : {
+    "/api/v1/auth/csrf" : {
+      "get" : {
+        "operationId" : "csrf",
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Sets the XSRF-TOKEN cookie that every POST must echo in X-XSRF-TOKEN",
+        "tags" : [ "auth" ]
+      }
+    },
+    "/api/v1/auth/forgot-password" : {
+      "post" : {
+        "operationId" : "forgotPassword",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/EmailRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "202" : {
+            "description" : "Accepted"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Emails a reset link when the account exists (same answer either way)",
+        "tags" : [ "auth" ]
+      }
+    },
+    "/api/v1/auth/login" : {
+      "post" : {
+        "description" : "401 invalid_credentials; 403 email_not_verified (a new code is sent) or account_banned; 429 too_many_attempts after 5 wrong passwords in 10 minutes.",
+        "operationId" : "logIn",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/LoginRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/MeResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Signs in with email and password",
+        "tags" : [ "auth" ]
+      }
+    },
+    "/api/v1/auth/logout" : {
+      "post" : {
+        "operationId" : "logOut",
+        "responses" : {
+          "204" : {
+            "description" : "No Content"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Signs this device out and clears the cookies",
+        "tags" : [ "auth" ]
+      }
+    },
+    "/api/v1/auth/logout-all" : {
+      "post" : {
+        "operationId" : "logOutEverywhere",
+        "responses" : {
+          "204" : {
+            "description" : "No Content"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Signs the account out on every device",
+        "tags" : [ "auth" ]
+      }
+    },
+    "/api/v1/auth/refresh" : {
+      "post" : {
+        "description" : "401 session_expired when the refresh cookie is missing, expired or reused.",
+        "operationId" : "refresh",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/MeResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "New sign-in cookies from the refresh cookie",
+        "tags" : [ "auth" ]
+      }
+    },
+    "/api/v1/auth/resend-code" : {
+      "post" : {
+        "operationId" : "resendCode",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/EmailRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "202" : {
+            "description" : "Accepted"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Emails a new code (429 resend_too_soon within 30 s)",
+        "tags" : [ "auth" ]
+      }
+    },
+    "/api/v1/auth/reset-password" : {
+      "post" : {
+        "description" : "400 invalid_token; 400 password_too_weak (field: password).",
+        "operationId" : "resetPassword",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ResetPasswordRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "204" : {
+            "description" : "No Content"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Sets a new password from a reset link and signs out every device",
+        "tags" : [ "auth" ]
+      }
+    },
+    "/api/v1/auth/signup" : {
+      "post" : {
+        "description" : "409 email_taken when the email already has a confirmed account.",
+        "operationId" : "signUp",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/SignupRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SignupResponse"
+                }
+              }
+            },
+            "description" : "Created"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Creates an account and emails a 6-digit code",
+        "tags" : [ "auth" ]
+      }
+    },
+    "/api/v1/auth/verify" : {
+      "post" : {
+        "description" : "400 invalid_code, code_expired or too_many_attempts (field: code).",
+        "operationId" : "verify",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/VerifyRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/MeResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Confirms the email with its code and signs in",
+        "tags" : [ "auth" ]
+      }
+    },
     "/api/v1/health" : {
       "get" : {
         "description" : "200 when everything is UP, 503 when the database is DOWN.",
@@ -39,10 +352,51 @@
         "summary" : "Is the API running and can it reach the database?",
         "tags" : [ "health" ]
       }
+    },
+    "/api/v1/me" : {
+      "get" : {
+        "operationId" : "me",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/MeResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "The signed-in account (401 when not signed in)",
+        "tags" : [ "account" ]
+      }
     }
   },
   "components" : {
     "schemas" : {
+      "EmailRequest" : {
+        "type" : "object",
+        "properties" : {
+          "email" : {
+            "type" : "string",
+            "maxLength" : 254,
+            "minLength" : 0,
+            "pattern" : "^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$"
+          }
+        },
+        "required" : [ "email" ]
+      },
       "ErrorDetail" : {
         "type" : "object",
         "properties" : {
@@ -51,13 +405,17 @@
             "example" : "validation_failed"
           },
           "fields" : {
-            "type" : "object",
+            "type" : [ "object", "null" ],
             "additionalProperties" : {
               "type" : "string"
             }
           },
           "message" : {
             "type" : "string"
+          },
+          "retryAfterSeconds" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int64"
           }
         },
         "required" : [ "code", "message" ]
@@ -85,6 +443,130 @@
           }
         },
         "required" : [ "database", "status" ]
+      },
+      "LoginRequest" : {
+        "type" : "object",
+        "properties" : {
+          "email" : {
+            "type" : "string",
+            "maxLength" : 254,
+            "minLength" : 0,
+            "pattern" : "^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$"
+          },
+          "password" : {
+            "type" : "string",
+            "maxLength" : 128,
+            "minLength" : 0
+          },
+          "remember" : {
+            "type" : [ "boolean", "null" ]
+          }
+        },
+        "required" : [ "email", "password" ]
+      },
+      "MeResponse" : {
+        "type" : "object",
+        "properties" : {
+          "avatarUrl" : {
+            "type" : [ "string", "null" ]
+          },
+          "displayName" : {
+            "type" : "string"
+          },
+          "email" : {
+            "type" : "string"
+          },
+          "emailVerified" : {
+            "type" : "boolean"
+          },
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "roles" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          }
+        },
+        "required" : [ "displayName", "email", "emailVerified", "id", "roles" ]
+      },
+      "ResetPasswordRequest" : {
+        "type" : "object",
+        "properties" : {
+          "password" : {
+            "type" : "string",
+            "maxLength" : 128,
+            "minLength" : 0
+          },
+          "token" : {
+            "type" : "string",
+            "maxLength" : 200,
+            "minLength" : 0
+          }
+        },
+        "required" : [ "password", "token" ]
+      },
+      "SignupRequest" : {
+        "type" : "object",
+        "properties" : {
+          "email" : {
+            "type" : "string",
+            "maxLength" : 254,
+            "minLength" : 0,
+            "pattern" : "^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$"
+          },
+          "language" : {
+            "type" : [ "string", "null" ],
+            "pattern" : "en|km"
+          },
+          "name" : {
+            "type" : "string",
+            "maxLength" : 60,
+            "minLength" : 2
+          },
+          "password" : {
+            "type" : "string",
+            "maxLength" : 128,
+            "minLength" : 0
+          }
+        },
+        "required" : [ "email", "name", "password" ]
+      },
+      "SignupResponse" : {
+        "type" : "object",
+        "properties" : {
+          "codeExpiresInSeconds" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "email" : {
+            "type" : "string"
+          },
+          "resendAfterSeconds" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        },
+        "required" : [ "codeExpiresInSeconds", "email", "resendAfterSeconds" ]
+      },
+      "VerifyRequest" : {
+        "type" : "object",
+        "properties" : {
+          "code" : {
+            "type" : "string",
+            "minLength" : 1,
+            "pattern" : "\\d{6}"
+          },
+          "email" : {
+            "type" : "string",
+            "maxLength" : 254,
+            "minLength" : 0,
+            "pattern" : "^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$"
+          }
+        },
+        "required" : [ "code", "email" ]
       }
     }
   }
