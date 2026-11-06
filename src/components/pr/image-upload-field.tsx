@@ -25,7 +25,7 @@ export function ImageUploadField({
   aspect = "aspect-[3/4] w-32",
   removable = true,
 }: {
-  kind: Extract<UploadKind, "COVER" | "BANNER">
+  kind: Extract<UploadKind, "COVER" | "BANNER" | "THUMBNAIL">
   label: string
   hint: string
   value: ImageValue | null

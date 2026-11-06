@@ -100,6 +100,7 @@ export const panelSchema = z.strictObject({
 
 export const novelBlockSchema = z.discriminatedUnion("type", [
   z.strictObject({ type: z.literal("paragraph"), text: z.string() }),
+  z.strictObject({ type: z.literal("heading"), text: z.string() }),
   z.strictObject({ type: z.literal("quote"), text: z.string() }),
   z.strictObject({ type: z.literal("scene-break") }),
 ]);

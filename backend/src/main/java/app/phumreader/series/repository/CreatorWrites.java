@@ -278,26 +278,46 @@ public class CreatorWrites {
                 .list();
     }
 
-    /** Replaces all panels; a panel's {@code url} is what readers load. */
+    /** Replaces all panels in two statements; a panel's {@code url} is what readers load. */
     public void replacePanels(UUID episodeId, List<PanelRow> panels) {
         jdbc.sql("delete from episode_images where episode_id = :id")
                 .param("id", episodeId)
                 .update();
-        int position = 1;
-        for (PanelRow p : panels) {
-            jdbc.sql(
-                            "insert into episode_images (episode_id, position, storage_key, width,"
-                                    + " height, alt, upload_id) values (:e, :p, :url, :w, :h, :alt,"
-                                    + " :u)")
-                    .param("e", episodeId)
-                    .param("p", position++)
-                    .param("url", p.url())
-                    .param("w", p.width())
-                    .param("h", p.height())
-                    .param("alt", p.alt())
-                    .param("u", p.uploadId())
-                    .update();
+        if (panels.isEmpty()) {
+            return;
         }
+        int size = panels.size();
+        Integer[] positions = new Integer[size];
+        String[] urls = new String[size];
+        Integer[] widths = new Integer[size];
+        Integer[] heights = new Integer[size];
+        String[] alts = new String[size];
+        UUID[] uploadIds = new UUID[size];
+        for (int i = 0; i < size; i++) {
+            PanelRow p = panels.get(i);
+            positions[i] = i + 1;
+            urls[i] = p.url();
+            widths[i] = p.width();
+            heights[i] = p.height();
+            alts[i] = p.alt();
+            uploadIds[i] = p.uploadId();
+        }
+        jdbc.sql(
+                        """
+                        insert into episode_images (episode_id, position, storage_key, width, height,
+                                                    alt, upload_id)
+                        select :episode, t.position, t.url, t.width, t.height, t.alt, t.upload
+                        from unnest(:positions, :urls, :widths, :heights, :alts, :uploads)
+                             as t(position, url, width, height, alt, upload)
+                        """)
+                .param("episode", episodeId)
+                .param("positions", positions)
+                .param("urls", urls)
+                .param("widths", widths)
+                .param("heights", heights)
+                .param("alts", alts)
+                .param("uploads", uploadIds)
+                .update();
     }
 
     public Optional<ChapterRow> chapter(UUID episodeId) {

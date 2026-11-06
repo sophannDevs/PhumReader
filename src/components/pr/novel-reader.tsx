@@ -14,6 +14,7 @@ import type { NovelBlock } from "@/data"
 import { Link } from "@/i18n/navigation"
 import { useChapter } from "@/lib/queries"
 import { seriesHref } from "@/lib/routes"
+import { inlineMarks } from "@/lib/inline-marks"
 import { useAppStore } from "@/lib/store"
 import { useLockedRedirect } from "@/lib/use-locked-redirect"
 import { useReaderNav } from "@/lib/use-reader-nav"
@@ -39,7 +40,7 @@ export function NovelSkeleton() {
 // The demo text is the same for every chapter; the design shows "6 min read".
 const READ_MINUTES = 6
 
-/** Chapter body: paragraphs, italic quotes with a green rule, centred "* * *" scene breaks. */
+/** Chapter body: paragraphs, headings, italic quotes with a green rule, centred "* * *" scene breaks; **bold** and *italic* marks. */
 export function NovelBody({ blocks }: { blocks: NovelBlock[] }) {
   return (
     <div className="flex flex-col gap-[1.1em]">
@@ -48,12 +49,16 @@ export function NovelBody({ blocks }: { blocks: NovelBlock[] }) {
           <p key={i} aria-hidden className="py-2 text-center tracking-[1em] text-reader-quiet">
             * * *
           </p>
+        ) : b.type === "heading" ? (
+          <h2 key={i} className="pt-2 text-[1.25em] leading-snug font-semibold">
+            {inlineMarks(b.text)}
+          </h2>
         ) : b.type === "quote" ? (
           <blockquote key={i} className="border-l-[3px] border-primary pl-4 italic">
-            {b.text}
+            {inlineMarks(b.text)}
           </blockquote>
         ) : (
-          <p key={i}>{b.text}</p>
+          <p key={i}>{inlineMarks(b.text)}</p>
         )
       )}
     </div>

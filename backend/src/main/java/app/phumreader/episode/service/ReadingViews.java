@@ -44,13 +44,18 @@ public final class ReadingViews {
      */
     public record Panel(String src, int width, int height, String alt) {}
 
-    /** A paragraph, a quote or a scene break ({@code text} is null for a scene break). */
+    /**
+     * A paragraph, a heading, a quote or a scene break ({@code text} is null for a scene break).
+     * Text may carry {@code **bold**} and {@code *italic*} marks.
+     */
     public record NovelBlock(BlockType type, @Nullable String text) {}
 
     /** Kinds of chapter text block. */
     public enum BlockType {
         @JsonProperty("paragraph")
         PARAGRAPH,
+        @JsonProperty("heading")
+        HEADING,
         @JsonProperty("quote")
         QUOTE,
         @JsonProperty("scene-break")

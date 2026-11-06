@@ -1721,7 +1721,7 @@ export interface components {
         NovelBlock: {
             text?: string | null;
             /** @enum {string} */
-            type: "paragraph" | "quote" | "scene-break";
+            type: "paragraph" | "heading" | "quote" | "scene-break";
         };
         OrderRequest: {
             /** @enum {string} */

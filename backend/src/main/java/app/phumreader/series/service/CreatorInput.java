@@ -74,10 +74,10 @@ public final class CreatorInput {
     /**
      * A block of chapter text.
      *
-     * @param type paragraph, quote or scene-break
+     * @param type paragraph, heading, quote or scene-break
      */
     public record Block(
-            @NotBlank @Pattern(regexp = "paragraph|quote|scene-break") String type,
+            @NotBlank @Pattern(regexp = "paragraph|heading|quote|scene-break") String type,
             @Nullable @Size(max = 20000) String text) {}
 
     /**

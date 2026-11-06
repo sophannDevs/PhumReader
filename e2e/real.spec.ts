@@ -1,3 +1,4 @@
+import { randomBytes } from "node:crypto"
 import { deflateSync, crc32 } from "node:zlib"
 import { expect, request as playwrightRequest, test, type Locator, type Page } from "@playwright/test"
 
@@ -207,6 +208,24 @@ function png(width: number, height: number): Buffer {
     chunk("IDAT", deflateSync(raw)),
     chunk("IEND", Buffer.alloc(0)),
   ])
+}
+
+/** A PNG of random pixels: it does not compress, so it weighs about width x height x 3 bytes (for upload timing). */
+function noisyPng(width: number, height: number): Buffer {
+  const chunk = (type: string, data: Buffer) => {
+    const body = Buffer.concat([Buffer.from(type), data])
+    const out = Buffer.alloc(8 + data.length + 4)
+    out.writeUInt32BE(data.length, 0)
+    body.copy(out, 4)
+    out.writeUInt32BE(crc32(body) >>> 0, 8 + data.length)
+    return out
+  }
+  const ihdr = Buffer.alloc(13)
+  ihdr.writeUInt32BE(width, 0)
+  ihdr.writeUInt32BE(height, 4)
+  ihdr.set([8, 2, 0, 0, 0], 8)
+  const rows = Array.from({ length: height }, () => Buffer.concat([Buffer.from([0]), randomBytes(width * 3)]))
+  return Buffer.concat([Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]), chunk("IHDR", ihdr), chunk("IDAT", deflateSync(Buffer.concat(rows), { level: 0 })), chunk("IEND", Buffer.alloc(0))])
 }
 
 test("8. My series: become a creator in the dialog, then the list with search, filters and notices", async () => {
@@ -446,7 +465,243 @@ test("10. creator image upload: presigned upload to storage, WebP variants, 799 
   expect((await fake.complete()).status()).toBe(422)
 })
 
-test("11. creator writes: draft series, publish, free and Fast Pass episodes, a scheduled episode goes live by itself", async () => {
+/** A series made through the API for the episode tests (the form tests cover the series form itself). */
+async function makeSeries(type: "comic" | "novel", title: string): Promise<{ id: string; slug: string; headers: { "X-XSRF-TOKEN": string } }> {
+  await page.request.get("/api/v1/auth/csrf")
+  const xsrf = (await page.context().cookies()).find((c) => c.name === "XSRF-TOKEN")?.value ?? ""
+  const headers = { "X-XSRF-TOKEN": xsrf }
+  const image = png(600, 800)
+  const ticket = await (await page.request.post("/api/v1/creator/uploads", { headers, data: { kind: "COVER", contentType: "image/png", size: image.length } })).json()
+  await page.request.put(ticket.uploadUrl, { headers: ticket.headers, data: image })
+  await page.request.post(`/api/v1/creator/uploads/${ticket.id}/complete`, { headers })
+  const created = await (
+    await page.request.post("/api/v1/creator/series", {
+      headers,
+      data: { title, type, genre: "fantasy", languages: ["en"], summary: "A test story.", tags: [], coverUploadId: ticket.id },
+    })
+  ).json()
+  expect((await page.request.post(`/api/v1/creator/series/${created.id}/publish`, { headers })).status()).toBe(200)
+  return { id: created.id, slug: created.slug, headers }
+}
+
+test("11. Comic episode page: 60 panels at 10 Mbps with per-file progress, a failed file retried alone, reorder, preview, Fast Pass, publish, schedule, draft", async () => {
+  test.setTimeout(240_000)
+  const { id, slug, headers } = await makeSeries("comic", `E2E Comic ${stamp}`)
+  const anonymous = await playwrightRequest.newContext({ baseURL: "http://localhost:3100" })
+  const on = (locator: Locator) => locator.and(page.locator(":visible"))
+
+  await page.goto(`/creator/series/${id}/episodes/new`)
+  await page.waitForLoadState("networkidle")
+  await expect(on(page.getByRole("heading", { name: "Add episode" }))).toBeVisible()
+  await expect(on(page.getByLabel("Number"))).toHaveAttribute("placeholder", "1")
+
+  // Validation first: nothing to publish yet.
+  await on(page.getByRole("button", { name: "Publish now" })).click()
+  await expect(on(page.getByText("Enter a title."))).toBeVisible()
+
+  // 60 good panels (about 190 KB each) and one 799 px wide file; one panel's first upload is cut off.
+  const good = Array.from({ length: 60 }, (_, i) => ({ name: `panel-${String(i + 1).padStart(2, "0")}.png`, mimeType: "image/png", buffer: noisyPng(800, i === 6 ? 79 : 80) }))
+  const narrow = { name: "too-narrow.png", mimeType: "image/png", buffer: png(799, 200) }
+  const cutOffSize = good[6].buffer.length
+  let cutOff = false
+  await page.route("**/127.0.0.1:9000/**", (route) => {
+    const request = route.request()
+    if (request.method() === "PUT" && !cutOff && request.postDataBuffer()?.length === cutOffSize) {
+      cutOff = true
+      return route.abort("failed")
+    }
+    return route.continue()
+  })
+  const cdp = await page.context().newCDPSession(page)
+  await cdp.send("Network.enable")
+  await cdp.send("Network.emulateNetworkConditions", { offline: false, latency: 20, downloadThroughput: (10 * 1024 * 1024) / 8, uploadThroughput: (10 * 1024 * 1024) / 8 })
+
+  const started = Date.now()
+  await page.locator("input[type=file][multiple]").setInputFiles([...good, narrow])
+  // Every file has its own progress while it travels.
+  await expect(on(page.getByRole("progressbar", { name: /^Uploading panel \d+$/ }).first())).toBeVisible()
+  await expect(on(page.getByText("59 of 61 panels uploaded"))).toBeVisible({ timeout: 120_000 })
+  await expect(on(page.getByText("2 failed"))).toBeVisible()
+  console.log(`60 panels at 10 Mbps: ${Math.round((Date.now() - started) / 1000)} s`)
+  await cdp.send("Network.emulateNetworkConditions", { offline: false, latency: 0, downloadThroughput: -1, uploadThroughput: -1 })
+
+  // The cut-off file can be retried on its own; the 799 px file cannot be retried, only removed.
+  const retryButtons = on(page.getByRole("button", { name: "Retry" }))
+  await expect(retryButtons).toHaveCount(1)
+  await expect(on(page.getByText("This image is 799 px wide; the minimum is 800 px."))).toBeVisible()
+  await retryButtons.click()
+  await expect(on(page.getByText("60 of 61 panels uploaded"))).toBeVisible()
+  await on(page.getByRole("button", { name: /^Remove panel \d+$/ }).last()).click()
+  await expect(on(page.getByText("60 of 60 panels uploaded"))).toBeVisible()
+  expect(cutOff).toBe(true)
+
+  // Reorder with the buttons and by dragging; remove one.
+  const names = () => on(page.getByRole("list", { name: "Panels in reading order" })).locator("li p.truncate").allTextContents()
+  expect((await names())[0]).toBe("panel-01.png")
+  await on(page.getByRole("button", { name: "Move panel 2 up", exact: true })).click()
+  expect((await names()).slice(0, 2)).toEqual(["panel-02.png", "panel-01.png"])
+  const cards = on(page.getByRole("list", { name: "Panels in reading order" })).locator("li")
+  await cards.nth(2).dragTo(cards.nth(0))
+  expect((await names()).slice(0, 3)).toEqual(["panel-03.png", "panel-02.png", "panel-01.png"])
+  await on(page.getByRole("button", { name: "Remove panel 3", exact: true })).click()
+  await expect(on(page.getByText("59 of 59 panels uploaded"))).toBeVisible()
+
+  // 59 panels on the page: no sideways scroll from a small phone to a desktop.
+  for (const width of [320, 390, 768, 1440]) {
+    await page.setViewportSize({ width, height: 900 })
+    expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth), `${width}px`).toBeLessThanOrEqual(0)
+  }
+  await page.setViewportSize({ width: 1280, height: 900 })
+
+  // Thumbnail must be square; details; Fast Pass rules.
+  await on(page.locator("input[type=file]:not([multiple])")).setInputFiles({ name: "wide.png", mimeType: "image/png", buffer: png(400, 300) })
+  await expect(on(page.getByText("The image must be square."))).toBeVisible()
+  await on(page.locator("input[type=file]:not([multiple])")).setInputFiles({ name: "square.png", mimeType: "image/png", buffer: png(400, 400) })
+  await expect(on(page.getByAltText("Thumbnail preview"))).toBeVisible()
+  await on(page.getByLabel("Title", { exact: true })).fill(`Episode one ${stamp}`)
+  await on(page.getByLabel("Creator's note")).fill("Thank you for reading!")
+  await on(page.getByRole("switch", { name: "Comments" })).click()
+  await expect(on(page.getByText("Comments are turned off for this episode."))).toBeVisible()
+  await on(page.getByRole("radio", { name: /Fast Pass/ })).click()
+  await on(page.getByLabel("Price (coins)")).fill("12")
+  await on(page.getByRole("button", { name: "Publish now" })).click()
+  await expect(on(page.getByText("Choose a price from 3 to 10 coins."))).toBeVisible()
+  await on(page.getByLabel("Price (coins)")).fill("4")
+  await on(page.getByLabel("Free after (days)")).fill("3")
+
+  // The preview shows the panels in order.
+  await on(page.getByRole("button", { name: "Preview" })).click()
+  const preview = page.getByRole("dialog")
+  await expect(preview.getByText(`Episode one ${stamp}`)).toBeVisible()
+  await expect(preview.getByRole("img")).toHaveCount(59)
+  await page.keyboard.press("Escape")
+
+  // Publish: the success screen, and the API agrees.
+  await on(page.getByRole("button", { name: "Publish now" })).click()
+  await expect(on(page.getByText("Episode 1 is live"))).toBeVisible({ timeout: 30_000 })
+  await expect(on(page.getByRole("link", { name: "View episode" }))).toHaveAttribute("href", new RegExp(`/read/${slug}/1$`))
+  const saved = await (await page.request.get(`/api/v1/creator/series/${id}/episodes/1`)).json()
+  expect(saved).toMatchObject({ status: "published", priceCoins: 4, freeAfterDays: 3, commentsEnabled: false, creatorNote: "Thank you for reading!" })
+  expect(saved.panels).toHaveLength(59)
+  expect(saved.thumbnailUrl).toBeTruthy()
+  expect((await anonymous.get(`/api/v1/series/${slug}/episodes/1`)).status()).toBe(402)
+
+  // Upload another: a blank form that suggests number 2; a past time is refused, a future one is kept in Phnom Penh time.
+  await on(page.getByRole("button", { name: "Upload another" })).click()
+  await expect(on(page.getByLabel("Number"))).toHaveAttribute("placeholder", "2")
+  await expect(on(page.getByLabel("Title", { exact: true }))).toHaveValue("")
+  await on(page.locator("input[type=file][multiple]")).setInputFiles([good[0], good[1]])
+  await expect(on(page.getByText("2 of 2 panels uploaded"))).toBeVisible({ timeout: 30_000 })
+  await on(page.getByLabel("Title", { exact: true })).fill(`Episode two ${stamp}`)
+  await on(page.getByRole("radio", { name: "Schedule for later" })).click()
+  await on(page.getByRole("button", { name: "Schedule" }).last()).click()
+  await expect(on(page.getByText("Choose a release time."))).toBeVisible()
+  const phnomPenh = (ms: number) => new Date(Date.now() + ms + 7 * 3600_000).toISOString().slice(0, 16)
+  await on(page.getByLabel("Release time")).fill(phnomPenh(-3600_000))
+  await on(page.getByRole("button", { name: "Schedule" }).last()).click()
+  await expect(on(page.getByText("Choose a time in the future."))).toBeVisible()
+  const later = phnomPenh(3 * 3600_000)
+  await on(page.getByLabel("Release time")).fill(later)
+  await on(page.getByRole("button", { name: "Schedule" }).last()).click()
+  await expect(on(page.getByText("Episode 2 is scheduled"))).toBeVisible({ timeout: 30_000 })
+  const scheduled = await (await page.request.get(`/api/v1/creator/series/${id}/episodes/2`)).json()
+  expect(scheduled.status).toBe("scheduled")
+  expect(scheduled.publishedAt).toBe(`${new Date(`${later}:00+07:00`).toISOString().slice(0, 19)}Z`)
+  expect((await anonymous.get(`/api/v1/series/${slug}/episodes/2`)).status()).toBe(404)
+
+  // Draft: saved without needing everything, reopened from the edit page.
+  await on(page.getByRole("button", { name: "Upload another" })).click()
+  await on(page.getByLabel("Title", { exact: true })).fill(`Episode three ${stamp}`)
+  await on(page.getByRole("button", { name: "Save draft" })).click()
+  await expect(on(page.getByText("Draft saved"))).toBeVisible({ timeout: 30_000 })
+  await on(page.getByRole("link", { name: "Edit episode" })).click()
+  await expect(page).toHaveURL(new RegExp(`/creator/series/${id}/episodes/3/edit$`))
+  await expect(on(page.getByLabel("Title", { exact: true }))).toHaveValue(`Episode three ${stamp}`)
+  await expect(on(page.getByLabel("Number"))).toBeDisabled()
+
+  // A live episode is edited in place and keeps its panels, thumbnail and Fast Pass.
+  await page.goto(`/creator/series/${id}/episodes/1/edit`)
+  await expect(on(page.getByLabel("Title", { exact: true }))).toHaveValue(`Episode one ${stamp}`)
+  await expect(on(page.getByRole("list", { name: "Panels in reading order" }).locator("li"))).toHaveCount(59)
+  await on(page.getByLabel("Title", { exact: true })).fill(`Episode one edited ${stamp}`)
+  await on(page.getByRole("button", { name: "Save changes" })).click()
+  await expect(on(page.getByText("Episode 1 is live"))).toBeVisible()
+  const edited = await (await page.request.get(`/api/v1/creator/series/${id}/episodes/1`)).json()
+  expect(edited).toMatchObject({ title: `Episode one edited ${stamp}`, priceCoins: 4 })
+  expect(edited.panels).toHaveLength(59)
+  expect(edited.thumbnailUrl).toBeTruthy()
+
+  await page.goto("/creator/series/00000000-0000-0000-0000-000000000000/episodes/new")
+  await expect(on(page.getByText("Series not found"))).toBeVisible()
+  expect((await page.request.post(`/api/v1/creator/series/${id}/unpublish`, { headers })).status()).toBe(200)
+  await anonymous.dispose()
+})
+
+test("12. Chapter page: block editor with bold, heading, scene break and word count; readers see the marks", async () => {
+  test.setTimeout(120_000)
+  const { id, slug, headers } = await makeSeries("novel", `E2E Novel ${stamp}`)
+  const on = (locator: Locator) => locator.and(page.locator(":visible"))
+
+  await page.goto(`/creator/series/${id}/episodes/new`)
+  await page.waitForLoadState("networkidle")
+  await expect(on(page.getByRole("heading", { name: "Add chapter" }))).toBeVisible()
+  await on(page.getByLabel("Title", { exact: true })).fill(`The glass sea ${stamp}`)
+
+  // An empty chapter cannot be published.
+  await on(page.getByRole("button", { name: "Publish now" })).click()
+  await expect(on(page.getByText("Write the chapter first."))).toBeVisible()
+
+  // Write: bold with the button and with Ctrl+B, italic, a heading, a scene break, a quote.
+  const text1 = on(page.getByLabel("Text of block 1"))
+  await text1.fill("The sea was glass.")
+  await text1.press("ControlOrMeta+A")
+  await on(page.getByRole("button", { name: "Bold, block 1" })).click()
+  await expect(text1).toHaveValue("**The sea was glass.**")
+  await on(page.getByRole("button", { name: "Bold, block 1" })).click()
+  await expect(text1).toHaveValue("The sea was glass.")
+  await text1.fill("She waited for the tide.")
+  await text1.press("ControlOrMeta+A")
+  await text1.press("ControlOrMeta+B")
+  await expect(text1).toHaveValue("**She waited for the tide.**")
+  await text1.fill("She **waited** for the *tide*.")
+  await on(page.getByRole("button", { name: "Heading", exact: true })).click()
+  await on(page.getByLabel("Text of block 2")).fill("Chapter one")
+  await on(page.getByRole("button", { name: "Scene break", exact: true })).click()
+  await on(page.getByRole("button", { name: "Paragraph", exact: true })).click()
+  await on(page.getByLabel("Text of block 4")).fill("Morning came.")
+  await on(page.getByLabel("Block 4 type")).selectOption("quote")
+  await on(page.getByRole("button", { name: "Move block 2 up" })).click()
+  await expect(on(page.getByLabel("Text of block 1"))).toHaveValue("Chapter one")
+  await expect(on(page.getByText("9 words"))).toBeVisible()
+
+  await on(page.getByRole("button", { name: "Preview" })).click()
+  const preview = page.getByRole("dialog")
+  await expect(preview.locator("strong")).toHaveText("waited")
+  await expect(preview.locator("em").first()).toHaveText("tide")
+  await expect(preview.getByRole("heading", { name: "Chapter one", level: 4 })).toBeVisible()
+  await page.keyboard.press("Escape")
+
+  await on(page.getByRole("button", { name: "Publish now" })).click()
+  await expect(on(page.getByText("Episode 1 is live"))).toBeVisible({ timeout: 30_000 })
+  await expect(on(page.getByRole("link", { name: "View episode" }))).toHaveAttribute("href", new RegExp(`/novel/${slug}/1$`))
+  const saved = await (await page.request.get(`/api/v1/creator/series/${id}/episodes/1`)).json()
+  expect(saved.wordCount).toBe(9)
+  expect(saved.blocks.map((b: { type: string }) => b.type)).toEqual(["heading", "paragraph", "scene-break", "quote"])
+
+  // The reader renders the heading and the marks as formatting, never as raw asterisks.
+  await page.goto(`/novel/${slug}/1`)
+  await expect(page.getByRole("heading", { name: "Chapter one", level: 2 })).toBeVisible()
+  await expect(page.locator("strong").first()).toHaveText("waited")
+  await expect(page.getByText("**waited**")).toHaveCount(0)
+
+  // A slug nobody made still answers "not found" (the API says so; the demo data is not consulted).
+  await page.goto("/series/there-is-no-such-series")
+  await expect(page.getByRole("heading", { name: "Page not found" })).toBeVisible()
+
+  expect((await page.request.post(`/api/v1/creator/series/${id}/unpublish`, { headers })).status()).toBe(200)
+})
+
+test("13. creator writes: draft series, publish, free and Fast Pass episodes, a scheduled episode goes live by itself", async () => {
   test.setTimeout(150_000)
   await page.request.get("/api/v1/auth/csrf")
   const xsrf = (await page.context().cookies()).find((c) => c.name === "XSRF-TOKEN")?.value ?? ""
@@ -518,7 +773,7 @@ test("11. creator writes: draft series, publish, free and Fast Pass episodes, a 
   await anonymous.dispose()
 })
 
-test("12. delete the account: signed out everywhere, wrong password refused first", async () => {
+test("14. delete the account: signed out everywhere, wrong password refused first", async () => {
   await page.goto("/settings")
   await page.getByRole("button", { name: "Delete account" }).first().click()
   const dialog = page.getByRole("dialog")

@@ -128,6 +128,30 @@ public class MediaService {
         return new ReadyImage(id, view.url(), row.width(), row.height(), row.declaredSize());
     }
 
+    /**
+     * Like {@link #readyImage} for many uploads with one database query; the result keeps the order
+     * of {@code ids} (an id may appear more than once).
+     */
+    public List<ReadyImage> readyImages(UUID owner, List<UUID> ids, UploadKind kind, String field) {
+        Map<UUID, Row> rows = new java.util.HashMap<>();
+        uploads.findAll(new java.util.HashSet<>(ids)).forEach(r -> rows.put(r.id(), r));
+        List<ReadyImage> out = new java.util.ArrayList<>(ids.size());
+        for (UUID id : ids) {
+            Row row = rows.get(id);
+            if (row == null || !row.ownerId().equals(owner) || row.kind() != kind) {
+                throw ApiException.invalidField(field, "upload_invalid", "Upload the image again.");
+            }
+            if (row.status() != UploadStatus.READY) {
+                throw ApiException.invalidField(
+                        field, "upload_not_ready", "The image has not been checked yet.");
+            }
+            out.add(
+                    new ReadyImage(
+                            id, toView(row).url(), row.width(), row.height(), row.declaredSize()));
+        }
+        return out;
+    }
+
     private Row owned(UUID owner, UUID id) {
         return uploads.find(id)
                 .filter(r -> r.ownerId().equals(owner))

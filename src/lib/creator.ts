@@ -41,3 +41,25 @@ export function useSeriesEdit(id: string) {
     retry: false,
   })
 }
+
+/** The series' episodes of every status (the next free number comes from it). */
+export function useMyEpisodes(seriesId: string, enabled = true) {
+  const email = useAccountEmail()
+  return useQuery({
+    queryKey: ["creator", "episodes", email ?? "", seriesId] as const,
+    queryFn: () => real.fetchMyEpisodes(seriesId),
+    enabled: !DEMO_MODE && !!email && enabled,
+    retry: false,
+  })
+}
+
+/** One episode as the edit form needs it. */
+export function useEpisodeEdit(seriesId: string, n: number) {
+  const email = useAccountEmail()
+  return useQuery({
+    queryKey: ["creator", "episode-edit", email ?? "", seriesId, n] as const,
+    queryFn: () => real.fetchEpisodeEdit(seriesId, n),
+    enabled: !DEMO_MODE && !!email,
+    retry: false,
+  })
+}

@@ -69,6 +69,34 @@ public class MediaUploads {
                 .optional();
     }
 
+    /** Several uploads in one query (the ones that exist; the order is not kept). */
+    public List<Row> findAll(java.util.Collection<UUID> ids) {
+        if (ids.isEmpty()) {
+            return List.of();
+        }
+        return jdbc.sql("select * from media_uploads where id = any(:ids)")
+                .param("ids", ids.toArray(UUID[]::new))
+                .query(MediaUploads::row)
+                .list();
+    }
+
+    private static Row row(java.sql.ResultSet rs, int n) throws java.sql.SQLException {
+        Integer[] widths = (Integer[]) rs.getArray("variant_widths").getArray();
+        return new Row(
+                rs.getObject("id", UUID.class),
+                rs.getObject("owner_id", UUID.class),
+                UploadKind.valueOf(rs.getString("kind")),
+                UploadStatus.valueOf(rs.getString("status")),
+                rs.getString("content_type"),
+                rs.getLong("declared_size"),
+                rs.getString("original_key"),
+                (Integer) rs.getObject("width"),
+                (Integer) rs.getObject("height"),
+                List.of(widths),
+                rs.getString("reject_code"),
+                rs.getString("reject_message"));
+    }
+
     public void markReady(UUID id, int width, int height, List<Integer> variantWidths) {
         jdbc.sql(
                         "update media_uploads set status = 'READY', width = :w, height = :h,"

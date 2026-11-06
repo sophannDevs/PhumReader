@@ -48,3 +48,15 @@ export const createSeries = (input: SeriesInput) => api.post<SeriesEdit>("/creat
 export const updateSeries = (id: string, input: SeriesInput) => api.put<SeriesEdit>(`/creator/series/${id}`, input)
 export const publishSeries = (id: string) => api.post<SeriesEdit>(`/creator/series/${id}/publish`)
 export const unpublishSeries = (id: string) => api.post<SeriesEdit>(`/creator/series/${id}/unpublish`)
+
+// ---------------------------------------------------------------- episodes
+
+export type EpisodeEdit = Schemas["EpisodeEdit"]
+export type EpisodeInput = Schemas["EpisodeInput"]
+export type MyEpisode = Schemas["CreatorEpisode"]
+
+export const fetchMyEpisodes = (seriesId: string) => api.get<MyEpisode[]>(`/creator/series/${seriesId}/episodes`)
+export const fetchEpisodeEdit = (seriesId: string, n: number) => api.get<EpisodeEdit>(`/creator/series/${seriesId}/episodes/${n}`)
+export const createEpisode = (seriesId: string, input: EpisodeInput) => api.post<EpisodeEdit>(`/creator/series/${seriesId}/episodes`, input)
+export const updateEpisode = (seriesId: string, n: number, input: EpisodeInput) =>
+  api.put<EpisodeEdit>(`/creator/series/${seriesId}/episodes/${n}`, input)

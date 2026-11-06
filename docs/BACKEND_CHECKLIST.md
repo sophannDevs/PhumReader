@@ -512,7 +512,7 @@ wiring them are fixed in P5-07.
   - Notes: the browser PUTs to MinIO directly (works: MinIO allows any origin); Cloudflare R2 needs a CORS rule on the
     bucket for the site's origin (Phase 7). The pen name from "Become a creator" is not editable yet.
 
-- [ ] **P4-15 Upload episode** `/creator/series/[id]/episodes/new` (A1)
+- [x] **P4-15 Upload episode** `/creator/series/[id]/episodes/new` (A1)
   - Build: breadcrumb, auto number, title; comic: drag-and-drop, reorder by drag and up / down, delete, file rules,
     live preview strip; novel: editor with bold, italic, heading, scene break, word count; square thumbnail;
     creator's note; comments on / off; Free or Fast Pass with price and free-after days; publish now / schedule
@@ -520,6 +520,26 @@ wiring them are fixed in P5-07.
   - Depends on: P2-03 (T09–T10)
   - Done when: an upload of 60 panels on a 10 Mbps connection finishes with per-file progress; a failed file can
     be retried alone.
+  - Done (2026-11-06): `/creator/series/[id]/episodes/new` and `/creator/series/[id]/episodes/[n]/edit`
+    (`episode-form.tsx`, `panel-uploader.tsx`, `chapter-editor.tsx`, `use-panel-uploads.ts`). Comics: drop or choose
+    files, three uploads at a time each with its own progress, reorder by dragging or with Up / Down, remove, Retry on
+    a failed file only (a wrong file, such as 799 px, can only be removed), 100 images / 200 MB, a preview strip and a
+    Preview dialog. Novels: block editor (paragraph, heading, quote, scene break, bold and italic with buttons or
+    Ctrl+B / Ctrl+I, reorder, live word count). Both: auto number, title, square thumbnail, creator's note, comments
+    on / off, Free or Fast Pass (3–10 coins, free after 1–90 days), publish now / schedule in Phnom Penh time / save
+    draft, validation next to the fields, a success screen (View episode, Upload another, Back to My series), and
+    editing drafts, scheduled and live episodes. English and Khmer.
+    Tests: real-mode Playwright test 11 (60 panels with the network limited to 10 Mbps: all uploaded in about 20 s with
+    per-file progress; one file cut off and retried alone; reorder by button and drag; Fast Pass rules; preview;
+    publish; schedule with the Phnom Penh time checked on the API; draft; edit of a live episode; no sideways scroll at
+    320 / 390 / 768 / 1440 px), test 12 (the chapter editor, and the reader shows heading and bold / italic).
+    Assumptions 108 to 110 in docs/CHECKLIST.md.
+  - Changed on the way: (1) chapter text gets a `heading` block and `**bold**` / `*italic*` marks (backend accepts
+    and returns them; the novel reader and the preview render them without HTML). (2) Editing an episode without a new
+    thumbnail keeps the saved one. (3) Saving an episode with many panels was slow (one database call per panel);
+    panels are now looked up and written in two statements. (4) The public series and reader pages no longer
+    404 on the server for slugs missing from the demo data when the real API is on, so a creator's own series and
+    episodes can be opened (View episode works).
 
 - [ ] **P4-16 Admin** `/admin` (A8, A9)
   - Build: users, content, reports queue, orders and refunds, with existing components.

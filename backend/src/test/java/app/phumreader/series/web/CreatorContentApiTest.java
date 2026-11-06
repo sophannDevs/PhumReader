@@ -308,6 +308,36 @@ class CreatorContentApiTest {
     }
 
     @Test
+    void editingKeepsTheThumbnailUnlessANewOneIsSent() throws Exception {
+        String id = livingSeries("Thumbs", "comic");
+        String panel = upload("PANEL", 800, 800);
+        String thumb = upload("THUMBNAIL", 400, 400);
+        String body =
+                "{\"title\":\"One\",\"publish\":{\"mode\":\"draft\"},\"imageUploadIds\":[\""
+                        + panel
+                        + "\"],\"thumbnailUploadId\":\"%s\"}";
+        mvc.perform(
+                        post(SERIES + "/" + id + "/episodes")
+                                .with(me)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(body.formatted(thumb)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.thumbnailUrl").exists());
+        mvc.perform(
+                        put(SERIES + "/" + id + "/episodes/1")
+                                .with(me)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(
+                                        "{\"title\":\"One again\",\"publish\":{\"mode\":\"draft\"},"
+                                                + "\"imageUploadIds\":[\""
+                                                + panel
+                                                + "\"]}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.title").value("One again"))
+                .andExpect(jsonPath("$.thumbnailUrl").exists());
+    }
+
+    @Test
     void anEpisodeIsLimitedTo100ImagesAnd200Mb() throws Exception {
         String id = livingSeries("Limits", "comic");
         String one = upload("PANEL", 800, 800);
@@ -428,7 +458,7 @@ class CreatorContentApiTest {
     void aChapterIsStoredAsBlocksWithAWordCount() throws Exception {
         String id = livingSeries("Words", "novel");
         String blocks =
-                "[{\"type\":\"paragraph\",\"text\":\"The sea was glass.\"},{\"type\":\"scene-break\"},"
+                "[{\"type\":\"heading\",\"text\":\"Chapter **One**\"},{\"type\":\"paragraph\",\"text\":\"The sea was *glass*.\"},{\"type\":\"scene-break\"},"
                         + "{\"type\":\"quote\",\"text\":\"  Hold on.  \"},{\"type\":\"paragraph\",\"text\":\"   \"}]";
         mvc.perform(
                         post(SERIES + "/" + id + "/episodes")
@@ -436,13 +466,18 @@ class CreatorContentApiTest {
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(chapter("Chapter one", "{\"mode\":\"now\"}", blocks)))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.wordCount").value(6))
-                .andExpect(jsonPath("$.blocks.length()").value(3))
-                .andExpect(jsonPath("$.blocks[1].type").value("scene-break"))
-                .andExpect(jsonPath("$.blocks[2].text").value("Hold on."));
+                .andExpect(jsonPath("$.wordCount").value(8))
+                .andExpect(jsonPath("$.blocks.length()").value(4))
+                .andExpect(jsonPath("$.blocks[0].type").value("heading"))
+                .andExpect(jsonPath("$.blocks[2].type").value("scene-break"))
+                .andExpect(jsonPath("$.blocks[3].text").value("Hold on."));
+        // Readers get the heading and the marks as written.
         mvc.perform(get("/api/v1/series/words/episodes/1"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.blocks.length()").value(3));
+                .andExpect(jsonPath("$.blocks.length()").value(4))
+                .andExpect(jsonPath("$.blocks[0].type").value("heading"))
+                .andExpect(jsonPath("$.blocks[0].text").value("Chapter **One**"))
+                .andExpect(jsonPath("$.blocks[1].text").value("The sea was *glass*."));
 
         // Publishing an empty chapter, panels on a novel and text on a comic are refused.
         mvc.perform(

@@ -3437,7 +3437,7 @@
           "type" : {
             "type" : "string",
             "minLength" : 1,
-            "pattern" : "paragraph|quote|scene-break"
+            "pattern" : "paragraph|heading|quote|scene-break"
           }
         },
         "required" : [ "type" ]
@@ -4599,7 +4599,7 @@
           },
           "type" : {
             "type" : "string",
-            "enum" : [ "paragraph", "quote", "scene-break" ]
+            "enum" : [ "paragraph", "heading", "quote", "scene-break" ]
           }
         },
         "required" : [ "type" ]

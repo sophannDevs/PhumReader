@@ -261,7 +261,7 @@ public class CreatorContentService {
         UUID id = UUID.randomUUID();
         Content content = content(user, series, in);
         Stored stored = state(in, null);
-        writes.insertEpisode(id, seriesId, number, values(user, in, stored));
+        writes.insertEpisode(id, seriesId, number, values(user, in, stored, null));
         saveContent(id, series.type(), content);
         afterWrite(seriesId, stored.status());
         return edit(requireEpisode(seriesId, number));
@@ -276,7 +276,7 @@ public class CreatorContentService {
         }
         Content content = content(user, series, in);
         Stored stored = state(in, current);
-        writes.updateEpisode(current.id(), values(user, in, stored));
+        writes.updateEpisode(current.id(), values(user, in, stored, current.thumbnailUrl()));
         saveContent(current.id(), series.type(), content);
         afterWrite(seriesId, stored.status());
         return edit(requireEpisode(seriesId, number));
@@ -319,15 +319,16 @@ public class CreatorContentService {
                 throw ApiException.invalidField(
                         "imageUploadIds", "required", "Add at least one panel.");
             }
+            List<ReadyImage> images =
+                    media.readyImages(user.id(), ids, UploadKind.PANEL, "imageUploadIds");
             List<PanelRow> panels = new ArrayList<>();
             long bytes = 0;
             int n = 1;
-            for (UUID id : ids) {
-                ReadyImage img = image(user, id, UploadKind.PANEL, "imageUploadIds");
+            for (ReadyImage img : images) {
                 bytes += img.bytes();
                 panels.add(
                         new PanelRow(
-                                id,
+                                img.id(),
                                 img.url(),
                                 img.width(),
                                 img.height(),
@@ -432,10 +433,12 @@ public class CreatorContentService {
         return days == null ? null : releasedAt.plus(days, ChronoUnit.DAYS);
     }
 
-    private EpisodeValues values(CurrentUser user, EpisodeInput in, Stored s) {
+    private EpisodeValues values(
+            CurrentUser user, EpisodeInput in, Stored s, @Nullable String keepThumbnail) {
+        // Without a new upload the saved thumbnail stays.
         String thumb =
                 in.thumbnailUploadId() == null
-                        ? null
+                        ? keepThumbnail
                         : image(
                                         user,
                                         in.thumbnailUploadId(),
