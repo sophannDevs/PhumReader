@@ -5,6 +5,7 @@ import { useSyncExternalStore } from "react"
 import type { Genre } from "@/data"
 import { usePathname } from "@/i18n/navigation"
 import * as real from "@/lib/api/catalog"
+import * as realAccount from "@/lib/api/account"
 import * as realCoins from "@/lib/api/coins"
 import { DEMO_MODE } from "@/lib/api/config"
 import * as demo from "@/lib/demo-api"
@@ -102,7 +103,17 @@ export const useLibrary = () => {
   return useQuery({ queryKey: ["library", flag], queryFn: demo.fetchLibrary, enabled: DEMO_MODE })
 }
 
+/** The creator dashboard: the demo's stand-in creator, or the signed-in account's own series. */
 export const useCreator = () => {
   const flag = useDemoFlag()
-  return useQuery({ queryKey: ["creator", flag], queryFn: demo.fetchCreator })
+  const user = useUser()
+  const hydrated = useHydrated()
+  const email = hydrated ? user?.email : undefined
+  const demoQuery = useQuery({ queryKey: ["creator", flag], queryFn: demo.fetchCreator, enabled: DEMO_MODE })
+  const realQuery = useQuery({
+    queryKey: ["creator", "real", email ?? ""],
+    queryFn: realAccount.fetchCreator,
+    enabled: !DEMO_MODE && !!email,
+  })
+  return DEMO_MODE ? demoQuery : realQuery
 }

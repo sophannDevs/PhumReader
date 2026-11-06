@@ -9,6 +9,7 @@
     "lint": "eslint",
     "typecheck": "next typegen && tsc --noEmit",
     "test:e2e": "playwright test",
+    "test:e2e:real": "playwright test -c playwright.real.config.ts",
     "api:gen": "openapi-typescript backend/openapi/openapi.json -o src/lib/api/schema.d.ts",
     "api:check": "openapi-typescript backend/openapi/openapi.json -o src/lib/api/schema.d.ts --check"
   },

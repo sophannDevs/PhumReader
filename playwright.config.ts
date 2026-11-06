@@ -4,6 +4,8 @@ import { defineConfig, devices } from "@playwright/test"
 // expectations get 15 s and no test sleeps longer than that.
 export default defineConfig({
   testDir: "./e2e",
+  // The real-API flows have their own config (npm run test:e2e:real).
+  testIgnore: "**/real.spec.ts",
   timeout: 60_000,
   expect: { timeout: 15_000 },
   fullyParallel: true,

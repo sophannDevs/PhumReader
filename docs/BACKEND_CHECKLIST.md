@@ -37,7 +37,7 @@ Sources of truth: the plan doc, `CLAUDE.md`, `docs/BACKEND.md` (decisions and lo
 - Money: balances change only through the ledger, in one transaction with a wallet row lock; every payment and
   unlock call is idempotent. Never build card number fields: cards use the PayWay hosted page.
 
-Progress: 3 / 51 tasks (P1-05, P1-07, P1-08) · Stage 1: step 4 of 5 done (all 5 parts), step 5: parts 1-4 of 5 done · milestones M1, M3, M4, M5, M6, M7
+Progress: 3 / 51 tasks (P1-05, P1-07, P1-08) · Stage 1: step 5 of 5 done (all 5 parts) · milestones M1, M3, M4, M5, M6, M7
 
 ---
 
@@ -127,7 +127,7 @@ deployment and no Docker. A step is done when its checks pass; tick the plan tas
       (`/me` 401; logging in kept it; deleted again and left pending). Not done yet: avatar upload (needs P3-07),
       "become a creator" (A11) and the creator writing pages (P3-14), the job that erases accounts after 30 days
       (worker), content settings (no column or page control yet).
-- [ ] **Step 5: Connect the frontend** (P5-01, P5-06, parts of P5-04, P5-05, P5-07; `/reset` from P4-09)
+- [x] **Step 5: Connect the frontend** (P5-01, P5-06, parts of P5-04, P5-05, P5-07; `/reset` from P4-09)
   - Fetch wrapper (cookies, CSRF, silent refresh, `ApiError`); every `demo-api.ts` call has a real-API path; server
     state for logged-in users; 401 / 402 / 429 handling; payment status polling; `/reset` page.
     `NEXT_PUBLIC_DEMO=1` still runs the old demo.
@@ -185,7 +185,18 @@ deployment and no Docker. A step is done when its checks pass; tick the plan tas
       Glass Compass episode 68 charged exactly 5 (263 to 258), opened the reader and listed it in `/series/{slug}/me`
       and the Library's Unlocked tab. Demo build: the Playwright suite passes (23 of 24; the "404 page" test failed on
       a cold server, assumption 44). Assumption 104 in docs/CHECKLIST.md. The test left the demo account with 258 coins.
-    - [ ] Part 5, settings and creator dashboard; Playwright key flows against the local backend and in demo mode.
+    - [x] Part 5, settings and creator dashboard; Playwright key flows against the local backend and in demo mode.
+      Done 2026-11-06: `src/lib/api/account.ts`, `src/lib/settings-sync.tsx` (load and save appearance, reading
+      defaults, notifications), `src/components/pr/account-security.tsx` (rename, change password and email, devices,
+      delete account), the creator dashboard on `/creator/dashboard`. New `e2e/real.spec.ts` with
+      `playwright.real.config.ts` and `npm run test:e2e:real`: 8 flows on a brand-new account against the local API
+      (sign up with the code; subscribe, follow, like, Library remove and Undo; comment post, like, delete; buy the 10
+      pack with the simulator, reload resumes the order, unlock episode 66; name, dark theme and text size saved and
+      seen from a second browser; wrong then right current password, new password logs in, device list; creator
+      dashboard empty, then with a fixture answer because no creator account can log in; delete account) all pass in
+      50 s. Demo suite (`npm run test:e2e`, real spec excluded): 23 of 24, the "404 page" cold-server test failed
+      once (assumption 44). Each real run leaves one account waiting for deletion. Assumption 105 in docs/CHECKLIST.md.
+
 
 Not in Stage 1: deployment (P1-10, Phase 7), CI (P1-09), uploads / R2 / image Worker (P3-07, P3-08), creator
 writing pages and admin (P3-14 writes, P3-18, P4-13 – P4-16), sending notifications and real email (P3-16,

@@ -10,6 +10,7 @@ import { SkeletonRow } from "@/components/pr/skeletons"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { Link, usePathname } from "@/i18n/navigation"
+import { DEMO_MODE } from "@/lib/api/config"
 import { useCreator } from "@/lib/queries"
 import { useAppStore, useUser } from "@/lib/store"
 
@@ -49,7 +50,7 @@ export function CreatorPage() {
     { label: t("statSeries"), value: query.data ? String(query.data.series.length) : "…" },
     { label: t("statReaders"), value: query.data?.totals.views ?? "…" },
     { label: t("statLikes"), value: query.data?.totals.likes ?? "…" },
-    { label: t("statEarnings"), value: t("amount") },
+    { label: t("statEarnings"), value: query.data?.earnedCoins === undefined ? t("amount") : t("coinsAmount", { count: query.data.earnedCoins }) },
   ]
   const guidelines = [1, 2, 3] as const
 
@@ -84,7 +85,7 @@ export function CreatorPage() {
           <h2 id="your-series-title" className="type-h2">
             {t("yourSeries")}
           </h2>
-          {query.data ? <p className="type-body text-muted-foreground">{t("yourSeriesDesc", { name: query.data.name })}</p> : null}
+          {query.data?.name ? <p className="type-body text-muted-foreground">{t(DEMO_MODE ? "yourSeriesDesc" : "yourSeriesOwn", { name: query.data.name })}</p> : null}
         </div>
         {query.isPending ? (
           <div className="flex flex-col gap-4 rounded-card border p-4" aria-hidden>

@@ -94,5 +94,6 @@ npm run dev          start the dev server (http://localhost:3000)
 npm run lint         ESLint
 npm run typecheck    tsc --noEmit
 npm run build        production build
-npm run test:e2e     Playwright tests for the key flows (added later in the checklist)
+npm run test:e2e     Playwright key flows in demo mode (dev server, NEXT_PUBLIC_DEMO=1)
+npm run test:e2e:real  Playwright key flows against the local backend on :8080 (builds the app in real mode)
 npx shadcn@latest add <component>   add a shadcn/ui component

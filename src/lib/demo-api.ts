@@ -146,6 +146,10 @@ export type CreatorData = {
   name: string
   series: Series[]
   totals: { views: string; likes: string }
+  /** Real API only: the account has the creator role. */
+  isCreator?: boolean
+  /** Real API only: coins earned from unlocks. */
+  earnedCoins?: number
 }
 
 /** The demo has no creator accounts: the dashboard shows Chan Sreyleak's series. */

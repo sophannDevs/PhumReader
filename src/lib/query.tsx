@@ -5,6 +5,7 @@ import { ThemeProvider } from "@/lib/theme"
 import { useState } from "react"
 import { Toaster } from "@/components/ui/sonner"
 import { SessionSync } from "@/lib/session-sync"
+import { SettingsSync } from "@/lib/settings-sync"
 import { StoreHydrator } from "@/lib/store-hydrator"
 
 /**
@@ -23,6 +24,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
       <QueryClientProvider client={client}>
         <StoreHydrator />
         <SessionSync />
+        <SettingsSync />
         {children}
         <Toaster />
       </QueryClientProvider>
