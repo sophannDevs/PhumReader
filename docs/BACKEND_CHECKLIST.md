@@ -7,11 +7,12 @@ Sources of truth: `CLAUDE.md`, `docs/BACKEND.md` (design and decisions), `docs/C
 ## Stack (decided in B01, see docs/BACKEND.md)
 
 - Java 21, Spring Boot (latest stable, pinned in B02), Gradle Kotlin DSL
-- Spring Web, Security, Validation, Data JPA, Session (Redis), Mail, Actuator
-- PostgreSQL 16 + Flyway, Redis 7, Cloudflare R2 (AWS SDK v2)
+- Spring Web, Security, Validation, Data JPA, Session (JDBC), Mail, Actuator
+- Supabase PostgreSQL (session pooler) + Flyway, no Redis, Cloudflare R2 (AWS SDK v2)
 - springdoc-openapi → `backend/openapi/openapi.json` → `openapi-typescript` in the frontend
-- JUnit 5, MockMvc, Testcontainers, ArchUnit, Spotless; Playwright for end-to-end
+- JUnit 5, MockMvc, Zonky embedded PostgreSQL, ArchUnit, Spotless; Playwright for end-to-end
 - Payments: KHQR (Bakong) + ABA PayWay. Readers only at launch (Part 6 postponed).
+- No Docker on development machines (company policy). Local work needs Java 21 and the Supabase dev project; `./gradlew check` needs neither Docker nor network.
 
 ## How to work through this list
 
@@ -19,7 +20,7 @@ Sources of truth: `CLAUDE.md`, `docs/BACKEND.md` (design and decisions), `docs/C
 - Backend task done when: `cd backend && ./gradlew check` passes (tests + Spotless + ArchUnit). If the task also changes the frontend: `npm run lint && npm run typecheck && npm run build` as well. Then tick the box and commit `Bxx: <short description>`.
 - After any controller or DTO change: regenerate `backend/openapi/openapi.json` and run `npm run api:gen` (from B07 on), and commit both.
 - Never break demo mode: with `NEXT_PUBLIC_DEMO=1` the frontend runs on `demo-api.ts` and the local store until B52.
-- Never put secrets in the repo. `.env.example` and `application-dev.yml` hold dev-only values.
+- Never put secrets in the repo. `.env.example` and `application-dev.yml` hold dev-only values. The Supabase password lives only in `backend/.env` (git-ignored) and in each platform's secret store.
 - Money: coin balances change only through the ledger (B26), in one transaction with a wallet row lock, and every payment or unlock call is idempotent.
 - Never build card number fields. Card payments use the provider-hosted page.
 - Each API task adds tests: success path, validation errors, permission errors, and (where relevant) a double submit.
@@ -32,23 +33,23 @@ Progress: 1 / 52
 ## Part 1: Foundation
 
 - [x] **B01 Architecture and stack decision** (≈30 min)
-  - Build: decisions recorded in `docs/BACKEND.md`; `CLAUDE.md` Scope rules updated for Phase 2. Revised to a separate Spring Boot service (this file and BACKEND.md rewritten).
+  - Build: decisions recorded in `docs/BACKEND.md`; `CLAUDE.md` Scope rules updated for Phase 2. Revised to a separate Spring Boot service (this file and BACKEND.md rewritten). Revised again on 2026-11-06: no Docker on development machines, Supabase PostgreSQL, no Redis (Spring Session JDBC, Bucket4j in memory, embedded PostgreSQL for tests).
   - Done when: `docs/BACKEND.md` exists and the user has approved it.
 
 - [ ] **B02 Spring Boot project scaffold** (≈45 min)
-  - Build: create `backend/` with Spring Initializr (Java 21, Gradle Kotlin DSL, packaging jar): Web, Validation, Security, Data JPA, PostgreSQL driver, Flyway, Data Redis, Session, Mail, Actuator, Lombok-free (use records). Package `app.phumreader`, feature folders from BACKEND.md, `PhumReaderApplication`, profiles `dev` / `prod` / `test`, Spotless, ArchUnit dependency, a `GET /api/v1/health` endpoint, `backend/README.md`, `backend/Dockerfile` (multi-stage, non-root). Add `backend/` entries to `.gitignore` (build, .gradle).
-  - Done when: `./gradlew bootRun` starts on :8080 with the dev profile and `./gradlew check` passes with one smoke test.
+  - Build: create `backend/` with Spring Initializr (Java 21, Gradle Kotlin DSL, packaging jar): Web, Validation, Security, Data JPA, PostgreSQL driver, Flyway (+ `flyway-database-postgresql`), Session JDBC, Mail, Actuator, Lombok-free (use records). Package `app.phumreader`, feature folders from BACKEND.md, `PhumReaderApplication`, profiles `dev` / `prod` / `test`, Spotless, ArchUnit and Zonky embedded PostgreSQL (test) dependencies, a `GET /api/v1/health` endpoint, `backend/README.md`, `backend/Dockerfile` (multi-stage, non-root; built in CI only, never locally). Add `backend/` entries to `.gitignore` (build, .gradle).
+  - Done when: `./gradlew check` passes with one smoke test that boots the app on embedded PostgreSQL (no Docker, no network). `bootRun` against Supabase is checked in B03.
 
-- [ ] **B03 Local environment** (≈45 min)
-  - Build: `docker-compose.yml` at the repo root with PostgreSQL 16, Redis 7 and Mailpit (dev email inbox), `.env.example`, `application-dev.yml` reading env with safe defaults, npm scripts `backend:up`, `backend:down`, `backend:dev` (wraps `./gradlew bootRun`). Add the `/api` rewrite to `next.config` (`BACKEND_URL`, default `http://localhost:8080`) so the browser stays same-origin.
-  - Done when: `docker compose up -d` + `bootRun` run, `http://localhost:3000/api/v1/health` returns the backend response through the Next.js rewrite.
+- [ ] **B03 Supabase and local environment** (≈45 min)
+  - Build: the user creates the Supabase project `phumreader-dev` (Singapore), turns the Data API off and keeps the database password out of the repo. First check that the office network reaches the session pooler with `psql`. `backend/.env.example` (committed, un-ignored with `!.env.example`) and `backend/.env` (git-ignored) with `DB_URL` (session pooler JDBC URL, `sslmode=require`), `DB_USER` (`postgres.<project-ref>`) and `DB_PASSWORD`; `application-dev.yml` reads them (HikariCP pool 5, Flyway on the same URL); a `local` profile for the local PostgreSQL 17 when offline; dev email logged to the console. npm script `backend:dev` (wraps `./gradlew bootRun`). Add the `/api` rewrite to `next.config` (`BACKEND_URL`, default `http://localhost:8080`) so the browser stays same-origin.
+  - Done when: `bootRun` connects to Supabase, Flyway runs its baseline, and `http://localhost:3000/api/v1/health` returns the backend response with the database UP through the Next.js rewrite.
 
 - [ ] **B04 Database schema and Flyway migrations** (≈60 min)
-  - Build: `V1__init.sql` with tables: users, auth_identities, verification_codes, password_reset_tokens, genres, series, series_translations, series_genres, episodes, chapters, comments, likes, bookmarks, subscriptions, reading_progress, unlocks, coin_wallets, coin_ledger, coin_packs, orders, fast_pass, user_settings, idempotency_keys, shedlock. UUID keys, foreign keys, indexes, check constraints (e.g. ledger amount ≠ 0), `created_at` / `updated_at`. JPA entities and repositories for the catalog tables only (others come with their tasks). `ddl-auto=validate`.
-  - Done when: migrations run on an empty database via Testcontainers, JPA validation passes, and the schema is summarised in `docs/BACKEND.md`.
+  - Build: `V1__init.sql` with tables: users, auth_identities, verification_codes, password_reset_tokens, genres, series, series_translations, series_genres, episodes, chapters, comments, likes, bookmarks, subscriptions, reading_progress, unlocks, coin_wallets, coin_ledger, coin_packs, orders, fast_pass, user_settings, idempotency_keys, shedlock, spring_session, spring_session_attributes. UUID keys, foreign keys, indexes, check constraints (e.g. ledger amount ≠ 0), `created_at` / `updated_at`, row level security on every table with no policies (nothing leaks if the Supabase Data API is ever turned on). JPA entities and repositories for the catalog tables only (others come with their tasks). `ddl-auto=validate`.
+  - Done when: migrations run on an empty embedded PostgreSQL in tests and on the Supabase dev project, JPA validation passes, and the schema is summarised in `docs/BACKEND.md`.
 
 - [ ] **B05 Seed from demo data** (≈45 min)
-  - Build: copy `src/data/demo-data.json` to `backend/seed/demo-data.json`; a `seed` profile `ApplicationRunner` loads genres, series, episodes, chapters, comments, coin packs and the demo reader account (`reader@toonwave.app`, password hashed). Idempotent: running twice changes nothing.
+  - Build: copy `src/data/demo-data.json` to `backend/seed/demo-data.json`; a `seed` profile `ApplicationRunner` loads genres, series, episodes, chapters, comments, coin packs and the demo reader account (`reader@toonwave.app`, password hashed). Idempotent: running twice changes nothing. Runs against the Supabase dev project.
   - Done when: after seeding the counts match the demo data (41 comics, 7 novels, 8 genres) and an integration test asserts them.
 
 - [ ] **B06 Shared API layer** (≈45 min)
@@ -60,7 +61,7 @@ Progress: 1 / 52
   - Done when: the health endpoint is called from the frontend through the typed client and `npm run typecheck` passes.
 
 - [ ] **B08 Tests and CI** (≈45 min)
-  - Build: base test classes with Testcontainers (PostgreSQL, Redis) and `@ServiceConnection`, test data builders, ArchUnit rules (controllers do not use repositories, no entity in a controller signature, features do not depend on each other's internals), GitHub Actions workflows: backend (`./gradlew check`) and frontend (lint, typecheck, build), plus the OpenAPI drift check.
+  - Build: base test classes on Zonky embedded PostgreSQL (Flyway applied, one database per test class), test data builders, ArchUnit rules (controllers do not use repositories, no entity in a controller signature, features do not depend on each other's internals), GitHub Actions workflows (no Docker or database service needed): backend (`./gradlew check`) and frontend (lint, typecheck, build), plus the OpenAPI drift check.
   - Done when: both workflows are green on a pull request.
 
 ---
@@ -68,12 +69,12 @@ Progress: 1 / 52
 ## Part 2: Auth and accounts
 
 - [ ] **B09 Sign up and email verification** (≈60 min)
-  - Build: `POST /auth/signup`, `POST /auth/verify` (6-digit code, 10 min expiry, 5 attempts, stored hashed), Argon2id via Spring Security `Argon2PasswordEncoder`, the same password rules as the frontend (3 of 4), email-taken error `email_taken`. `MailSender` interface: console/Mailpit in dev, SMTP in prod (choose the provider here).
+  - Build: `POST /auth/signup`, `POST /auth/verify` (6-digit code, 10 min expiry, 5 attempts, stored hashed), Argon2id via Spring Security `Argon2PasswordEncoder`, the same password rules as the frontend (3 of 4), email-taken error `email_taken`. `MailSender` interface: console log in dev (Mailpit Windows binary optional), SMTP in prod (choose the provider here).
   - Done when: tests cover a valid sign up, a wrong code, an expired code, too many attempts and a duplicate email.
 
 - [ ] **B10 Log in, log out and sessions** (≈60 min)
-  - Build: Spring Security filter chain, `POST /auth/login`, `POST /auth/logout`, `GET /auth/me`, Spring Session in Redis (httpOnly, Secure, SameSite=Lax cookie), cookie-to-header CSRF, wrong credentials always `invalid_credentials`, login rate limit (Bucket4j).
-  - Done when: a session survives a backend restart (Redis), logout removes it, and a POST without the CSRF header gets 403.
+  - Build: Spring Security filter chain, `POST /auth/login`, `POST /auth/logout`, `GET /auth/me`, Spring Session JDBC in PostgreSQL (httpOnly, Secure, SameSite=Lax cookie), cookie-to-header CSRF, wrong credentials always `invalid_credentials`, login rate limit (Bucket4j, in memory).
+  - Done when: a session survives a backend restart (stored in PostgreSQL), logout removes it, and a POST without the CSRF header gets 403.
 
 - [ ] **B11 Forgot and reset password** (≈45 min)
   - Build: `POST /auth/forgot`, `POST /auth/reset` with a single-use hashed token (30 min expiry), same response whether or not the email exists, all sessions of the user revoked after a reset.
@@ -100,7 +101,7 @@ Progress: 1 / 52
   - Done when: every `demo-api` read has an endpoint and contract tests compare the shapes with the demo data.
 
 - [ ] **B16 Search** (≈45 min)
-  - Build: `GET /search?q=` with PostgreSQL full-text search plus `pg_trgm` (Flyway migration), matching titles, creators and Khmer text.
+  - Build: `GET /search?q=` with PostgreSQL full-text search plus `pg_trgm` (Flyway migration that works on Supabase and on embedded PostgreSQL), matching titles, creators and Khmer text.
   - Done when: "gl" finds Glass Compass and a Khmer query returns results.
 
 - [ ] **B17 Reader content endpoints** (≈60 min)
@@ -220,12 +221,12 @@ Progress: 1 / 52
   - Done when: an admin can hide a comment and unpublish a series.
 
 - [ ] **B42 Analytics and view counting** (≈60 min)
-  - Build: view events with de-duplication, Redis counters flushed to PostgreSQL, a scheduled ranking recompute (replaces the static order).
+  - Build: view events with de-duplication, in-memory counters flushed to PostgreSQL in batches, a scheduled ranking recompute (replaces the static order).
   - Done when: rankings change after views are recorded.
 
 - [ ] **B43 Notifications** (≈60 min)
   - Build: email templates (new episode, Fast Pass, payment receipt), respect the Settings switches, unsubscribe link.
-  - Done when: publishing an episode emails subscribers who enabled it (checked in Mailpit).
+  - Done when: publishing an episode emails subscribers who enabled it (checked in the dev mail log or Mailpit).
 
 - [ ] **B44 Background jobs** (≈45 min)
   - Build: `@Scheduled` jobs with ShedLock for scheduled publishing, ranking, order expiry, soft-delete purge, idempotency-key cleanup; job metrics.
@@ -244,7 +245,7 @@ Progress: 1 / 52
   - Done when: the pages exist and Settings links to them.
 
 - [ ] **B47 Performance** (≈60 min)
-  - Build: query review (N+1, indexes), HikariCP sizing, Redis / HTTP caching for public reads, load test of home feed, unlock and checkout.
+  - Build: query review (N+1, indexes), HikariCP sizing within the Supabase pooler limits, Caffeine / HTTP caching for public reads, load test of home feed, unlock and checkout.
   - Done when: p95 of public reads is under 300 ms in the test setup.
 
 - [ ] **B48 Observability** (≈45 min)
@@ -252,11 +253,11 @@ Progress: 1 / 52
   - Done when: a thrown test error appears in Sentry with the request id.
 
 - [ ] **B49 Backups and restore** (≈45 min)
-  - Build: automated PostgreSQL backups, a documented and tested restore, Flyway rollback notes (forward-only migrations policy).
+  - Build: Supabase Pro daily backups (7 days, point-in-time recovery add-on optional) plus a scheduled `pg_dump` to R2, a documented and tested restore into a fresh Supabase project, Flyway rollback notes (forward-only migrations policy).
   - Done when: a restore into a fresh database is verified.
 
 - [ ] **B50 Deployment** (≈90 min)
-  - Build: hosting and region, staging and production for both services, backend Docker image in CI, `/api` routing on one domain, domain, SSL, secrets, Postgres and Redis managed services.
+  - Build: hosting and region, staging and production for both services, backend Docker image in CI, `/api` routing on one domain, domain, SSL, secrets, Supabase staging and production projects on the Pro plan (free projects pause after a week idle and have no backups), the API on the direct connection when the host has IPv6, otherwise the session pooler or the IPv4 add-on.
   - Done when: `main` deploys to staging and production is promoted by hand.
 
 - [ ] **B51 End-to-end tests on the real backend** (≈60 min)
