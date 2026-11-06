@@ -1,11 +1,16 @@
 package app.phumreader.series.service;
 
+import app.phumreader.common.error.ApiException;
+import app.phumreader.common.security.CurrentUser;
 import app.phumreader.series.repository.CreatorQueries;
+import app.phumreader.series.repository.CreatorQueries.EditRow;
 import app.phumreader.series.repository.CreatorQueries.SeriesNumbers;
 import app.phumreader.series.service.CatalogViews.SeriesCard;
 import app.phumreader.series.service.CreatorViews.CreatorDashboard;
 import app.phumreader.series.service.CreatorViews.CreatorSeries;
 import app.phumreader.series.service.CreatorViews.CreatorTotals;
+import app.phumreader.series.service.CreatorViews.SeriesEdit;
+import app.phumreader.user.service.UserService;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -27,10 +32,66 @@ public class CreatorService {
 
     private final CreatorQueries queries;
     private final CatalogService catalog;
+    private final UserService users;
 
-    public CreatorService(CreatorQueries queries, CatalogService catalog) {
+    public CreatorService(CreatorQueries queries, CatalogService catalog, UserService users) {
         this.queries = queries;
         this.catalog = catalog;
+        this.users = users;
+    }
+
+    /**
+     * The reader accepts the Creator terms (A11) and becomes a creator. The CREATOR role reaches
+     * their access token with the next refresh.
+     */
+    @Transactional
+    public String becomeCreator(UUID userId, String penName) {
+        if (queries.penName(userId).isPresent()) {
+            throw ApiException.conflict("already_creator", "This account is already a creator.");
+        }
+        String name = penName.trim();
+        if (name.isEmpty()) {
+            throw ApiException.invalidField("penName", "required", "Enter a pen name.");
+        }
+        queries.insertProfile(userId, name);
+        users.grantCreator(userId);
+        return name;
+    }
+
+    /**
+     * Ownership rule for every creator write (P3-05): only the series' own creator passes. An
+     * unknown series is 404, somebody else's is 403.
+     */
+    public SeriesEdit ownedSeries(CurrentUser user, UUID seriesId) {
+        EditRow r = requireOwnedSeries(user, seriesId);
+        return new SeriesEdit(
+                r.id(),
+                r.slug(),
+                r.type(),
+                r.title(),
+                r.summary(),
+                r.genreSlug(),
+                r.languages(),
+                r.ageRating(),
+                r.status(),
+                r.visibility(),
+                r.updateDay(),
+                r.coverUrl(),
+                r.bannerUrl(),
+                r.tags());
+    }
+
+    /** Same rule for writes that need the series' row. */
+    EditRow requireOwnedSeries(CurrentUser user, UUID seriesId) {
+        EditRow row =
+                queries.editRow(seriesId)
+                        .orElseThrow(
+                                () -> ApiException.notFound("series_not_found", "No such series."));
+        if (!row.creatorId().equals(user.id())) {
+            throw ApiException.forbidden(
+                    "not_your_series", "This series belongs to another creator.");
+        }
+        return row;
     }
 
     public CreatorDashboard dashboard(UUID userId) {

@@ -1,9 +1,14 @@
 package app.phumreader.series.repository;
 
+import app.phumreader.series.domain.AgeRating;
+import app.phumreader.series.domain.SeriesStatus;
+import app.phumreader.series.domain.SeriesType;
 import app.phumreader.series.domain.SeriesVisibility;
+import java.time.DayOfWeek;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.jspecify.annotations.Nullable;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Repository;
 
@@ -25,6 +30,24 @@ public class CreatorQueries {
             long comments,
             long unlocks,
             long earnedCoins) {}
+
+    /** A series as its creator edits it (no counters). */
+    public record EditRow(
+            UUID id,
+            UUID creatorId,
+            String slug,
+            SeriesType type,
+            String title,
+            String summary,
+            String genreSlug,
+            List<String> languages,
+            AgeRating ageRating,
+            SeriesStatus status,
+            SeriesVisibility visibility,
+            @Nullable DayOfWeek updateDay,
+            @Nullable String coverUrl,
+            @Nullable String bannerUrl,
+            List<String> tags) {}
 
     private final JdbcClient jdbc;
 
@@ -67,5 +90,50 @@ public class CreatorQueries {
                                 rs.getLong("unlocks"),
                                 rs.getLong("earned_coins")))
                 .list();
+    }
+
+    /** Saves the profile (the Creator terms were accepted now). */
+    public void insertProfile(UUID userId, String penName) {
+        jdbc.sql(
+                        "insert into creator_profiles (user_id, pen_name, accepted_terms_at)"
+                                + " values (:id, :name, now())")
+                .param("id", userId)
+                .param("name", penName)
+                .update();
+    }
+
+    /** The series for editing, whoever owns it. */
+    public Optional<EditRow> editRow(UUID seriesId) {
+        return jdbc.sql(
+                        """
+                        select s.id, s.creator_id, s.slug, s.type, s.title, s.summary, g.slug as genre,
+                               s.languages, s.age_rating, s.status, s.visibility, s.update_day,
+                               s.cover_url, s.banner_url,
+                               array(select t.tag from series_tags t where t.series_id = s.id
+                                     order by t.tag) as tags
+                        from series s join genres g on g.id = s.genre_id
+                        where s.id = :id
+                        """)
+                .param("id", seriesId)
+                .query((rs, n) -> {
+                    String day = rs.getString("update_day");
+                    return new EditRow(
+                            rs.getObject("id", UUID.class),
+                            rs.getObject("creator_id", UUID.class),
+                            rs.getString("slug"),
+                            SeriesType.valueOf(rs.getString("type")),
+                            rs.getString("title"),
+                            rs.getString("summary"),
+                            rs.getString("genre"),
+                            List.of((String[]) rs.getArray("languages").getArray()),
+                            AgeRating.valueOf(rs.getString("age_rating")),
+                            SeriesStatus.valueOf(rs.getString("status")),
+                            SeriesVisibility.valueOf(rs.getString("visibility")),
+                            day == null ? null : DayOfWeek.valueOf(day),
+                            rs.getString("cover_url"),
+                            rs.getString("banner_url"),
+                            List.of((String[]) rs.getArray("tags").getArray()));
+                })
+                .optional();
     }
 }

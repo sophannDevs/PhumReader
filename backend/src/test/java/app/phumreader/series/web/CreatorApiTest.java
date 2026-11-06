@@ -159,6 +159,110 @@ class CreatorApiTest {
         mvc.perform(get(DASHBOARD)).andExpect(status().isUnauthorized());
     }
 
+    // ---------- P3-05: becoming a creator and ownership ----------
+
+    @Test
+    void aReaderBecomesACreatorOnce() throws Exception {
+        UUID reader = sessions.newReader("Dara");
+        String body = "{\"penName\":\"  Dara Draws \",\"acceptTerms\":true}";
+
+        mvc.perform(
+                        post("/api/v1/creator")
+                                .with(sessions.as(reader))
+                                .contentType("application/json")
+                                .content(body))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.penName").value("Dara Draws"));
+        assertThat(
+                        jdbc.sql(
+                                        "select count(*) from user_roles where user_id = :u and role = 'CREATOR'")
+                                .param("u", reader)
+                                .query(Long.class)
+                                .single())
+                .isEqualTo(1);
+        // The dashboard reads the profile, so it is right before the token is refreshed.
+        mvc.perform(get(DASHBOARD).with(sessions.as(reader)))
+                .andExpect(jsonPath("$.creator").value(true))
+                .andExpect(jsonPath("$.name").value("Dara Draws"));
+        mvc.perform(
+                        post("/api/v1/creator")
+                                .with(sessions.as(reader, "READER", "CREATOR"))
+                                .contentType("application/json")
+                                .content(body))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.error.code").value("already_creator"));
+    }
+
+    @Test
+    void becomingACreatorNeedsTheTermsAndAPenName() throws Exception {
+        UUID reader = sessions.newReader("Dara");
+        for (String body :
+                new String[] {
+                    "{\"penName\":\"Dara\",\"acceptTerms\":false}",
+                    "{\"penName\":\"   \",\"acceptTerms\":true}",
+                    "{\"penName\":\"" + "x".repeat(61) + "\",\"acceptTerms\":true}",
+                    "{\"acceptTerms\":true}"
+                }) {
+            mvc.perform(
+                            post("/api/v1/creator")
+                                    .with(sessions.as(reader))
+                                    .contentType("application/json")
+                                    .content(body))
+                    .andExpect(status().isBadRequest());
+        }
+        assertThat(
+                        jdbc.sql("select count(*) from creator_profiles where user_id = :u")
+                                .param("u", reader)
+                                .query(Long.class)
+                                .single())
+                .isZero();
+        mvc.perform(
+                        post("/api/v1/creator")
+                                .with(sessions.guest())
+                                .contentType("application/json")
+                                .content("{\"penName\":\"Dara\",\"acceptTerms\":true}"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void aCreatorCannotOpenAnotherCreatorsSeries() throws Exception {
+        UUID standIn = sessions.userId("creator@toonwave.app");
+        UUID mine =
+                jdbc.sql("select id from series where creator_id = :c limit 1")
+                        .param("c", standIn)
+                        .query(UUID.class)
+                        .single();
+        UUID other = sessions.newReader("Dara");
+        mvc.perform(
+                        post("/api/v1/creator")
+                                .with(sessions.as(other))
+                                .contentType("application/json")
+                                .content("{\"penName\":\"Dara Draws\",\"acceptTerms\":true}"))
+                .andExpect(status().isCreated());
+
+        String path = "/api/v1/creator/series/" + mine;
+        mvc.perform(get(path).with(sessions.as(standIn, "READER", "CREATOR")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(mine.toString()))
+                .andExpect(jsonPath("$.visibility").exists())
+                .andExpect(jsonPath("$.genre").exists());
+        mvc.perform(get(path).with(sessions.as(other, "READER", "CREATOR")))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.error.code").value("not_your_series"));
+        mvc.perform(
+                        get("/api/v1/creator/series/" + UUID.randomUUID())
+                                .with(sessions.as(other, "READER", "CREATOR")))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void creatorOnlyRoutesNeedTheCreatorRole() throws Exception {
+        UUID reader = sessions.newReader("Dara");
+        String path = "/api/v1/creator/series/" + UUID.randomUUID();
+        mvc.perform(get(path).with(sessions.as(reader))).andExpect(status().isForbidden());
+        mvc.perform(get(path).with(sessions.guest())).andExpect(status().isUnauthorized());
+    }
+
     private String dashboard(UUID creator) throws Exception {
         return mvc.perform(get(DASHBOARD).with(sessions.as(creator, "READER", "CREATOR")))
                 .andExpect(status().isOk())

@@ -1,8 +1,13 @@
 package app.phumreader.series.service;
 
+import app.phumreader.series.domain.AgeRating;
+import app.phumreader.series.domain.SeriesStatus;
+import app.phumreader.series.domain.SeriesType;
 import app.phumreader.series.domain.SeriesVisibility;
 import app.phumreader.series.service.CatalogViews.SeriesCard;
+import java.time.DayOfWeek;
 import java.util.List;
+import java.util.UUID;
 import org.jspecify.annotations.Nullable;
 
 /** What the creator dashboard shows (src/components/pr/creator-page.tsx). Raw numbers. */
@@ -53,4 +58,21 @@ public final class CreatorViews {
             long comments,
             long unlocks,
             long earnedCoins) {}
+
+    /** A series as its creator edits it (GET /creator/series/{id}). */
+    public record SeriesEdit(
+            UUID id,
+            String slug,
+            SeriesType type,
+            String title,
+            String summary,
+            String genre,
+            List<String> languages,
+            AgeRating ageRating,
+            SeriesStatus status,
+            SeriesVisibility visibility,
+            @Nullable DayOfWeek updateDay,
+            @Nullable String coverUrl,
+            @Nullable String bannerUrl,
+            List<String> tags) {}
 }

@@ -70,6 +70,16 @@ public class UserService {
         user.changeUnverifiedSignup(displayName, passwordHash);
     }
 
+    /** Makes the account a creator. The access token carries the role after its next refresh. */
+    public void grantCreator(UUID userId) {
+        User user =
+                users.findById(userId)
+                        .orElseThrow(
+                                () -> ApiException.notFound("user_not_found", "No such account."));
+        user.grantCreator();
+        users.saveAndFlush(user);
+    }
+
     public void changePassword(User user, String passwordHash) {
         user.changePassword(passwordHash);
     }

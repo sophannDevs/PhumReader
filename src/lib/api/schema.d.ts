@@ -449,6 +449,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/creator": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Accept the Creator terms and become a creator
+         * @description Adds the CREATOR role. Call POST /auth/refresh afterwards so the access token carries it. 409 already_creator when the account already is one.
+         */
+        post: operations["become"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/creator/dashboard": {
         parameters: {
             query?: never;
@@ -461,6 +481,26 @@ export interface paths {
          * @description Readers who are not creators get creator: false and no series (the page's empty state).
          */
         get: operations["dashboard"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/creator/series/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * One of the signed-in creator's series, as the edit form shows it
+         * @description 403 for another creator's series, 404 when it does not exist.
+         */
+        get: operations["series_1"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1100,6 +1140,13 @@ export interface components {
             isNew: boolean;
             up: boolean;
         };
+        BecomeCreatorRequest: {
+            acceptTerms: boolean;
+            penName: string;
+        };
+        BecomeCreatorResponse: {
+            penName: string;
+        };
         BookmarkState: {
             bookmarked: boolean;
         };
@@ -1597,6 +1644,28 @@ export interface components {
             series: components["schemas"]["SeriesCard"];
             stats: components["schemas"]["SeriesStats"];
             synopsis: string;
+        };
+        SeriesEdit: {
+            /** @enum {string} */
+            ageRating: "all" | "teen" | "mature";
+            bannerUrl?: string | null;
+            coverUrl?: string | null;
+            genre: string;
+            /** Format: uuid */
+            id: string;
+            languages: string[];
+            slug: string;
+            /** @enum {string} */
+            status: "ongoing" | "completed" | "hiatus";
+            summary: string;
+            tags: string[];
+            title: string;
+            /** @enum {string} */
+            type: "comic" | "novel";
+            /** @enum {string|null} */
+            updateDay?: "MONDAY" | "TUESDAY" | "WEDNESDAY" | "THURSDAY" | "FRIDAY" | "SATURDAY" | "SUNDAY" | null;
+            /** @enum {string} */
+            visibility: "draft" | "published" | "hidden";
         };
         SeriesStats: {
             /** Format: int64 */
@@ -2467,6 +2536,39 @@ export interface operations {
             };
         };
     };
+    become: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BecomeCreatorRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BecomeCreatorResponse"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
     dashboard: {
         parameters: {
             query?: never;
@@ -2483,6 +2585,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CreatorDashboard"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    series_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SeriesEdit"];
                 };
             };
             /** @description Error */

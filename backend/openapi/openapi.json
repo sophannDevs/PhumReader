@@ -883,6 +883,46 @@
         "tags" : [ "comments" ]
       }
     },
+    "/api/v1/creator" : {
+      "post" : {
+        "description" : "Adds the CREATOR role. Call POST /auth/refresh afterwards so the access token carries it. 409 already_creator when the account already is one.",
+        "operationId" : "become",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/BecomeCreatorRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/BecomeCreatorResponse"
+                }
+              }
+            },
+            "description" : "Created"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Accept the Creator terms and become a creator",
+        "tags" : [ "creator" ]
+      }
+    },
     "/api/v1/creator/dashboard" : {
       "get" : {
         "description" : "Readers who are not creators get creator: false and no series (the page's empty state).",
@@ -910,6 +950,45 @@
           }
         },
         "summary" : "The signed-in creator's series and their numbers",
+        "tags" : [ "creator" ]
+      }
+    },
+    "/api/v1/creator/series/{id}" : {
+      "get" : {
+        "description" : "403 for another creator's series, 404 when it does not exist.",
+        "operationId" : "series_1",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SeriesEdit"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "One of the signed-in creator's series, as the edit form shows it",
         "tags" : [ "creator" ]
       }
     },
@@ -2770,6 +2849,29 @@
         },
         "required" : [ "isNew", "up" ]
       },
+      "BecomeCreatorRequest" : {
+        "type" : "object",
+        "properties" : {
+          "acceptTerms" : {
+            "type" : "boolean"
+          },
+          "penName" : {
+            "type" : "string",
+            "maxLength" : 60,
+            "minLength" : 0
+          }
+        },
+        "required" : [ "acceptTerms", "penName" ]
+      },
+      "BecomeCreatorResponse" : {
+        "type" : "object",
+        "properties" : {
+          "penName" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "penName" ]
+      },
       "BookmarkState" : {
         "type" : "object",
         "properties" : {
@@ -4183,6 +4285,66 @@
           }
         },
         "required" : [ "creatorId", "creatorSeriesCount", "related", "series", "stats", "synopsis" ]
+      },
+      "SeriesEdit" : {
+        "type" : "object",
+        "properties" : {
+          "ageRating" : {
+            "type" : "string",
+            "enum" : [ "all", "teen", "mature" ]
+          },
+          "bannerUrl" : {
+            "type" : [ "string", "null" ]
+          },
+          "coverUrl" : {
+            "type" : [ "string", "null" ]
+          },
+          "genre" : {
+            "type" : "string"
+          },
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "languages" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "slug" : {
+            "type" : "string"
+          },
+          "status" : {
+            "type" : "string",
+            "enum" : [ "ongoing", "completed", "hiatus" ]
+          },
+          "summary" : {
+            "type" : "string"
+          },
+          "tags" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "title" : {
+            "type" : "string"
+          },
+          "type" : {
+            "type" : "string",
+            "enum" : [ "comic", "novel" ]
+          },
+          "updateDay" : {
+            "type" : [ "string", "null" ],
+            "enum" : [ "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY", null ]
+          },
+          "visibility" : {
+            "type" : "string",
+            "enum" : [ "draft", "published", "hidden" ]
+          }
+        },
+        "required" : [ "ageRating", "genre", "id", "languages", "slug", "status", "summary", "tags", "title", "type", "visibility" ]
       },
       "SeriesStats" : {
         "type" : "object",

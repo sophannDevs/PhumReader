@@ -97,6 +97,11 @@ public class User implements Persistable<UUID> {
         lastLoginAt = now;
     }
 
+    /** Adds the CREATOR role (after the Creator terms were accepted, A11). */
+    public void grantCreator() {
+        roles.add(Role.CREATOR);
+    }
+
     public void rename(String displayName) {
         this.displayName = displayName.trim();
     }

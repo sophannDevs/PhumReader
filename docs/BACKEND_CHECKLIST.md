@@ -343,7 +343,7 @@ Spring Boot owns every business rule; the website never talks to the database di
   - Depends on: P3-02, A14
   - Done when: new and returning users can sign in with each provider on staging.
 
-- [ ] **P3-05 Roles and ownership**
+- [x] **P3-05 Roles and ownership**
   - Build: roles READER / CREATOR / ADMIN, `@PreAuthorize` rules, ownership checks on every creator write;
     "become a creator" endpoint (accept the Creator terms, A11).
   - Depends on: P3-02
