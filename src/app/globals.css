@@ -2,7 +2,7 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
-/* Light by default; `.dark` (set by next-themes on <html>) swaps the tokens below.
+/* Light by default; `.dark` (set on <html> by src/lib/theme.tsx) swaps the tokens below.
    The comic reader and heroes use the fixed "surface" tokens, which stay dark in both
    themes; the novel reader has its own themes. */
 @custom-variant dark (&:is(.dark *));
@@ -389,4 +389,10 @@
   html {
     @apply font-sans;
   }
+}
+
+/* Applied for one frame while the theme changes, so colours switch without animating. */
+.no-theme-transition,
+.no-theme-transition * {
+  transition: none !important;
 }

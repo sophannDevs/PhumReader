@@ -7,6 +7,7 @@ import "../globals.css";
 import { routing } from "@/i18n/routing";
 import { Providers } from "@/lib/query";
 import { cn } from "@/lib/utils";
+import { THEME_INIT_SCRIPT } from "@/lib/theme-script";
 
 // Self-hosted by next/font. Latin falls to Inter, Khmer falls to Kantumruy Pro
 // (see --font-sans in globals.css). Noto Serif is only for the novel reader.
@@ -73,6 +74,9 @@ export default async function LocaleLayout({
       suppressHydrationWarning
       className={cn("h-full antialiased font-sans", inter.variable, kantumruy.variable, notoSerif.variable)}
     >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+      </head>
       <body className="min-h-full flex flex-col">
         <NextIntlClientProvider locale={locale} messages={messages}>
           <Providers>{children}</Providers>
