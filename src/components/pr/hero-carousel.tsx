@@ -99,10 +99,12 @@ function Slide({ slide, priority }: { slide: HeroSlideView; priority: boolean })
             <HeartIcon className="size-3.5" aria-hidden />
             {s.likes}
           </span>
-          <span className="inline-flex items-center gap-1.5">
-            <CalendarIcon className="size-3.5" aria-hidden />
-            {loc.schedule(s.schedule)}
-          </span>
+          {s.schedule ? (
+            <span className="inline-flex items-center gap-1.5">
+              <CalendarIcon className="size-3.5" aria-hidden />
+              {loc.schedule(s.schedule)}
+            </span>
+          ) : null}
         </p>
         <div className="mt-2 flex flex-wrap items-center gap-2">
           <Button asChild variant="brand" size="lg">

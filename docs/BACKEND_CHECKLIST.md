@@ -146,8 +146,19 @@ deployment and no Docker. A step is done when its checks pass; tick the plan tas
       unconfirmed log in to the code step, 6 wrong passwords ("Try again in 10 minutes."), Khmer `/km/reset`,
       Google "coming soon". Demo mode (`NEXT_PUBLIC_DEMO=1` build): the Playwright suite passes (24 tests; the
       desktop "404 page" test failed once on a cold server and passed 8 times after, see assumption 44).
-    - [ ] Part 2, catalog: Home, Rankings, Genres, Search, Series page, episode lists, comic and novel readers
+    - [x] Part 2, catalog: Home, Rankings, Genres, Search, Series page, episode lists, comic and novel readers
       (402 opens the unlock dialog); raw API values formatted for English and Khmer.
+      Done 2026-11-06: `src/lib/api/catalog.ts` turns the API's raw values into the pages' shapes (counts "1.6M",
+      dates "Nov 5, 2026", "Every Sun", ranking movement "▲ 2" / "NEW"); `src/lib/queries.ts` picks the demo or the
+      real API; a reader that gets 402 `episode_locked` goes back to the series page with the unlock dialog
+      (`src/lib/use-locked-redirect.ts`). Real check in Chromium on a real-API build against the local API on
+      Supabase: Home (one `/home` call), the daily grid with the demo's counts, rankings (Paper Tigers first with
+      "▲ 2" as in the demo, all 41 comics, the novels tab), genres and Sci-fi's series, search, the Glass Compass
+      page ("68 episodes · new every Sun", About, related), comic episode 1 (9 pages) and Next, episode 66 opened
+      by URL back to the series page with the dialog, novel chapter 1 and Next, the Khmer series page (Khmer digits
+      and schedule), unknown series and episode (the 404 page), an API 500 (ErrorState, Retry recovers). Demo build
+      (`NEXT_PUBLIC_DEMO=1`): the Playwright suite passes except the desktop "404 page" test on a cold server
+      (assumption 44).
     - [ ] Part 3, the reader's own data: progress and Continue reading, read marks, subscribe, follow, likes,
       bookmarks, library tabs with remove and undo, comments (post, like, delete, report).
     - [ ] Part 4, coins: balance in the header, unlock with an Idempotency-Key, packs, orders paid with the dev
@@ -724,8 +735,28 @@ All 74 plan tasks, and where each one lives.
 42. **Demo hints stay** on the sign-in pages (demo account, code 123456): they are true for the dev API as well.
     P5-07 removes them.
 43. **New Khmer strings** (sign-in errors, the reset page) need a native speaker's review.
-44. **404 status on a cold server:** the first request for an unknown series on a freshly started production
-    server once answered 200 instead of 404; repeated runs and direct requests give 404. Not caused by Step 5;
-    looked at again with the Playwright work in Part 5.
+44. **404 status on a cold server:** with Cache Components, the first request for an unknown series or episode
+    streams the page's static shell (status 200) and then the not-found content inside it; from the second
+    request on the answer is the cached 404. Only the HTTP status of that first request is off; the 404 page
+    shows both times. Not caused by Step 5 (the server-side check still reads the demo data, assumption 48);
+    the desktop "404 page" Playwright test fails on a freshly started production server and passes after. A fix
+    (checking the slug before the Suspense boundary) is left for P5-04.
 45. **Test accounts on Supabase dev (Step 5 part 1):** `step5-check-20261106082102@phumreader.test` (password
     `Phumreader2?`) and `step5-unconfirmed-20261106082102@phumreader.test` (demo password).
+46. **Catalog values are formatted in the website** (`src/lib/api/catalog.ts`): the API's numbers become "1.6M",
+    ISO days "Nov 5, 2026", `updateDay` "Every Sun", `previousRank` "▲ 2" / "▼ 1" / "—" / "NEW"; `useLocalize`
+    turns those into Khmer as it did for the demo. A status of `hiatus` shows as ongoing (the pages know ongoing
+    and completed); a series without a schedule shows no schedule line and "N episodes"; a missing cover shows
+    `public/covers/placeholder.svg`; an age rating other than "all" is shown as the API sends it (teen, mature).
+47. **Whole lists are fetched page by page:** the episode list, the rankings and a genre's series are read at the
+    API's largest page (100) until `nextCursor` is empty, because the pages show the whole list (the episodes
+    tab keeps its own "12 at a time"). Proper paged lists come with P5-02.
+48. **Server-side checks still read the demo data:** `generateStaticParams`, `generateMetadata` and the
+    server-side 404 for unknown slugs and episode numbers use `src/data` (the seed is the same 48 series). A
+    series that exists only in the API would 404 until P5-07 moves these to `BACKEND_URL`. The API's own 404
+    answers are handled in the browser (`notFound()`); `?demo=` flags do nothing with the real API.
+49. **Locked episodes with the real API:** the reader asks the API; 402 `episode_locked` sends it to the series
+    page with the unlock dialog. Until Step 5 part 4 the unlock itself is still the demo (the local store), so
+    with the real API a Fast Pass episode stays locked after the demo "unlock" and the reader comes back to the
+    dialog; lock icons in the lists also still follow the local store.
+50. **Continue reading on Home** is empty with the real API until Step 5 part 3 (`/me/history`).

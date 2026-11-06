@@ -466,7 +466,9 @@
     "showMore": "Show {count} more",
     "noEpisodes": "No episodes yet",
     "noEpisodesDesc": "New episodes will show up here.",
-    "noChapters": "No chapters yet"
+    "noChapters": "No chapters yet",
+    "episodesCount": "{count, plural, one {# episode} other {# episodes}}",
+    "chaptersCount": "{count, plural, one {# chapter} other {# chapters}}"
   },
   "library": {
     "title": "My library",

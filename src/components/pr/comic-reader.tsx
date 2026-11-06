@@ -14,6 +14,7 @@ import type { Episode, Series } from "@/data"
 import { Link } from "@/i18n/navigation"
 import { useEpisode } from "@/lib/queries"
 import { seriesHref } from "@/lib/routes"
+import { useLockedRedirect } from "@/lib/use-locked-redirect"
 import { useReaderNav } from "@/lib/use-reader-nav"
 import { useLocalize } from "@/lib/localize"
 
@@ -34,8 +35,10 @@ export function ReaderSkeleton() {
 export function ComicReader({ slug, n }: { slug: string; n: number }) {
   const query = useEpisode(slug, n)
   const t = useTranslations("reader")
+  // Real API: a locked episode (402) goes to the series page with the unlock dialog.
+  const locked = useLockedRedirect(slug, n, query.error)
 
-  if (query.isPending) return <ReaderSkeleton />
+  if (query.isPending || locked) return <ReaderSkeleton />
   if (query.isError)
     return (
       <ErrorState

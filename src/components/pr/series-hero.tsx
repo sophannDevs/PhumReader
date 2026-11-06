@@ -117,9 +117,11 @@ export function SeriesHero({
             <div className="flex flex-wrap items-center gap-2">
               <Badge variant="dark">{loc.genre(series.genre)}</Badge>
               <Badge variant="dark">{t(novel ? "novel" : "comic")}</Badge>
-              <Badge variant="dark">
-                <CalendarIcon /> {loc.schedule(series.schedule)}
-              </Badge>
+              {series.schedule ? (
+                <Badge variant="dark">
+                  <CalendarIcon /> {loc.schedule(series.schedule)}
+                </Badge>
+              ) : null}
               <Badge variant="new">{t(series.status === "completed" ? "completed" : "ongoing")}</Badge>
             </div>
             <h1 className="type-series-title">{series.title}</h1>

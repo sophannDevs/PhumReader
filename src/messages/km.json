@@ -466,7 +466,9 @@
     "showMore": "បង្ហាញបន្ថែម {count}",
     "noEpisodes": "មិនទាន់មានវគ្គទេ",
     "noEpisodesDesc": "វគ្គថ្មីនឹងបង្ហាញនៅទីនេះ។",
-    "noChapters": "មិនទាន់មានជំពូកទេ"
+    "noChapters": "មិនទាន់មានជំពូកទេ",
+    "episodesCount": "{count} វគ្គ",
+    "chaptersCount": "{count} ជំពូក"
   },
   "library": {
     "title": "បណ្ណាល័យរបស់ខ្ញុំ",

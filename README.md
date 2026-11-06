@@ -3,8 +3,9 @@
 PhumReader (ភូមិ "village" + Reader) is a webtoon-style site for comics and web novels for readers in
 Cambodia, in English and Khmer. The Spring Boot API lives in [`backend/`](backend/README.md)
 (plan: [docs/BACKEND.md](docs/BACKEND.md), progress: [docs/BACKEND_CHECKLIST.md](docs/BACKEND_CHECKLIST.md)).
-**The website is moving onto it page by page (Stage 1 Step 5)**: sign-in already uses the API; the other pages
-still use the demo data until their part is done. Set `NEXT_PUBLIC_DEMO=1` in `.env.local` to run the whole
+**The website is moving onto it page by page (Stage 1 Step 5)**: sign-in and the catalog (Home, Rankings,
+Genres, Search, series pages, both readers) already use the API; the library, coins, comments, settings and
+creator pages still use the demo data until their part is done. Set `NEXT_PUBLIC_DEMO=1` in `.env.local` to run the whole
 Phase 1 demo without a backend.
 
 ## Run it

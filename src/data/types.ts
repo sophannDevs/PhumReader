@@ -53,8 +53,9 @@ export const seriesSchema = z.strictObject({
   freeEpisodes: positiveInt,
   fastPassEpisodes: nonNegativeInt,
   totalEpisodes: positiveInt,
-  updateDay: weekdaySchema,
-  /** Human schedule such as "Every Sun" */
+  /** null for a series without a schedule (the real API); demo series always have one */
+  updateDay: weekdaySchema.nullable(),
+  /** Human schedule such as "Every Sun"; "" without a schedule */
   schedule: z.string(),
   badges: z.strictObject({ up: z.boolean(), isNew: z.boolean() }),
   status: seriesStatusSchema,

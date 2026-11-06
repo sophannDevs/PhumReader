@@ -77,10 +77,12 @@ export function EpisodesTab({
 
       <div className="flex items-center justify-between gap-3">
         <p className="type-body text-muted-foreground tabular-nums">
-          {t(novel ? "chaptersLine" : "episodesLine", {
-            count: series.totalEpisodes,
-            day: th(`days.${series.updateDay}`),
-          })}
+          {series.updateDay
+            ? t(novel ? "chaptersLine" : "episodesLine", {
+                count: series.totalEpisodes,
+                day: th(`days.${series.updateDay}`),
+              })
+            : t(novel ? "chaptersCount" : "episodesCount", { count: series.totalEpisodes })}
         </p>
         <Button variant="ghost" size="sm" onClick={() => setNewestFirst((v) => !v)}>
           <ArrowUpDownIcon />

@@ -15,6 +15,7 @@ import { Link } from "@/i18n/navigation"
 import { useChapter } from "@/lib/queries"
 import { seriesHref } from "@/lib/routes"
 import { useAppStore } from "@/lib/store"
+import { useLockedRedirect } from "@/lib/use-locked-redirect"
 import { useReaderNav } from "@/lib/use-reader-nav"
 import { cn } from "@/lib/utils"
 import { useLocalize } from "@/lib/localize"
@@ -64,8 +65,10 @@ export function NovelReader({ slug, n }: { slug: string; n: number }) {
   const query = useChapter(slug, n)
   const settings = useAppStore((s) => s.novelSettings)
   const t = useTranslations("reader")
+  // Real API: a locked chapter (402) goes to the series page with the unlock dialog.
+  const locked = useLockedRedirect(slug, n, query.error)
 
-  if (query.isPending) return <NovelSkeleton />
+  if (query.isPending || locked) return <NovelSkeleton />
   if (query.isError)
     return (
       <div data-reader-theme={settings.theme} className="flex flex-1 flex-col bg-reader-page text-reader-text">

@@ -23,7 +23,9 @@ export function SeriesAbout({ series, synopsis }: { series: Series; synopsis: st
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-2">
         <p className="text-base leading-7">{synopsis}</p>
-        <p className="type-body text-muted-foreground">{t("aboutNew", { day: th(`dayFull.${series.updateDay}`) })}</p>
+        {series.updateDay ? (
+          <p className="type-body text-muted-foreground">{t("aboutNew", { day: th(`dayFull.${series.updateDay}`) })}</p>
+        ) : null}
       </div>
 
       <section aria-labelledby="details-title" className="flex flex-col gap-3">
