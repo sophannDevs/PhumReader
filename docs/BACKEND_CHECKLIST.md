@@ -37,7 +37,7 @@ Sources of truth: the plan doc, `CLAUDE.md`, `docs/BACKEND.md` (decisions and lo
 - Money: balances change only through the ledger, in one transaction with a wallet row lock; every payment and
   unlock call is idempotent. Never build card number fields: cards use the PayWay hosted page.
 
-Progress: 3 / 51 tasks (P1-05, P1-07, P1-08) · Stage 1: step 4 of 5 done (all 5 parts), step 5: parts 1-3 of 5 done · milestones M1, M3, M4, M5, M6, M7
+Progress: 3 / 51 tasks (P1-05, P1-07, P1-08) · Stage 1: step 4 of 5 done (all 5 parts), step 5: parts 1-4 of 5 done · milestones M1, M3, M4, M5, M6, M7
 
 ---
 
@@ -173,8 +173,18 @@ deployment and no Docker. A step is done when its checks pass; tick the plan tas
       report; novel chapter bookmark; exactly one progress call per opening. Demo build: the Playwright suite passes
       (24 tests; the "404 page" test failed once on a cold server, assumption 44, and passed on the rerun).
       Assumption 103 in docs/CHECKLIST.md.
-    - [ ] Part 4, coins: balance in the header, unlock with an Idempotency-Key, packs, orders paid with the dev
+    - [x] Part 4, coins: balance in the header, unlock with an Idempotency-Key, packs, orders paid with the dev
       simulator, status polling every 3 s and resuming after a reload (P5-06), purchase history.
+      Done 2026-11-06: `src/lib/api/coins.ts` (wallet, packs, orders, unlock), `src/lib/wallet.ts` (balance mirrored into
+      the store, `applyBalance`), the real branch of `useCheckout` (create order with an Idempotency-Key, poll every
+      3 s, resume from `phumreader.pendingOrder`, cancel, simulate), unlock with one Idempotency-Key per episode.
+      Real check in Chromium on a real-API build against the local API: header balance equals `/me/coins`; packs
+      and methods from the API; continue to pay, reload resumes the pay step; "I've paid" (balance 3 to 263 with the
+      first-purchase bonus, header updated); cancel; simulated failure; history rows Paid / Cancelled / Failed after
+      a reload; an order paid from outside the page is noticed by the poll (1.8 s, pending key cleared); unlocking
+      Glass Compass episode 68 charged exactly 5 (263 to 258), opened the reader and listed it in `/series/{slug}/me`
+      and the Library's Unlocked tab. Demo build: the Playwright suite passes (23 of 24; the "404 page" test failed on
+      a cold server, assumption 44). Assumption 104 in docs/CHECKLIST.md. The test left the demo account with 258 coins.
     - [ ] Part 5, settings and creator dashboard; Playwright key flows against the local backend and in demo mode.
 
 Not in Stage 1: deployment (P1-10, Phase 7), CI (P1-09), uploads / R2 / image Worker (P3-07, P3-08), creator

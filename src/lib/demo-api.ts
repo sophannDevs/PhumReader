@@ -278,6 +278,10 @@ export type CoinsPageData = {
   firstPurchaseBonus: string
   khqrExpiryMinutes: number
   fastPassPrice: number
+  /** Real API only: pack size (coins) -> pack id. */
+  packIds?: Record<number, number>
+  /** Real API only: the dev payment simulator is on. */
+  simulator?: boolean
 }
 
 export const fetchCoinsPage = () =>

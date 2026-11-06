@@ -5,9 +5,11 @@ import { useSyncExternalStore } from "react"
 import type { Genre } from "@/data"
 import { usePathname } from "@/i18n/navigation"
 import * as real from "@/lib/api/catalog"
+import * as realCoins from "@/lib/api/coins"
 import { DEMO_MODE } from "@/lib/api/config"
 import * as demo from "@/lib/demo-api"
 import { getDemoFlag, type DemoFlag } from "@/lib/demo-api"
+import { useHydrated, useUser } from "@/lib/store"
 
 /**
  * The catalog pages read the demo (`NEXT_PUBLIC_DEMO=1`) or the real API; both give the same
@@ -80,9 +82,19 @@ export const useSearchSeries = (query: string) => {
   return useQuery({ queryKey: ["search", query.trim().toLowerCase(), flag], queryFn: () => catalog.search(query) })
 }
 
+/** The Coins page: the demo's, or the API's packs plus the reader's own purchase history. */
 export const useCoinsPage = () => {
   const flag = useDemoFlag()
-  return useQuery({ queryKey: ["coins-page", flag], queryFn: demo.fetchCoinsPage })
+  const user = useUser()
+  const hydrated = useHydrated()
+  const email = hydrated ? user?.email : undefined
+  const demoQuery = useQuery({ queryKey: ["coins-page", flag], queryFn: demo.fetchCoinsPage, enabled: DEMO_MODE })
+  const realQuery = useQuery({
+    queryKey: ["coins-page", "real", email ?? ""],
+    queryFn: () => realCoins.fetchCoinsPage(!!email),
+    enabled: !DEMO_MODE && hydrated,
+  })
+  return DEMO_MODE ? demoQuery : realQuery
 }
 
 export const useLibrary = () => {

@@ -65,6 +65,8 @@ export function CheckoutCard({
   onCancel,
   onSubmit,
   onReset,
+  starting = false,
+  canSimulate = true,
 }: {
   flow: Flow
   remaining: number
@@ -76,6 +78,10 @@ export function CheckoutCard({
   onCancel: () => void
   onSubmit: (outcome: "success" | "failed") => void
   onReset: () => void
+  /** An order is being created. */
+  starting?: boolean
+  /** Shows the "simulate failure" button (the demo and the dev simulator). */
+  canSimulate?: boolean
 }) {
   const t = useTranslations("coins")
   const loc = useLocalize()
@@ -218,9 +224,11 @@ export function CheckoutCard({
           <Button variant="ghost" size="sm" onClick={onCancel}>
             {t("cancel")}
           </Button>
-          <Button variant="ghost" size="sm" onClick={() => onSubmit("failed")}>
-            {t("simulateFail")}
-          </Button>
+          {canSimulate ? (
+            <Button variant="ghost" size="sm" onClick={() => onSubmit("failed")}>
+              {t("simulateFail")}
+            </Button>
+          ) : null}
         </div>
       </section>
     )
@@ -250,7 +258,7 @@ export function CheckoutCard({
         />
         <Row label={t("payingWith")} value={methodName} className="[&_dd]:text-foreground" />
       </dl>
-      <Button variant="brand" size="lg" className="mt-6 w-full" onClick={proceed}>
+      <Button variant="brand" size="lg" className="mt-6 w-full" disabled={starting} onClick={proceed}>
         {t("continuePay")}
       </Button>
       <p className="type-small mt-3 text-center font-normal text-muted-foreground tabular-nums">

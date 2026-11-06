@@ -1,15 +1,22 @@
 "use client"
 
+import { useQueryClient } from "@tanstack/react-query"
 import { useTranslations } from "next-intl"
 import { useEffect, useRef, useState } from "react"
 import { toast } from "sonner"
 import { UnlockDialog } from "@/components/pr/unlock-dialog"
 import { fastPassPrice, type Episode, type Series } from "@/data"
 import { usePathname, useRouter } from "@/i18n/navigation"
+import { DEMO_MODE } from "@/lib/api/config"
+import * as realCoins from "@/lib/api/coins"
+import { ApiError, idempotencyKey } from "@/lib/api/client"
+import type { Viewer } from "@/lib/api/me"
 import { unlock } from "@/lib/demo-api"
+import { meKeys, useAccountEmail } from "@/lib/me"
 import { useEpisodes } from "@/lib/queries"
 import { readerHref, seriesHref } from "@/lib/routes"
 import { useAppStore, useCoins, useHydrated, useUser } from "@/lib/store"
+import { applyBalance } from "@/lib/wallet"
 
 /**
  * Owns the UnlockDialog of a series page (Episodes tab rows call `request`).
@@ -28,6 +35,10 @@ export function useSeriesUnlock(series: Series) {
   const episodes = useEpisodes(series.slug)
   const [target, setTarget] = useState<Episode | null>(null)
   const [loading, setLoading] = useState(false)
+  const email = useAccountEmail()
+  const qc = useQueryClient()
+  // One key per episode being unlocked: pressing Unlock again after a network error never charges twice.
+  const unlockKey = useRef<{ n: number; key: string } | null>(null)
   const price = fastPassPrice()
   const novel = series.type === "novel"
 
@@ -89,14 +100,30 @@ export function useSeriesUnlock(series: Series) {
       onUnlock={async () => {
         setLoading(true)
         try {
-          await unlock(series.id, target.n)
-          store().spendCoins(price)
-          store().unlockEpisode(series.id, target.n)
+          if (DEMO_MODE) {
+            await unlock(series.id, target.n)
+            store().spendCoins(price)
+            store().unlockEpisode(series.id, target.n)
+          } else {
+            if (unlockKey.current?.n !== target.n) unlockKey.current = { n: target.n, key: idempotencyKey() }
+            const result = await realCoins.unlockEpisode(series.slug, target.n, unlockKey.current.key)
+            unlockKey.current = null
+            if (email) {
+              applyBalance(qc, email, result.balance)
+              qc.setQueryData<Viewer>(meKeys.viewer(email, series.slug), (v) =>
+                v && !v.unlocked.includes(target.n) ? { ...v, unlocked: [...v.unlocked, target.n].sort((a, b) => a - b) } : v
+              )
+              void qc.invalidateQueries({ queryKey: meKeys.viewer(email, series.slug) })
+              void qc.invalidateQueries({ queryKey: meKeys.unlocked(email) })
+            }
+          }
           toast.success(tt(novel ? "chapterUnlocked" : "episodeUnlocked", { n: target.n }))
           const n = target.n
           setTarget(null)
           router.push(readerHref(series, n))
-        } catch {
+        } catch (error) {
+          // Not enough coins (402) or an episode that is free now (409): the balance may have changed.
+          if (!DEMO_MODE && email && error instanceof ApiError) void qc.invalidateQueries({ queryKey: ["wallet", email] })
           toast.error(tt("unlockFailed"))
         } finally {
           setLoading(false)

@@ -5,22 +5,20 @@ import { useLocale } from "next-intl"
 import { EmptyState } from "@/components/pr/empty-state"
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import type { PaymentMethod, PurchaseStatus } from "@/data"
+import type { PaymentMethod, Purchase, PurchaseStatus } from "@/data"
 import { formatDate } from "@/lib/format"
 import { useDemoFlag } from "@/lib/queries"
-import { useAppStore } from "@/lib/store"
 import { ReceiptIcon } from "lucide-react"
 import { useLocalize } from "@/lib/localize"
 
 const statusVariant = { Paid: "brand", Failed: "danger", Cancelled: "secondary" } as const
 
-/** Purchase history from the store (newest first); `?demo=empty` shows the empty state. */
-export function PurchaseHistory({ methods }: { methods: PaymentMethod[] }) {
+/** Purchase history (newest first): the store's in the demo, the API's orders otherwise; `?demo=empty` shows the empty state. */
+export function PurchaseHistory({ methods, purchases }: { methods: PaymentMethod[]; purchases: (Purchase & { orderId?: string })[] }) {
   const t = useTranslations("coins")
   const loc = useLocalize()
   const locale = useLocale()
   const flag = useDemoFlag()
-  const purchases = useAppStore((s) => s.purchases)
   const rows = flag === "empty" ? [] : purchases
   const label = (id: string) => {
     const m = methods.find((x) => x.id === id)
