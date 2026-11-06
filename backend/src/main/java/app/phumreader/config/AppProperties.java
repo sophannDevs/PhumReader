@@ -18,6 +18,7 @@ import org.springframework.validation.annotation.Validated;
  * @param auth sign-in settings
  * @param catalog settings for the public catalog (home feed, series, rankings)
  * @param payments coin orders and payments
+ * @param views view counting
  */
 @Validated
 @ConfigurationProperties("phumreader")
@@ -25,7 +26,18 @@ public record AppProperties(
         @NotBlank @URL String frontendUrl,
         @Valid @DefaultValue Auth auth,
         @Valid @DefaultValue Catalog catalog,
-        @Valid @DefaultValue Payments payments) {
+        @Valid @DefaultValue Payments payments,
+        @Valid @DefaultValue Views views) {
+
+    /**
+     * @param enabled count views (off in tests, which compare view numbers with the demo)
+     * @param dedupeWindow the same viewer counts once per page in this time
+     * @param flushInterval how often counts are added to the database
+     */
+    public record Views(
+            @DefaultValue("false") boolean enabled,
+            @DefaultValue("30m") Duration dedupeWindow,
+            @DefaultValue("60s") Duration flushInterval) {}
 
     /**
      * @param homeCacheTtl how long the home feed is served from memory before it is built again

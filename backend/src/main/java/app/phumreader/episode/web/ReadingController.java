@@ -1,6 +1,8 @@
 package app.phumreader.episode.web;
 
 import app.phumreader.common.security.CurrentUser;
+import app.phumreader.common.views.ViewRecorder;
+import app.phumreader.common.web.Viewer;
 import app.phumreader.episode.service.ReadingService;
 import app.phumreader.episode.service.ReadingViews.BookmarkState;
 import app.phumreader.episode.service.ReadingViews.EpisodeContent;
@@ -8,6 +10,7 @@ import app.phumreader.episode.service.ReadingViews.EpisodeLikeState;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
@@ -33,8 +36,11 @@ class ReadingController {
 
     private final ReadingService reading;
 
-    ReadingController(ReadingService reading) {
+    private final ViewRecorder views;
+
+    ReadingController(ReadingService reading, ViewRecorder views) {
         this.reading = reading;
+        this.views = views;
     }
 
     /**
@@ -54,8 +60,11 @@ class ReadingController {
     EpisodeContent content(
             @PathVariable String slug,
             @PathVariable int n,
-            @Parameter(hidden = true) @AuthenticationPrincipal @Nullable CurrentUser user) {
-        return reading.content(slug, n, user);
+            @Parameter(hidden = true) @AuthenticationPrincipal @Nullable CurrentUser user,
+            @Parameter(hidden = true) HttpServletRequest request) {
+        EpisodeContent content = reading.content(slug, n, user);
+        views.episode(content.series().id(), n, Viewer.of(user, request));
+        return content;
     }
 
     @PutMapping("/progress")

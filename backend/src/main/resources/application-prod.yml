@@ -19,6 +19,8 @@ spring:
       url: ${REDIS_URL}
 
 phumreader:
+  views:
+    enabled: true
   search:
     url: ${MEILI_URL:}
     key: ${MEILI_MASTER_KEY:}

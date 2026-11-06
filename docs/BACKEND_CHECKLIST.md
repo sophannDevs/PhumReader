@@ -98,6 +98,18 @@ deployment and no Docker. A step is done when its checks pass; tick the plan tas
     searches answer from Meilisearch. Not done yet: nothing writes SEARCH events until the creator pages exist
     (P3-14: call `OutboxEvents.add` in the same transaction as a publish / unpublish / edit); the ranking uses the views
     from the last sync (refreshed with view counters); suggestions and filters beyond `type`.
+  - Done 2026-11-06 (part 2d, view counters): `common/views` (`ViewCounter`: `RedisViewCounter` with Lua scripts, or
+    `InMemoryViewCounter` without Redis; `ViewRecorder`; `common/web/Viewer`). Opening a series page counts one view for
+    the series; opening an episode or chapter counts one view for that episode (not the series). One viewer (user id, or
+    client address when signed out) counts once per page per 30 minutes (`phumreader.views.dedupe-window`). A counter
+    error is only logged. `ViewFlushService` (every 60 s, `phumreader.views.flush-interval`) adds the counts to
+    `series.view_count` and `episodes.view_count`, puts them back if the write fails, and queues a `VIEWS_CHANGED` search
+    event per series (only when Meilisearch is on) so search ranking follows. Off in tests (`phumreader.views.enabled`),
+    on in dev and prod. Tests: `ViewCountingTest` (3), `ViewFlushDatabaseTest` (1), `RedisViewCounterTest` (1, real
+    Redis, skipped when none); check green. Real check on Supabase + Redis: 5 requests from one client gave 1 series and
+    1 episode view in Redis; after the flush Glass Compass went from 1,600,000 to 1,600,001 views. Known gap: the page
+    shows the stored total, up to one flush interval behind; the first views after a restart of a no-Redis API are lost
+    if it stops before a flush.
   - 2026-11-06: the company PC may not download programs, so Step 4 runs first with built-in stand-ins
     (rate limits and codes in memory, search in PostgreSQL, JWT signed with the JDK). At home: install the
     services, fill in `backend/.env`, swap the stand-ins (and optionally the JWT code for a JWT library), add
