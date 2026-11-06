@@ -100,7 +100,7 @@ async function csrfToken(fresh = false): Promise<string | undefined> {
 let refreshing: Promise<boolean> | null = null
 
 /** One refresh for all calls that got 401 at the same time. */
-function refreshSession(): Promise<boolean> {
+export function refreshSession(): Promise<boolean> {
   refreshing ??= send("POST", "/auth/refresh", {})
     .then((res) => res.ok)
     .catch(() => false)

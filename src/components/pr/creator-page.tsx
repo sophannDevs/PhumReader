@@ -1,15 +1,17 @@
 "use client"
 
-import { BanknoteIcon, LogInIcon, PenLineIcon } from "lucide-react"
+import { BanknoteIcon, ListIcon, LogInIcon, PenLineIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
+import { useState } from "react"
 import { toast } from "sonner"
+import { BecomeCreatorDialog } from "@/components/pr/become-creator-dialog"
 import { EmptyState } from "@/components/pr/empty-state"
 import { ErrorState } from "@/components/pr/error-state"
 import { RankRow } from "@/components/pr/rank-row"
 import { SkeletonRow } from "@/components/pr/skeletons"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
-import { Link, usePathname } from "@/i18n/navigation"
+import { Link, usePathname, useRouter } from "@/i18n/navigation"
 import { DEMO_MODE } from "@/lib/api/config"
 import { useCreator } from "@/lib/queries"
 import { useAppStore, useUser } from "@/lib/store"
@@ -23,6 +25,8 @@ export function CreatorPage() {
   const user = useUser()
   const pathname = usePathname()
   const query = useCreator()
+  const router = useRouter()
+  const [becoming, setBecoming] = useState(false)
 
   if (!user) {
     return (
@@ -61,9 +65,29 @@ export function CreatorPage() {
         <h1 className="type-h1">{t("title")}</h1>
         <p className="type-lead max-w-2xl">{t("intro")}</p>
         <div className="mt-1 flex flex-wrap gap-2">
-          <Button variant="brand" size="lg" onClick={() => toast.success(tt("publishingSoon"))}>
-            <PenLineIcon />
-            {t("start")}
+          {DEMO_MODE ? (
+            <Button variant="brand" size="lg" onClick={() => toast.success(tt("publishingSoon"))}>
+              <PenLineIcon />
+              {t("start")}
+            </Button>
+          ) : query.data?.isCreator ? (
+            <Button asChild variant="brand" size="lg">
+              <Link href="/creator/series/new">
+                <PenLineIcon />
+                {t("start")}
+              </Link>
+            </Button>
+          ) : (
+            <Button variant="brand" size="lg" disabled={query.isPending} onClick={() => setBecoming(true)}>
+              <PenLineIcon />
+              {t("start")}
+            </Button>
+          )}
+          <Button asChild variant="outline" size="lg">
+            <Link href="/creator/series">
+              <ListIcon />
+              {t("mySeries")}
+            </Link>
           </Button>
           <Button asChild variant="outline" size="lg">
             <a href="#guidelines">{t("guidelines")}</a>
@@ -121,6 +145,8 @@ export function CreatorPage() {
           ))}
         </div>
       </section>
+
+      {DEMO_MODE ? null : <BecomeCreatorDialog open={becoming} onOpenChange={setBecoming} onDone={() => router.push("/creator/series")} />}
 
       <section id="earnings" aria-labelledby="earnings-title" className="flex scroll-mt-24 flex-col gap-3">
         <h2 id="earnings-title" className="type-h2">

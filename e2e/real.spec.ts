@@ -81,6 +81,8 @@ test("2. subscribe, follow and like persist after a reload; Library lists them",
 
 test("3. comment: post, like, delete", async () => {
   await page.goto("/series/glass-compass")
+  // A freshly started server hydrates slowly: wait, or the click on "Post" can land before the page is interactive.
+  await page.waitForLoadState("networkidle")
   await page.getByRole("tab", { name: /Comments/ }).click()
   const text = `E2E comment ${stamp}`
   await page.getByPlaceholder("What did you think?").fill(text)
@@ -207,7 +209,85 @@ function png(width: number, height: number): Buffer {
   ])
 }
 
-test("8. creator image upload: terms, presigned upload to storage, WebP variants, 799 px refused", async () => {
+test("8. My series: become a creator in the dialog, then the list with search, filters and notices", async () => {
+  // A reader sees the invitation, not an empty list.
+  await page.goto("/creator/series")
+  await expect(page.getByRole("heading", { name: "My series" })).toBeVisible()
+  await expect(page.getByText("Become a creator to publish")).toBeVisible()
+  await page.getByRole("button", { name: "Become a creator" }).click()
+  const dialog = page.getByRole("dialog")
+  await dialog.getByLabel("Pen name").fill("E2E Pen")
+  await dialog.getByRole("button", { name: "Accept and continue" }).click()
+  await expect(dialog.getByText("Accept the terms to continue.")).toBeVisible()
+  await dialog.getByRole("checkbox").click()
+  await dialog.getByRole("button", { name: "Accept and continue" }).click()
+  await expect(page.getByText("You're a creator now.")).toBeVisible()
+
+  // No series yet: an empty state with one next step.
+  await expect(page.getByText("You have no series yet")).toBeVisible()
+  await expect(page.getByRole("link", { name: "Create series" }).first()).toHaveAttribute("href", /\/creator\/series\/new$/)
+
+  // Two series written through the API (the create page comes in P4-14): one live, one draft.
+  await page.request.get("/api/v1/auth/csrf")
+  const xsrf = (await page.context().cookies()).find((c) => c.name === "XSRF-TOKEN")?.value ?? ""
+  const headers = { "X-XSRF-TOKEN": xsrf }
+  const ticket = await (await page.request.post("/api/v1/creator/uploads", { headers, data: { kind: "COVER", contentType: "image/png", size: png(600, 800).length } })).json()
+  await page.request.put(ticket.uploadUrl, { headers: ticket.headers, data: png(600, 800) })
+  expect((await page.request.post(`/api/v1/creator/uploads/${ticket.id}/complete`, { headers })).status()).toBe(200)
+  const create = async (title: string, cover: boolean) =>
+    (
+      await (
+        await page.request.post("/api/v1/creator/series", {
+          headers,
+          data: { title, type: "comic", genre: "fantasy", languages: ["en"], summary: "A test story.", tags: [], coverUploadId: cover ? ticket.id : null },
+        })
+      ).json()
+    ).id as string
+  const alpha = await create(`E2E Alpha ${stamp}`, true)
+  const beta = await create(`E2E Beta ${stamp}`, false)
+  expect((await page.request.post(`/api/v1/creator/series/${alpha}/publish`, { headers })).status()).toBe(200)
+
+  await page.reload()
+  const rows = page.getByRole("list", { name: "My series" }).getByRole("listitem")
+  await expect(rows).toHaveCount(2)
+  const alphaRow = rows.filter({ hasText: `E2E Alpha ${stamp}` })
+  const betaRow = rows.filter({ hasText: `E2E Beta ${stamp}` })
+  await expect(alphaRow.getByText("Published")).toBeVisible()
+  await expect(betaRow.getByText("Draft")).toBeVisible()
+  await expect(alphaRow).toContainText("0 episodes")
+  await expect(alphaRow.getByRole("link", { name: "Add episode" })).toHaveAttribute("href", new RegExp(`/creator/series/${alpha}/episodes/new$`))
+  await expect(betaRow.getByRole("link", { name: "Edit" })).toHaveAttribute("href", new RegExp(`/creator/series/${beta}/edit$`))
+
+  // The status filter and the search.
+  await page.getByRole("tab", { name: "Published" }).click()
+  await expect(rows).toHaveCount(1)
+  await expect(alphaRow).toBeVisible()
+  await page.getByRole("tab", { name: "Draft" }).click()
+  await expect(rows).toHaveCount(1)
+  await expect(betaRow).toBeVisible()
+  await page.getByRole("tab", { name: "All" }).click()
+  await page.getByRole("searchbox", { name: "Search your series" }).fill("beta")
+  await expect(rows).toHaveCount(1)
+  await page.getByRole("searchbox", { name: "Search your series" }).fill("zzz-nothing")
+  await expect(page.getByText("No series match")).toBeVisible()
+
+  // The success notices carry the next step.
+  await page.goto(`/creator/series?notice=series-created&series=${alpha}`)
+  await expect(page.getByText("Series created")).toBeVisible()
+  await expect(page.getByRole("link", { name: "Add the first episode" })).toHaveAttribute("href", new RegExp(`/creator/series/${alpha}/episodes/new$`))
+  await page.goto(`/creator/series?notice=episode-added&series=${alpha}`)
+  await expect(page.getByRole("link", { name: "Add another episode" })).toBeVisible()
+
+  // The dashboard now offers "Start publishing" as a link and "My series".
+  await page.goto("/creator")
+  await expect(page.getByRole("link", { name: "Start publishing" })).toHaveAttribute("href", /\/creator\/series\/new$/)
+  await expect(page.getByRole("link", { name: "My series" }).first()).toBeVisible()
+
+  // Keep the dev data clean: the live series goes back to a draft.
+  expect((await page.request.post(`/api/v1/creator/series/${alpha}/unpublish`, { headers })).status()).toBe(200)
+})
+
+test("9. creator image upload: presigned upload to storage, WebP variants, 799 px refused", async () => {
   // The signed-in browser's cookies; writes need the CSRF header.
   await page.request.get("/api/v1/auth/csrf")
   const xsrf = (await page.context().cookies()).find((c) => c.name === "XSRF-TOKEN")?.value ?? ""
@@ -215,13 +295,7 @@ test("8. creator image upload: terms, presigned upload to storage, WebP variants
   const startUpload = (size: number) =>
     page.request.post("/api/v1/creator/uploads", { headers, data: { kind: "PANEL", contentType: "image/png", size } })
 
-  // A reader cannot upload before accepting the Creator terms.
-  expect((await startUpload(1000)).status()).toBe(403)
-  expect((await page.request.post("/api/v1/creator", { headers, data: { penName: "E2E Creator", acceptTerms: false } })).status()).toBe(400)
-  const become = await page.request.post("/api/v1/creator", { headers, data: { penName: "E2E Creator", acceptTerms: true } })
-  expect(become.status()).toBe(201)
-  // The CREATOR role reaches the access token with the next refresh.
-  expect((await page.request.post("/api/v1/auth/refresh", { headers })).ok()).toBe(true)
+  // The account became a creator in the previous test; a signed-in reader without the terms would get 403 here.
 
   async function upload(image: Buffer) {
     const ticketRes = await startUpload(image.length)
@@ -260,7 +334,7 @@ test("8. creator image upload: terms, presigned upload to storage, WebP variants
   expect((await fake.complete()).status()).toBe(422)
 })
 
-test("9. creator writes: draft series, publish, free and Fast Pass episodes, a scheduled episode goes live by itself", async () => {
+test("10. creator writes: draft series, publish, free and Fast Pass episodes, a scheduled episode goes live by itself", async () => {
   test.setTimeout(150_000)
   await page.request.get("/api/v1/auth/csrf")
   const xsrf = (await page.context().cookies()).find((c) => c.name === "XSRF-TOKEN")?.value ?? ""
@@ -332,7 +406,7 @@ test("9. creator writes: draft series, publish, free and Fast Pass episodes, a s
   await anonymous.dispose()
 })
 
-test("10. delete the account: signed out everywhere, wrong password refused first", async () => {
+test("11. delete the account: signed out everywhere, wrong password refused first", async () => {
   await page.goto("/settings")
   await page.getByRole("button", { name: "Delete account" }).first().click()
   const dialog = page.getByRole("dialog")

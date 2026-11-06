@@ -474,11 +474,26 @@ wiring them are fixed in P5-07.
   - Depends on: P2-04 (T15)
   - Done when: every error from the API shows next to its field or as an alert; typed input is never lost.
 
-- [ ] **P4-13 Creator › My series** `/creator/series` (A1)
+- [x] **P4-13 Creator › My series** `/creator/series` (A1)
   - Build: list with filter and search, Create series, Add episode per row, success notice with "Add the first
     episode" / "Add another episode".
   - Depends on: P2-04 (T12)
   - Done when: the episode count updates after publishing.
+  - Done (2026-11-06): `/creator/series` (`src/components/pr/creator-series-page.tsx`): search (250 ms after typing),
+    All / Published / Draft filter, one row per series (cover, type, episodes, readers, subscribers, status badge,
+    Add episode, Edit), "Create series", the success notice (`?notice=series-created|episode-added&series=<id>`
+    with "Add the first episode" / "Add another episode"), loading, empty, no-match, error and logged-out states,
+    English and Khmer. A reader sees "Become a creator" with a dialog (pen name + terms, react-hook-form + zod) that
+    calls `POST /creator` and then refreshes the session so creator-only calls work at once; `/creator` uses the
+    same dialog for "Start publishing" and links to My series. Demo mode shows the stand-in creator's series read-only.
+    Tests: real-mode Playwright test 8 (dialog, list, filter, search, notices), demo `e2e/creator-series.spec.ts`
+    (desktop and phone, no sideways scroll, Khmer).
+  - Notes: "Create series", "Edit" and "Add episode" link to `/creator/series/new`, `/creator/series/[id]/edit` and
+    `/creator/series/[id]/episodes/new`, which P4-14 and P4-15 build (until then they show the 404 page).
+    Also fixed in this task: a comment you post in a thread of more than 50 comments could vanish from the list
+    (the API sends the top 50 by likes, and the list was loaded again after the post); `src/lib/comments.ts` now
+    keeps the reader's own comments. The "404 page" demo test (`/series/nope` answers 200 in dev) already fails on a
+    clean checkout; not caused by this task.
 
 - [ ] **P4-14 Create / edit series** `/creator/series/new`, `/creator/series/[id]/edit` (A1)
   - Build: title, genres, type (comic or novel), language, summary, tags, schedule, rating (A10), cover and banner
