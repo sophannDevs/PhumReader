@@ -619,7 +619,9 @@
     "title": "Page not found",
     "body": "The page you're looking for doesn't exist or has moved.",
     "home": "Back to Home",
-    "genres": "Browse genres"
+    "genres": "Browse genres",
+    "searchLabel": "Search series, creators…",
+    "searchSubmit": "Search"
   },
   "comingSoon": {
     "title": "{topic} is coming soon",
@@ -1107,5 +1109,108 @@
     "error_not_hideable": "Only live content can be hidden.",
     "error_not_hidden": "This item is not hidden.",
     "error_report_closed": "Another admin already settled this report."
+  },
+  "legal": {
+    "placeholderNote": "Placeholder text. The final wording comes from [YOUR COMPANY NAME] before launch.",
+    "updated": "Last updated: [DATE]",
+    "toc": "On this page",
+    "terms": {
+      "title": "Terms of use",
+      "intro": "These terms explain how you may use PhumReader, a place to read comics and web novels in Khmer and English.",
+      "sections": [
+        {
+          "h": "Using PhumReader",
+          "p": "You may read, subscribe, like and comment for personal use. Do not copy, resell or scrape stories, and do not misuse the site."
+        },
+        {
+          "h": "Your account",
+          "p": "Keep your password private. You are responsible for what happens under your account. We may suspend accounts that break these terms."
+        },
+        {
+          "h": "Coins and Fast Pass",
+          "p": "Coins are bought with the payment methods shown at checkout and unlock Fast Pass episodes. Prices and refund rules are [PRICE AND REFUND POLICY]."
+        },
+        {
+          "h": "Creators",
+          "p": "Creators keep the rights to their work and promise that they own what they publish. We may hide content that breaks the rules or the law."
+        },
+        {
+          "h": "Comments and reports",
+          "p": "Be kind. Comments that are abusive, hateful or spam may be hidden. You can report any series, episode or comment."
+        },
+        {
+          "h": "Changes and contact",
+          "p": "We may update these terms and will show the date above. Questions: [SUPPORT EMAIL]."
+        }
+      ]
+    },
+    "privacy": {
+      "title": "Privacy policy",
+      "intro": "This page explains what PhumReader collects about you, why, and the choices you have.",
+      "sections": [
+        {
+          "h": "What we collect",
+          "p": "Your name, email address, reading activity (progress, subscriptions, likes, bookmarks), coin purchases and the comments you write."
+        },
+        {
+          "h": "Why we collect it",
+          "p": "To run your account, remember where you stopped reading, process payments, keep the site safe and send the emails you ask for."
+        },
+        {
+          "h": "Who we share it with",
+          "p": "Payment providers, our email and hosting providers, and only what they need. We do not sell your data. Details: [PROVIDER LIST]."
+        },
+        {
+          "h": "Cookies and local storage",
+          "p": "We use cookies to keep you signed in and to protect forms, and local storage for your reading settings."
+        },
+        {
+          "h": "Your choices",
+          "p": "You can change your details and notification settings in Settings. You can delete your account there; your personal data is erased after a 30-day grace period."
+        },
+        {
+          "h": "Contact",
+          "p": "Questions about your data: [SUPPORT EMAIL]."
+        }
+      ]
+    },
+    "help": {
+      "title": "Help center",
+      "intro": "Answers to common questions. Cannot find yours? Write to us.",
+      "faqTitle": "Common questions",
+      "faq": [
+        {
+          "q": "How do I get coins?",
+          "a": "Open Coins from the menu, choose a pack and pay with KHQR, ABA Pay or card. The coins are added as soon as the payment is confirmed."
+        },
+        {
+          "q": "What is Fast Pass?",
+          "a": "Some new episodes can be read early for a few coins. Every Fast Pass episode becomes free for everyone after the date shown on it."
+        },
+        {
+          "q": "I paid but my coins did not arrive.",
+          "a": "Wait a minute and reload Coins. If the order still shows as pending, contact us with the order number from your purchase history."
+        },
+        {
+          "q": "How do I become a creator?",
+          "a": "Open Creator in the menu and accept the Creator terms. You can then create a series and upload episodes."
+        },
+        {
+          "q": "How do I delete my account?",
+          "a": "Go to Settings > Account > Delete account. Your account is erased after a 30-day grace period; logging in during that time keeps it."
+        },
+        {
+          "q": "How do I report a problem with a story or comment?",
+          "a": "Use the Report button on the series, episode or comment. Our team reviews every report."
+        }
+      ],
+      "contactTitle": "Contact us",
+      "contactBody": "Email [SUPPORT EMAIL]. We usually reply within [REPLY TIME]."
+    },
+    "offline": {
+      "title": "You are offline",
+      "body": "PhumReader needs a connection to load stories. Check your network and try again.",
+      "retry": "Try again"
+    }
   }
 }

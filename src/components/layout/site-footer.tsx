@@ -27,10 +27,10 @@ const columns: { title: string; links: FooterLink[] }[] = [
   {
     title: "help",
     links: [
-      { key: "helpCenter", href: "/coming-soon?topic=help-center" },
-      { key: "terms", href: "/coming-soon?topic=terms" },
-      { key: "privacy", href: "/coming-soon?topic=privacy" },
-      { key: "contact", href: "/coming-soon?topic=contact" },
+      { key: "helpCenter", href: "/help" },
+      { key: "terms", href: "/terms" },
+      { key: "privacy", href: "/privacy" },
+      { key: "contact", href: "/help#contact" },
     ],
   },
 ]

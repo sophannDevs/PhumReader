@@ -5,6 +5,7 @@ import { hasLocale, NextIntlClientProvider } from "next-intl";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import "../globals.css";
 import { routing } from "@/i18n/routing";
+import { ServiceWorker } from "@/components/pr/service-worker";
 import { Providers } from "@/lib/query";
 import { cn } from "@/lib/utils";
 import { THEME_INIT_SCRIPT } from "@/lib/theme-script";
@@ -80,6 +81,7 @@ export default async function LocaleLayout({
       <body className="min-h-full flex flex-col">
         <NextIntlClientProvider locale={locale} messages={messages}>
           <Providers>{children}</Providers>
+          <ServiceWorker />
         </NextIntlClientProvider>
       </body>
     </html>

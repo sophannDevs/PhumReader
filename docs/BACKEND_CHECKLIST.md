@@ -585,11 +585,24 @@ wiring them are fixed in P5-07.
     future account purge must keep `audit_log` rows (the table is append-only and `actor_id` references `users`).
     Layout at 390 px was not checked in a browser: rows wrap and the tab bar scrolls inside its own box.
 
-- [ ] **P4-17 System and legal pages**
+- [x] **P4-17 System and legal pages**
   - Build: offline page for the installable app, Terms, Privacy, Help (placeholder text, A16); 404 and 500 already
     exist (T44).
   - Depends on: P2-04 (T12)
   - Done when: unknown URLs show the 404 page with search and Home links; the new pages are linked from the footer.
+  - Done (2026-11-06): `/terms`, `/privacy` (`legal-page.tsx`: numbered sections with a table of contents), `/help`
+    (`help-page.tsx`: six questions in an accordion, contact section at `/help#contact`) and `/offline`
+    (`offline-view.tsx`), all in English and Khmer under the `legal` messages, with placeholder text and
+    `[PLACEHOLDERS]` for company, dates, prices and the support email (A16). The footer's Help center, Terms,
+    Privacy and Contact links now open them (they went to "coming soon" before). The 404 page has a search box
+    (opens `/search?q=…`), "Back to Home" and "Browse genres". Installable app: `public/sw.js`, registered in
+    production only (`service-worker.tsx`), keeps `/offline` and `/km/offline` (with their style sheets) and shows
+    them when a page cannot be loaded; it never touches API calls or other files. Tests: `e2e/system-pages.spec.ts`
+    (footer links, table of contents, Khmer, 404 with search and Home, offline page, and the network turned off
+    after the first visit shows the offline page); no sideways scroll at 390 and 1440 px.
+  - Notes: `/series/nope` and other unknown dynamic URLs show the 404 page but answer HTTP 200 (the same known
+    failure of the demo test "404 page" in `e2e/states.spec.ts`); fully unknown paths such as `/no/such/page` answer 404.
+    The service worker only works on the production build (`next start`), not in `npm run dev`.
 
 - [ ] **Milestone M4**: every artboard's buttons work (creator and admin pages on mock data until Phase 5).
 
