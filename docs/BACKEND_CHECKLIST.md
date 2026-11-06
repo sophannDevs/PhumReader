@@ -37,7 +37,7 @@ Sources of truth: the plan doc, `CLAUDE.md`, `docs/BACKEND.md` (decisions and lo
 - Money: balances change only through the ledger, in one transaction with a wallet row lock; every payment and
   unlock call is idempotent. Never build card number fields: cards use the PayWay hosted page.
 
-Progress: 3 / 51 tasks (P1-05, P1-07, P1-08) · Stage 1: step 4 of 5, part 1 of 5 done · milestones M1, M3, M4, M5, M6, M7
+Progress: 3 / 51 tasks (P1-05, P1-07, P1-08) · Stage 1: step 4 of 5, parts 1–2 of 5 done · milestones M1, M3, M4, M5, M6, M7
 
 ---
 
@@ -85,7 +85,15 @@ deployment and no Docker. A step is done when its checks pass; tick the plan tas
       CSRF token (it stays the same for the browser), then `/me` and refresh 401; 6 wrong passwords for one email
       give 429 with `retryAfterSeconds`. Fixed on the way: the CSRF token used to change after every signed-in
       request, so a page that read it earlier got 403 on log out.
-    - [ ] Part 2, catalog: home, rankings, genres, series and episodes, search (PostgreSQL for now)
+    - [x] Part 2, catalog (P3-06 without Redis and page refresh, P3-15 stand-in): `GET /api/v1/home`, `/rankings`,
+      `/genres`, `/genres/{slug}`, `/series` (type, genre, popular / newest, paged), `/series/{slug}`,
+      `/series/{slug}/episodes` (oldest / newest, paged), `/search` (PostgreSQL). All public.
+      Done 2026-11-06: 18 new tests (84 backend tests green). The catalog test compares every one of the 48 series
+      cards, the Glass Compass episode list and the home sections with `demo-data.json` on the demo's today, then
+      moves the clock (a Fast Pass episode turns free on its date; UP and NEW badges follow the calendar). Real check
+      through `http://localhost:3000/api/v1` on Supabase: home built in 1.2 s (Tokyo), then 10–20 ms from memory;
+      series page 0.5 s; lists 0.1–0.2 s. Not done yet: Redis cache and "refresh the website's page on publish"
+      (Step 3 and P3-14), Meilisearch (P3-15), the reader's own Continue reading (Part 3).
     - [ ] Part 3, reading: episode content (402 when locked), progress, library, likes, bookmarks, follows, comments
     - [ ] Part 4, coins: balance, unlocks, packs, orders with a dev-only payment simulator, history
     - [ ] Part 5, settings and the creator dashboard
@@ -541,8 +549,8 @@ All 74 plan tasks, and where each one lives.
    series the creator dashboard shows. The other 11 demo creators and the 5 commenters cannot log in
    (`*.phumreader.invalid` addresses, no password).
 6. **Badges.** "NEW" comes from `series.launched_at`: series the demo marks as new are seeded as launched 14 days
-   before the demo's today. "UP" will be computed from release dates in Step 4, so it may not match the demo's
-   hand-set flags exactly.
+   before the demo's today. "UP" is computed from the schedule and release dates (assumption 15), so it does not
+   match the demo's hand-set flags exactly.
 7. **Subscriber counts** are seeded as 4.68% of likes, the website's own rule (frontend Assumption 5).
 8. **Access tokens without a JWT library (for now).** RS256 tokens are signed and checked with the JDK's own
    crypto (`auth/service/JwtService`): only RS256, our issuer and unexpired tokens pass. Dev and tests use a
@@ -562,3 +570,22 @@ All 74 plan tasks, and where each one lives.
     `Retry-After` and `retryAfterSeconds`.
 13. **"Remember me" off** gives browser-session cookies (no Max-Age); the choice is kept on the refresh token
     (V2 migration), so refreshes keep it.
+14. **Catalog answers carry raw values.** Field names follow `src/data/types.ts`, but `views` / `likes` are numbers,
+    episode `date` is an ISO day in Asia/Phnom_Penh, ranking movement is `previousRank` (null = NEW) and there is
+    no `schedule` text (`updateDay` instead). Step 5's fetch layer turns them into the website's strings ("1.6M",
+    "Nov 5, 2026", "▲ 2", "Every Sun") with its own formatters, which also cover Khmer. Formatting on the server
+    would be English only.
+15. **UP and NEW badges use the real clock in Asia/Phnom_Penh.** A series is UP when it is ongoing, updates today
+    and released an episode (or a Fast Pass episode turned free) in the last 7 days; with the seed that is the
+    day's 6–7 scheduled series through 2026-12-02 (the last demo episode turns free on 2026-11-26),
+    then none. An episode is UP when it is the newest free one and
+    turned free in the last 7 days (the spec's "latest free episode has UP"). NEW lasts 30 days after launch, so
+    the 16 demo "new" series lose it on 2026-11-21.
+16. **Home feed choices the demo hard-coded:** daily lists, genre rows and web novels are the most viewed (ties by
+    id); a genre row shows up to 12 series; the "become a creator" card shows the 3 most viewed comics (the demo
+    picked three titles). The home feed has no Continue reading: that is the reader's own data (Part 3).
+17. **Home feed cache in memory** for 60 s (`phumreader.catalog.home-cache-ttl`, 0 in tests), rebuilt at
+    midnight in Phnom Penh. Redis replaces it in Step 3; nothing changes the catalog yet (publishing is P3-14).
+18. **Search stand-in.** `GET /api/v1/search` finds published series whose title, creator or genre contains the
+    text (any case, Khmer works), titles starting with it first, at most 20; an empty query gives the 6 most
+    viewed ("Popular now"). P3-15 moves it to Meilisearch behind the same address.

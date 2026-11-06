@@ -49,6 +49,9 @@ The other demo creators and commenters exist as accounts without a password (the
 - http://localhost:8080/api/v1/health: health, also through the website at http://localhost:3000/api/v1/health
 - http://localhost:8080/actuator/health: Spring health details
 - http://localhost:8080/swagger-ui.html: API explorer (off in `prod`)
+- Public catalog (needs the seeded demo): http://localhost:3000/api/v1/home,
+  `/api/v1/series/glass-compass`, `/api/v1/series/glass-compass/episodes?sort=newest`, `/api/v1/rankings?kind=novels`,
+  `/api/v1/genres`, `/api/v1/series?genre=sci-fi`, `/api/v1/search?q=glass`
 
 ## Code layout
 
@@ -75,4 +78,6 @@ Inside a feature: `web` (controllers + request/response records) → `service` �
 - Base path `/api/v1`, JSON only. Every error: `{"error": {"code": "snake_case", "message": "…", "fields"?: {…}}}`.
 - Every response carries `X-Request-Id` (also in each log line).
 - Lists use cursor paging: `?cursor=&limit=` → `{ "items": [...], "nextCursor": "…" | null }`.
+- Catalog answers use the website's field names (`src/data/types.ts`) with raw values: counts as numbers, days as
+  ISO dates in Asia/Phnom_Penh; the website formats them for English and Khmer.
 - Writes need the CSRF header `X-XSRF-TOKEN` (value of the `XSRF-TOKEN` cookie).

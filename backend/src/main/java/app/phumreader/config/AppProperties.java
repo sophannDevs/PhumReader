@@ -16,10 +16,20 @@ import org.springframework.validation.annotation.Validated;
  *
  * @param frontendUrl the website's address, used for links in emails and sign-in redirects
  * @param auth sign-in settings
+ * @param catalog settings for the public catalog (home feed, series, rankings)
  */
 @Validated
 @ConfigurationProperties("phumreader")
-public record AppProperties(@NotBlank @URL String frontendUrl, @Valid @DefaultValue Auth auth) {
+public record AppProperties(
+        @NotBlank @URL String frontendUrl,
+        @Valid @DefaultValue Auth auth,
+        @Valid @DefaultValue Catalog catalog) {
+
+    /**
+     * @param homeCacheTtl how long the home feed is served from memory before it is built again
+     *     (zero turns the cache off)
+     */
+    public record Catalog(@DefaultValue("60s") Duration homeCacheTtl) {}
 
     /**
      * @param accessTokenTtl lifetime of the access token (JWT in the access cookie)

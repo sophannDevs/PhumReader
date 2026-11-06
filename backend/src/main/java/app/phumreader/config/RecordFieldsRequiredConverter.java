@@ -60,6 +60,10 @@ class RecordFieldsRequiredConverter implements ModelConverter {
             Set<String> types = new LinkedHashSet<>(property.getTypes());
             types.add("null");
             property.setTypes(types);
+            // An enum must list null too, or null would not be a valid value.
+            if (property.getEnum() != null && !property.getEnum().contains(null)) {
+                property.addEnumItemObject(null);
+            }
         } else if (property.get$ref() == null) {
             property.setNullable(true);
         }

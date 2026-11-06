@@ -12,6 +12,11 @@ public class MutableClock extends Clock {
 
     private final AtomicReference<Instant> now = new AtomicReference<>(Instant.now());
 
+    /** Jumps to {@code instant} (catalog tests pin the demo's "today"). */
+    public void set(Instant instant) {
+        now.set(instant);
+    }
+
     public void advance(Duration duration) {
         now.updateAndGet(t -> t.plus(duration));
     }

@@ -189,6 +189,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/genres": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** All genres in display order */
+        get: operations["genres"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/genres/{slug}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One genre (404 when unknown) */
+        get: operations["genre"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/health": {
         parameters: {
             query?: never;
@@ -201,6 +235,23 @@ export interface paths {
          * @description 200 when everything is UP, 503 when the database is DOWN.
          */
         get: operations["health"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/home": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Home feed: hero, daily updates, rankings, genres, web novels */
+        get: operations["home"];
         put?: never;
         post?: never;
         delete?: never;
@@ -226,12 +277,131 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/rankings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** A ranking, best first */
+        get: operations["rankings"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Series by title, creator or genre
+         * @description An empty query returns the 6 most viewed series ("Popular now").
+         */
+        get: operations["search"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/series": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Published series, optionally of one type and one genre */
+        get: operations["seriesList"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/series/{slug}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The series page (404 when unknown) */
+        get: operations["series"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/series/{slug}/episodes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Released episodes of a series (404 when the series is unknown) */
+        get: operations["episodes"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        Badges: {
+            isNew: boolean;
+            up: boolean;
+        };
+        CursorPageEpisodeSummary: {
+            items: components["schemas"]["EpisodeSummary"][];
+            nextCursor?: string | null;
+        };
+        CursorPageRankingEntry: {
+            items: components["schemas"]["RankingEntry"][];
+            nextCursor?: string | null;
+        };
+        CursorPageSeriesCard: {
+            items: components["schemas"]["SeriesCard"][];
+            nextCursor?: string | null;
+        };
         EmailRequest: {
             email: string;
+        };
+        EpisodeSummary: {
+            /** @enum {string} */
+            access: "free" | "fastpass";
+            /** Format: date */
+            date: string;
+            isUp: boolean;
+            /** Format: int64 */
+            likes: number;
+            /** Format: int32 */
+            n: number;
+            /** Format: int32 */
+            price?: number | null;
+            thumb?: string | null;
+            title: string;
         };
         ErrorDetail: {
             /** @example validation_failed */
@@ -247,11 +417,42 @@ export interface components {
         ErrorResponse: {
             error: components["schemas"]["ErrorDetail"];
         };
+        GenreItem: {
+            name: string;
+            /** Format: int64 */
+            seriesCount: number;
+            slug: string;
+        };
         HealthResponse: {
             /** @enum {string} */
             database: "UP" | "DOWN";
             /** @enum {string} */
             status: "UP" | "DOWN";
+        };
+        HeroSlide: {
+            blurb: string;
+            series: string;
+            seriesData: components["schemas"]["SeriesCard"];
+            tag: string;
+        };
+        HomeFeed: {
+            byGenre: {
+                [key: string]: components["schemas"]["SeriesCard"][];
+            };
+            creatorCovers: components["schemas"]["SeriesCard"][];
+            daily: {
+                [key: string]: components["schemas"]["SeriesCard"][];
+            };
+            genres: string[];
+            hero: components["schemas"]["HeroSlide"][];
+            novels: components["schemas"]["SeriesCard"][];
+            rankings: components["schemas"]["HomeRankings"];
+            /** @enum {string} */
+            today: "Mon" | "Tue" | "Wed" | "Thu" | "Fri" | "Sat" | "Sun";
+        };
+        HomeRankings: {
+            comics: components["schemas"]["RankingEntry"][];
+            novels: components["schemas"]["RankingEntry"][];
         };
         LoginRequest: {
             email: string;
@@ -267,9 +468,62 @@ export interface components {
             id: string;
             roles: string[];
         };
+        RankingEntry: {
+            /** Format: int32 */
+            previousRank?: number | null;
+            /** Format: int32 */
+            rank: number;
+            series: components["schemas"]["SeriesCard"];
+        };
         ResetPasswordRequest: {
             password: string;
             token: string;
+        };
+        SearchResults: {
+            items: components["schemas"]["SeriesCard"][];
+        };
+        SeriesCard: {
+            /** @enum {string} */
+            ageRating: "all" | "teen" | "mature";
+            badges: components["schemas"]["Badges"];
+            cover?: string | null;
+            creator: string;
+            /** Format: int32 */
+            fastPassEpisodes: number;
+            /** Format: int32 */
+            freeEpisodes: number;
+            genre: string;
+            /** Format: uuid */
+            id: string;
+            language: string[];
+            /** Format: int64 */
+            likes: number;
+            slug: string;
+            /** @enum {string} */
+            status: "ongoing" | "completed" | "hiatus";
+            title: string;
+            /** Format: int32 */
+            totalEpisodes: number;
+            /** @enum {string} */
+            type: "comic" | "novel";
+            /** @enum {string|null} */
+            updateDay?: "Mon" | "Tue" | "Wed" | "Thu" | "Fri" | "Sat" | "Sun" | null;
+            /** Format: int64 */
+            views: number;
+        };
+        SeriesDetail: {
+            /** Format: int32 */
+            creatorSeriesCount: number;
+            related: components["schemas"]["SeriesCard"][];
+            series: components["schemas"]["SeriesCard"];
+            stats: components["schemas"]["SeriesStats"];
+            synopsis: string;
+        };
+        SeriesStats: {
+            /** Format: int64 */
+            comments: number;
+            /** Format: int64 */
+            subscribers: number;
         };
         SignupRequest: {
             email: string;
@@ -599,6 +853,66 @@ export interface operations {
             };
         };
     };
+    genres: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GenreItem"][];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    genre: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GenreItem"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
     health: {
         parameters: {
             query?: never;
@@ -628,6 +942,35 @@ export interface operations {
             };
         };
     };
+    home: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HomeFeed"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
     me: {
         parameters: {
             query?: never;
@@ -644,6 +987,180 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["MeResponse"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    rankings: {
+        parameters: {
+            query?: {
+                kind?: "comics" | "novels";
+                /** @description nextCursor of the previous page; omit for the first page */
+                cursor?: string | null;
+                /** @description Page size, 1-100 (default 20) */
+                limit?: number | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CursorPageRankingEntry"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    search: {
+        parameters: {
+            query?: {
+                q?: string;
+                /** @description 1-20 (default 8) */
+                limit?: number | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SearchResults"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    seriesList: {
+        parameters: {
+            query?: {
+                type?: "comic" | "novel";
+                /** @description Genre slug, e.g. slice-of-life */
+                genre?: string | null;
+                sort?: "popular" | "newest";
+                /** @description nextCursor of the previous page; omit for the first page */
+                cursor?: string | null;
+                /** @description Page size, 1-100 (default 20) */
+                limit?: number | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CursorPageSeriesCard"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    series: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SeriesDetail"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    episodes: {
+        parameters: {
+            query?: {
+                sort?: "oldest" | "newest";
+                /** @description nextCursor of the previous page; omit for the first page */
+                cursor?: string | null;
+                /** @description Page size, 1-100 (default 20) */
+                limit?: number | null;
+            };
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CursorPageEpisodeSummary"];
                 };
             };
             /** @description Error */

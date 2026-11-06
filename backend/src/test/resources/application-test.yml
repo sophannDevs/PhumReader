@@ -6,6 +6,9 @@ phumreader:
     generate-dev-keys: true
     # Any reuse of a rotated refresh token counts (tests move the clock).
     refresh-reuse-grace: 0s
+  catalog:
+    # Tests change the clock and the data: always build the home feed fresh.
+    home-cache-ttl: 0s
 
 management:
   endpoint:

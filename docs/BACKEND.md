@@ -116,6 +116,9 @@ matching ledger entries.
   validation, 401 not logged in, 402 locked episode (with price and free date), 403 forbidden, 404, 409
   conflict, 429 rate limited (with `Retry-After`). One `@RestControllerAdvice`.
 - Lists: cursor pagination `?cursor=&limit=` returning `{ items, nextCursor }`, with sort options.
+- Catalog answers keep the website's field names (`src/data/types.ts`) but carry raw values (counts as numbers,
+  calendar days as ISO dates in Asia/Phnom_Penh, ranking movement as the previous rank); the website's fetch layer
+  formats them with its own `formatCount` / `formatDate` (English and Khmer).
 - Money and access mutations (unlock, create order, webhooks) take an `Idempotency-Key` and are safe to retry.
 - Every response carries `X-Request-Id`, also in the logs (MDC) and in Sentry.
 - Validation uses Jakarta Validation on request records.

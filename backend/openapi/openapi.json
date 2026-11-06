@@ -323,6 +323,75 @@
         "tags" : [ "auth" ]
       }
     },
+    "/api/v1/genres" : {
+      "get" : {
+        "operationId" : "genres",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/GenreItem"
+                  }
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "All genres in display order",
+        "tags" : [ "catalog" ]
+      }
+    },
+    "/api/v1/genres/{slug}" : {
+      "get" : {
+        "operationId" : "genre",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "slug",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/GenreItem"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "One genre (404 when unknown)",
+        "tags" : [ "catalog" ]
+      }
+    },
     "/api/v1/health" : {
       "get" : {
         "description" : "200 when everything is UP, 503 when the database is DOWN.",
@@ -353,6 +422,35 @@
         "tags" : [ "health" ]
       }
     },
+    "/api/v1/home" : {
+      "get" : {
+        "operationId" : "home",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/HomeFeed"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Home feed: hero, daily updates, rankings, genres, web novels",
+        "tags" : [ "catalog" ]
+      }
+    },
     "/api/v1/me" : {
       "get" : {
         "operationId" : "me",
@@ -381,10 +479,345 @@
         "summary" : "The signed-in account (401 when not signed in)",
         "tags" : [ "account" ]
       }
+    },
+    "/api/v1/rankings" : {
+      "get" : {
+        "operationId" : "rankings",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "kind",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "default" : "comics",
+            "enum" : [ "comics", "novels" ]
+          }
+        }, {
+          "description" : "nextCursor of the previous page; omit for the first page",
+          "in" : "query",
+          "name" : "cursor",
+          "required" : false,
+          "schema" : {
+            "type" : [ "string", "null" ]
+          }
+        }, {
+          "description" : "Page size, 1-100 (default 20)",
+          "in" : "query",
+          "name" : "limit",
+          "required" : false,
+          "schema" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int32"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CursorPageRankingEntry"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "A ranking, best first",
+        "tags" : [ "catalog" ]
+      }
+    },
+    "/api/v1/search" : {
+      "get" : {
+        "description" : "An empty query returns the 6 most viewed series (\"Popular now\").",
+        "operationId" : "search",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "q",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "default" : "",
+            "maxLength" : 100,
+            "minLength" : 0
+          }
+        }, {
+          "description" : "1-20 (default 8)",
+          "in" : "query",
+          "name" : "limit",
+          "required" : false,
+          "schema" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int32"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SearchResults"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Series by title, creator or genre",
+        "tags" : [ "search" ]
+      }
+    },
+    "/api/v1/series" : {
+      "get" : {
+        "operationId" : "seriesList",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "type",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "enum" : [ "comic", "novel" ]
+          }
+        }, {
+          "description" : "Genre slug, e.g. slice-of-life",
+          "in" : "query",
+          "name" : "genre",
+          "required" : false,
+          "schema" : {
+            "type" : [ "string", "null" ]
+          }
+        }, {
+          "in" : "query",
+          "name" : "sort",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "default" : "popular",
+            "enum" : [ "popular", "newest" ]
+          }
+        }, {
+          "description" : "nextCursor of the previous page; omit for the first page",
+          "in" : "query",
+          "name" : "cursor",
+          "required" : false,
+          "schema" : {
+            "type" : [ "string", "null" ]
+          }
+        }, {
+          "description" : "Page size, 1-100 (default 20)",
+          "in" : "query",
+          "name" : "limit",
+          "required" : false,
+          "schema" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int32"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CursorPageSeriesCard"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Published series, optionally of one type and one genre",
+        "tags" : [ "catalog" ]
+      }
+    },
+    "/api/v1/series/{slug}" : {
+      "get" : {
+        "operationId" : "series",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "slug",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SeriesDetail"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "The series page (404 when unknown)",
+        "tags" : [ "catalog" ]
+      }
+    },
+    "/api/v1/series/{slug}/episodes" : {
+      "get" : {
+        "operationId" : "episodes",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "slug",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "sort",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "default" : "oldest",
+            "enum" : [ "oldest", "newest" ]
+          }
+        }, {
+          "description" : "nextCursor of the previous page; omit for the first page",
+          "in" : "query",
+          "name" : "cursor",
+          "required" : false,
+          "schema" : {
+            "type" : [ "string", "null" ]
+          }
+        }, {
+          "description" : "Page size, 1-100 (default 20)",
+          "in" : "query",
+          "name" : "limit",
+          "required" : false,
+          "schema" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int32"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CursorPageEpisodeSummary"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Released episodes of a series (404 when the series is unknown)",
+        "tags" : [ "catalog" ]
+      }
     }
   },
   "components" : {
     "schemas" : {
+      "Badges" : {
+        "type" : "object",
+        "properties" : {
+          "isNew" : {
+            "type" : "boolean"
+          },
+          "up" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "isNew", "up" ]
+      },
+      "CursorPageEpisodeSummary" : {
+        "type" : "object",
+        "properties" : {
+          "items" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/EpisodeSummary"
+            }
+          },
+          "nextCursor" : {
+            "type" : [ "string", "null" ]
+          }
+        },
+        "required" : [ "items" ]
+      },
+      "CursorPageRankingEntry" : {
+        "type" : "object",
+        "properties" : {
+          "items" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/RankingEntry"
+            }
+          },
+          "nextCursor" : {
+            "type" : [ "string", "null" ]
+          }
+        },
+        "required" : [ "items" ]
+      },
+      "CursorPageSeriesCard" : {
+        "type" : "object",
+        "properties" : {
+          "items" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/SeriesCard"
+            }
+          },
+          "nextCursor" : {
+            "type" : [ "string", "null" ]
+          }
+        },
+        "required" : [ "items" ]
+      },
       "EmailRequest" : {
         "type" : "object",
         "properties" : {
@@ -396,6 +829,41 @@
           }
         },
         "required" : [ "email" ]
+      },
+      "EpisodeSummary" : {
+        "type" : "object",
+        "properties" : {
+          "access" : {
+            "type" : "string",
+            "enum" : [ "free", "fastpass" ]
+          },
+          "date" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "isUp" : {
+            "type" : "boolean"
+          },
+          "likes" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "n" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "price" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int32"
+          },
+          "thumb" : {
+            "type" : [ "string", "null" ]
+          },
+          "title" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "access", "date", "isUp", "likes", "n", "title" ]
       },
       "ErrorDetail" : {
         "type" : "object",
@@ -430,6 +898,22 @@
         },
         "required" : [ "error" ]
       },
+      "GenreItem" : {
+        "type" : "object",
+        "properties" : {
+          "name" : {
+            "type" : "string"
+          },
+          "seriesCount" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "slug" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "name", "seriesCount", "slug" ]
+      },
       "HealthResponse" : {
         "type" : "object",
         "properties" : {
@@ -443,6 +927,97 @@
           }
         },
         "required" : [ "database", "status" ]
+      },
+      "HeroSlide" : {
+        "type" : "object",
+        "properties" : {
+          "blurb" : {
+            "type" : "string"
+          },
+          "series" : {
+            "type" : "string"
+          },
+          "seriesData" : {
+            "$ref" : "#/components/schemas/SeriesCard"
+          },
+          "tag" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "blurb", "series", "seriesData", "tag" ]
+      },
+      "HomeFeed" : {
+        "type" : "object",
+        "properties" : {
+          "byGenre" : {
+            "type" : "object",
+            "additionalProperties" : {
+              "type" : "array",
+              "items" : {
+                "$ref" : "#/components/schemas/SeriesCard"
+              }
+            }
+          },
+          "creatorCovers" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/SeriesCard"
+            }
+          },
+          "daily" : {
+            "type" : "object",
+            "additionalProperties" : {
+              "type" : "array",
+              "items" : {
+                "$ref" : "#/components/schemas/SeriesCard"
+              }
+            }
+          },
+          "genres" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "hero" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/HeroSlide"
+            }
+          },
+          "novels" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/SeriesCard"
+            }
+          },
+          "rankings" : {
+            "$ref" : "#/components/schemas/HomeRankings"
+          },
+          "today" : {
+            "type" : "string",
+            "enum" : [ "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun" ]
+          }
+        },
+        "required" : [ "byGenre", "creatorCovers", "daily", "genres", "hero", "novels", "rankings", "today" ]
+      },
+      "HomeRankings" : {
+        "type" : "object",
+        "properties" : {
+          "comics" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/RankingEntry"
+            }
+          },
+          "novels" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/RankingEntry"
+            }
+          }
+        },
+        "required" : [ "comics", "novels" ]
       },
       "LoginRequest" : {
         "type" : "object",
@@ -492,6 +1067,23 @@
         },
         "required" : [ "displayName", "email", "emailVerified", "id", "roles" ]
       },
+      "RankingEntry" : {
+        "type" : "object",
+        "properties" : {
+          "previousRank" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int32"
+          },
+          "rank" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "series" : {
+            "$ref" : "#/components/schemas/SeriesCard"
+          }
+        },
+        "required" : [ "rank", "series" ]
+      },
       "ResetPasswordRequest" : {
         "type" : "object",
         "properties" : {
@@ -507,6 +1099,127 @@
           }
         },
         "required" : [ "password", "token" ]
+      },
+      "SearchResults" : {
+        "type" : "object",
+        "properties" : {
+          "items" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/SeriesCard"
+            }
+          }
+        },
+        "required" : [ "items" ]
+      },
+      "SeriesCard" : {
+        "type" : "object",
+        "properties" : {
+          "ageRating" : {
+            "type" : "string",
+            "enum" : [ "all", "teen", "mature" ]
+          },
+          "badges" : {
+            "$ref" : "#/components/schemas/Badges"
+          },
+          "cover" : {
+            "type" : [ "string", "null" ]
+          },
+          "creator" : {
+            "type" : "string"
+          },
+          "fastPassEpisodes" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "freeEpisodes" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "genre" : {
+            "type" : "string"
+          },
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "language" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "likes" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "slug" : {
+            "type" : "string"
+          },
+          "status" : {
+            "type" : "string",
+            "enum" : [ "ongoing", "completed", "hiatus" ]
+          },
+          "title" : {
+            "type" : "string"
+          },
+          "totalEpisodes" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "type" : {
+            "type" : "string",
+            "enum" : [ "comic", "novel" ]
+          },
+          "updateDay" : {
+            "type" : [ "string", "null" ],
+            "enum" : [ "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun", null ]
+          },
+          "views" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        },
+        "required" : [ "ageRating", "badges", "creator", "fastPassEpisodes", "freeEpisodes", "genre", "id", "language", "likes", "slug", "status", "title", "totalEpisodes", "type", "views" ]
+      },
+      "SeriesDetail" : {
+        "type" : "object",
+        "properties" : {
+          "creatorSeriesCount" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "related" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/SeriesCard"
+            }
+          },
+          "series" : {
+            "$ref" : "#/components/schemas/SeriesCard"
+          },
+          "stats" : {
+            "$ref" : "#/components/schemas/SeriesStats"
+          },
+          "synopsis" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "creatorSeriesCount", "related", "series", "stats", "synopsis" ]
+      },
+      "SeriesStats" : {
+        "type" : "object",
+        "properties" : {
+          "comments" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "subscribers" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        },
+        "required" : [ "comments", "subscribers" ]
       },
       "SignupRequest" : {
         "type" : "object",

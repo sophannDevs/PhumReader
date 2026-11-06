@@ -29,6 +29,15 @@ public class SecurityConfig {
     static final String[] PUBLIC_GET = {
         "/api/v1/health",
         "/api/v1/auth/csrf",
+        // Public catalog (P3-06) and search.
+        "/api/v1/home",
+        "/api/v1/rankings",
+        "/api/v1/genres",
+        "/api/v1/genres/*",
+        "/api/v1/series",
+        "/api/v1/series/*",
+        "/api/v1/series/*/episodes",
+        "/api/v1/search",
         "/actuator/health",
         "/actuator/health/**",
         "/v3/api-docs",
