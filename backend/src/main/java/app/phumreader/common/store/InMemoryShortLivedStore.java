@@ -5,10 +5,12 @@ import java.time.Instant;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Component;
 
 /** {@link ShortLivedStore} kept in this API instance's memory. */
 @Component
+@ConditionalOnExpression("'${phumreader.redis.url:}'.isBlank()")
 public class InMemoryShortLivedStore implements ShortLivedStore {
 
     private static final int CLEANUP_ABOVE = 10_000;

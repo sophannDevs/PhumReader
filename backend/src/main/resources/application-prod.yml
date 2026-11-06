@@ -5,7 +5,13 @@ spring:
     username: ${DB_USER}
     password: ${DB_PASSWORD}
 
+  data:
+    redis:
+      url: ${REDIS_URL}
+
 phumreader:
+  redis:
+    url: ${REDIS_URL}
   frontend-url: ${FRONTEND_URL}
   auth:
     jwt-private-key: ${PHUMREADER_JWT_PRIVATE_KEY}

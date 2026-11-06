@@ -5,8 +5,8 @@ import java.time.Duration;
 import java.util.Optional;
 
 /**
- * Counts events per key in fixed time windows (for example wrong passwords per email). In memory
- * for now; a Redis version comes with Stage 1 Step 3 so limits hold across several API instances.
+ * Counts events per key in fixed time windows (for example wrong passwords per email). In Redis
+ * when {@code phumreader.redis.url} is set (limits hold across API instances), otherwise in memory.
  */
 public interface RateLimiter {
 

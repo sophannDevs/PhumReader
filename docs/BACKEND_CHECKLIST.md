@@ -75,6 +75,13 @@ deployment and no Docker. A step is done when its checks pass; tick the plan tas
     R2 bucket (accounts), the MinIO bucket `phumreader-dev` (created by P3-07), and part 2: swap the in-memory
     stand-ins for Redis (rate limits, codes, view counters), Meilisearch (search + outbox sync) and Mailpit (SMTP),
     then Google / Facebook login (P3-04).
+  - Done 2026-11-06 (part 2a, Redis): `RedisRateLimiter` and `RedisShortLivedStore` (`common/ratelimit`, `common/store`)
+    replace the in-memory ones when `REDIS_URL` is set (`phumreader.redis.url`); without it the in-memory versions stay
+    (tests, no-Redis machines). Limiter: one Lua script (INCR + PEXPIRE) per key, fails open with a warning if Redis is
+    down; store: SET with TTL, errors are not hidden. New `RedisStandInsTest` (3 tests, runs against a real Redis,
+    skipped when none is on 6379), `./gradlew check` green. Real check on Supabase + local Redis: 5 wrong passwords
+    then 429 and the keys `phumreader:rl:*` with TTL ~600 s; sign-up put `phumreader:kv:verify:<email>` (TTL 600 s) and
+    verifying removed it. Not done yet: view counters and the job queue (Redis, with P3-14), Meilisearch, Mailpit SMTP.
   - 2026-11-06: the company PC may not download programs, so Step 4 runs first with built-in stand-ins
     (rate limits and codes in memory, search in PostgreSQL, JWT signed with the JDK). At home: install the
     services, fill in `backend/.env`, swap the stand-ins (and optionally the JWT code for a JWT library), add

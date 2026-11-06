@@ -13,6 +13,10 @@ phumreader:
     home-cache-ttl: 0s
 
 management:
+  health:
+    redis:
+      # Tests use the in-memory stand-ins; no Redis is running.
+      enabled: false
   endpoint:
     health:
       show-details: always
