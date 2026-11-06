@@ -20,13 +20,17 @@ public final class CatalogRows {
 
     /** A published episode or chapter (no content). */
     public record EpisodeRow(
+            UUID id,
+            UUID seriesId,
             int number,
             String title,
             OffsetDateTime publishedAt,
             @Nullable OffsetDateTime freeAt,
             @Nullable Integer priceCoins,
             @Nullable String thumbnailUrl,
-            long likes) {}
+            long likes,
+            boolean commentsEnabled,
+            @Nullable String creatorNote) {}
 
     /**
      * Where the previous page of a series list ended: the last row's sort value and id. {@code

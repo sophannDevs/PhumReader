@@ -92,6 +92,7 @@ public final class CatalogViews {
      * The series page.
      *
      * @param related up to 4 other series in the same genre
+     * @param creatorId the creator's id (follow / unfollow)
      * @param creatorSeriesCount the creator's published series, this one included
      */
     public record SeriesDetail(
@@ -99,6 +100,7 @@ public final class CatalogViews {
             String synopsis,
             SeriesStats stats,
             List<SeriesCard> related,
+            UUID creatorId,
             int creatorSeriesCount) {}
 
     /**

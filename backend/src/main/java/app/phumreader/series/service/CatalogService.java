@@ -13,6 +13,9 @@ import app.phumreader.series.repository.CatalogRows.GenreRow;
 import app.phumreader.series.repository.CatalogRows.RankingRow;
 import app.phumreader.series.repository.CatalogRows.SeriesKey;
 import app.phumreader.series.repository.SeriesRow;
+import app.phumreader.series.service.CatalogRefs.EpisodeInSeries;
+import app.phumreader.series.service.CatalogRefs.EpisodeRef;
+import app.phumreader.series.service.CatalogRefs.SeriesRef;
 import app.phumreader.series.service.CatalogViews.Badges;
 import app.phumreader.series.service.CatalogViews.EpisodeAccess;
 import app.phumreader.series.service.CatalogViews.EpisodeSummary;
@@ -33,14 +36,18 @@ import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
 
@@ -244,6 +251,7 @@ public class CatalogService {
                 row.summary(),
                 new SeriesStats(row.subscribers(), queries.visibleComments(row.id())),
                 cards.of(queries.related(row.id(), RELATED, at)),
+                row.creatorId(),
                 queries.publishedSeriesOfCreator(row.creatorId()));
     }
 
@@ -260,9 +268,94 @@ public class CatalogService {
                 queries.seriesBySlug(slug, at).orElseThrow(CatalogService::seriesNotFound);
         List<EpisodeSummary> episodes =
                 queries.episodes(series.id(), newestFirst, after, size + 1, at).stream()
-                        .map(e -> episode(e, series, now))
+                        .map(e -> episode(e, series.latestFreeNumber(), now))
                         .toList();
         return page(episodes, size, e -> Cursors.encode(prefix + "|" + e.n()));
+    }
+
+    // ---------- lookups for other features (reading, library, comments) ----------
+
+    /** A published series by slug, with its card as of now. */
+    public Optional<SeriesRef> find(String slug) {
+        Instant now = clock.instant();
+        Cards cards = new Cards(now, today(now));
+        return queries.seriesBySlug(slug, utc(now)).map(row -> ref(row, cards));
+    }
+
+    /** A published series by slug; 404 {@code series_not_found} when there is none. */
+    public SeriesRef require(String slug) {
+        return find(slug).orElseThrow(CatalogService::seriesNotFound);
+    }
+
+    /** Cards of the published series among {@code seriesIds} (others are left out). */
+    public Map<UUID, SeriesCard> cards(Collection<UUID> seriesIds) {
+        Instant now = clock.instant();
+        Cards cards = new Cards(now, today(now));
+        Map<UUID, SeriesCard> result = new LinkedHashMap<>();
+        for (SeriesRow row : queries.seriesByIds(Set.copyOf(seriesIds), utc(now))) {
+            result.put(row.id(), cards.of(row));
+        }
+        return result;
+    }
+
+    /** A released episode of the series; 404 {@code episode_not_found} when there is none. */
+    public EpisodeRef requireEpisode(SeriesRef series, int number) {
+        Instant now = clock.instant();
+        return queries.episode(series.id(), number, utc(now))
+                .map(e -> episodeRef(e, series.latestFreeNumber(), now))
+                .orElseThrow(
+                        () -> ApiException.notFound("episode_not_found", "Episode not found."));
+    }
+
+    /** The released episode just before ({@code before}) or after {@code number}. */
+    public Optional<EpisodeRef> neighbour(SeriesRef series, int number, boolean before) {
+        Instant now = clock.instant();
+        return queries.neighbour(series.id(), number, before, utc(now))
+                .map(e -> episodeRef(e, series.latestFreeNumber(), now));
+    }
+
+    /** Released episodes of published series by episode id, each with its series' card. */
+    public Map<UUID, EpisodeInSeries> episodesByIds(Collection<UUID> episodeIds) {
+        Instant now = clock.instant();
+        OffsetDateTime at = utc(now);
+        Cards cards = new Cards(now, today(now));
+        List<EpisodeRow> rows = queries.episodesByIds(Set.copyOf(episodeIds), at);
+        Map<UUID, SeriesRow> series = new LinkedHashMap<>();
+        queries.seriesByIds(rows.stream().map(EpisodeRow::seriesId).collect(Collectors.toSet()), at)
+                .forEach(s -> series.put(s.id(), s));
+        Map<UUID, EpisodeInSeries> result = new LinkedHashMap<>();
+        for (EpisodeRow row : rows) {
+            SeriesRow s = series.get(row.seriesId());
+            if (s != null) {
+                result.put(
+                        row.id(),
+                        new EpisodeInSeries(
+                                cards.of(s), episodeRef(row, s.latestFreeNumber(), now)));
+            }
+        }
+        return result;
+    }
+
+    private static SeriesRef ref(SeriesRow row, Cards cards) {
+        return new SeriesRef(
+                row.id(),
+                row.slug(),
+                row.title(),
+                row.type(),
+                row.creatorId(),
+                cards.of(row),
+                row.latestFreeNumber());
+    }
+
+    private static EpisodeRef episodeRef(
+            EpisodeRow e, @Nullable Integer latestFreeNumber, Instant now) {
+        return new EpisodeRef(
+                e.id(),
+                e.seriesId(),
+                e.number(),
+                episode(e, latestFreeNumber, now),
+                e.commentsEnabled(),
+                e.creatorNote());
     }
 
     /**
@@ -284,13 +377,13 @@ public class CatalogService {
     // ---------- rules ----------
 
     /** An episode as listed: access, its free date and the UP mark at {@code now}. */
-    static EpisodeSummary episode(EpisodeRow e, SeriesRow series, Instant now) {
+    static EpisodeSummary episode(EpisodeRow e, @Nullable Integer latestFreeNumber, Instant now) {
         boolean fastPass = e.freeAt() != null && e.freeAt().toInstant().isAfter(now);
         OffsetDateTime freeFrom = e.freeAt() != null ? e.freeAt() : e.publishedAt();
         boolean up =
                 !fastPass
-                        && series.latestFreeNumber() != null
-                        && e.number() == series.latestFreeNumber()
+                        && latestFreeNumber != null
+                        && e.number() == latestFreeNumber
                         && recent(freeFrom, now, UP_FOR);
         return new EpisodeSummary(
                 e.number(),

@@ -9,6 +9,7 @@ import app.phumreader.seed.DemoSeeder;
 import app.phumreader.support.AuthTestConfig;
 import app.phumreader.support.IntegrationTest;
 import app.phumreader.support.MutableClock;
+import app.phumreader.support.SeededDemo;
 import jakarta.servlet.http.Cookie;
 import java.io.IOException;
 import java.io.InputStream;
@@ -33,6 +34,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Transactional;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
@@ -42,8 +44,8 @@ import tools.jackson.databind.json.JsonMapper;
  * demo mode must come back from the API on the demo's "today" (Thursday 2026-11-05, noon in Phnom
  * Penh), and move with the clock after that.
  *
- * <p>The demo is seeded once into this context's database and kept (committed): these tests only
- * read, and the one that changes data rolls back.
+ * <p>The demo is seeded once into this context's database and kept ({@link SeededDemo}): these
+ * tests only read, and the one that changes data rolls back.
  */
 @IntegrationTest
 @Import(AuthTestConfig.class)
@@ -66,13 +68,12 @@ class CatalogApiTest {
     @Autowired DemoSeeder seeder;
     @Autowired JdbcClient jdbc;
     @Autowired JsonMapper json;
+    @Autowired PlatformTransactionManager transactions;
 
     @BeforeEach
     void demoContentAtDemoNoon() throws IOException {
         clock.set(DEMO_NOON);
-        if (jdbc.sql("select count(*) from series").query(Long.class).single() == 0) {
-            seeder.seed();
-        }
+        SeededDemo.ensure(seeder, jdbc, transactions);
         if (demo == null) {
             try (InputStream in = new ClassPathResource("seed/demo-data.json").getInputStream()) {
                 demo = json.readTree(in);

@@ -13,6 +13,7 @@ import java.sql.Array;
 import java.sql.SQLException;
 import java.time.DayOfWeek;
 import java.time.OffsetDateTime;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -94,13 +95,23 @@ public class CatalogQueries {
     private static final RowMapper<EpisodeRow> EPISODE =
             (rs, n) ->
                     new EpisodeRow(
+                            rs.getObject("id", UUID.class),
+                            rs.getObject("series_id", UUID.class),
                             rs.getInt("number"),
                             rs.getString("title"),
                             rs.getObject("published_at", OffsetDateTime.class),
                             rs.getObject("free_at", OffsetDateTime.class),
                             rs.getObject("price_coins", Integer.class),
                             rs.getString("thumbnail_url"),
-                            rs.getLong("like_count"));
+                            rs.getLong("like_count"),
+                            rs.getBoolean("comments_enabled"),
+                            rs.getString("creator_note"));
+
+    /** Columns of {@link #EPISODE}; only released episodes (published, release time passed). */
+    private static final String EPISODE_COLUMNS =
+            "select id, series_id, number, title, published_at, free_at, price_coins,"
+                    + " thumbnail_url, like_count, comments_enabled, creator_note from episodes"
+                    + " where status = 'PUBLISHED' and published_at <= :now";
 
     private final JdbcClient jdbc;
 
@@ -339,9 +350,8 @@ public class CatalogQueries {
             int limit,
             OffsetDateTime now) {
         String sql =
-                "select number, title, published_at, free_at, price_coins, thumbnail_url,"
-                        + " like_count from episodes where series_id = :id"
-                        + " and status = 'PUBLISHED' and published_at <= :now"
+                EPISODE_COLUMNS
+                        + " and series_id = :id"
                         + (afterNumber == null
                                 ? ""
                                 : newestFirst ? " and number < :after" : " and number > :after")
@@ -354,6 +364,58 @@ public class CatalogQueries {
             spec = spec.param("after", afterNumber);
         }
         return spec.query(EPISODE).list();
+    }
+
+    /** One released episode by number. */
+    public Optional<EpisodeRow> episode(UUID seriesId, int number, OffsetDateTime now) {
+        return jdbc.sql(EPISODE_COLUMNS + " and series_id = :id and number = :n")
+                .param("id", seriesId)
+                .param("n", number)
+                .param("now", now)
+                .query(EPISODE)
+                .optional();
+    }
+
+    /** The released episode just before or just after {@code number}. */
+    public Optional<EpisodeRow> neighbour(
+            UUID seriesId, int number, boolean before, OffsetDateTime now) {
+        String sql =
+                EPISODE_COLUMNS
+                        + " and series_id = :id"
+                        + (before
+                                ? " and number < :n order by number desc"
+                                : " and number > :n order by number")
+                        + " limit 1";
+        return jdbc.sql(sql)
+                .param("id", seriesId)
+                .param("n", number)
+                .param("now", now)
+                .query(EPISODE)
+                .optional();
+    }
+
+    /** Released episodes by id (any series). */
+    public List<EpisodeRow> episodesByIds(Collection<UUID> ids, OffsetDateTime now) {
+        if (ids.isEmpty()) {
+            return List.of();
+        }
+        return jdbc.sql(EPISODE_COLUMNS + " and id in (:ids)")
+                .param("ids", List.copyOf(ids))
+                .param("now", now)
+                .query(EPISODE)
+                .list();
+    }
+
+    /** Published series by id. */
+    public List<SeriesRow> seriesByIds(Collection<UUID> ids, OffsetDateTime now) {
+        if (ids.isEmpty()) {
+            return List.of();
+        }
+        return jdbc.sql(cards(PUBLISHED + " and id in (:ids)"))
+                .param("ids", List.copyOf(ids))
+                .param("now", now)
+                .query(SERIES)
+                .list();
     }
 
     // ---------- helpers ----------

@@ -323,6 +323,226 @@
         "tags" : [ "auth" ]
       }
     },
+    "/api/v1/comments/{id}" : {
+      "delete" : {
+        "operationId" : "delete",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "No Content"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Delete a comment (its author, the series' creator or an admin)",
+        "tags" : [ "comments" ]
+      }
+    },
+    "/api/v1/comments/{id}/like" : {
+      "delete" : {
+        "operationId" : "unlike_1",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CommentLikeState"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Take back a comment like",
+        "tags" : [ "comments" ]
+      },
+      "put" : {
+        "operationId" : "like_1",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CommentLikeState"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Like a comment",
+        "tags" : [ "comments" ]
+      }
+    },
+    "/api/v1/comments/{id}/report" : {
+      "post" : {
+        "operationId" : "reportComment",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ReportRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "202" : {
+            "description" : "Accepted"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Report a comment to the admins",
+        "tags" : [ "comments" ]
+      }
+    },
+    "/api/v1/creators/{id}/follow" : {
+      "delete" : {
+        "operationId" : "unfollow",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/FollowState"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Stop following a creator",
+        "tags" : [ "library" ]
+      },
+      "put" : {
+        "operationId" : "follow",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/FollowState"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Follow a creator",
+        "tags" : [ "library" ]
+      }
+    },
     "/api/v1/genres" : {
       "get" : {
         "operationId" : "genres",
@@ -478,6 +698,363 @@
         },
         "summary" : "The signed-in account (401 when not signed in)",
         "tags" : [ "account" ]
+      }
+    },
+    "/api/v1/me/follows" : {
+      "get" : {
+        "operationId" : "follows",
+        "parameters" : [ {
+          "description" : "nextCursor of the previous page; omit for the first page",
+          "in" : "query",
+          "name" : "cursor",
+          "required" : false,
+          "schema" : {
+            "type" : [ "string", "null" ]
+          }
+        }, {
+          "description" : "Page size, 1-100 (default 20)",
+          "in" : "query",
+          "name" : "limit",
+          "required" : false,
+          "schema" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int32"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CursorPageFollowedCreator"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Followed creators, most recent first",
+        "tags" : [ "library" ]
+      }
+    },
+    "/api/v1/me/history" : {
+      "get" : {
+        "operationId" : "history",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "sort",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "default" : "recent",
+            "enum" : [ "recent", "title" ]
+          }
+        }, {
+          "description" : "nextCursor of the previous page; omit for the first page",
+          "in" : "query",
+          "name" : "cursor",
+          "required" : false,
+          "schema" : {
+            "type" : [ "string", "null" ]
+          }
+        }, {
+          "description" : "Page size, 1-100 (default 20)",
+          "in" : "query",
+          "name" : "limit",
+          "required" : false,
+          "schema" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int32"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CursorPageHistoryEntry"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Continue reading / Recently read, most recent first or by title",
+        "tags" : [ "library" ]
+      }
+    },
+    "/api/v1/me/history/remove" : {
+      "post" : {
+        "operationId" : "removeHistory",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/RemoveRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/RemovedHistory"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Remove series from the reading history; returns what to send back to undo",
+        "tags" : [ "library" ]
+      }
+    },
+    "/api/v1/me/history/restore" : {
+      "post" : {
+        "operationId" : "restoreHistory",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/RestoreHistoryRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "204" : {
+            "description" : "No Content"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Undo a history remove",
+        "tags" : [ "library" ]
+      }
+    },
+    "/api/v1/me/subscriptions" : {
+      "get" : {
+        "operationId" : "subscriptions",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "sort",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "default" : "recent",
+            "enum" : [ "recent", "title" ]
+          }
+        }, {
+          "description" : "nextCursor of the previous page; omit for the first page",
+          "in" : "query",
+          "name" : "cursor",
+          "required" : false,
+          "schema" : {
+            "type" : [ "string", "null" ]
+          }
+        }, {
+          "description" : "Page size, 1-100 (default 20)",
+          "in" : "query",
+          "name" : "limit",
+          "required" : false,
+          "schema" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int32"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CursorPageSubscriptionEntry"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Subscribed series, most recent first or by title",
+        "tags" : [ "library" ]
+      }
+    },
+    "/api/v1/me/subscriptions/remove" : {
+      "post" : {
+        "operationId" : "removeSubscriptions",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/RemoveRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/RemovedSubscriptions"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Unsubscribe from several series; returns what to send back to undo",
+        "tags" : [ "library" ]
+      }
+    },
+    "/api/v1/me/subscriptions/restore" : {
+      "post" : {
+        "operationId" : "restoreSubscriptions",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/RestoreSubscriptionsRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "204" : {
+            "description" : "No Content"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Undo a remove: subscribe again with the original dates",
+        "tags" : [ "library" ]
+      }
+    },
+    "/api/v1/me/unlocked" : {
+      "get" : {
+        "operationId" : "unlocked",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "sort",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "default" : "recent",
+            "enum" : [ "recent", "title" ]
+          }
+        }, {
+          "description" : "nextCursor of the previous page; omit for the first page",
+          "in" : "query",
+          "name" : "cursor",
+          "required" : false,
+          "schema" : {
+            "type" : [ "string", "null" ]
+          }
+        }, {
+          "description" : "Page size, 1-100 (default 20)",
+          "in" : "query",
+          "name" : "limit",
+          "required" : false,
+          "schema" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int32"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CursorPageUnlockedEntry"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Unlocked episodes, most recent first or by series title and number",
+        "tags" : [ "library" ]
       }
     },
     "/api/v1/rankings" : {
@@ -695,6 +1272,114 @@
         "tags" : [ "catalog" ]
       }
     },
+    "/api/v1/series/{slug}/comments" : {
+      "get" : {
+        "operationId" : "seriesThread",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "slug",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "sort",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "default" : "top",
+            "enum" : [ "top", "newest" ]
+          }
+        }, {
+          "description" : "nextCursor of the previous page; omit for the first page",
+          "in" : "query",
+          "name" : "cursor",
+          "required" : false,
+          "schema" : {
+            "type" : [ "string", "null" ]
+          }
+        }, {
+          "description" : "Page size, 1-100 (default 20)",
+          "in" : "query",
+          "name" : "limit",
+          "required" : false,
+          "schema" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int32"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CursorPageCommentView"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Comments on the series page",
+        "tags" : [ "comments" ]
+      },
+      "post" : {
+        "operationId" : "postOnSeries",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "slug",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/CommentRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CommentView"
+                }
+              }
+            },
+            "description" : "Created"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Comment on the series page",
+        "tags" : [ "comments" ]
+      }
+    },
     "/api/v1/series/{slug}/episodes" : {
       "get" : {
         "operationId" : "episodes",
@@ -757,6 +1442,590 @@
         "summary" : "Released episodes of a series (404 when the series is unknown)",
         "tags" : [ "catalog" ]
       }
+    },
+    "/api/v1/series/{slug}/episodes/{n}" : {
+      "get" : {
+        "description" : "402 episode_locked (with price and freeOn) for a Fast Pass episode the reader has not unlocked; 404 for an unknown series or episode.",
+        "operationId" : "content",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "slug",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "path",
+          "name" : "n",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/EpisodeContent"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "An episode or chapter to read",
+        "tags" : [ "reading" ]
+      }
+    },
+    "/api/v1/series/{slug}/episodes/{n}/bookmark" : {
+      "delete" : {
+        "operationId" : "unbookmark",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "slug",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "path",
+          "name" : "n",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/BookmarkState"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Remove a bookmark",
+        "tags" : [ "reading" ]
+      },
+      "put" : {
+        "operationId" : "bookmark",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "slug",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "path",
+          "name" : "n",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/BookmarkState"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Bookmark an episode or chapter",
+        "tags" : [ "reading" ]
+      }
+    },
+    "/api/v1/series/{slug}/episodes/{n}/comments" : {
+      "get" : {
+        "operationId" : "episodeThread",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "slug",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "path",
+          "name" : "n",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }, {
+          "in" : "query",
+          "name" : "sort",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "default" : "top",
+            "enum" : [ "top", "newest" ]
+          }
+        }, {
+          "description" : "nextCursor of the previous page; omit for the first page",
+          "in" : "query",
+          "name" : "cursor",
+          "required" : false,
+          "schema" : {
+            "type" : [ "string", "null" ]
+          }
+        }, {
+          "description" : "Page size, 1-100 (default 20)",
+          "in" : "query",
+          "name" : "limit",
+          "required" : false,
+          "schema" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int32"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CursorPageCommentView"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Comments on an episode",
+        "tags" : [ "comments" ]
+      },
+      "post" : {
+        "description" : "402 when the reader may not read the episode; 403 comments_disabled when the creator turned comments off.",
+        "operationId" : "postOnEpisode",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "slug",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "path",
+          "name" : "n",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/CommentRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CommentView"
+                }
+              }
+            },
+            "description" : "Created"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Comment on an episode",
+        "tags" : [ "comments" ]
+      }
+    },
+    "/api/v1/series/{slug}/episodes/{n}/like" : {
+      "delete" : {
+        "operationId" : "unlike",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "slug",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "path",
+          "name" : "n",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/EpisodeLikeState"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Take back an episode like",
+        "tags" : [ "reading" ]
+      },
+      "put" : {
+        "operationId" : "like",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "slug",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "path",
+          "name" : "n",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/EpisodeLikeState"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Like an episode",
+        "tags" : [ "reading" ]
+      }
+    },
+    "/api/v1/series/{slug}/episodes/{n}/report" : {
+      "post" : {
+        "operationId" : "reportEpisode",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "slug",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "path",
+          "name" : "n",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ReportRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "202" : {
+            "description" : "Accepted"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Report an episode to the admins",
+        "tags" : [ "comments" ]
+      }
+    },
+    "/api/v1/series/{slug}/me" : {
+      "get" : {
+        "operationId" : "seriesState",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "slug",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SeriesViewer"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "The reader's own state on a series page (subscribed, read marks, unlocks)",
+        "tags" : [ "library" ]
+      }
+    },
+    "/api/v1/series/{slug}/progress" : {
+      "put" : {
+        "operationId" : "progress",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "slug",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ProgressRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "204" : {
+            "description" : "No Content"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Save where the reader is in the series (Continue reading)",
+        "tags" : [ "reading" ]
+      }
+    },
+    "/api/v1/series/{slug}/report" : {
+      "post" : {
+        "operationId" : "reportSeries",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "slug",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ReportRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "202" : {
+            "description" : "Accepted"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Report a series to the admins",
+        "tags" : [ "comments" ]
+      }
+    },
+    "/api/v1/series/{slug}/subscription" : {
+      "delete" : {
+        "operationId" : "unsubscribe",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "slug",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SubscriptionState"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Unsubscribe from a series",
+        "tags" : [ "library" ]
+      },
+      "put" : {
+        "operationId" : "subscribe",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "slug",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SubscriptionState"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Subscribe to a series",
+        "tags" : [ "library" ]
+      }
     }
   },
   "components" : {
@@ -773,6 +2042,102 @@
         },
         "required" : [ "isNew", "up" ]
       },
+      "BookmarkState" : {
+        "type" : "object",
+        "properties" : {
+          "bookmarked" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "bookmarked" ]
+      },
+      "CommentAuthor" : {
+        "type" : "object",
+        "properties" : {
+          "avatarUrl" : {
+            "type" : [ "string", "null" ]
+          },
+          "name" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "name" ]
+      },
+      "CommentLikeState" : {
+        "type" : "object",
+        "properties" : {
+          "liked" : {
+            "type" : "boolean"
+          },
+          "likes" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        },
+        "required" : [ "liked", "likes" ]
+      },
+      "CommentRequest" : {
+        "type" : "object",
+        "properties" : {
+          "body" : {
+            "type" : "string",
+            "maxLength" : 2000,
+            "minLength" : 0
+          }
+        },
+        "required" : [ "body" ]
+      },
+      "CommentView" : {
+        "type" : "object",
+        "properties" : {
+          "author" : {
+            "$ref" : "#/components/schemas/CommentAuthor"
+          },
+          "body" : {
+            "type" : "string"
+          },
+          "canDelete" : {
+            "type" : "boolean"
+          },
+          "createdAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "liked" : {
+            "type" : "boolean"
+          },
+          "likes" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "mine" : {
+            "type" : "boolean"
+          },
+          "top" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "author", "body", "canDelete", "createdAt", "id", "liked", "likes", "mine", "top" ]
+      },
+      "CursorPageCommentView" : {
+        "type" : "object",
+        "properties" : {
+          "items" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/CommentView"
+            }
+          },
+          "nextCursor" : {
+            "type" : [ "string", "null" ]
+          }
+        },
+        "required" : [ "items" ]
+      },
       "CursorPageEpisodeSummary" : {
         "type" : "object",
         "properties" : {
@@ -780,6 +2145,36 @@
             "type" : "array",
             "items" : {
               "$ref" : "#/components/schemas/EpisodeSummary"
+            }
+          },
+          "nextCursor" : {
+            "type" : [ "string", "null" ]
+          }
+        },
+        "required" : [ "items" ]
+      },
+      "CursorPageFollowedCreator" : {
+        "type" : "object",
+        "properties" : {
+          "items" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/FollowedCreator"
+            }
+          },
+          "nextCursor" : {
+            "type" : [ "string", "null" ]
+          }
+        },
+        "required" : [ "items" ]
+      },
+      "CursorPageHistoryEntry" : {
+        "type" : "object",
+        "properties" : {
+          "items" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/HistoryEntry"
             }
           },
           "nextCursor" : {
@@ -818,6 +2213,36 @@
         },
         "required" : [ "items" ]
       },
+      "CursorPageSubscriptionEntry" : {
+        "type" : "object",
+        "properties" : {
+          "items" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/SubscriptionEntry"
+            }
+          },
+          "nextCursor" : {
+            "type" : [ "string", "null" ]
+          }
+        },
+        "required" : [ "items" ]
+      },
+      "CursorPageUnlockedEntry" : {
+        "type" : "object",
+        "properties" : {
+          "items" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/UnlockedEntry"
+            }
+          },
+          "nextCursor" : {
+            "type" : [ "string", "null" ]
+          }
+        },
+        "required" : [ "items" ]
+      },
       "EmailRequest" : {
         "type" : "object",
         "properties" : {
@@ -829,6 +2254,70 @@
           }
         },
         "required" : [ "email" ]
+      },
+      "EpisodeContent" : {
+        "type" : "object",
+        "properties" : {
+          "blocks" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/NovelBlock"
+            }
+          },
+          "comments" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "commentsEnabled" : {
+            "type" : "boolean"
+          },
+          "creatorNote" : {
+            "type" : [ "string", "null" ]
+          },
+          "episode" : {
+            "$ref" : "#/components/schemas/EpisodeSummary"
+          },
+          "next" : {
+            "$ref" : "#/components/schemas/EpisodeSummary"
+          },
+          "panels" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Panel"
+            }
+          },
+          "previous" : {
+            "$ref" : "#/components/schemas/EpisodeSummary"
+          },
+          "series" : {
+            "$ref" : "#/components/schemas/SeriesCard"
+          },
+          "total" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "viewer" : {
+            "$ref" : "#/components/schemas/ReaderState"
+          },
+          "wordCount" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        },
+        "required" : [ "blocks", "comments", "commentsEnabled", "episode", "panels", "series", "total", "viewer", "wordCount" ]
+      },
+      "EpisodeLikeState" : {
+        "type" : "object",
+        "properties" : {
+          "liked" : {
+            "type" : "boolean"
+          },
+          "likes" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        },
+        "required" : [ "liked", "likes" ]
       },
       "EpisodeSummary" : {
         "type" : "object",
@@ -878,8 +2367,16 @@
               "type" : "string"
             }
           },
+          "freeOn" : {
+            "type" : [ "string", "null" ],
+            "format" : "date"
+          },
           "message" : {
             "type" : "string"
+          },
+          "price" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int32"
           },
           "retryAfterSeconds" : {
             "type" : [ "integer", "null" ],
@@ -897,6 +2394,40 @@
           }
         },
         "required" : [ "error" ]
+      },
+      "FollowState" : {
+        "type" : "object",
+        "properties" : {
+          "followers" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "following" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "followers", "following" ]
+      },
+      "FollowedCreator" : {
+        "type" : "object",
+        "properties" : {
+          "followedAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "seriesCount" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        },
+        "required" : [ "followedAt", "id", "name", "seriesCount" ]
       },
       "GenreItem" : {
         "type" : "object",
@@ -945,6 +2476,34 @@
           }
         },
         "required" : [ "blurb", "series", "seriesData", "tag" ]
+      },
+      "HistoryEntry" : {
+        "type" : "object",
+        "properties" : {
+          "episode" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "lastRead" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "progress" : {
+            "type" : "number",
+            "format" : "double"
+          },
+          "readAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "series" : {
+            "type" : "string"
+          },
+          "seriesData" : {
+            "$ref" : "#/components/schemas/SeriesCard"
+          }
+        },
+        "required" : [ "episode", "lastRead", "progress", "readAt", "series", "seriesData" ]
       },
       "HomeFeed" : {
         "type" : "object",
@@ -1067,6 +2626,56 @@
         },
         "required" : [ "displayName", "email", "emailVerified", "id", "roles" ]
       },
+      "NovelBlock" : {
+        "type" : "object",
+        "properties" : {
+          "text" : {
+            "type" : [ "string", "null" ]
+          },
+          "type" : {
+            "type" : "string",
+            "enum" : [ "paragraph", "quote", "scene-break" ]
+          }
+        },
+        "required" : [ "type" ]
+      },
+      "Panel" : {
+        "type" : "object",
+        "properties" : {
+          "alt" : {
+            "type" : "string"
+          },
+          "height" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "src" : {
+            "type" : "string"
+          },
+          "width" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        },
+        "required" : [ "alt", "height", "src", "width" ]
+      },
+      "ProgressRequest" : {
+        "type" : "object",
+        "properties" : {
+          "episode" : {
+            "type" : "integer",
+            "format" : "int32",
+            "minimum" : 1
+          },
+          "progress" : {
+            "type" : "number",
+            "format" : "double",
+            "maximum" : 1,
+            "minimum" : 0
+          }
+        },
+        "required" : [ "episode", "progress" ]
+      },
       "RankingEntry" : {
         "type" : "object",
         "properties" : {
@@ -1084,6 +2693,123 @@
         },
         "required" : [ "rank", "series" ]
       },
+      "ReaderState" : {
+        "type" : "object",
+        "properties" : {
+          "bookmarked" : {
+            "type" : "boolean"
+          },
+          "liked" : {
+            "type" : "boolean"
+          },
+          "signedIn" : {
+            "type" : "boolean"
+          },
+          "unlocked" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "bookmarked", "liked", "signedIn", "unlocked" ]
+      },
+      "RemoveRequest" : {
+        "type" : "object",
+        "properties" : {
+          "seriesIds" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string",
+              "format" : "uuid"
+            },
+            "maxItems" : 100,
+            "minItems" : 0
+          }
+        },
+        "required" : [ "seriesIds" ]
+      },
+      "RemovedHistory" : {
+        "type" : "object",
+        "properties" : {
+          "items" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/RemovedHistoryEntry"
+            }
+          }
+        },
+        "required" : [ "items" ]
+      },
+      "RemovedHistoryEntry" : {
+        "type" : "object",
+        "properties" : {
+          "episode" : {
+            "type" : "integer",
+            "format" : "int32",
+            "minimum" : 1
+          },
+          "lastRead" : {
+            "type" : "integer",
+            "format" : "int32",
+            "minimum" : 1
+          },
+          "progress" : {
+            "type" : "number",
+            "format" : "double",
+            "maximum" : 1,
+            "minimum" : 0
+          },
+          "readAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "seriesId" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        },
+        "required" : [ "episode", "lastRead", "progress", "readAt", "seriesId" ]
+      },
+      "RemovedSubscription" : {
+        "type" : "object",
+        "properties" : {
+          "seriesId" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "subscribedAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          }
+        },
+        "required" : [ "seriesId", "subscribedAt" ]
+      },
+      "RemovedSubscriptions" : {
+        "type" : "object",
+        "properties" : {
+          "items" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/RemovedSubscription"
+            }
+          }
+        },
+        "required" : [ "items" ]
+      },
+      "ReportRequest" : {
+        "type" : "object",
+        "properties" : {
+          "details" : {
+            "type" : [ "string", "null" ],
+            "maxLength" : 1000,
+            "minLength" : 0
+          },
+          "reason" : {
+            "type" : "string",
+            "maxLength" : 50,
+            "minLength" : 0
+          }
+        },
+        "required" : [ "reason" ]
+      },
       "ResetPasswordRequest" : {
         "type" : "object",
         "properties" : {
@@ -1099,6 +2825,34 @@
           }
         },
         "required" : [ "password", "token" ]
+      },
+      "RestoreHistoryRequest" : {
+        "type" : "object",
+        "properties" : {
+          "items" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/RemovedHistoryEntry"
+            },
+            "maxItems" : 100,
+            "minItems" : 0
+          }
+        },
+        "required" : [ "items" ]
+      },
+      "RestoreSubscriptionsRequest" : {
+        "type" : "object",
+        "properties" : {
+          "items" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/RemovedSubscription"
+            },
+            "maxItems" : 100,
+            "minItems" : 0
+          }
+        },
+        "required" : [ "items" ]
       },
       "SearchResults" : {
         "type" : "object",
@@ -1185,6 +2939,10 @@
       "SeriesDetail" : {
         "type" : "object",
         "properties" : {
+          "creatorId" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
           "creatorSeriesCount" : {
             "type" : "integer",
             "format" : "int32"
@@ -1205,7 +2963,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "creatorSeriesCount", "related", "series", "stats", "synopsis" ]
+        "required" : [ "creatorId", "creatorSeriesCount", "related", "series", "stats", "synopsis" ]
       },
       "SeriesStats" : {
         "type" : "object",
@@ -1220,6 +2978,37 @@
           }
         },
         "required" : [ "comments", "subscribers" ]
+      },
+      "SeriesViewer" : {
+        "type" : "object",
+        "properties" : {
+          "followingCreator" : {
+            "type" : "boolean"
+          },
+          "lastEpisode" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int32"
+          },
+          "lastRead" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "progress" : {
+            "type" : [ "number", "null" ],
+            "format" : "double"
+          },
+          "subscribed" : {
+            "type" : "boolean"
+          },
+          "unlocked" : {
+            "type" : "array",
+            "items" : {
+              "type" : "integer",
+              "format" : "int32"
+            }
+          }
+        },
+        "required" : [ "followingCreator", "lastRead", "subscribed", "unlocked" ]
       },
       "SignupRequest" : {
         "type" : "object",
@@ -1263,6 +3052,48 @@
           }
         },
         "required" : [ "codeExpiresInSeconds", "email", "resendAfterSeconds" ]
+      },
+      "SubscriptionEntry" : {
+        "type" : "object",
+        "properties" : {
+          "series" : {
+            "$ref" : "#/components/schemas/SeriesCard"
+          },
+          "subscribedAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          }
+        },
+        "required" : [ "series", "subscribedAt" ]
+      },
+      "SubscriptionState" : {
+        "type" : "object",
+        "properties" : {
+          "subscribed" : {
+            "type" : "boolean"
+          },
+          "subscribers" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        },
+        "required" : [ "subscribed", "subscribers" ]
+      },
+      "UnlockedEntry" : {
+        "type" : "object",
+        "properties" : {
+          "episode" : {
+            "$ref" : "#/components/schemas/EpisodeSummary"
+          },
+          "series" : {
+            "$ref" : "#/components/schemas/SeriesCard"
+          },
+          "unlockedAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          }
+        },
+        "required" : [ "episode", "series", "unlockedAt" ]
       },
       "VerifyRequest" : {
         "type" : "object",

@@ -50,6 +50,12 @@ public class GlobalExceptionHandler {
         return body(ex.status(), ex.code(), ex.getMessage(), ex.fields());
     }
 
+    @ExceptionHandler(LockedException.class)
+    ResponseEntity<ErrorResponse> locked(LockedException ex) {
+        return ResponseEntity.status(HttpStatus.PAYMENT_REQUIRED)
+                .body(ErrorResponse.locked(ex.code(), ex.getMessage(), ex.price(), ex.freeOn()));
+    }
+
     @ExceptionHandler(RateLimitedException.class)
     ResponseEntity<ErrorResponse> rateLimited(RateLimitedException ex) {
         long seconds = Math.max(1, ex.retryAfter().toSeconds());

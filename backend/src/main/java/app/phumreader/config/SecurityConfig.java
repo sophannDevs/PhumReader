@@ -37,6 +37,10 @@ public class SecurityConfig {
         "/api/v1/series",
         "/api/v1/series/*",
         "/api/v1/series/*/episodes",
+        // Reading free episodes and comment threads (P3-09, P3-13); locked episodes answer 402.
+        "/api/v1/series/*/episodes/*",
+        "/api/v1/series/*/comments",
+        "/api/v1/series/*/episodes/*/comments",
         "/api/v1/search",
         "/actuator/health",
         "/actuator/health/**",

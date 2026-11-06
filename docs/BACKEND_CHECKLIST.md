@@ -37,7 +37,7 @@ Sources of truth: the plan doc, `CLAUDE.md`, `docs/BACKEND.md` (decisions and lo
 - Money: balances change only through the ledger, in one transaction with a wallet row lock; every payment and
   unlock call is idempotent. Never build card number fields: cards use the PayWay hosted page.
 
-Progress: 3 / 51 tasks (P1-05, P1-07, P1-08) · Stage 1: step 4 of 5, parts 1–2 of 5 done · milestones M1, M3, M4, M5, M6, M7
+Progress: 3 / 51 tasks (P1-05, P1-07, P1-08) · Stage 1: step 4 of 5, parts 1–3 of 5 done · milestones M1, M3, M4, M5, M6, M7
 
 ---
 
@@ -94,7 +94,16 @@ deployment and no Docker. A step is done when its checks pass; tick the plan tas
       through `http://localhost:3000/api/v1` on Supabase: home built in 1.2 s (Tokyo), then 10–20 ms from memory;
       series page 0.5 s; lists 0.1–0.2 s. Not done yet: Redis cache and "refresh the website's page on publish"
       (Step 3 and P3-14), Meilisearch (P3-15), the reader's own Continue reading (Part 3).
-    - [ ] Part 3, reading: episode content (402 when locked), progress, library, likes, bookmarks, follows, comments
+    - [x] Part 3, reading (P3-09 without signed image URLs, P3-12, P3-13): episode / chapter content
+      `GET /api/v1/series/{slug}/episodes/{n}` (402 `episode_locked` with `price` and `freeOn`), progress, episode
+      likes and bookmarks; subscribe, follow, the reader's state on a series page (`/series/{slug}/me`), library
+      lists `/me/history` (Continue reading), `/me/subscriptions`, `/me/unlocked`, `/me/follows` (recent / title,
+      paged), remove with undo; comment threads on series pages and episodes (top / newest, paged), post, delete,
+      like, reports for series, episodes and comments.
+      Done 2026-11-06: 18 new tests (102 backend tests green). Real check through `http://localhost:3000/api/v1` on
+      Supabase as the demo reader: free episode and chapter, 402 on a Fast Pass episode, history with the four demo
+      entries, progress, subscribe, like, comment like and follow (each undone afterwards). Not done yet: signed
+      image URLs (P3-08), view counters (Redis, Step 3), unlocking with coins (Part 4).
     - [ ] Part 4, coins: balance, unlocks, packs, orders with a dev-only payment simulator, history
     - [ ] Part 5, settings and the creator dashboard
 - [ ] **Step 5: Connect the frontend** (P5-01, P5-06, parts of P5-04, P5-05, P5-07; `/reset` from P4-09)
@@ -589,3 +598,20 @@ All 74 plan tasks, and where each one lives.
 18. **Search stand-in.** `GET /api/v1/search` finds published series whose title, creator or genre contains the
     text (any case, Khmer works), titles starting with it first, at most 20; an empty query gives the 6 most
     viewed ("Popular now"). P3-15 moves it to Meilisearch behind the same address.
+19. **Who may read a Fast Pass episode before its free date:** readers who unlocked it, the series' creator and
+    admins. Everyone else gets 402 `episode_locked` with `price` and `freeOn`. Saving progress, liking,
+    bookmarking and commenting on an episode need the same access. Comic panels are returned as their stored
+    public paths until signed image URLs (P3-08). Opening an episode does not count a view yet (view counters
+    come with Redis).
+20. **Reading progress:** `PUT /series/{slug}/progress` stores the episode opened last and how far into it;
+    `lastRead` (the highest episode opened, for the "✓ Read" marks) only goes up. "Continue reading" on Home and
+    "Recently read" in the library are both `GET /me/history` (most recent first).
+21. **Comments:** at most 500 characters (the website's counter); "Top" is the thread's most liked comment with at
+    least 10 likes; there are no threaded replies (the website's Reply puts the name in the box); deleting hides
+    the comment (status DELETED); 10 comments per reader per 10 minutes. Liking an episode also adds to its
+    series' like count.
+22. **Reports:** a reader's second report on the same series, episode or comment is ignored while the first is
+    still open; 20 reports per reader per hour.
+23. **Remove with undo** has no server-side trash: `/me/subscriptions/remove` and `/me/history/remove` return the
+    removed entries, and sending them to `.../restore` puts them back with their original dates. Unlocked
+    episodes cannot be removed (they were paid for).
