@@ -6,11 +6,14 @@ import { ArrowLeftIcon, KeyRoundIcon, MailCheckIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useState } from "react"
 import { useForm } from "react-hook-form"
+import { toast } from "sonner"
 import { forgotSchema, type ForgotValues } from "@/components/auth/auth-schemas"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { sendResetLink } from "@/lib/demo-api"
+import { retryAfterSeconds } from "@/lib/api/errors"
+import { requestPasswordReset } from "@/lib/session"
+import { useWaitText } from "@/lib/use-wait-text"
 
 const iconTile = "flex size-12 items-center justify-center rounded-card bg-muted text-muted-foreground"
 
@@ -31,10 +34,20 @@ function BackToLogin({ onBack }: { onBack: () => void }) {
 /** Forgot password: email -> "Send reset link" (spinner) -> "Check your inbox" -> back to Log in. */
 export function ForgotView({ onBack }: { onBack: () => void }) {
   const t = useTranslations("auth")
+  const ts = useTranslations("states")
+  const waitText = useWaitText()
   const [sentTo, setSentTo] = useState<string | null>(null)
   const form = useForm<ForgotValues>({ resolver: zodResolver(forgotSchema), defaultValues: { email: "" } })
   const { errors } = form.formState
-  const send = useMutation({ mutationFn: (v: ForgotValues) => sendResetLink(v.email.trim()), onSuccess: (r) => setSentTo(r.email) })
+  const send = useMutation({
+    mutationFn: (v: ForgotValues) => requestPasswordReset(v.email),
+    onSuccess: setSentTo,
+    onError: (e) => {
+      const wait = retryAfterSeconds(e)
+      if (wait !== undefined) toast.error(t("tooManyTitle"), { description: waitText(wait), duration: 5000 })
+      else toast.error(ts("errorTitle"), { description: ts("errorDescription"), duration: 5000 })
+    },
+  })
 
   if (sentTo) {
     return (

@@ -6,6 +6,7 @@ import { MobileTabBar } from "@/components/layout/mobile-tab-bar"
 import { useSearch } from "@/components/layout/search-provider"
 import { SiteHeader } from "@/components/layout/site-header"
 import { usePathname } from "@/i18n/navigation"
+import { logOut } from "@/lib/session"
 import { useAppStore, useCoins, useUser } from "@/lib/store"
 
 /** Remember the current page so Log in / Sign up can send the reader back (not from the login page itself). */
@@ -33,8 +34,7 @@ export function ConnectedHeader() {
       onSearchOpen={open}
       onLogin={saveReturnTo}
       onLogout={() => {
-        useAppStore.getState().logout()
-        toast.success(t("loggedOut"))
+        void logOut().then(() => toast.success(t("loggedOut")))
       }}
     />
   )

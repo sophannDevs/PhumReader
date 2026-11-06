@@ -1,10 +1,11 @@
 # PhumReader
 
 PhumReader (ភូមិ "village" + Reader) is a webtoon-style site for comics and web novels for readers in
-Cambodia, in English and Khmer. **The website still runs as a demo**: login, coins and payments are
-simulated in the browser. A Spring Boot backend is being built in [`backend/`](backend/README.md)
-(plan: [docs/BACKEND.md](docs/BACKEND.md), progress: [docs/BACKEND_CHECKLIST.md](docs/BACKEND_CHECKLIST.md));
-the pages switch to it in Stage 1 Step 5.
+Cambodia, in English and Khmer. The Spring Boot API lives in [`backend/`](backend/README.md)
+(plan: [docs/BACKEND.md](docs/BACKEND.md), progress: [docs/BACKEND_CHECKLIST.md](docs/BACKEND_CHECKLIST.md)).
+**The website is moving onto it page by page (Stage 1 Step 5)**: sign-in already uses the API; the other pages
+still use the demo data until their part is done. Set `NEXT_PUBLIC_DEMO=1` in `.env.local` to run the whole
+Phase 1 demo without a backend.
 
 ## Run it
 
@@ -15,12 +16,15 @@ npm install
 npm run dev          # http://localhost:3000  (Khmer: http://localhost:3000/km)
 ```
 
+`npm run dev` talks to the API (start it first, see below). Without a backend, put `NEXT_PUBLIC_DEMO=1` in
+`.env.local` (see `.env.example`) and restart `npm run dev`.
+
 | Command | What it does |
 | --- | --- |
 | `npm run lint` | ESLint |
 | `npm run typecheck` | `next typegen && tsc --noEmit` |
 | `npm run build` | production build |
-| `npm run test:e2e` | Playwright tests (start with `npx playwright install chromium` once; it starts `npm run dev` itself) |
+| `npm run test:e2e` | Playwright tests in demo mode (start with `npx playwright install chromium` once; it starts `npm run dev` with `NEXT_PUBLIC_DEMO=1` itself, or reuses a dev server already on port 3000) |
 | `npm run api:gen` | TypeScript types `src/lib/api/schema.d.ts` from `backend/openapi/openapi.json` |
 | `npm run api:check` | fails when `src/lib/api/schema.d.ts` is out of date |
 
@@ -38,9 +42,12 @@ Details and commands: [backend/README.md](backend/README.md).
 
 ## Demo account
 
-- Log in with **reader@toonwave.app** / **Toonwave1!** (the address keeps the project's old working name).
-- Sign up works with any new email; the email code is **123456**.
-- "Continue with Google / Facebook" does no OAuth and logs in as Sokha Chan.
+- Log in with **reader@toonwave.app** / **Toonwave1!** (the address keeps the project's old working name). The
+  seeded API database has the same account.
+- Sign up works with any new email; the email code is **123456** (in demo mode and with the dev API, which prints
+  emails, such as reset links, in its console).
+- "Continue with Google / Facebook": in demo mode it does no OAuth and logs in as Sokha Chan; with the API it says
+  "coming soon".
 - Coins, unlocks, subscriptions, reading history, purchases and reader settings are kept per browser in
   `localStorage` under `phumreader.app`. Reset everything in **Settings > Reset demo data**, or clear that key.
 - Payments are placeholders only (`[PAYMENT PROVIDER FORM]`, `[KHQR PLACEHOLDER]`): use "I've paid (simulate)"

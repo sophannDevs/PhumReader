@@ -2,44 +2,47 @@
 
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useMutation } from "@tanstack/react-query"
-import { CheckIcon, CircleIcon } from "lucide-react"
-import { useTranslations } from "next-intl"
+import { useLocale, useTranslations } from "next-intl"
 import { Controller, useForm, useWatch } from "react-hook-form"
 import { toast } from "sonner"
-import { passwordChecks, signupSchema, type SignupValues } from "@/components/auth/auth-schemas"
+import { signupSchema, type SignupValues } from "@/components/auth/auth-schemas"
 import { PasswordInput } from "@/components/auth/password-input"
+import { PasswordRules } from "@/components/auth/password-rules"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { DemoApiError, signUp } from "@/lib/demo-api"
-import { useAppStore } from "@/lib/store"
-import { cn } from "@/lib/utils"
-
-export type SignupData = { name: string; email: string; password: string }
+import { errorCode, fieldErrors, retryAfterSeconds } from "@/lib/api/errors"
+import { signUp, type PendingCode } from "@/lib/session"
+import { useWaitText } from "@/lib/use-wait-text"
 
 /** Sign up: name, email, password with a strength bar and live rules, terms. Next: Verify. */
-export function SignupView({ onSubmitted }: { onSubmitted: (data: SignupData) => void }) {
+export function SignupView({ onSubmitted }: { onSubmitted: (pending: PendingCode) => void }) {
   const t = useTranslations("auth")
   const ts = useTranslations("states")
+  const locale = useLocale()
+  const waitText = useWaitText()
   const form = useForm<SignupValues>({
     resolver: zodResolver(signupSchema),
     defaultValues: { name: "", email: "", password: "", terms: false },
   })
   const { errors } = form.formState
   const password = useWatch({ control: form.control, name: "password" })
-  const checks = passwordChecks(password ?? "")
-  const met = checks.filter(Boolean).length
 
   const create = useMutation({
     mutationFn: (v: SignupValues) =>
-      signUp(
-        { name: v.name.trim(), email: v.email.trim(), password: v.password },
-        useAppStore.getState().accounts.map((a) => a.email)
-      ),
-    onSuccess: (_, v) => onSubmitted({ name: v.name.trim(), email: v.email.trim(), password: v.password }),
+      signUp({ name: v.name.trim(), email: v.email.trim(), password: v.password }, locale),
+    onSuccess: onSubmitted,
     onError: (e) => {
-      if (e instanceof DemoApiError && e.code === "email_taken") form.setError("email", { message: "emailTaken" })
+      // The API checks the same rules as the form; map its answers onto the fields.
+      const fields = fieldErrors(e)
+      const wait = retryAfterSeconds(e)
+      if (errorCode(e) === "email_taken") form.setError("email", { message: "emailTaken" }, { shouldFocus: true })
+      else if (errorCode(e) === "password_too_weak" || fields.password)
+        form.setError("password", { message: "passwordWeak" }, { shouldFocus: true })
+      else if (fields.email) form.setError("email", { message: "emailInvalid" }, { shouldFocus: true })
+      else if (fields.name) form.setError("name", { message: "nameRequired" }, { shouldFocus: true })
+      else if (wait !== undefined) toast.error(t("tooManyTitle"), { description: waitText(wait), duration: 5000 })
       else toast.error(ts("errorTitle"), { description: ts("errorDescription"), duration: 5000 })
     },
   })
@@ -91,33 +94,7 @@ export function SignupView({ onSubmitted }: { onSubmitted: (data: SignupData) =>
           aria-describedby={errors.password ? "signup-password-error signup-rules" : "signup-rules"}
           {...form.register("password")}
         />
-        <div
-          role="img"
-          aria-label={t("strength", { count: met })}
-          data-met={met}
-          className="grid grid-cols-4 gap-1.5"
-        >
-          {[0, 1, 2, 3].map((i) => (
-            <span
-              key={i}
-              data-filled={i < met}
-              className={cn("h-1.5 rounded-full bg-muted transition-colors", i < met && (met >= 3 ? "bg-primary" : "bg-coin"))}
-            />
-          ))}
-        </div>
-        <ul id="signup-rules" className="grid grid-cols-2 gap-x-3 gap-y-1">
-          {checks.map((ok, i) => (
-            <li
-              key={i}
-              data-met={ok}
-              className={cn("flex items-center gap-1.5 text-[13px]", ok ? "text-brand-ink" : "text-muted-foreground")}
-            >
-              {ok ? <CheckIcon className="size-3.5" aria-hidden /> : <CircleIcon className="size-3.5" aria-hidden />}
-              {t(`rule${i}` as "rule0")}
-              <span className="sr-only">{ok ? t("ruleMet") : t("ruleUnmet")}</span>
-            </li>
-          ))}
-        </ul>
+        <PasswordRules password={password ?? ""} id="signup-rules" />
         {errors.password ? (
           <p id="signup-password-error" className="text-[13px] text-destructive">
             {t(errors.password.message as "passwordWeak")}

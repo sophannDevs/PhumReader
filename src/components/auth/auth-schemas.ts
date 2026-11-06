@@ -22,14 +22,19 @@ export const passwordChecks = (password: string): boolean[] => [
   /[^A-Za-z0-9\s]/.test(password),
 ]
 
+// at least 3 of the 4 rules (the strength bar turns green at 3)
+const newPassword = z.string().refine((v) => passwordChecks(v).filter(Boolean).length >= 3, "passwordWeak")
+
 export const signupSchema = z.object({
   name: z.string().trim().min(2, "nameRequired"),
   email,
-  // at least 3 of the 4 rules (the strength bar turns green at 3)
-  password: z.string().refine((v) => passwordChecks(v).filter(Boolean).length >= 3, "passwordWeak"),
+  password: newPassword,
   terms: z.boolean().refine((v) => v, "termsRequired"),
 })
 export type SignupValues = z.infer<typeof signupSchema>
 
 export const forgotSchema = z.object({ email })
 export type ForgotValues = z.infer<typeof forgotSchema>
+
+export const resetSchema = z.object({ password: newPassword })
+export type ResetValues = z.infer<typeof resetSchema>

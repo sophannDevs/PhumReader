@@ -6,30 +6,30 @@ import { useTranslations } from "next-intl"
 import { REGEXP_ONLY_DIGITS } from "input-otp"
 import { useEffect, useRef, useState } from "react"
 import { toast } from "sonner"
-import type { SignupData } from "@/components/auth/signup-view"
 import { Button } from "@/components/ui/button"
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp"
 import { demoData } from "@/data"
-import { DemoApiError, verifyCode } from "@/lib/demo-api"
+import { errorCode, retryAfterSeconds } from "@/lib/api/errors"
+import { resendCode, verifyEmail, type PendingCode } from "@/lib/session"
 import { useAppStore } from "@/lib/store"
+import { useWaitText } from "@/lib/use-wait-text"
 
-const RESEND_SECONDS = 30
-
-/** Verify email: 6-digit code, resend countdown, demo code hint. A right code creates the account and logs in. */
+/** Verify email: 6-digit code, resend countdown, demo code hint. A right code confirms the account and logs in. */
 export function VerifyView({
-  data,
+  pending,
   onBack,
   onDone,
 }: {
-  data: SignupData
+  pending: PendingCode
   onBack: () => void
   onDone: () => void
 }) {
   const t = useTranslations("auth")
   const tt = useTranslations("toasts")
   const ts = useTranslations("states")
+  const waitText = useWaitText()
   const [code, setCode] = useState("")
-  const [seconds, setSeconds] = useState(RESEND_SECONDS)
+  const [seconds, setSeconds] = useState(pending.resendAfterSeconds)
   const otpRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -39,21 +39,42 @@ export function VerifyView({
   }, [seconds])
 
   const verify = useMutation({
-    mutationFn: () => verifyCode(code),
-    onSuccess: () => {
-      const store = useAppStore.getState()
-      store.addAccount({ name: data.name, email: data.email, password: data.password })
-      store.login({ name: data.name, email: data.email })
+    mutationFn: () => verifyEmail(pending, code),
+    onSuccess: (user) => {
+      useAppStore.getState().login(user)
       onDone()
     },
     // Keep the typed code (shown red) and the focus in the OTP so the reader can edit it.
     onError: (e) => {
-      toast.error(e instanceof DemoApiError && e.code === "invalid_code" ? t("wrongCode") : ts("errorTitle"), { duration: 5000 })
+      const messages: Record<string, string> = {
+        invalid_code: t("wrongCode"),
+        code_expired: t("codeExpired"),
+        too_many_attempts: t("codeTooMany"),
+        already_verified: t("alreadyVerified"),
+      }
+      toast.error(messages[errorCode(e) ?? ""] ?? ts("errorTitle"), { duration: 5000 })
       requestAnimationFrame(() => otpRef.current?.focus())
     },
   })
 
-  const wrong = verify.error instanceof DemoApiError && verify.error.code === "invalid_code"
+  const resend = useMutation({
+    mutationFn: () => resendCode(pending.email),
+    onSuccess: () => {
+      setSeconds(30)
+      toast.success(tt("codeSent"))
+    },
+    onError: (e) => {
+      const wait = retryAfterSeconds(e)
+      if (wait !== undefined) {
+        setSeconds(wait)
+        toast.error(t("tooManyTitle"), { description: waitText(wait), duration: 5000 })
+      } else {
+        toast.error(ts("errorTitle"), { description: ts("errorDescription"), duration: 5000 })
+      }
+    },
+  })
+
+  const wrong = ["invalid_code", "code_expired", "too_many_attempts"].includes(errorCode(verify.error) ?? "")
 
   return (
     <form
@@ -69,7 +90,7 @@ export function VerifyView({
       <div className="flex flex-col gap-1.5">
         <h1 className="type-h2">{t("verifyTitle")}</h1>
         <p className="type-body text-muted-foreground">
-          {t("verifySub")} <span className="font-medium text-foreground">{data.email}</span>
+          {t("verifySub")} <span className="font-medium text-foreground">{pending.email}</span>
         </p>
       </div>
 
@@ -109,10 +130,8 @@ export function VerifyView({
           <button
             type="button"
             className="rounded-sm font-medium text-brand-ink underline underline-offset-4 outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            onClick={() => {
-              setSeconds(RESEND_SECONDS)
-              toast.success(tt("codeSent"))
-            }}
+            disabled={resend.isPending}
+            onClick={() => resend.mutate()}
           >
             {t("resend")}
           </button>

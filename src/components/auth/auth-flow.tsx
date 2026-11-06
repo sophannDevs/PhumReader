@@ -7,8 +7,9 @@ import { DoneView } from "@/components/auth/done-view"
 import { ForgotView } from "@/components/auth/forgot-view"
 import { LoginView } from "@/components/auth/login-view"
 import { VerifyView } from "@/components/auth/verify-view"
-import { SignupView, type SignupData } from "@/components/auth/signup-view"
+import { SignupView } from "@/components/auth/signup-view"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import type { PendingCode } from "@/lib/session"
 
 type View = "login" | "signup" | "verify" | "forgot" | "done"
 
@@ -21,8 +22,9 @@ export function AuthFlow() {
   const params = useSearchParams()
   const mode = params.get("mode")
   const [view, setViewState] = useState<View>(mode === "signup" ? "signup" : mode === "forgot" ? "forgot" : "login")
-  // The sign-up details held while the reader verifies the email code (T34).
-  const [pending, setPending] = useState<SignupData | null>(null)
+  // The email waiting for its code: after Sign up (T34), or after logging in with an unconfirmed email.
+  const [pending, setPending] = useState<PendingCode | null>(null)
+  const [verifyFrom, setVerifyFrom] = useState<"signup" | "login">("signup")
 
   // Log in / Sign up / Forgot are kept in `?mode=` so the language switch (which opens the
   // other locale's route) lands on the same view. Verify and Done are not persisted.
@@ -55,17 +57,28 @@ export function AuthFlow() {
         </>
       ) : null}
 
-      {view === "login" ? <LoginView onForgot={() => setView("forgot")} onDone={() => setView("done")} /> : null}
+      {view === "login" ? (
+        <LoginView
+          onForgot={() => setView("forgot")}
+          onDone={() => setView("done")}
+          onNeedsCode={(next) => {
+            setPending(next)
+            setVerifyFrom("login")
+            setView("verify")
+          }}
+        />
+      ) : null}
       {view === "signup" ? (
         <SignupView
-          onSubmitted={(data) => {
-            setPending(data)
+          onSubmitted={(next) => {
+            setPending(next)
+            setVerifyFrom("signup")
             setView("verify")
           }}
         />
       ) : null}
       {view === "verify" && pending ? (
-        <VerifyView data={pending} onBack={() => setView("signup")} onDone={() => setView("done")} />
+        <VerifyView pending={pending} onBack={() => setView(verifyFrom)} onDone={() => setView("done")} />
       ) : null}
       {view === "forgot" ? <ForgotView onBack={() => setView("login")} /> : null}
     </div>

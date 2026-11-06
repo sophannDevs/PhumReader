@@ -132,6 +132,27 @@ deployment and no Docker. A step is done when its checks pass; tick the plan tas
     state for logged-in users; 401 / 402 / 429 handling; payment status polling; `/reset` page.
     `NEXT_PUBLIC_DEMO=1` still runs the old demo.
   - Check: the Playwright key flows pass against the local backend and in demo mode; lint, typecheck and build pass.
+  - Done in five parts, stopping after each. Pages not yet connected keep using the demo data in both modes until
+    their part:
+    - [x] Part 1, data layer and sign-in: `src/lib/api/` fetch wrapper, the demo / real switch, the session from
+      `GET /me` on start (header), log in (unconfirmed email goes to the code step, 429 shows the wait), sign up,
+      code and resend, forgot password, log out, the new `/reset` page.
+      Done 2026-11-06: `src/lib/api/client.ts` (cookies, CSRF header with one retry on `invalid_csrf_token`, one
+      shared silent refresh on 401, `ApiError`, `idempotencyKey()`), `src/lib/api/config.ts` (`DEMO_MODE`),
+      `src/lib/session.ts` (sign-in for both modes), `src/lib/session-sync.tsx`, `/reset`. Real check in Chromium
+      on a real-API production build against the local API on Supabase: wrong password, log in, reload, a deleted
+      access cookie refreshed silently, log out (`/me` 401), sign up with code 123456, taken email, forgot
+      password, reset link (weak password refused, new one saved, log in with it, the link fails the second time),
+      unconfirmed log in to the code step, 6 wrong passwords ("Try again in 10 minutes."), Khmer `/km/reset`,
+      Google "coming soon". Demo mode (`NEXT_PUBLIC_DEMO=1` build): the Playwright suite passes (24 tests; the
+      desktop "404 page" test failed once on a cold server and passed 8 times after, see assumption 44).
+    - [ ] Part 2, catalog: Home, Rankings, Genres, Search, Series page, episode lists, comic and novel readers
+      (402 opens the unlock dialog); raw API values formatted for English and Khmer.
+    - [ ] Part 3, the reader's own data: progress and Continue reading, read marks, subscribe, follow, likes,
+      bookmarks, library tabs with remove and undo, comments (post, like, delete, report).
+    - [ ] Part 4, coins: balance in the header, unlock with an Idempotency-Key, packs, orders paid with the dev
+      simulator, status polling every 3 s and resuming after a reload (P5-06), purchase history.
+    - [ ] Part 5, settings and creator dashboard; Playwright key flows against the local backend and in demo mode.
 
 Not in Stage 1: deployment (P1-10, Phase 7), CI (P1-09), uploads / R2 / image Worker (P3-07, P3-08), creator
 writing pages and admin (P3-14 writes, P3-18, P4-13 – P4-16), sending notifications and real email (P3-16,
@@ -685,3 +706,26 @@ All 74 plan tasks, and where each one lives.
 36. **Test account on Supabase dev:** the real check of part 5 created
     `part5-check-20261106150150@phumreader.test`, now `part5-check-20261106150150-moved@phumreader.test`
     (password `Phumreader2?`), and left it waiting for deletion. The demo reader's settings were put back.
+37. **The real API is the default.** `NEXT_PUBLIC_DEMO=1` builds the Phase 1 demo; the setting is read at build
+    time, so one build serves one mode. Pages not connected yet keep using the demo data in both modes until their
+    part of Step 5.
+38. **The session in the website:** the header's name and email stay in localStorage only as a hint (no flash on
+    load); on every full page load `GET /me` confirms it, refreshing once if the access token has expired. A
+    signed-in call that still gets 401 after the refresh logs the header out. The refresh cookie is HttpOnly, so
+    the website cannot tell a guest in advance: a guest's page load costs `GET /me` and a refresh (both 401, shown
+    in the browser console). Pages keep fetching in the browser; server-side fetching with revalidate tags (P5-01)
+    is not part of Stage 1.
+39. **Google and Facebook buttons** say "coming soon" with the real API (P3-04 needs keys, at home).
+40. **Unconfirmed accounts:** logging in opens the code step (the API has sent a new code). "Resend code" follows
+    the API's 30-second wait.
+41. **`/reset?token=`** asks for a new password with the sign-up rules. Success signs this device out locally and
+    offers Log in; a used or expired link offers a new one (`/login?mode=forgot`). The page is not indexed. P4-09's
+    separate `/signup`, `/verify` and `/forgot` addresses are not built: those views stay in `/login?mode=`.
+42. **Demo hints stay** on the sign-in pages (demo account, code 123456): they are true for the dev API as well.
+    P5-07 removes them.
+43. **New Khmer strings** (sign-in errors, the reset page) need a native speaker's review.
+44. **404 status on a cold server:** the first request for an unknown series on a freshly started production
+    server once answered 200 instead of 404; repeated runs and direct requests give 404. Not caused by Step 5;
+    looked at again with the Playwright work in Part 5.
+45. **Test accounts on Supabase dev (Step 5 part 1):** `step5-check-20261106082102@phumreader.test` (password
+    `Phumreader2?`) and `step5-unconfirmed-20261106082102@phumreader.test` (demo password).

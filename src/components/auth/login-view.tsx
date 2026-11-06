@@ -13,43 +13,64 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { demoData } from "@/data"
-import { DemoApiError, login, socialLogin, type DemoUser } from "@/lib/demo-api"
-import { useAppStore } from "@/lib/store"
+import { errorCode, retryAfterSeconds } from "@/lib/api/errors"
+import { logIn, socialLogIn, type PendingCode } from "@/lib/session"
+import { useAppStore, type StoredUser } from "@/lib/store"
+import { useWaitText } from "@/lib/use-wait-text"
 
 /** Log in: social buttons, email + password form, wrong-credentials alert, demo hint. */
 export function LoginView({
   onForgot,
   onDone,
+  onNeedsCode,
 }: {
   onForgot: () => void
   /** Called after the store has the user; the flow shows the Done view. */
   onDone: () => void
+  /** The email is not confirmed yet: the API sent a new code, the flow shows Verify. */
+  onNeedsCode: (pending: PendingCode) => void
 }) {
   const t = useTranslations("auth")
   const ts = useTranslations("states")
+  const waitText = useWaitText()
   const form = useForm<LoginValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: { email: "", password: "", remember: true },
   })
   const { errors } = form.formState
 
-  const finish = (user: DemoUser) => {
+  const finish = (user: StoredUser) => {
     useAppStore.getState().login(user)
     onDone()
   }
 
   const emailLogin = useMutation({
-    mutationFn: (v: LoginValues) => login(v.email, v.password, useAppStore.getState().accounts),
+    mutationFn: (v: LoginValues) => logIn(v.email, v.password, v.remember),
     onSuccess: finish,
-    onError: (e) =>
-      e instanceof DemoApiError && e.code === "invalid_credentials"
-        ? toast.error(t("errorTitle"), { description: t("errorBody"), duration: 5000 })
-        : toast.error(ts("errorTitle"), { description: ts("errorDescription"), duration: 5000 }),
+    onError: (e, v) => {
+      const code = errorCode(e)
+      const wait = retryAfterSeconds(e)
+      if (code === "invalid_credentials") {
+        toast.error(t("errorTitle"), { description: t("errorBody"), duration: 5000 })
+      } else if (code === "email_not_verified") {
+        toast.info(t("unverified"), { duration: 5000 })
+        onNeedsCode({ email: v.email.trim().toLowerCase(), resendAfterSeconds: 30 })
+      } else if (wait !== undefined) {
+        toast.error(t("tooManyTitle"), { description: waitText(wait), duration: 5000 })
+      } else if (code === "account_banned") {
+        toast.error(t("banned"), { duration: 5000 })
+      } else {
+        toast.error(ts("errorTitle"), { description: ts("errorDescription"), duration: 5000 })
+      }
+    },
   })
   const social = useMutation({
-    mutationFn: socialLogin,
+    mutationFn: socialLogIn,
     onSuccess: finish,
-    onError: () => toast.error(ts("errorTitle"), { description: ts("errorDescription"), duration: 5000 }),
+    onError: (e) =>
+      errorCode(e) === "social_login_unavailable"
+        ? toast.info(t("socialSoon"), { duration: 5000 })
+        : toast.error(ts("errorTitle"), { description: ts("errorDescription"), duration: 5000 }),
   })
   const busy = emailLogin.isPending || social.isPending
 

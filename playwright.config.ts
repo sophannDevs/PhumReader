@@ -15,6 +15,8 @@ export default defineConfig({
   },
   webServer: {
     command: "npm run dev",
+    // The suite tests the demo until Stage 1 Step 5 part 5 adds runs against the real API.
+    env: { NEXT_PUBLIC_DEMO: "1" },
     url: "http://localhost:3000",
     reuseExistingServer: true,
     timeout: 120_000,

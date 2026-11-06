@@ -23,6 +23,7 @@ import { Link, usePathname, useRouter } from "@/i18n/navigation"
 import { type Locale } from "@/i18n/routing"
 import { cn } from "@/lib/utils"
 import { initials } from "@/lib/format"
+import { logOut } from "@/lib/session"
 import { useAppStore, useUser } from "@/lib/store"
 import { useRestoreFocus } from "@/lib/use-restore-focus"
 import { MonitorIcon, MoonIcon, SunIcon, UserIcon } from "lucide-react"
@@ -199,8 +200,7 @@ export function SettingsPage() {
             <Button
               variant="outline"
               onClick={() => {
-                useAppStore.getState().logout()
-                toast.success(tt("loggedOut"))
+                void logOut().then(() => toast.success(tt("loggedOut")))
               }}
             >
               {t("logOut")}
