@@ -1,6 +1,8 @@
 package app.phumreader.auth.service;
 
 import app.phumreader.auth.domain.RefreshToken;
+import app.phumreader.auth.repository.DeviceQueries;
+import app.phumreader.auth.repository.DeviceQueries.DeviceRow;
 import app.phumreader.auth.repository.RefreshTokenRepository;
 import app.phumreader.common.error.ApiException;
 import app.phumreader.config.AppProperties;
@@ -8,6 +10,8 @@ import app.phumreader.user.service.Account;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -32,14 +36,20 @@ public class TokenService {
             UUID userId, UUID familyId, boolean remember, String refreshToken, Instant expiresAt) {}
 
     private final RefreshTokenRepository tokens;
+    private final DeviceQueries devices;
     private final JwtService jwt;
     private final Clock clock;
     private final Duration refreshLifetime;
     private final Duration reuseGrace;
 
     public TokenService(
-            RefreshTokenRepository tokens, JwtService jwt, Clock clock, AppProperties properties) {
+            RefreshTokenRepository tokens,
+            DeviceQueries devices,
+            JwtService jwt,
+            Clock clock,
+            AppProperties properties) {
         this.tokens = tokens;
+        this.devices = devices;
         this.jwt = jwt;
         this.clock = clock;
         this.refreshLifetime = properties.auth().refreshTokenTtl();
@@ -132,6 +142,38 @@ public class TokenService {
     /** Logs the user out on every device. */
     void revokeAll(UUID userId) {
         tokens.revokeAllOfUser(userId, clock.instant());
+    }
+
+    /** The device (token family) of a refresh cookie, when it belongs to this user and works. */
+    Optional<UUID> deviceOf(@Nullable String refreshToken, UUID userId) {
+        if (refreshToken == null || refreshToken.isBlank()) {
+            return Optional.empty();
+        }
+        Instant now = clock.instant();
+        return tokens.findByTokenHash(Secrets.sha256(refreshToken))
+                .filter(t -> t.getUserId().equals(userId))
+                .filter(t -> !t.isRevoked() && !t.isExpired(now))
+                .map(RefreshToken::getFamilyId);
+    }
+
+    List<DeviceRow> devices(UUID userId) {
+        return devices.active(userId, clock.instant());
+    }
+
+    /**
+     * Signs out one of the user's devices; {@code false} when there is no such signed-in device.
+     */
+    boolean revokeDevice(UUID userId, UUID familyId) {
+        return tokens.revokeFamilyOfUser(userId, familyId, clock.instant()) > 0;
+    }
+
+    /** Signs out every device but {@code keep} (every device when it is empty). */
+    void revokeAllExcept(UUID userId, Optional<UUID> keep) {
+        if (keep.isPresent()) {
+            tokens.revokeAllOfUserExcept(userId, keep.get(), clock.instant());
+        } else {
+            revokeAll(userId);
+        }
     }
 
     static ApiException sessionExpired() {

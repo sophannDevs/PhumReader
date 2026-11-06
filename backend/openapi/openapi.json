@@ -10,6 +10,119 @@
     "description" : "Same origin as the website"
   } ],
   "paths" : {
+    "/api/v1/auth/change-email" : {
+      "post" : {
+        "description" : "400 wrong_password (field password) or same_email; 409 email_taken; 429 resend_too_soon within 30 s.",
+        "operationId" : "changeEmail",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ChangeEmailRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "202" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/EmailChangeResponse"
+                }
+              }
+            },
+            "description" : "Accepted"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Emails a 6-digit code to the new address",
+        "tags" : [ "account" ]
+      }
+    },
+    "/api/v1/auth/change-email/confirm" : {
+      "post" : {
+        "description" : "400 invalid_code, code_expired or too_many_attempts (field code); 409 email_taken.",
+        "operationId" : "confirmEmail",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/CodeRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/MeResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Confirms the new email with its code",
+        "tags" : [ "account" ]
+      }
+    },
+    "/api/v1/auth/change-password" : {
+      "post" : {
+        "description" : "400 wrong_password (field currentPassword) or password_too_weak (field newPassword); 429 too_many_attempts after 5 wrong passwords in 10 minutes.",
+        "operationId" : "changePassword",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ChangePasswordRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "204" : {
+            "description" : "No Content"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Sets a new password and signs out the other devices",
+        "tags" : [ "account" ]
+      }
+    },
     "/api/v1/auth/csrf" : {
       "get" : {
         "operationId" : "csrf",
@@ -30,6 +143,107 @@
         },
         "summary" : "Sets the XSRF-TOKEN cookie that every POST must echo in X-XSRF-TOKEN",
         "tags" : [ "auth" ]
+      }
+    },
+    "/api/v1/auth/delete-account" : {
+      "post" : {
+        "description" : "Logging in before deleteAfter keeps the account. 400 wrong_password (field password).",
+        "operationId" : "deleteAccount",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/PasswordRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/DeletionResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Deletes the account after 30 days and signs out every device",
+        "tags" : [ "account" ]
+      }
+    },
+    "/api/v1/auth/devices" : {
+      "get" : {
+        "operationId" : "devices",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/DeviceList"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Signed-in devices, this one first",
+        "tags" : [ "account" ]
+      }
+    },
+    "/api/v1/auth/devices/{id}" : {
+      "delete" : {
+        "description" : "404 device_not_found. Signing out this device also clears its cookies. Its access token still works for up to 15 minutes.",
+        "operationId" : "signOutDevice",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "No Content"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Signs out one device",
+        "tags" : [ "account" ]
       }
     },
     "/api/v1/auth/forgot-password" : {
@@ -669,6 +883,36 @@
         "tags" : [ "comments" ]
       }
     },
+    "/api/v1/creator/dashboard" : {
+      "get" : {
+        "description" : "Readers who are not creators get creator: false and no series (the page's empty state).",
+        "operationId" : "dashboard",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CreatorDashboard"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "The signed-in creator's series and their numbers",
+        "tags" : [ "creator" ]
+      }
+    },
     "/api/v1/creators/{id}/follow" : {
       "delete" : {
         "operationId" : "unfollow",
@@ -1195,6 +1439,113 @@
         },
         "summary" : "Undo a history remove",
         "tags" : [ "library" ]
+      }
+    },
+    "/api/v1/me/profile" : {
+      "patch" : {
+        "description" : "2 to 60 characters after trimming; 400 name_too_short.",
+        "operationId" : "updateProfile",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ProfileRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/MeResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Changes the display name",
+        "tags" : [ "account" ]
+      }
+    },
+    "/api/v1/me/settings" : {
+      "get" : {
+        "operationId" : "settings",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Settings"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "The signed-in account's settings",
+        "tags" : [ "account" ]
+      },
+      "patch" : {
+        "description" : "Only the fields in the body change, e.g. {\"reader\":{\"size\":20}}. 400 invalid_text_size (field reader.size).",
+        "operationId" : "updateSettings",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/SettingsChange"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Settings"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Saves the settings that are sent and returns all of them",
+        "tags" : [ "account" ]
       }
     },
     "/api/v1/me/subscriptions" : {
@@ -2428,6 +2779,50 @@
         },
         "required" : [ "bookmarked" ]
       },
+      "ChangeEmailRequest" : {
+        "type" : "object",
+        "properties" : {
+          "newEmail" : {
+            "type" : "string",
+            "maxLength" : 254,
+            "minLength" : 0,
+            "pattern" : "^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$"
+          },
+          "password" : {
+            "type" : "string",
+            "maxLength" : 128,
+            "minLength" : 0
+          }
+        },
+        "required" : [ "newEmail", "password" ]
+      },
+      "ChangePasswordRequest" : {
+        "type" : "object",
+        "properties" : {
+          "currentPassword" : {
+            "type" : "string",
+            "maxLength" : 128,
+            "minLength" : 0
+          },
+          "newPassword" : {
+            "type" : "string",
+            "maxLength" : 128,
+            "minLength" : 0
+          }
+        },
+        "required" : [ "currentPassword", "newPassword" ]
+      },
+      "CodeRequest" : {
+        "type" : "object",
+        "properties" : {
+          "code" : {
+            "type" : "string",
+            "minLength" : 1,
+            "pattern" : "\\d{6}"
+          }
+        },
+        "required" : [ "code" ]
+      },
       "CoinPack" : {
         "type" : "object",
         "properties" : {
@@ -2555,6 +2950,90 @@
           }
         },
         "required" : [ "author", "body", "canDelete", "createdAt", "id", "liked", "likes", "mine", "top" ]
+      },
+      "CreatorDashboard" : {
+        "type" : "object",
+        "properties" : {
+          "creator" : {
+            "type" : "boolean"
+          },
+          "name" : {
+            "type" : [ "string", "null" ]
+          },
+          "series" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/CreatorSeries"
+            }
+          },
+          "totals" : {
+            "$ref" : "#/components/schemas/CreatorTotals"
+          }
+        },
+        "required" : [ "creator", "series", "totals" ]
+      },
+      "CreatorSeries" : {
+        "type" : "object",
+        "properties" : {
+          "comments" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "earnedCoins" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "series" : {
+            "$ref" : "#/components/schemas/SeriesCard"
+          },
+          "subscribers" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "unlocks" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "visibility" : {
+            "type" : "string",
+            "enum" : [ "draft", "published", "hidden" ]
+          }
+        },
+        "required" : [ "comments", "earnedCoins", "series", "subscribers", "unlocks", "visibility" ]
+      },
+      "CreatorTotals" : {
+        "type" : "object",
+        "properties" : {
+          "comments" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "earnedCoins" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "likes" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "series" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "subscribers" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "unlocks" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "views" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        },
+        "required" : [ "comments", "earnedCoins", "likes", "series", "subscribers", "unlocks", "views" ]
       },
       "CursorPageCommentView" : {
         "type" : "object",
@@ -2705,6 +3184,72 @@
           }
         },
         "required" : [ "items" ]
+      },
+      "DeletionResponse" : {
+        "type" : "object",
+        "properties" : {
+          "deleteAfter" : {
+            "type" : "string",
+            "format" : "date-time"
+          }
+        },
+        "required" : [ "deleteAfter" ]
+      },
+      "Device" : {
+        "type" : "object",
+        "properties" : {
+          "browser" : {
+            "type" : [ "string", "null" ]
+          },
+          "current" : {
+            "type" : "boolean"
+          },
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "lastActiveAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "signedInAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "system" : {
+            "type" : [ "string", "null" ]
+          }
+        },
+        "required" : [ "current", "id", "lastActiveAt", "signedInAt" ]
+      },
+      "DeviceList" : {
+        "type" : "object",
+        "properties" : {
+          "items" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Device"
+            }
+          }
+        },
+        "required" : [ "items" ]
+      },
+      "EmailChangeResponse" : {
+        "type" : "object",
+        "properties" : {
+          "codeExpiresInSeconds" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "email" : {
+            "type" : "string"
+          },
+          "resendAfterSeconds" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        },
+        "required" : [ "codeExpiresInSeconds", "email", "resendAfterSeconds" ]
       },
       "EmailRequest" : {
         "type" : "object",
@@ -3140,6 +3685,29 @@
         },
         "required" : [ "displayName", "email", "emailVerified", "id", "roles" ]
       },
+      "NotificationSettings" : {
+        "type" : "object",
+        "properties" : {
+          "episodes" : {
+            "type" : "boolean"
+          },
+          "fastPass" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "episodes", "fastPass" ]
+      },
+      "NotificationsChange" : {
+        "type" : "object",
+        "properties" : {
+          "episodes" : {
+            "type" : [ "boolean", "null" ]
+          },
+          "fastPass" : {
+            "type" : [ "boolean", "null" ]
+          }
+        }
+      },
       "NovelBlock" : {
         "type" : "object",
         "properties" : {
@@ -3247,6 +3815,28 @@
         },
         "required" : [ "alt", "height", "src", "width" ]
       },
+      "PasswordRequest" : {
+        "type" : "object",
+        "properties" : {
+          "password" : {
+            "type" : "string",
+            "maxLength" : 128,
+            "minLength" : 0
+          }
+        },
+        "required" : [ "password" ]
+      },
+      "ProfileRequest" : {
+        "type" : "object",
+        "properties" : {
+          "displayName" : {
+            "type" : "string",
+            "maxLength" : 60,
+            "minLength" : 0
+          }
+        },
+        "required" : [ "displayName" ]
+      },
       "ProgressRequest" : {
         "type" : "object",
         "properties" : {
@@ -3280,6 +3870,47 @@
           }
         },
         "required" : [ "rank", "series" ]
+      },
+      "ReaderChange" : {
+        "type" : "object",
+        "properties" : {
+          "font" : {
+            "type" : [ "string", "null" ],
+            "enum" : [ "sans", "serif", null ]
+          },
+          "size" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int32"
+          },
+          "theme" : {
+            "type" : [ "string", "null" ],
+            "enum" : [ "light", "sepia", "dark", null ]
+          },
+          "wide" : {
+            "type" : [ "boolean", "null" ]
+          }
+        }
+      },
+      "ReaderSettings" : {
+        "type" : "object",
+        "properties" : {
+          "font" : {
+            "type" : "string",
+            "enum" : [ "sans", "serif" ]
+          },
+          "size" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "theme" : {
+            "type" : "string",
+            "enum" : [ "light", "sepia", "dark" ]
+          },
+          "wide" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "font", "size", "theme", "wide" ]
       },
       "ReaderState" : {
         "type" : "object",
@@ -3597,6 +4228,45 @@
           }
         },
         "required" : [ "followingCreator", "lastRead", "subscribed", "unlocked" ]
+      },
+      "Settings" : {
+        "type" : "object",
+        "properties" : {
+          "language" : {
+            "type" : "string",
+            "enum" : [ "en", "km" ]
+          },
+          "notifications" : {
+            "$ref" : "#/components/schemas/NotificationSettings"
+          },
+          "reader" : {
+            "$ref" : "#/components/schemas/ReaderSettings"
+          },
+          "theme" : {
+            "type" : "string",
+            "enum" : [ "system", "light", "dark" ]
+          }
+        },
+        "required" : [ "language", "notifications", "reader", "theme" ]
+      },
+      "SettingsChange" : {
+        "type" : "object",
+        "properties" : {
+          "language" : {
+            "type" : [ "string", "null" ],
+            "enum" : [ "en", "km", null ]
+          },
+          "notifications" : {
+            "$ref" : "#/components/schemas/NotificationsChange"
+          },
+          "reader" : {
+            "$ref" : "#/components/schemas/ReaderChange"
+          },
+          "theme" : {
+            "type" : [ "string", "null" ],
+            "enum" : [ "system", "light", "dark", null ]
+          }
+        }
       },
       "SignupRequest" : {
         "type" : "object",

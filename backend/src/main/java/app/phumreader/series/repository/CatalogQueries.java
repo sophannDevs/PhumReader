@@ -406,6 +406,17 @@ public class CatalogQueries {
                 .list();
     }
 
+    /** Every series of a creator (drafts and hidden ones too), most viewed first. */
+    public List<SeriesRow> seriesOfCreator(UUID creatorId, OffsetDateTime now) {
+        return jdbc.sql(
+                        cards("select * from series where creator_id = :creator")
+                                + " order by c.view_count desc, c.id")
+                .param("creator", creatorId)
+                .param("now", now)
+                .query(SERIES)
+                .list();
+    }
+
     /** Published series by id. */
     public List<SeriesRow> seriesByIds(Collection<UUID> ids, OffsetDateTime now) {
         if (ids.isEmpty()) {

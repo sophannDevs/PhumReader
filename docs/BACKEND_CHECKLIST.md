@@ -37,7 +37,7 @@ Sources of truth: the plan doc, `CLAUDE.md`, `docs/BACKEND.md` (decisions and lo
 - Money: balances change only through the ledger, in one transaction with a wallet row lock; every payment and
   unlock call is idempotent. Never build card number fields: cards use the PayWay hosted page.
 
-Progress: 3 / 51 tasks (P1-05, P1-07, P1-08) · Stage 1: step 4 of 5, parts 1–4 of 5 done · milestones M1, M3, M4, M5, M6, M7
+Progress: 3 / 51 tasks (P1-05, P1-07, P1-08) · Stage 1: step 4 of 5 done (all 5 parts), step 5 next · milestones M1, M3, M4, M5, M6, M7
 
 ---
 
@@ -72,7 +72,7 @@ deployment and no Docker. A step is done when its checks pass; tick the plan tas
     (rate limits and codes in memory, search in PostgreSQL, JWT signed with the JDK). At home: install the
     services, fill in `backend/.env`, swap the stand-ins (and optionally the JWT code for a JWT library), add
     Google / Facebook login (P3-04).
-- [ ] **Step 4: API for every existing page** (P3-02 – P3-06, P3-09 – P3-13, P3-15, P3-17; P3-05/P3-14 stats only)
+- [x] **Step 4: API for every existing page** (P3-02 – P3-06, P3-09 – P3-13, P3-15, P3-17; P3-05/P3-14 stats only)
   - Header, auth (sign up, code, log in, refresh, log out, forgot, reset, rate limits; Google / Facebook only with
     dev app keys), Home, Rankings, Genres, Search, Series, comic and novel readers, Coins (PayWay sandbox if keys
     exist, otherwise a dev-only payment simulator), Library, Settings, Creator dashboard.
@@ -114,7 +114,19 @@ deployment and no Docker. A step is done when its checks pass; tick the plan tas
       coins and the first-purchase offer (unlock answers 402 `not_enough_coins`); a new test account bought the
       10 pack (+10 first bonus), paying twice credited once, then unlocked Glass Compass 66 for 5 coins.
       Not done yet: ABA PayWay (KHQR, ABA Pay, hosted card page, signed webhook, nightly reconciliation; A4).
-    - [ ] Part 5, settings and the creator dashboard
+    - [x] Part 5, settings and the creator dashboard (P3-17; P3-14 stats only): `GET` / `PATCH /api/v1/me/settings`
+      (language, appearance, novel reader defaults, notifications; only the fields sent change), `PATCH
+      /me/profile` (display name); under `/api/v1/auth` (where the refresh cookie is sent): `change-password`
+      (signs out the other devices), `change-email` + `change-email/confirm` (6-digit code to the new address),
+      `devices` (list, `DELETE devices/{id}`), `delete-account` (30-day grace, A18); `GET /api/v1/creator/dashboard`
+      (the creator's series with views, likes, subscribers, comments, unlocks and earned coins, plus totals).
+      Done 2026-11-06: 21 new tests (136 backend tests green). Real check through `http://localhost:3000/api/v1` on
+      Supabase: the demo reader's settings saved, reloaded and put back (size 15 refused); Chan Sreyleak's
+      dashboard shows her 4 series (76.5M views, 14.4M likes); a new test account renamed itself, changed language,
+      password (the other device signed out) and email (dev code), signed out its phone, then deleted itself
+      (`/me` 401; logging in kept it; deleted again and left pending). Not done yet: avatar upload (needs P3-07),
+      "become a creator" (A11) and the creator writing pages (P3-14), the job that erases accounts after 30 days
+      (worker), content settings (no column or page control yet).
 - [ ] **Step 5: Connect the frontend** (P5-01, P5-06, parts of P5-04, P5-05, P5-07; `/reset` from P4-09)
   - Fetch wrapper (cookies, CSRF, silent refresh, `ApiError`); every `demo-api.ts` call has a real-API path; server
     state for logged-in users; 401 / 402 / 429 handling; payment status polling; `/reset` page.
@@ -644,3 +656,32 @@ All 74 plan tasks, and where each one lives.
 29. **Test account on Supabase dev:** the real check of part 4 created `part4-check-20261106142851@phumreader.test`
     (demo password) with one paid 10-coin order, one cancelled order, an unlock of Glass Compass 66 and 15 coins.
     Ledger rows are permanent, so it stays; it does not touch the demo reader.
+30. **Settings use the website's names and values:** `language` (`en` / `km`), `theme` (`system` / `light` / `dark`,
+    as next-themes), `reader` = the store's `novelSettings` (`size` one of 14–24 in steps of 2, `theme`
+    `light` / `sepia` / `dark`, `font` `sans` / `serif`, `wide`), `notifications` (`episodes`, `fastPass`).
+    `PATCH` changes only the fields sent. Accounts without a settings row read the defaults. Sending notifications
+    is P3-16. The display name follows the sign-up rule (2–60 characters after trimming). There is no avatar
+    until uploads exist (P3-07): the website keeps showing initials.
+31. **Account actions ask for the current password** (change password, change email, delete account); 5 wrong
+    ones per account in 10 minutes pause all three with 429. Accounts that only use Google or Facebook (P3-04) have
+    no password and set one with "Forgot password" first.
+32. **Changing the password** keeps the device that asked signed in and signs out every other device; an email
+    tells the account. **Changing the email** sends a 6-digit code (10 minutes, 5 tries, one per 30 seconds; dev
+    code 123456) to the new address; the change happens when the code is entered, and the old address is told.
+    Pending changes are kept in memory until Step 3 (Redis).
+33. **Devices** are sign-ins (refresh-token families) that are neither signed out nor expired, with browser and
+    system read from the User-Agent (`null` when unknown; the website names them). These endpoints live under
+    `/api/v1/auth` because the refresh cookie is only sent there, which is how the API knows the current device. A
+    signed-out device's access token still works for up to 15 minutes.
+34. **Deleting the account (A18)** signs out every device and marks it DELETION_PENDING; logging in before
+    `deleteAfter` (30 days) keeps it, with an email. Erasing the personal data after 30 days is a worker job that
+    is not built yet; the account keeps its email address until then. Creators may delete their account; what
+    happens to their series is decided with P3-14 and P3-18.
+35. **Creator dashboard:** `creator` comes from `creator_profiles` (not the token's roles), so readers who are not
+    creators get `creator: false` with no series, which is the page's empty state. "Readers" is total views;
+    earnings are coins from Fast Pass unlocks (payouts are not in v1, A7). Drafts and hidden series are included
+    with their `visibility` (the seed has only published ones). "Become a creator" (A11) waits for the Creator
+    terms and the writing pages (P3-14).
+36. **Test account on Supabase dev:** the real check of part 5 created
+    `part5-check-20261106150150@phumreader.test`, now `part5-check-20261106150150-moved@phumreader.test`
+    (password `Phumreader2?`), and left it waiting for deletion. The demo reader's settings were put back.

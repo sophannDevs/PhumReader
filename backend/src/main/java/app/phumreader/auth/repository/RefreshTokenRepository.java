@@ -29,4 +29,18 @@ public interface RefreshTokenRepository extends JpaRepository<RefreshToken, UUID
     @Query(
             "update RefreshToken t set t.revokedAt = :now where t.userId = :userId and t.revokedAt is null")
     int revokeAllOfUser(UUID userId, Instant now);
+
+    /** Signs out one device of this user; 0 when it is not theirs or already signed out. */
+    @Modifying
+    @Query(
+            "update RefreshToken t set t.revokedAt = :now where t.userId = :userId"
+                    + " and t.familyId = :familyId and t.revokedAt is null")
+    int revokeFamilyOfUser(UUID userId, UUID familyId, Instant now);
+
+    /** Signs out every device of this user except one. */
+    @Modifying
+    @Query(
+            "update RefreshToken t set t.revokedAt = :now where t.userId = :userId"
+                    + " and t.familyId <> :keep and t.revokedAt is null")
+    int revokeAllOfUserExcept(UUID userId, UUID keep, Instant now);
 }

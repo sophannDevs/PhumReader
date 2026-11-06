@@ -4,6 +4,66 @@
  */
 
 export interface paths {
+    "/api/v1/auth/change-email": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Emails a 6-digit code to the new address
+         * @description 400 wrong_password (field password) or same_email; 409 email_taken; 429 resend_too_soon within 30 s.
+         */
+        post: operations["changeEmail"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/change-email/confirm": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Confirms the new email with its code
+         * @description 400 invalid_code, code_expired or too_many_attempts (field code); 409 email_taken.
+         */
+        post: operations["confirmEmail"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/change-password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Sets a new password and signs out the other devices
+         * @description 400 wrong_password (field currentPassword) or password_too_weak (field newPassword); 429 too_many_attempts after 5 wrong passwords in 10 minutes.
+         */
+        post: operations["changePassword"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/auth/csrf": {
         parameters: {
             query?: never;
@@ -16,6 +76,63 @@ export interface paths {
         put?: never;
         post?: never;
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/delete-account": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Deletes the account after 30 days and signs out every device
+         * @description Logging in before deleteAfter keeps the account. 400 wrong_password (field password).
+         */
+        post: operations["deleteAccount"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/devices": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Signed-in devices, this one first */
+        get: operations["devices"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/devices/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Signs out one device
+         * @description 404 device_not_found. Signing out this device also clears its cookies. Its access token still works for up to 15 minutes.
+         */
+        delete: operations["signOutDevice"];
         options?: never;
         head?: never;
         patch?: never;
@@ -332,6 +449,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/creator/dashboard": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The signed-in creator's series and their numbers
+         * @description Readers who are not creators get creator: false and no series (the page's empty state).
+         */
+        get: operations["dashboard"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/creators/{id}/follow": {
         parameters: {
             query?: never;
@@ -555,6 +692,47 @@ export interface paths {
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/profile": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Changes the display name
+         * @description 2 to 60 characters after trimming; 400 name_too_short.
+         */
+        patch: operations["updateProfile"];
+        trace?: never;
+    };
+    "/api/v1/me/settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The signed-in account's settings */
+        get: operations["settings"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Saves the settings that are sent and returns all of them
+         * @description Only the fields in the body change, e.g. {"reader":{"size":20}}. 400 invalid_text_size (field reader.size).
+         */
+        patch: operations["updateSettings"];
         trace?: never;
     };
     "/api/v1/me/subscriptions": {
@@ -925,6 +1103,17 @@ export interface components {
         BookmarkState: {
             bookmarked: boolean;
         };
+        ChangeEmailRequest: {
+            newEmail: string;
+            password: string;
+        };
+        ChangePasswordRequest: {
+            currentPassword: string;
+            newPassword: string;
+        };
+        CodeRequest: {
+            code: string;
+        };
         CoinPack: {
             /** Format: int32 */
             bonus: number;
@@ -972,6 +1161,41 @@ export interface components {
             mine: boolean;
             top: boolean;
         };
+        CreatorDashboard: {
+            creator: boolean;
+            name?: string | null;
+            series: components["schemas"]["CreatorSeries"][];
+            totals: components["schemas"]["CreatorTotals"];
+        };
+        CreatorSeries: {
+            /** Format: int64 */
+            comments: number;
+            /** Format: int64 */
+            earnedCoins: number;
+            series: components["schemas"]["SeriesCard"];
+            /** Format: int64 */
+            subscribers: number;
+            /** Format: int64 */
+            unlocks: number;
+            /** @enum {string} */
+            visibility: "draft" | "published" | "hidden";
+        };
+        CreatorTotals: {
+            /** Format: int64 */
+            comments: number;
+            /** Format: int64 */
+            earnedCoins: number;
+            /** Format: int64 */
+            likes: number;
+            /** Format: int32 */
+            series: number;
+            /** Format: int64 */
+            subscribers: number;
+            /** Format: int64 */
+            unlocks: number;
+            /** Format: int64 */
+            views: number;
+        };
         CursorPageCommentView: {
             items: components["schemas"]["CommentView"][];
             nextCursor?: string | null;
@@ -1011,6 +1235,31 @@ export interface components {
         CursorPageUnlockedEntry: {
             items: components["schemas"]["UnlockedEntry"][];
             nextCursor?: string | null;
+        };
+        DeletionResponse: {
+            /** Format: date-time */
+            deleteAfter: string;
+        };
+        Device: {
+            browser?: string | null;
+            current: boolean;
+            /** Format: uuid */
+            id: string;
+            /** Format: date-time */
+            lastActiveAt: string;
+            /** Format: date-time */
+            signedInAt: string;
+            system?: string | null;
+        };
+        DeviceList: {
+            items: components["schemas"]["Device"][];
+        };
+        EmailChangeResponse: {
+            /** Format: int64 */
+            codeExpiresInSeconds: number;
+            email: string;
+            /** Format: int64 */
+            resendAfterSeconds: number;
         };
         EmailRequest: {
             email: string;
@@ -1168,6 +1417,14 @@ export interface components {
             id: string;
             roles: string[];
         };
+        NotificationSettings: {
+            episodes: boolean;
+            fastPass: boolean;
+        };
+        NotificationsChange: {
+            episodes?: boolean | null;
+            fastPass?: boolean | null;
+        };
         NovelBlock: {
             text?: string | null;
             /** @enum {string} */
@@ -1215,6 +1472,12 @@ export interface components {
             /** Format: int32 */
             width: number;
         };
+        PasswordRequest: {
+            password: string;
+        };
+        ProfileRequest: {
+            displayName: string;
+        };
         ProgressRequest: {
             /** Format: int32 */
             episode: number;
@@ -1227,6 +1490,24 @@ export interface components {
             /** Format: int32 */
             rank: number;
             series: components["schemas"]["SeriesCard"];
+        };
+        ReaderChange: {
+            /** @enum {string|null} */
+            font?: "sans" | "serif" | null;
+            /** Format: int32 */
+            size?: number | null;
+            /** @enum {string|null} */
+            theme?: "light" | "sepia" | "dark" | null;
+            wide?: boolean | null;
+        };
+        ReaderSettings: {
+            /** @enum {string} */
+            font: "sans" | "serif";
+            /** Format: int32 */
+            size: number;
+            /** @enum {string} */
+            theme: "light" | "sepia" | "dark";
+            wide: boolean;
         };
         ReaderState: {
             bookmarked: boolean;
@@ -1334,6 +1615,22 @@ export interface components {
             subscribed: boolean;
             unlocked: number[];
         };
+        Settings: {
+            /** @enum {string} */
+            language: "en" | "km";
+            notifications: components["schemas"]["NotificationSettings"];
+            reader: components["schemas"]["ReaderSettings"];
+            /** @enum {string} */
+            theme: "system" | "light" | "dark";
+        };
+        SettingsChange: {
+            /** @enum {string|null} */
+            language?: "en" | "km" | null;
+            notifications?: components["schemas"]["NotificationsChange"];
+            reader?: components["schemas"]["ReaderChange"];
+            /** @enum {string|null} */
+            theme?: "system" | "light" | "dark" | null;
+        };
         SignupRequest: {
             email: string;
             language?: string | null;
@@ -1394,6 +1691,103 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    changeEmail: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChangeEmailRequest"];
+            };
+        };
+        responses: {
+            /** @description Accepted */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EmailChangeResponse"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    confirmEmail: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CodeRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MeResponse"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    changePassword: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChangePasswordRequest"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
     csrf: {
         parameters: {
             query?: never;
@@ -1405,6 +1799,97 @@ export interface operations {
         responses: {
             /** @description OK */
             200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    deleteAccount: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PasswordRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeletionResponse"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    devices: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeviceList"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    signOutDevice: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -1982,6 +2467,35 @@ export interface operations {
             };
         };
     };
+    dashboard: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CreatorDashboard"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
     follow: {
         parameters: {
             query?: never;
@@ -2409,6 +2923,101 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    updateProfile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProfileRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MeResponse"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    settings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Settings"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    updateSettings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SettingsChange"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Settings"];
+                };
             };
             /** @description Error */
             default: {

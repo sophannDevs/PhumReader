@@ -97,6 +97,38 @@ public class User implements Persistable<UUID> {
         lastLoginAt = now;
     }
 
+    public void rename(String displayName) {
+        this.displayName = displayName.trim();
+    }
+
+    /** A new address that was just confirmed with a code. */
+    public void changeEmail(String email, Instant now) {
+        this.email = normalizeEmail(email);
+        this.emailVerifiedAt = now;
+    }
+
+    /** Starts the 30-day grace period (A18); asking again keeps the first date. */
+    public void requestDeletion(Instant now) {
+        if (status != UserStatus.DELETION_PENDING) {
+            status = UserStatus.DELETION_PENDING;
+            deletionRequestedAt = now;
+        }
+    }
+
+    /** Ends the grace period; {@code false} when no deletion was pending. */
+    public boolean cancelDeletion() {
+        if (status != UserStatus.DELETION_PENDING) {
+            return false;
+        }
+        status = UserStatus.ACTIVE;
+        deletionRequestedAt = null;
+        return true;
+    }
+
+    public @Nullable Instant getDeletionRequestedAt() {
+        return deletionRequestedAt;
+    }
+
     public boolean isEmailVerified() {
         return emailVerifiedAt != null;
     }

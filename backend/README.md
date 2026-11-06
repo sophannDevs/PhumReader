@@ -52,6 +52,9 @@ The other demo creators and commenters exist as accounts without a password (the
 - Public catalog (needs the seeded demo): http://localhost:3000/api/v1/home,
   `/api/v1/series/glass-compass`, `/api/v1/series/glass-compass/episodes?sort=newest`, `/api/v1/rankings?kind=novels`,
   `/api/v1/genres`, `/api/v1/series?genre=sci-fi`, `/api/v1/search?q=glass`
+- Signed in (log in first; the explorer lists them all): `/api/v1/me/settings`, `/api/v1/auth/devices`,
+  `/api/v1/creator/dashboard` (log in as `creator@toonwave.app` to see series), `/api/v1/me/coins`,
+  `/api/v1/me/history`
 
 ## Code layout
 

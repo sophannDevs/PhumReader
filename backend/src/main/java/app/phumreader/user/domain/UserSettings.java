@@ -11,8 +11,9 @@ import org.hibernate.annotations.UpdateTimestamp;
 import org.springframework.data.domain.Persistable;
 
 /**
- * Per-account settings (table {@code user_settings}), created with the account. The reader and
- * notification fields are edited in Stage 1 Step 4 part 5.
+ * Per-account settings (table {@code user_settings}), created with the account and edited on the
+ * Settings page (P3-17). Accounts made before settings existed (seeded commenters) have no row;
+ * they read as {@link #defaults}.
  */
 @Entity
 @Table(name = "user_settings")
@@ -74,7 +75,67 @@ public class UserSettings implements Persistable<UUID> {
         isNew = false;
     }
 
-    public String getLanguage() {
-        return language;
+    public Language getLanguage() {
+        return Language.ofCode(language);
+    }
+
+    public ThemeChoice getTheme() {
+        return ThemeChoice.valueOf(theme);
+    }
+
+    public int getReaderTextSize() {
+        return readerTextSize;
+    }
+
+    public ReaderTheme getReaderTheme() {
+        return ReaderTheme.valueOf(readerTheme);
+    }
+
+    public ReaderFont getReaderFont() {
+        return ReaderFont.valueOf(readerFont);
+    }
+
+    public boolean isReaderWideSpacing() {
+        return readerWideSpacing;
+    }
+
+    public boolean isNotifyNewEpisodes() {
+        return notifyNewEpisodes;
+    }
+
+    public boolean isNotifyFastPass() {
+        return notifyFastPass;
+    }
+
+    public void changeLanguage(Language value) {
+        language = value.code();
+    }
+
+    public void changeTheme(ThemeChoice value) {
+        theme = value.name();
+    }
+
+    public void changeReaderTextSize(int value) {
+        readerTextSize = (short) value;
+    }
+
+    public void changeReaderTheme(ReaderTheme value) {
+        readerTheme = value.name();
+    }
+
+    public void changeReaderFont(ReaderFont value) {
+        readerFont = value.name();
+    }
+
+    public void changeReaderWideSpacing(boolean value) {
+        readerWideSpacing = value;
+    }
+
+    public void changeNotifyNewEpisodes(boolean value) {
+        notifyNewEpisodes = value;
+    }
+
+    public void changeNotifyFastPass(boolean value) {
+        notifyFastPass = value;
     }
 }

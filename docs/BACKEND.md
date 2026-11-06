@@ -101,7 +101,8 @@ matching ledger entries.
   `http://localhost:8080`), so the browser stays same-origin. In production the API is either behind the same
   rewrite or on `api.<domain>` (same site); decided in P7-01. Cookies stay first-party.
 - **Cookies**: access token and refresh token in Secure, HttpOnly, SameSite=Lax cookies; the refresh cookie is
-  scoped to the refresh path. A reused refresh token logs out that device.
+  scoped to `/api/v1/auth`. A reused refresh token logs out that device. Endpoints that need to know which device
+  is asking (devices list, change password, delete account) therefore live under `/api/v1/auth`.
 - **CSRF**: cookie-to-header token (`XSRF-TOKEN` cookie, `X-XSRF-TOKEN` header) on every write.
 - **Fetch wrapper** (P5-01): sends cookies and the CSRF header, refreshes once silently on 401 and retries,
   throws a typed `ApiError`.

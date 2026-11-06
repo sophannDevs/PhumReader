@@ -5,9 +5,18 @@ import app.phumreader.user.domain.User;
 import app.phumreader.user.domain.UserSettings;
 import app.phumreader.user.repository.UserRepository;
 import app.phumreader.user.repository.UserSettingsRepository;
+import app.phumreader.user.service.SettingsViews.NotificationSettings;
+import app.phumreader.user.service.SettingsViews.NotificationsChange;
+import app.phumreader.user.service.SettingsViews.ReaderChange;
+import app.phumreader.user.service.SettingsViews.ReaderSettings;
+import app.phumreader.user.service.SettingsViews.Settings;
+import app.phumreader.user.service.SettingsViews.SettingsChange;
 import java.time.Clock;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,6 +24,11 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @Transactional
 public class UserService {
+
+    /** How long a deleted account can still be restored by logging in (A18). */
+    public static final Duration DELETION_GRACE = Duration.ofDays(30);
+
+    private static final int NAME_MIN = 2;
 
     private final UserRepository users;
     private final UserSettingsRepository settings;
@@ -66,5 +80,116 @@ public class UserService {
 
     public void recordLogin(User user) {
         user.recordLogin(clock.instant());
+    }
+
+    // ---------- profile and settings (P3-17) ----------
+
+    /** Changes the display name (trimmed, 2 to 60 characters). */
+    public Account rename(UUID userId, String displayName) {
+        String name = displayName.trim();
+        if (name.length() < NAME_MIN) {
+            throw ApiException.invalidField(
+                    "displayName", "name_too_short", "Use at least 2 characters.");
+        }
+        User user = require(userId);
+        user.rename(name);
+        return Account.of(user);
+    }
+
+    @Transactional(readOnly = true)
+    public Settings settings(UUID userId) {
+        return view(settings.findById(userId).orElseGet(() -> UserSettings.defaults(userId, "en")));
+    }
+
+    /**
+     * Saves the fields that are sent; 400 {@code invalid_text_size} for a size the reader lacks.
+     */
+    public Settings updateSettings(UUID userId, SettingsChange change) {
+        ReaderChange reader = change.reader();
+        if (reader != null
+                && reader.size() != null
+                && !SettingsViews.TEXT_SIZES.contains(reader.size())) {
+            throw ApiException.invalidField(
+                    "reader.size",
+                    "invalid_text_size",
+                    "Text size must be one of " + SettingsViews.TEXT_SIZES + ".");
+        }
+        require(userId);
+        UserSettings row =
+                settings.findById(userId)
+                        .orElseGet(() -> settings.save(UserSettings.defaults(userId, "en")));
+        if (change.language() != null) {
+            row.changeLanguage(change.language());
+        }
+        if (change.theme() != null) {
+            row.changeTheme(change.theme());
+        }
+        if (reader != null) {
+            if (reader.size() != null) {
+                row.changeReaderTextSize(reader.size());
+            }
+            if (reader.theme() != null) {
+                row.changeReaderTheme(reader.theme());
+            }
+            if (reader.font() != null) {
+                row.changeReaderFont(reader.font());
+            }
+            if (reader.wide() != null) {
+                row.changeReaderWideSpacing(reader.wide());
+            }
+        }
+        NotificationsChange notify = change.notifications();
+        if (notify != null) {
+            if (notify.episodes() != null) {
+                row.changeNotifyNewEpisodes(notify.episodes());
+            }
+            if (notify.fastPass() != null) {
+                row.changeNotifyFastPass(notify.fastPass());
+            }
+        }
+        return view(row);
+    }
+
+    // ---------- email change and deletion (called by the auth feature) ----------
+
+    /**
+     * Sets a confirmed new email; 409 {@code email_taken} when another account took it meanwhile.
+     */
+    public void changeEmail(User user, String email) {
+        user.changeEmail(email, clock.instant());
+        try {
+            users.flush();
+        } catch (DataIntegrityViolationException ex) {
+            throw ApiException.conflict("email_taken", "That email already has an account.");
+        }
+    }
+
+    /** Starts the grace period and returns when the account will be erased. */
+    public Instant requestDeletion(User user) {
+        user.requestDeletion(clock.instant());
+        Instant requested = user.getDeletionRequestedAt();
+        return (requested != null ? requested : clock.instant()).plus(DELETION_GRACE);
+    }
+
+    /** Logging in during the grace period keeps the account; {@code true} when it was pending. */
+    public boolean cancelDeletion(User user) {
+        return user.cancelDeletion();
+    }
+
+    private User require(UUID userId) {
+        return users.findById(userId)
+                .orElseThrow(() -> ApiException.notFound("user_not_found", "No such account."));
+    }
+
+    private static Settings view(UserSettings row) {
+        return new Settings(
+                row.getLanguage(),
+                row.getTheme(),
+                new ReaderSettings(
+                        row.getReaderTextSize(),
+                        row.getReaderTheme(),
+                        row.getReaderFont(),
+                        row.isReaderWideSpacing()),
+                new NotificationSettings(row.isNotifyNewEpisodes(), row.isNotifyFastPass()));
     }
 }

@@ -6,6 +6,7 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Optional;
+import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.env.Environment;
@@ -13,8 +14,9 @@ import org.springframework.core.env.Profiles;
 import org.springframework.stereotype.Component;
 
 /**
- * Six-digit email codes: valid 10 minutes, 5 tries. Only a hash of the code is kept. In development
- * {@code phumreader.auth.fixed-verification-code} makes every code the same (end-to-end tests).
+ * Six-digit email codes for sign-up and for changing the email: valid 10 minutes, 5 tries. Only a
+ * hash of the code (with the address it was sent to) is kept. In development {@code
+ * phumreader.auth.fixed-verification-code} makes every code the same (end-to-end tests).
  */
 @Component
 class VerificationCodes {
@@ -50,16 +52,34 @@ class VerificationCodes {
         }
     }
 
-    /** A new code for {@code email}; the previous one stops working. */
+    /** A new sign-up code for {@code email}; the previous one stops working. */
     String issue(String email) {
-        String code = fixedCode != null ? fixedCode : Secrets.randomCode();
-        Instant expiresAt = clock.instant().plus(LIFETIME);
-        store.put(key(email), encode(Secrets.sha256(email + ":" + code), 0, expiresAt), expiresAt);
-        return code;
+        return issue(signupKey(email), email);
     }
 
     Check check(String email, String code) {
-        Optional<String> stored = store.get(key(email));
+        return check(signupKey(email), email, code);
+    }
+
+    /** A code that confirms {@code newEmail} for this account (Settings, change email). */
+    String issueEmailChange(UUID userId, String newEmail) {
+        return issue(emailChangeKey(userId), newEmail);
+    }
+
+    Check checkEmailChange(UUID userId, String newEmail, String code) {
+        return check(emailChangeKey(userId), newEmail, code);
+    }
+
+    /** The code is bound to {@code email}: it only works for the address it was sent to. */
+    private String issue(String key, String email) {
+        String code = fixedCode != null ? fixedCode : Secrets.randomCode();
+        Instant expiresAt = clock.instant().plus(LIFETIME);
+        store.put(key, encode(Secrets.sha256(email + ":" + code), 0, expiresAt), expiresAt);
+        return code;
+    }
+
+    private Check check(String key, String email, String code) {
+        Optional<String> stored = store.get(key);
         if (stored.isEmpty()) {
             return Check.EXPIRED;
         }
@@ -71,16 +91,20 @@ class VerificationCodes {
             return Check.TOO_MANY_ATTEMPTS;
         }
         if (Secrets.sameHash(hash, Secrets.sha256(email + ":" + code))) {
-            store.remove(key(email));
+            store.remove(key);
             return Check.OK;
         }
         int used = attempts + 1;
-        store.put(key(email), encode(hash, used, expiresAt), expiresAt);
+        store.put(key, encode(hash, used, expiresAt), expiresAt);
         return used >= MAX_ATTEMPTS ? Check.TOO_MANY_ATTEMPTS : Check.WRONG;
     }
 
-    private static String key(String email) {
+    private static String signupKey(String email) {
         return "verify:" + email;
+    }
+
+    private static String emailChangeKey(UUID userId) {
+        return "email-change:" + userId;
     }
 
     private static String encode(String hash, int attempts, Instant expiresAt) {

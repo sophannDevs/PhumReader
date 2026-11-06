@@ -298,6 +298,12 @@ public class CatalogService {
         return result;
     }
 
+    /** Cards of all of a creator's series, drafts and hidden ones too, most viewed first. */
+    public List<SeriesCard> creatorCards(UUID creatorId) {
+        Instant now = clock.instant();
+        return new Cards(now, today(now)).of(queries.seriesOfCreator(creatorId, utc(now)));
+    }
+
     /** A released episode of the series; 404 {@code episode_not_found} when there is none. */
     public EpisodeRef requireEpisode(SeriesRef series, int number) {
         Instant now = clock.instant();

@@ -152,7 +152,10 @@ public class AuthService {
 
     // ---------- log in, refresh, log out ----------
 
-    /** After 5 wrong passwords for an email in 10 minutes, the next try is refused with 429. */
+    /**
+     * After 5 wrong passwords for an email in 10 minutes, the next try is refused with 429. Logging
+     * in while the account waits to be deleted keeps it (A18).
+     */
     public SignIn logIn(String emailAddress, String password, boolean remember, ClientInfo client) {
         String address = User.normalizeEmail(emailAddress);
         limiter.acquire(
@@ -186,6 +189,13 @@ public class AuthService {
                     "email_not_verified", "Confirm your email first: we sent you a code.");
         }
         users.recordLogin(user);
+        if (users.cancelDeletion(user)) {
+            email.send(
+                    user.getEmail(),
+                    "Your PhumReader account is staying",
+                    "You logged in, so your account will not be deleted. Welcome back!\n\n"
+                            + "To delete it after all, use Settings > Account again.");
+        }
         return newSession(user, remember, client);
     }
 
@@ -294,12 +304,7 @@ public class AuthService {
     }
 
     private static void requireStrongPassword(String password) {
-        if (!PasswordPolicy.isStrongEnough(password)) {
-            throw ApiException.invalidField(
-                    "password",
-                    "password_too_weak",
-                    "Use at least 3 of: 8+ characters, upper and lower case, a number, a symbol.");
-        }
+        PasswordPolicy.require("password", password);
     }
 
     private static boolean maySignIn(User user) {
