@@ -14,8 +14,8 @@ import { useHydrated, useUser } from "@/lib/store"
 
 /**
  * The catalog pages read the demo (`NEXT_PUBLIC_DEMO=1`) or the real API; both give the same
- * shapes. Comments, the coins page, the library and the creator dashboard are still the demo
- * until their part of Stage 1 Step 5.
+ * shapes. `useComments` and `useLibrary` are the demo-mode paths only (`enabled: DEMO_MODE`): the real
+ * API versions live in `src/lib/comments.ts` and `src/components/pr/library-page.tsx`.
  */
 type Catalog = Pick<
   typeof demo,

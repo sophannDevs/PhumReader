@@ -389,12 +389,12 @@ Spring Boot owns every business rule; the website never talks to the database di
   - Done when: a sandbox payment credits coins exactly once even if the webhook arrives twice; an expired order
     shows as expired.
 
-- [ ] **P3-12 Library API**
+- [x] **P3-12 Library API**
   - Build: subscribe / unsubscribe, subscribed list, recently read, unlocked list, bulk remove with undo.
   - Depends on: P3-09
   - Done when: all three library tabs return paged data with sort options.
 
-- [ ] **P3-13 Comments, likes, reports**
+- [x] **P3-13 Comments, likes, reports**
   - Build: comments (post, delete own, creator deletes on own series), likes, reports to the admin queue.
   - Depends on: P3-05
   - Done when: comments respect the episode's comments on/off setting.
