@@ -186,6 +186,22 @@ public class UserService {
         return user.cancelDeletion();
     }
 
+    /** Suspends the account; {@code false} when it already was. */
+    public boolean ban(UUID userId) {
+        User user = require(userId);
+        boolean changed = user.ban();
+        users.saveAndFlush(user);
+        return changed;
+    }
+
+    /** Lifts a suspension; {@code false} when the account was not suspended. */
+    public boolean unban(UUID userId) {
+        User user = require(userId);
+        boolean changed = user.unban();
+        users.saveAndFlush(user);
+        return changed;
+    }
+
     private User require(UUID userId) {
         return users.findById(userId)
                 .orElseThrow(() -> ApiException.notFound("user_not_found", "No such account."));

@@ -454,10 +454,35 @@ Spring Boot owns every business rule; the website never talks to the database di
   - Depends on: P3-02
   - Done when: every Settings section can be saved and reloaded.
 
-- [ ] **P3-18 Admin API and audit log**
+- [x] **P3-18 Admin API and audit log**
   - Build: users (ban), content (hide), reports, orders (refund to the ledger).
   - Depends on: P3-05
   - Done when: every admin action writes an audit row with who, what and when.
+  - Done (2026-11-06): `/api/v1/admin/**`, ADMIN role only (`SecurityConfig`; 401 for guests, 403 for everyone
+    else, same JSON error body). Endpoints: `GET overview`; `GET users`, `POST users/{id}/ban|unban`;
+    `GET content?type=series|episode|comment`, `POST content/{type}/{id}/hide|restore`; `GET reports`,
+    `POST reports/{id}/settle` (`dismiss | resolve | hide`); `GET orders`, `POST orders/{id}/refund`; `GET audit`.
+    Lists page with a cursor and filter by `q` and `status`. Migration V6: episode status `HIDDEN`, order status
+    `REFUNDED` (+ `refunded_at`), `reports.resolution_note`, one REFUND ledger row per order, and `audit_log`
+    is append-only (a trigger rejects update, delete and truncate, like the coin ledger).
+    Every action writes its `audit_log` row (actor, action, target, details with the admin's reason, request id)
+    in the same transaction as the change: `user.ban`, `user.unban`, `content.hide`, `content.restore`,
+    `report.resolve`, `report.dismiss`, `order.refund`. `AdminApiTest` (15 tests) covers access, each action,
+    paging and the audit rows.
+  - Decisions: **Ban** sets the account to BANNED and revokes every refresh token (no more sign-in or refresh);
+    an access token already issued works until it expires (15 minutes). Admin accounts cannot be banned here.
+    **Hide** moves live content to HIDDEN (series PUBLISHED, episode PUBLISHED, comment VISIBLE) and restore moves
+    it back; only live content can be hidden. The public pages already show only published/visible content, so
+    hidden content disappears at once; the creator cannot edit, delete or re-publish it (series: 403
+    `hidden_by_admin`, episode: 409 `episode_hidden`). Hiding also resolves the open reports on that target, the
+    search index and the home feed are told. **Reports**: "hide" through one report settles every open report on
+    the same target; "dismiss" and "resolve" settle only that one. **Refund** takes back every coin the order
+    credited (pack + bonus + first-purchase bonus) with one REFUND ledger row; it is refused when the reader
+    already spent some (409 `coins_spent`) or the order is not PAID (409 `order_not_refundable`). A refunded order
+    still counts as the reader's first purchase (no second first-purchase bonus). Returning the money to the
+    payer is done in the payment provider's dashboard (P3-11/P3-12 has no provider refund call yet).
+    Not done: there is no API to grant the ADMIN role (set it in the database for now); the admin cannot edit a
+    series or episode, only hide it; no notification is sent to the user whose account or content was actioned.
 
 - [ ] **Milestone M3**: all endpoints in OpenAPI, integration tests green.
 

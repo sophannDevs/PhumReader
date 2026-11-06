@@ -96,6 +96,8 @@ public class SecurityConfig {
                                 .permitAll()
                                 .requestMatchers(HttpMethod.POST, PUBLIC_POST)
                                 .permitAll()
+                                .requestMatchers("/api/v1/admin/**")
+                                .hasRole("ADMIN")
                                 .anyRequest()
                                 .authenticated())
                 // 401 and 403 use the same JSON error body as every other error.

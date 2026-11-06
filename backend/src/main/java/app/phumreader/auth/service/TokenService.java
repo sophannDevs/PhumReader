@@ -140,7 +140,7 @@ public class TokenService {
     }
 
     /** Logs the user out on every device. */
-    void revokeAll(UUID userId) {
+    public void revokeAll(UUID userId) {
         tokens.revokeAllOfUser(userId, clock.instant());
     }
 

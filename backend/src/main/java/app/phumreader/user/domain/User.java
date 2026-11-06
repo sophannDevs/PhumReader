@@ -112,6 +112,25 @@ public class User implements Persistable<UUID> {
         this.emailVerifiedAt = now;
     }
 
+    /** An admin suspends the account (P3-18); {@code false} when it was already suspended. */
+    public boolean ban() {
+        if (status == UserStatus.BANNED) {
+            return false;
+        }
+        status = UserStatus.BANNED;
+        deletionRequestedAt = null;
+        return true;
+    }
+
+    /** Lifts a suspension; {@code false} when the account was not suspended. */
+    public boolean unban() {
+        if (status != UserStatus.BANNED) {
+            return false;
+        }
+        status = UserStatus.ACTIVE;
+        return true;
+    }
+
     /** Starts the 30-day grace period (A18); asking again keeps the first date. */
     public void requestDeletion(Instant now) {
         if (status != UserStatus.DELETION_PENDING) {

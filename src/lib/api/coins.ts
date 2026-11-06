@@ -38,6 +38,7 @@ const STATUS: Record<Order["status"], PurchaseStatus | null> = {
   failed: "Failed",
   expired: "Failed",
   cancelled: "Cancelled",
+  refunded: "Cancelled", // the design has no "Refunded" badge (assumption 111)
   pending: null,
 }
 

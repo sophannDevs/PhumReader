@@ -143,6 +143,29 @@ public class CoinService {
         return after;
     }
 
+    /**
+     * Takes coins back (a refund): one ledger row and the new balance. The caller holds the wallet
+     * lock and has checked that the balance covers {@code amount}.
+     *
+     * @return the new balance
+     */
+    public int debit(
+            UUID userId,
+            int balance,
+            int amount,
+            LedgerReason reason,
+            @Nullable UUID orderId,
+            @Nullable String note) {
+        if (amount <= 0) {
+            return balance;
+        }
+        OffsetDateTime now = now();
+        int after = balance - amount;
+        queries.appendLedger(userId, -amount, after, reason, orderId, null, note, now);
+        queries.setBalance(userId, after, now);
+        return after;
+    }
+
     /** The reader's coin history, newest first. */
     public CursorPage<LedgerEntry> ledger(
             CurrentUser user, @Nullable String cursor, @Nullable Integer limit) {

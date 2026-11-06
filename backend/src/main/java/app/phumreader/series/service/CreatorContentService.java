@@ -287,7 +287,7 @@ public class CreatorContentService {
     public void deleteEpisode(CurrentUser user, UUID seriesId, int number) {
         creators.requireOwnedSeries(user, seriesId);
         EpisodeRow current = requireEpisode(seriesId, number);
-        if (current.status().equals("PUBLISHED")) {
+        if (current.status().equals("PUBLISHED") || current.status().equals("HIDDEN")) {
             throw ApiException.conflict(
                     "episode_published", "A published episode cannot be deleted.");
         }
@@ -392,6 +392,10 @@ public class CreatorContentService {
             @Nullable Integer days) {}
 
     private Stored state(EpisodeInput in, @Nullable EpisodeRow current) {
+        if (current != null && current.status().equals("HIDDEN")) {
+            throw ApiException.conflict(
+                    "episode_hidden", "An admin took this episode down; it cannot be edited.");
+        }
         Instant now = clock.instant();
         FastPass fp = in.fastPass();
         Integer price =

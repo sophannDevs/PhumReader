@@ -4,6 +4,210 @@
  */
 
 export interface paths {
+    "/api/v1/admin/audit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The audit log, newest first */
+        get: operations["audit"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/content": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Series, episodes or comments, newest first */
+        get: operations["content_1"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/content/{type}/{id}/hide": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Take live content down; its open reports are resolved */
+        post: operations["hide"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/content/{type}/{id}/restore": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Put hidden content back */
+        post: operations["restore"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/orders": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Coin orders, newest first; search by order number, email or name */
+        get: operations["orders_1"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/orders/{id}/refund": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Refund a paid order: its coins are taken back through the ledger */
+        post: operations["refund"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/overview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Counts for the admin start page */
+        get: operations["overview"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/reports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The report queue, newest first */
+        get: operations["reports"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/reports/{id}/settle": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Dismiss, resolve or hide the reported content */
+        post: operations["settle"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/users": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Users, newest first; search by email or name */
+        get: operations["users"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/users/{id}/ban": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Suspend an account and sign it out everywhere */
+        post: operations["ban"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/users/{id}/unban": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Lift a suspension */
+        post: operations["unban"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/auth/change-email": {
         parameters: {
             query?: never;
@@ -1304,6 +1508,89 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        AdminContent: {
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: int32 */
+            episodeNumber?: number | null;
+            /** Format: uuid */
+            id: string;
+            /** Format: int64 */
+            openReports: number;
+            owner: string;
+            seriesSlug: string;
+            status: string;
+            title: string;
+            /** @enum {string} */
+            type: "series" | "episode" | "comment";
+        };
+        AdminOrder: {
+            /** Format: int32 */
+            coins: number;
+            /** Format: date-time */
+            createdAt: string;
+            displayName: string;
+            email: string;
+            /** Format: uuid */
+            id: string;
+            method: string;
+            orderNumber: string;
+            /** Format: date-time */
+            paidAt?: string | null;
+            /** Format: int32 */
+            priceKhr?: number | null;
+            /** Format: int32 */
+            priceUsdCents?: number | null;
+            refundable: boolean;
+            /** Format: date-time */
+            refundedAt?: string | null;
+            status: string;
+            /** Format: uuid */
+            userId: string;
+        };
+        AdminReport: {
+            /** Format: date-time */
+            createdAt: string;
+            details?: string | null;
+            /** Format: uuid */
+            id: string;
+            note?: string | null;
+            reason: string;
+            reporter: string;
+            /** Format: date-time */
+            resolvedAt?: string | null;
+            resolvedBy?: string | null;
+            status: string;
+            target: components["schemas"]["ReportTarget"];
+        };
+        AdminUser: {
+            /** Format: date-time */
+            createdAt: string;
+            displayName: string;
+            email: string;
+            /** Format: uuid */
+            id: string;
+            /** Format: date-time */
+            lastLoginAt?: string | null;
+            roles: string[];
+            status: string;
+        };
+        AuditEntry: {
+            action: string;
+            /** Format: uuid */
+            actorId?: string | null;
+            actorName?: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            details: {
+                [key: string]: unknown;
+            };
+            /** Format: int64 */
+            id: number;
+            requestId?: string | null;
+            targetId?: string | null;
+            targetType: string;
+        };
         Badges: {
             isNew: boolean;
             up: boolean;
@@ -1443,6 +1730,26 @@ export interface components {
             unlocks: number;
             /** Format: int64 */
             views: number;
+        };
+        CursorPageAdminContent: {
+            items: components["schemas"]["AdminContent"][];
+            nextCursor?: string | null;
+        };
+        CursorPageAdminOrder: {
+            items: components["schemas"]["AdminOrder"][];
+            nextCursor?: string | null;
+        };
+        CursorPageAdminReport: {
+            items: components["schemas"]["AdminReport"][];
+            nextCursor?: string | null;
+        };
+        CursorPageAdminUser: {
+            items: components["schemas"]["AdminUser"][];
+            nextCursor?: string | null;
+        };
+        CursorPageAuditEntry: {
+            items: components["schemas"]["AuditEntry"][];
+            nextCursor?: string | null;
         };
         CursorPageCommentView: {
             items: components["schemas"]["CommentView"][];
@@ -1723,6 +2030,9 @@ export interface components {
             /** @enum {string} */
             type: "paragraph" | "heading" | "quote" | "scene-break";
         };
+        OptionalReasonRequest: {
+            reason?: string | null;
+        };
         OrderRequest: {
             /** @enum {string} */
             method: "khqr" | "aba" | "card";
@@ -1753,9 +2063,23 @@ export interface components {
             priceUsdCents?: number | null;
             provider: string;
             /** @enum {string} */
-            status: "pending" | "paid" | "failed" | "cancelled" | "expired";
+            status: "pending" | "paid" | "failed" | "cancelled" | "expired" | "refunded";
             /** Format: int32 */
             totalCoins: number;
+        };
+        Overview: {
+            /** Format: int64 */
+            bannedUsers: number;
+            /** Format: int64 */
+            hiddenComments: number;
+            /** Format: int64 */
+            hiddenEpisodes: number;
+            /** Format: int64 */
+            hiddenSeries: number;
+            /** Format: int64 */
+            openReports: number;
+            /** Format: int64 */
+            refundedOrders: number;
         };
         Panel: {
             alt: string;
@@ -1823,6 +2147,14 @@ export interface components {
             signedIn: boolean;
             unlocked: boolean;
         };
+        ReasonRequest: {
+            reason: string;
+        };
+        RefundResult: {
+            order: components["schemas"]["AdminOrder"];
+            /** Format: int32 */
+            refundedCoins: number;
+        };
         RemoveRequest: {
             seriesIds: string[];
         };
@@ -1853,6 +2185,17 @@ export interface components {
         ReportRequest: {
             details?: string | null;
             reason: string;
+        };
+        ReportTarget: {
+            /** Format: int32 */
+            episodeNumber?: number | null;
+            /** Format: uuid */
+            id: string;
+            seriesSlug?: string | null;
+            status?: string | null;
+            title?: string | null;
+            /** @enum {string} */
+            type: "series" | "episode" | "comment";
         };
         ResetPasswordRequest: {
             password: string;
@@ -1980,6 +2323,11 @@ export interface components {
             /** @enum {string|null} */
             theme?: "system" | "light" | "dark" | null;
         };
+        SettleRequest: {
+            /** @enum {string} */
+            action: "dismiss" | "resolve" | "hide";
+            note?: string | null;
+        };
         SignupRequest: {
             email: string;
             language?: string | null;
@@ -2066,6 +2414,429 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    audit: {
+        parameters: {
+            query?: {
+                /** @description Action prefix, e.g. user. or order.refund */
+                action?: string | null;
+                actor?: string | null;
+                /** @description nextCursor of the previous page; omit for the first page */
+                cursor?: string | null;
+                /** @description Page size, 1-100 (default 20) */
+                limit?: number | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CursorPageAuditEntry"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    content_1: {
+        parameters: {
+            query: {
+                /** @description series, episode or comment */
+                type: string;
+                q?: string | null;
+                /** @description A state of that type, e.g. published or hidden */
+                status?: string | null;
+                /** @description nextCursor of the previous page; omit for the first page */
+                cursor?: string | null;
+                /** @description Page size, 1-100 (default 20) */
+                limit?: number | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CursorPageAdminContent"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    hide: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                type: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReasonRequest"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    restore: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                type: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["OptionalReasonRequest"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    orders_1: {
+        parameters: {
+            query?: {
+                q?: string | null;
+                /** @description pending, paid, failed, cancelled, expired or refunded */
+                status?: string | null;
+                /** @description nextCursor of the previous page; omit for the first page */
+                cursor?: string | null;
+                /** @description Page size, 1-100 (default 20) */
+                limit?: number | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CursorPageAdminOrder"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    refund: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReasonRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RefundResult"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    overview: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Overview"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    reports: {
+        parameters: {
+            query?: {
+                /** @description open, resolved or dismissed; omit for all */
+                status?: string | null;
+                /** @description nextCursor of the previous page; omit for the first page */
+                cursor?: string | null;
+                /** @description Page size, 1-100 (default 20) */
+                limit?: number | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CursorPageAdminReport"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    settle: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SettleRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminReport"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    users: {
+        parameters: {
+            query?: {
+                q?: string | null;
+                /** @description active, banned, deletion_pending or deleted */
+                status?: string | null;
+                /** @description nextCursor of the previous page; omit for the first page */
+                cursor?: string | null;
+                /** @description Page size, 1-100 (default 20) */
+                limit?: number | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CursorPageAdminUser"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    ban: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReasonRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminUser"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    unban: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["OptionalReasonRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminUser"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
     changeEmail: {
         parameters: {
             query?: never;
