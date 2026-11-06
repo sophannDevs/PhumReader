@@ -127,7 +127,7 @@ matching ledger entries.
 
 - Balances come only from `coin_ledger` (append-only). An unlock is one transaction: lock the wallet row, write
   the ledger, write the unlock. The balance is never negative.
-- Orders: `PENDING → PAID | FAILED | EXPIRED` (10-minute expiry). Coins are credited exactly once, even if the
+- Orders: `PENDING → PAID | FAILED | CANCELLED | EXPIRED` (10-minute expiry). Coins are credited exactly once, even if the
   webhook arrives twice. The webhook is the source of truth; the website polls order status every 3 s.
 - Pack prices (USD and KHR) live in `coin_packs` and change without a deploy (A2): packs 10 / 30 / 60 / 120 / 300
   with the designed bonuses.

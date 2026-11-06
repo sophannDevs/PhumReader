@@ -117,7 +117,8 @@ class HomeFeedCacheTest {
                                 null,
                                 true,
                                 null),
-                        new AppProperties.Catalog(ttl));
+                        new AppProperties.Catalog(ttl),
+                        new AppProperties.Payments(false, Duration.ofMinutes(10)));
         return new CatalogService(queries, clock, properties);
     }
 }

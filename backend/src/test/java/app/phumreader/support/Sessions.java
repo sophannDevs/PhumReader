@@ -71,6 +71,36 @@ public final class Sessions {
         return id;
     }
 
+    /** Gives a user coins as the ledger would (an ADJUSTMENT row and the wallet balance). */
+    public void grantCoins(UUID userId, int coins) {
+        int balance =
+                jdbc.sql(
+                                "insert into coin_wallets (user_id, balance) values (:u, :n)"
+                                        + " on conflict (user_id) do update"
+                                        + " set balance = coin_wallets.balance + :n returning balance")
+                        .param("u", userId)
+                        .param("n", coins)
+                        .query(Integer.class)
+                        .single();
+        jdbc.sql(
+                        "insert into coin_ledger (user_id, amount, balance_after, reason, note)"
+                                + " values (:u, :n, :b, 'ADJUSTMENT', 'Test coins')")
+                .param("u", userId)
+                .param("n", coins)
+                .param("b", balance)
+                .update();
+    }
+
+    /** The wallet balance equals the sum of the user's ledger rows. */
+    public boolean walletMatchesLedger(UUID userId) {
+        return jdbc.sql(
+                        "select coalesce((select balance from coin_wallets where user_id = :u), 0)"
+                                + " = coalesce((select sum(amount) from coin_ledger where user_id = :u), 0)")
+                .param("u", userId)
+                .query(Boolean.class)
+                .single();
+    }
+
     /** Id of a seeded account by email (the demo reader, the stand-in creator). */
     public UUID userId(String email) {
         return jdbc.sql("select id from users where email = :email")

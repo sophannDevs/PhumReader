@@ -189,6 +189,97 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/coins/orders": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Start buying a coin pack
+         * @description The order stays open for orderExpiryMinutes. A retry with the same Idempotency-Key returns the same order.
+         */
+        post: operations["createOrder"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/coins/orders/{number}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One of the reader's orders (poll it while the reader pays) */
+        get: operations["order"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/coins/orders/{number}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cancel an open order */
+        post: operations["cancel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/coins/orders/{number}/simulate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Dev only: pay or fail an order without ABA PayWay
+         * @description 404 when phumreader.payments.simulator is off (always in production).
+         */
+        post: operations["simulate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/coins/packs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Coin packs and ways to pay (public) */
+        get: operations["packs"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/comments/{id}": {
         parameters: {
             query?: never;
@@ -339,6 +430,57 @@ export interface paths {
         };
         /** The signed-in account (401 when not signed in) */
         get: operations["me"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/coins": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The reader's balance and whether the first-purchase bonus is on offer */
+        get: operations["wallet"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/coins/ledger": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Every change to the reader's coins, newest first */
+        get: operations["ledger"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/coins/orders": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The reader's orders, newest first (purchase history) */
+        get: operations["orders"];
         put?: never;
         post?: never;
         delete?: never;
@@ -683,6 +825,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/series/{slug}/episodes/{n}/unlock": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Unlock a Fast Pass episode with coins
+         * @description Charged at most once: a retry with the same Idempotency-Key, or unlocking the same episode again, costs nothing. 402 not_enough_coins (with price and freeOn); 409 episode_not_locked when it is free to read.
+         */
+        post: operations["unlock"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/series/{slug}/me": {
         parameters: {
             query?: never;
@@ -763,6 +925,27 @@ export interface components {
         BookmarkState: {
             bookmarked: boolean;
         };
+        CoinPack: {
+            /** Format: int32 */
+            bonus: number;
+            /** Format: int32 */
+            coins: number;
+            /** Format: int32 */
+            id: number;
+            /** Format: int32 */
+            priceKhr?: number | null;
+            /** Format: int32 */
+            priceUsdCents?: number | null;
+            /** @enum {string|null} */
+            tag?: "popular" | "best_value" | null;
+        };
+        CoinShop: {
+            methods: ("khqr" | "aba" | "card")[];
+            /** Format: int32 */
+            orderExpiryMinutes: number;
+            packs: components["schemas"]["CoinPack"][];
+            simulator: boolean;
+        };
         CommentAuthor: {
             avatarUrl?: string | null;
             name: string;
@@ -803,6 +986,14 @@ export interface components {
         };
         CursorPageHistoryEntry: {
             items: components["schemas"]["HistoryEntry"][];
+            nextCursor?: string | null;
+        };
+        CursorPageLedgerEntry: {
+            items: components["schemas"]["LedgerEntry"][];
+            nextCursor?: string | null;
+        };
+        CursorPageOrderView: {
+            items: components["schemas"]["OrderView"][];
             nextCursor?: string | null;
         };
         CursorPageRankingEntry: {
@@ -942,6 +1133,27 @@ export interface components {
             comics: components["schemas"]["RankingEntry"][];
             novels: components["schemas"]["RankingEntry"][];
         };
+        LedgerEntry: {
+            /** Format: int32 */
+            amount: number;
+            /** Format: int32 */
+            balanceAfter: number;
+            /** Format: date-time */
+            createdAt: string;
+            episode?: components["schemas"]["LedgerEpisode"];
+            /** Format: int64 */
+            id: number;
+            note?: string | null;
+            orderNumber?: string | null;
+            /** @enum {string} */
+            reason: "purchase" | "bonus" | "unlock" | "refund" | "adjustment";
+        };
+        LedgerEpisode: {
+            /** Format: int32 */
+            n: number;
+            series: string;
+            title: string;
+        };
         LoginRequest: {
             email: string;
             password: string;
@@ -960,6 +1172,40 @@ export interface components {
             text?: string | null;
             /** @enum {string} */
             type: "paragraph" | "quote" | "scene-break";
+        };
+        OrderRequest: {
+            /** @enum {string} */
+            method: "khqr" | "aba" | "card";
+            /** Format: int32 */
+            packId: number;
+        };
+        OrderView: {
+            /** Format: int32 */
+            bonusCoins: number;
+            /** Format: int32 */
+            coins: number;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            expiresAt: string;
+            /** Format: int32 */
+            firstBonusCoins: number;
+            /** @enum {string} */
+            method: "khqr" | "aba" | "card";
+            orderNumber: string;
+            /** Format: int32 */
+            packId: number;
+            /** Format: date-time */
+            paidAt?: string | null;
+            /** Format: int32 */
+            priceKhr?: number | null;
+            /** Format: int32 */
+            priceUsdCents?: number | null;
+            provider: string;
+            /** @enum {string} */
+            status: "pending" | "paid" | "failed" | "cancelled" | "expired";
+            /** Format: int32 */
+            totalCoins: number;
         };
         Panel: {
             alt: string;
@@ -1101,6 +1347,10 @@ export interface components {
             /** Format: int64 */
             resendAfterSeconds: number;
         };
+        SimulateRequest: {
+            /** @enum {string} */
+            outcome: "paid" | "failed";
+        };
         SubscriptionEntry: {
             series: components["schemas"]["SeriesCard"];
             /** Format: date-time */
@@ -1111,6 +1361,15 @@ export interface components {
             /** Format: int64 */
             subscribers: number;
         };
+        UnlockResult: {
+            alreadyUnlocked: boolean;
+            /** Format: int32 */
+            balance: number;
+            /** Format: int32 */
+            coins: number;
+            /** Format: int32 */
+            episode: number;
+        };
         UnlockedEntry: {
             episode: components["schemas"]["EpisodeSummary"];
             series: components["schemas"]["SeriesCard"];
@@ -1120,6 +1379,11 @@ export interface components {
         VerifyRequest: {
             code: string;
             email: string;
+        };
+        Wallet: {
+            /** Format: int32 */
+            balance: number;
+            firstPurchaseBonus: boolean;
         };
     };
     responses: never;
@@ -1419,6 +1683,168 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["MeResponse"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    createOrder: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description A new random value per order (8-100 characters) */
+                "Idempotency-Key": string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OrderRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OrderView"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    order: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                number: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OrderView"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    cancel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                number: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OrderView"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    simulate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                number: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SimulateRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OrderView"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    packs: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CoinShop"];
                 };
             };
             /** @description Error */
@@ -1752,6 +2178,103 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["MeResponse"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    wallet: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Wallet"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    ledger: {
+        parameters: {
+            query?: {
+                /** @description nextCursor of the previous page */
+                cursor?: string | null;
+                /** @description Page size, 1-100 (default 20) */
+                limit?: number | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CursorPageLedgerEntry"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    orders: {
+        parameters: {
+            query?: {
+                /** @description nextCursor of the previous page */
+                cursor?: string | null;
+                /** @description Page size, 1-100 (default 20) */
+                limit?: number | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CursorPageOrderView"];
                 };
             };
             /** @description Error */
@@ -2534,6 +3057,41 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    unlock: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description A new random value per unlock (8-100 characters) */
+                "Idempotency-Key": string | null;
+            };
+            path: {
+                slug: string;
+                n: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UnlockResult"];
+                };
             };
             /** @description Error */
             default: {

@@ -37,7 +37,7 @@ Sources of truth: the plan doc, `CLAUDE.md`, `docs/BACKEND.md` (decisions and lo
 - Money: balances change only through the ledger, in one transaction with a wallet row lock; every payment and
   unlock call is idempotent. Never build card number fields: cards use the PayWay hosted page.
 
-Progress: 3 / 51 tasks (P1-05, P1-07, P1-08) · Stage 1: step 4 of 5, parts 1–3 of 5 done · milestones M1, M3, M4, M5, M6, M7
+Progress: 3 / 51 tasks (P1-05, P1-07, P1-08) · Stage 1: step 4 of 5, parts 1–4 of 5 done · milestones M1, M3, M4, M5, M6, M7
 
 ---
 
@@ -104,7 +104,16 @@ deployment and no Docker. A step is done when its checks pass; tick the plan tas
       Supabase as the demo reader: free episode and chapter, 402 on a Fast Pass episode, history with the four demo
       entries, progress, subscribe, like, comment like and follow (each undone afterwards). Not done yet: signed
       image URLs (P3-08), view counters (Redis, Step 3), unlocking with coins (Part 4).
-    - [ ] Part 4, coins: balance, unlocks, packs, orders with a dev-only payment simulator, history
+    - [x] Part 4, coins (P3-10, P3-11 with the dev simulator instead of PayWay): `GET /api/v1/me/coins`,
+      `POST /series/{slug}/episodes/{n}/unlock` (Idempotency-Key), `/me/coins/ledger`, `GET /coins/packs`,
+      `POST /coins/orders` (Idempotency-Key), order status, cancel, `POST /coins/orders/{number}/simulate`
+      (dev only), `/me/coins/orders` (purchase history). Flyway V3: `payment_orders.first_bonus_coins`.
+      Done 2026-11-06: 13 new tests (115 backend tests green), among them 50 parallel unlocks with one key
+      (charged once), 50 parallel unlocks with too few coins for all (balance never below 0) and a payment
+      confirmed 50 times at once (credited once). Real check on Supabase (V3 applied): the demo reader keeps 3
+      coins and the first-purchase offer (unlock answers 402 `not_enough_coins`); a new test account bought the
+      10 pack (+10 first bonus), paying twice credited once, then unlocked Glass Compass 66 for 5 coins.
+      Not done yet: ABA PayWay (KHQR, ABA Pay, hosted card page, signed webhook, nightly reconciliation; A4).
     - [ ] Part 5, settings and the creator dashboard
 - [ ] **Step 5: Connect the frontend** (P5-01, P5-06, parts of P5-04, P5-05, P5-07; `/reset` from P4-09)
   - Fetch wrapper (cookies, CSRF, silent refresh, `ApiError`); every `demo-api.ts` call has a real-API path; server
@@ -615,3 +624,23 @@ All 74 plan tasks, and where each one lives.
 23. **Remove with undo** has no server-side trash: `/me/subscriptions/remove` and `/me/history/remove` return the
     removed entries, and sending them to `.../restore` puts them back with their original dates. Unlocked
     episodes cannot be removed (they were paid for).
+24. **Idempotency-Key is required** on unlocks and new orders (8–100 characters, kept 24 hours). A retry with the
+    same key gets the first answer back; the same key on a different request is refused with 409
+    `idempotency_key_reused`. The reader's wallet row is locked first, so two requests with one key never both run.
+25. **Unlocks:** 402 `not_enough_coins` (with `price` and `freeOn`) when the balance is too low; 409
+    `episode_not_locked` when the episode is free to read already (also for its creator and admins). Unlocking an
+    episode again charges nothing. The creator's earning is the full price (A7: revenue share comes later).
+26. **First-purchase bonus** = the pack's own coins (double coins), once per account: on the first order that is
+    *paid*. An open order shows the bonus it expects (`first_bonus_coins`, Flyway V3); if another order is paid
+    first, this one gets none. The ledger has one PURCHASE row and BONUS rows ("Pack bonus", "First purchase
+    bonus") per paid order.
+27. **Orders until PayWay (A4):** dev and tests pay with `POST /coins/orders/{number}/simulate`
+    (`phumreader.payments.simulator`; production refuses to start with it on, and without PayWay answers 503
+    `payments_unavailable`). An unpaid order is `expired` once its 10 minutes are over (stored as EXPIRED when it
+    is next changed) and can no longer be paid, like an expired KHQR code. Cancelling twice is fine; 20 new orders
+    per reader per hour. The webhook and nightly reconciliation come with PayWay.
+28. **Purchase history** is `GET /me/coins/orders` with every status (pending and expired too); the website shows
+    the Paid, Failed and Cancelled rows. `GET /me/coins/ledger` lists every coin change.
+29. **Test account on Supabase dev:** the real check of part 4 created `part4-check-20261106142851@phumreader.test`
+    (demo password) with one paid 10-coin order, one cancelled order, an unlock of Glass Compass 66 and 15 coins.
+    Ledger rows are permanent, so it stays; it does not touch the demo reader.

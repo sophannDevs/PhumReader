@@ -23,6 +23,9 @@ phumreader:
     secure-cookies: false
     # Every email code is 123456 in development (as in the demo), so end-to-end tests can sign up.
     fixed-verification-code: "123456"
+  payments:
+    # No PayWay keys on development machines: coin orders are paid with the dev simulator.
+    simulator: true
 
 management:
   endpoint:

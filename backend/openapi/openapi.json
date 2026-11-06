@@ -323,6 +323,206 @@
         "tags" : [ "auth" ]
       }
     },
+    "/api/v1/coins/orders" : {
+      "post" : {
+        "description" : "The order stays open for orderExpiryMinutes. A retry with the same Idempotency-Key returns the same order.",
+        "operationId" : "createOrder",
+        "parameters" : [ {
+          "description" : "A new random value per order (8-100 characters)",
+          "in" : "header",
+          "name" : "Idempotency-Key",
+          "required" : true,
+          "schema" : {
+            "type" : [ "string", "null" ]
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/OrderRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/OrderView"
+                }
+              }
+            },
+            "description" : "Created"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Start buying a coin pack",
+        "tags" : [ "payments" ]
+      }
+    },
+    "/api/v1/coins/orders/{number}" : {
+      "get" : {
+        "operationId" : "order",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "number",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/OrderView"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "One of the reader's orders (poll it while the reader pays)",
+        "tags" : [ "payments" ]
+      }
+    },
+    "/api/v1/coins/orders/{number}/cancel" : {
+      "post" : {
+        "operationId" : "cancel",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "number",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/OrderView"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Cancel an open order",
+        "tags" : [ "payments" ]
+      }
+    },
+    "/api/v1/coins/orders/{number}/simulate" : {
+      "post" : {
+        "description" : "404 when phumreader.payments.simulator is off (always in production).",
+        "operationId" : "simulate",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "number",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/SimulateRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/OrderView"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Dev only: pay or fail an order without ABA PayWay",
+        "tags" : [ "payments" ]
+      }
+    },
+    "/api/v1/coins/packs" : {
+      "get" : {
+        "operationId" : "packs",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CoinShop"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Coin packs and ways to pay (public)",
+        "tags" : [ "payments" ]
+      }
+    },
     "/api/v1/comments/{id}" : {
       "delete" : {
         "operationId" : "delete",
@@ -698,6 +898,129 @@
         },
         "summary" : "The signed-in account (401 when not signed in)",
         "tags" : [ "account" ]
+      }
+    },
+    "/api/v1/me/coins" : {
+      "get" : {
+        "operationId" : "wallet",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Wallet"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "The reader's balance and whether the first-purchase bonus is on offer",
+        "tags" : [ "coins" ]
+      }
+    },
+    "/api/v1/me/coins/ledger" : {
+      "get" : {
+        "operationId" : "ledger",
+        "parameters" : [ {
+          "description" : "nextCursor of the previous page",
+          "in" : "query",
+          "name" : "cursor",
+          "required" : false,
+          "schema" : {
+            "type" : [ "string", "null" ]
+          }
+        }, {
+          "description" : "Page size, 1-100 (default 20)",
+          "in" : "query",
+          "name" : "limit",
+          "required" : false,
+          "schema" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int32"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CursorPageLedgerEntry"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Every change to the reader's coins, newest first",
+        "tags" : [ "coins" ]
+      }
+    },
+    "/api/v1/me/coins/orders" : {
+      "get" : {
+        "operationId" : "orders",
+        "parameters" : [ {
+          "description" : "nextCursor of the previous page",
+          "in" : "query",
+          "name" : "cursor",
+          "required" : false,
+          "schema" : {
+            "type" : [ "string", "null" ]
+          }
+        }, {
+          "description" : "Page size, 1-100 (default 20)",
+          "in" : "query",
+          "name" : "limit",
+          "required" : false,
+          "schema" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int32"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CursorPageOrderView"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "The reader's orders, newest first (purchase history)",
+        "tags" : [ "payments" ]
       }
     },
     "/api/v1/me/follows" : {
@@ -1838,6 +2161,60 @@
         "tags" : [ "comments" ]
       }
     },
+    "/api/v1/series/{slug}/episodes/{n}/unlock" : {
+      "post" : {
+        "description" : "Charged at most once: a retry with the same Idempotency-Key, or unlocking the same episode again, costs nothing. 402 not_enough_coins (with price and freeOn); 409 episode_not_locked when it is free to read.",
+        "operationId" : "unlock",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "slug",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "path",
+          "name" : "n",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }, {
+          "description" : "A new random value per unlock (8-100 characters)",
+          "in" : "header",
+          "name" : "Idempotency-Key",
+          "required" : true,
+          "schema" : {
+            "type" : [ "string", "null" ]
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/UnlockResult"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Unlock a Fast Pass episode with coins",
+        "tags" : [ "coins" ]
+      }
+    },
     "/api/v1/series/{slug}/me" : {
       "get" : {
         "operationId" : "seriesState",
@@ -2051,6 +2428,62 @@
         },
         "required" : [ "bookmarked" ]
       },
+      "CoinPack" : {
+        "type" : "object",
+        "properties" : {
+          "bonus" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "coins" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "id" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "priceKhr" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int32"
+          },
+          "priceUsdCents" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int32"
+          },
+          "tag" : {
+            "type" : [ "string", "null" ],
+            "enum" : [ "popular", "best_value", null ]
+          }
+        },
+        "required" : [ "bonus", "coins", "id" ]
+      },
+      "CoinShop" : {
+        "type" : "object",
+        "properties" : {
+          "methods" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string",
+              "enum" : [ "khqr", "aba", "card" ]
+            }
+          },
+          "orderExpiryMinutes" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "packs" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/CoinPack"
+            }
+          },
+          "simulator" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "methods", "orderExpiryMinutes", "packs", "simulator" ]
+      },
       "CommentAuthor" : {
         "type" : "object",
         "properties" : {
@@ -2175,6 +2608,36 @@
             "type" : "array",
             "items" : {
               "$ref" : "#/components/schemas/HistoryEntry"
+            }
+          },
+          "nextCursor" : {
+            "type" : [ "string", "null" ]
+          }
+        },
+        "required" : [ "items" ]
+      },
+      "CursorPageLedgerEntry" : {
+        "type" : "object",
+        "properties" : {
+          "items" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/LedgerEntry"
+            }
+          },
+          "nextCursor" : {
+            "type" : [ "string", "null" ]
+          }
+        },
+        "required" : [ "items" ]
+      },
+      "CursorPageOrderView" : {
+        "type" : "object",
+        "properties" : {
+          "items" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/OrderView"
             }
           },
           "nextCursor" : {
@@ -2578,6 +3041,57 @@
         },
         "required" : [ "comics", "novels" ]
       },
+      "LedgerEntry" : {
+        "type" : "object",
+        "properties" : {
+          "amount" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "balanceAfter" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "createdAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "episode" : {
+            "$ref" : "#/components/schemas/LedgerEpisode"
+          },
+          "id" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "note" : {
+            "type" : [ "string", "null" ]
+          },
+          "orderNumber" : {
+            "type" : [ "string", "null" ]
+          },
+          "reason" : {
+            "type" : "string",
+            "enum" : [ "purchase", "bonus", "unlock", "refund", "adjustment" ]
+          }
+        },
+        "required" : [ "amount", "balanceAfter", "createdAt", "id", "reason" ]
+      },
+      "LedgerEpisode" : {
+        "type" : "object",
+        "properties" : {
+          "n" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "series" : {
+            "type" : "string"
+          },
+          "title" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "n", "series", "title" ]
+      },
       "LoginRequest" : {
         "type" : "object",
         "properties" : {
@@ -2638,6 +3152,80 @@
           }
         },
         "required" : [ "type" ]
+      },
+      "OrderRequest" : {
+        "type" : "object",
+        "properties" : {
+          "method" : {
+            "type" : "string",
+            "enum" : [ "khqr", "aba", "card" ]
+          },
+          "packId" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        },
+        "required" : [ "method", "packId" ]
+      },
+      "OrderView" : {
+        "type" : "object",
+        "properties" : {
+          "bonusCoins" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "coins" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "createdAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "expiresAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "firstBonusCoins" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "method" : {
+            "type" : "string",
+            "enum" : [ "khqr", "aba", "card" ]
+          },
+          "orderNumber" : {
+            "type" : "string"
+          },
+          "packId" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "paidAt" : {
+            "type" : [ "string", "null" ],
+            "format" : "date-time"
+          },
+          "priceKhr" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int32"
+          },
+          "priceUsdCents" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int32"
+          },
+          "provider" : {
+            "type" : "string"
+          },
+          "status" : {
+            "type" : "string",
+            "enum" : [ "pending", "paid", "failed", "cancelled", "expired" ]
+          },
+          "totalCoins" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        },
+        "required" : [ "bonusCoins", "coins", "createdAt", "expiresAt", "firstBonusCoins", "method", "orderNumber", "packId", "provider", "status", "totalCoins" ]
       },
       "Panel" : {
         "type" : "object",
@@ -3053,6 +3641,16 @@
         },
         "required" : [ "codeExpiresInSeconds", "email", "resendAfterSeconds" ]
       },
+      "SimulateRequest" : {
+        "type" : "object",
+        "properties" : {
+          "outcome" : {
+            "type" : "string",
+            "enum" : [ "paid", "failed" ]
+          }
+        },
+        "required" : [ "outcome" ]
+      },
       "SubscriptionEntry" : {
         "type" : "object",
         "properties" : {
@@ -3078,6 +3676,27 @@
           }
         },
         "required" : [ "subscribed", "subscribers" ]
+      },
+      "UnlockResult" : {
+        "type" : "object",
+        "properties" : {
+          "alreadyUnlocked" : {
+            "type" : "boolean"
+          },
+          "balance" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "coins" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "episode" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        },
+        "required" : [ "alreadyUnlocked", "balance", "coins", "episode" ]
       },
       "UnlockedEntry" : {
         "type" : "object",
@@ -3111,6 +3730,19 @@
           }
         },
         "required" : [ "code", "email" ]
+      },
+      "Wallet" : {
+        "type" : "object",
+        "properties" : {
+          "balance" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "firstPurchaseBonus" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "balance", "firstPurchaseBonus" ]
       }
     }
   }
