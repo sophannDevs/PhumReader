@@ -74,16 +74,26 @@ One package per feature. Inside a feature: `web` (controllers + request/response
 
 | Area | Tables |
 |---|---|
-| Accounts | users, user_identities (Google, Facebook), refresh_tokens (hashed, one per device), user_settings, creator_profiles |
-| Content | genres, series, series_tags, episodes (number, title, status draft / scheduled / published, free_at, price, comments on/off), episode_images (order, width, height, keys), chapter_texts |
-| Reading | subscriptions, reading_progress, episode_likes |
-| Money | coin_packs, payment_orders, coin_ledger (append-only, one row per top-up, unlock, refund), unlocks, creator_earnings |
+| Accounts | users, user_roles, user_identities (Google, Facebook), refresh_tokens (hashed, one family per device), user_settings, creator_profiles, creator_follows |
+| Content | genres, series, series_tags, episodes (number, title, status draft / scheduled / published, published_at, free_at + price for Fast Pass, comments on/off), episode_images (order, width, height, storage key), chapter_texts (blocks as JSON), featured_slides (home hero), rankings |
+| Reading | subscriptions, reading_progress (last episode, progress, highest episode opened), episode_likes, episode_bookmarks |
+| Money | coin_packs, coin_wallets (the locked row; balance = sum of the ledger), payment_orders, coin_ledger (append-only, one row per top-up, bonus, unlock, refund), unlocks, creator_earnings, idempotency_keys |
 | Community | comments, comment_likes, reports |
-| Operations | push_tokens, outbox_events (search and notification sync), audit_log, idempotency_keys, shedlock |
+| Operations | push_tokens, outbox_events (search and notification sync), audit_log, shedlock |
 
-Indexes from the plan: episodes by series + number, progress by user, ledger by user + time. Row level security
-is enabled on every table with no policies, so nothing leaks if the Supabase Data API is ever turned on.
-`genres`, `idempotency_keys` and `shedlock` are additions to the plan's list.
+Migration: `backend/src/main/resources/db/migration/V1__init.sql`. Indexes from the plan: episodes by series +
+number, progress by user, ledger by user + time. Rules the database enforces: the ledger is append-only
+(trigger), an order is credited once and an unlock charged once (partial unique indexes), wallet balances never go
+below zero, a Fast Pass episode has both a price (3–10) and a free date. Row level security is enabled on every
+table with no policies, so nothing leaks if the Supabase Data API is ever turned on; Flyway's own
+`flyway_schema_history` is the exception (it only lists migrations). Additions to the plan's list: user_roles,
+creator_follows, genres, featured_slides, rankings, episode_bookmarks, coin_wallets, idempotency_keys, shedlock.
+
+Demo content: `./gradlew bootRun --args='--spring.profiles.active=dev,seed'` loads `src/data/demo-data.json`
+(copied onto the classpath at build time) with stable ids, so it can run again safely. Accounts that can log in:
+`reader@toonwave.app` (3 coins, Continue reading) and `creator@toonwave.app` (Chan Sreyleak, the demo's stand-in
+creator); both use the demo password. The demo's two purchase-history rows are not seeded, because they have no
+matching ledger entries.
 
 ## How the website and the API talk
 

@@ -25,7 +25,8 @@ The `dev` profile is the default and reads `.env`. A missing required setting st
 
 | Command | What it does |
 |---|---|
-| `./gradlew bootRun` | Start the API (profile `dev`) |
+| `./gradlew bootRun` | Start the API (profile `dev`); Flyway creates or updates the tables first |
+| `./gradlew bootRun --args='--spring.profiles.active=dev,seed'` | Same, and load the website's demo content (safe to repeat) |
 | `./gradlew check` | Tests on an embedded PostgreSQL 17 (real binaries, no Docker), Spotless, ArchUnit, OpenAPI drift check |
 | `./gradlew spotlessApply` | Format the Java code (google-java-format, AOSP style) |
 | `./gradlew exportOpenApi` | Rewrite `openapi/openapi.json` from the code; then run `npm run api:gen` in the repo root |
@@ -33,6 +34,15 @@ The `dev` profile is the default and reads `.env`. A missing required setting st
 After any controller or DTO change: `./gradlew exportOpenApi`, then `npm run api:gen`, and commit both files.
 `./gradlew check` fails while `openapi/openapi.json` is out of date, `npm run api:check` while the TypeScript
 types are.
+
+## Demo accounts (after seeding)
+
+| Email | Password | What it is |
+|---|---|---|
+| `reader@toonwave.app` | `Toonwave1!` | Demo reader Sokha Chan: 3 coins, four series in Continue reading |
+| `creator@toonwave.app` | `Toonwave1!` | Chan Sreyleak, the demo's stand-in creator, owner of their series |
+
+The other demo creators and commenters exist as accounts without a password (they cannot log in).
 
 ## Useful addresses (dev)
 
@@ -50,7 +60,8 @@ src/main/java/app/phumreader/
   auth/ user/ series/ episode/ library/ coin/ payment/ comment/
   search/ notification/ media/ admin/        one package per feature (see each package-info.java)
 src/main/resources/
-  application.yml, application-dev.yml, application-prod.yml, db/migration/ (Flyway, from Stage 1 Step 2)
+  application.yml, application-dev.yml, application-prod.yml, db/migration/ (Flyway: V1__init.sql)
+src/main/java/app/phumreader/seed/   demo content loader (profile seed)
 src/test/java/app/phumreader/
   ArchitectureTest, OpenApiContractTest, support/IntegrationTest (embedded PostgreSQL + MockMvc)
 openapi/openapi.json   API contract (committed)

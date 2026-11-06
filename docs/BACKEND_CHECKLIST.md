@@ -37,7 +37,7 @@ Sources of truth: the plan doc, `CLAUDE.md`, `docs/BACKEND.md` (decisions and lo
 - Money: balances change only through the ledger, in one transaction with a wallet row lock; every payment and
   unlock call is idempotent. Never build card number fields: cards use the PayWay hosted page.
 
-Progress: 2 / 51 tasks (P1-07, P1-08) · Stage 1: step 1 of 5 · milestones M1, M3, M4, M5, M6, M7
+Progress: 3 / 51 tasks (P1-05, P1-07, P1-08) · Stage 1: step 2 of 5 · milestones M1, M3, M4, M5, M6, M7
 
 ---
 
@@ -56,11 +56,15 @@ deployment and no Docker. A step is done when its checks pass; tick the plan tas
   - Done 2026-11-06: 27 tests green; `bootRun` against Supabase `phumreader-dev` (Flyway off) answers
     `http://localhost:3000/api/v1/health` with the database UP through the rewrite. Carried over: Flyway's first
     run on Supabase (P1-05) to Step 2; ESLint import rules for the website's API client (P1-06) to Step 5.
-- [ ] **Step 2: Database setup** (P1-02 database part, P3-01)
+- [x] **Step 2: Database setup** (P1-02 database part, P3-01)
   - Supabase `phumreader-dev` through the session pooler; Flyway V1 with every table; seed from
     `demo-data.json` (48 series, 8 genres, episodes, comments, coin packs, demo reader and demo creators).
   - Check: `bootRun` connects and migrates; `/api/v1/health` through `http://localhost:3000/api/v1/health` shows
     the database UP; seed counts tested; running the seed twice changes nothing.
+  - Done 2026-11-06: V1 (34 tables) applied on Supabase in 8.6 s; seed in 20 s: 8 genres, 12 creators, 48 series
+    (41 comics, 7 novels), 3,956 episodes, 30,303 panels, 589 chapters, 12,012 comments, 5 packs, 3 hero slides,
+    48 ranking rows; a second run changed nothing (18 users, 1 ledger row). Health through the website: UP.
+    41 backend tests green. Staging (P3-01's second half) waits for P1-10.
 - [ ] **Step 3: Other local services** (P1-02 rest)
   - Upstash Redis, Meilisearch (`meilisearch.exe`), email printed in the backend console; a services check.
   - Check: the services check shows every service healthy.
@@ -99,7 +103,7 @@ P1-03 (Next.js app) and P1-04 (web libraries + shadcn/ui) are done by T01–T06.
   - Depends on: P1-01
   - Done when: the check shows all 5 services healthy.
 
-- [ ] **P1-05 Spring Boot app**
+- [x] **P1-05 Spring Boot app**
   - Build: Spring Boot 4.1.2 / Java 21 (Gradle Kotlin DSL): web, security, validation, data-jpa, Flyway
     (+ `flyway-database-postgresql`), PostgreSQL driver, actuator, springdoc-openapi; later tasks add OAuth2
     client, data-redis, mail, AWS SDK v2 S3 (for R2), Bucket4j and ShedLock when they need them. Test: Zonky
@@ -508,4 +512,19 @@ All 74 plan tasks, and where each one lives.
 
 ## Assumptions made while working
 
-(To be filled while working, in the same style as docs/CHECKLIST.md.)
+1. **Dev database region.** `phumreader-dev` was created in Tokyo (`ap-northeast-1`); fine for development.
+   Staging and production go to Singapore (P1-10).
+2. **Flyway's history table has no row level security.** Altering it inside a migration waits forever on
+   Flyway's own lock, so V1 skips it. It only lists migrations, and the Data API is off.
+3. **Seed dates.** Seeded timestamps use the demo's pinned "today" (2026-11-05, midnight Asia/Phnom_Penh), so
+   episode and Fast Pass dates match the demo. The API itself uses the real clock, so Fast Pass episodes turn
+   free on their real dates (the first on 2026-11-12).
+4. **Demo purchase history is not seeded.** Its two rows (a paid 33-coin order, a failed order) have no
+   matching ledger entries, and the demo account must keep 3 coins and its first-purchase bonus (e2e flow 3).
+5. **A login for the stand-in creator.** `creator@toonwave.app` / the demo password is Chan Sreyleak, whose
+   series the creator dashboard shows. The other 11 demo creators and the 5 commenters cannot log in
+   (`*.phumreader.invalid` addresses, no password).
+6. **Badges.** "NEW" comes from `series.launched_at`: series the demo marks as new are seeded as launched 14 days
+   before the demo's today. "UP" will be computed from release dates in Step 4, so it may not match the demo's
+   hand-set flags exactly.
+7. **Subscriber counts** are seeded as 4.68% of likes, the website's own rule (frontend Assumption 5).

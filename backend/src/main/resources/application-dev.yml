@@ -9,6 +9,9 @@ spring:
     hikari:
       maximum-pool-size: 5
       connection-timeout: 5000
+      data-source-properties:
+        # Sends batched INSERTs as multi-row statements (fast seeding over the network).
+        reWriteBatchedInserts: true
 
 phumreader:
   frontend-url: ${FRONTEND_URL:http://localhost:3000}

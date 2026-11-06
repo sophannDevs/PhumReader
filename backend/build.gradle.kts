@@ -35,6 +35,8 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-webmvc")
     implementation("org.flywaydb:flyway-database-postgresql")
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.2.0")
+    // Argon2 password hashing (Spring Security's Argon2PasswordEncoder).
+    implementation("org.bouncycastle:bcprov-jdk18on:1.86")
     runtimeOnly("org.postgresql:postgresql")
     annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
 
@@ -54,6 +56,11 @@ dependencies {
 tasks.withType<JavaCompile> {
     options.encoding = "UTF-8"
     options.compilerArgs.addAll(listOf("-parameters", "-Xlint:deprecation"))
+}
+
+// The demo content has one source: the website's src/data/demo-data.json. The seed reads this copy.
+tasks.processResources {
+    from("../src/data/demo-data.json") { into("seed") }
 }
 
 tasks.withType<Test> {
