@@ -489,6 +489,30 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/creator/series": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * My series, with a text filter and a visibility filter
+         * @description q matches the title; visibility is draft, published or hidden.
+         */
+        get: operations["list"];
+        put?: never;
+        /**
+         * Create a series as a draft
+         * @description cover / banner come from finished uploads (POST /creator/uploads). The slug is made from the title and never changes.
+         */
+        post: operations["create_1"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/creator/series/{id}": {
         parameters: {
             query?: never;
@@ -500,9 +524,153 @@ export interface paths {
          * One of the signed-in creator's series, as the edit form shows it
          * @description 403 for another creator's series, 404 when it does not exist.
          */
-        get: operations["series_1"];
+        get: operations["series"];
+        /**
+         * Edit a series
+         * @description Leave the upload ids out to keep the current cover / banner.
+         */
+        put: operations["update"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/creator/series/{id}/episodes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Every episode of the series, newest first, drafts and scheduled too */
+        get: operations["episodes"];
+        put?: never;
+        /**
+         * Add an episode (comic) or chapter (novel)
+         * @description publish.mode is DRAFT, NOW or SCHEDULED (with publish.at, an instant in the future). Comics send imageUploadIds in reading order (at most 100, 200 MB), novels send blocks. fastPass null means free; otherwise 3-10 coins and free after 1-90 days (defaults 5 and 7). number null takes the next free number.
+         */
+        post: operations["createEpisode"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/creator/series/{id}/episodes/{number}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One episode as the edit form shows it */
+        get: operations["episode"];
+        /**
+         * Edit an episode
+         * @description Send the whole episode. A published episode stays published (publish.mode NOW); drafts and scheduled episodes can change mode.
+         */
+        put: operations["updateEpisode"];
+        post?: never;
+        /**
+         * Delete a draft or scheduled episode
+         * @description 409 episode_published for a live episode.
+         */
+        delete: operations["deleteEpisode"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/creator/series/{id}/publish": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Put the series live
+         * @description Needs a summary and a cover. 403 hidden_by_admin when an admin hid it.
+         */
+        post: operations["publish"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/creator/series/{id}/unpublish": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Take the series back to a draft */
+        post: operations["unpublish"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/creator/uploads": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Start an image upload
+         * @description Returns a presigned URL: PUT the file to it with the given headers, then call POST /creator/uploads/{id}/complete. 400 for a type or size the rules do not allow.
+         */
+        post: operations["create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/creator/uploads/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The state of one of the signed-in creator's uploads */
+        get: operations["get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/creator/uploads/{id}/complete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Check the uploaded image and make its WebP variants
+         * @description 422 with a reason code (image_too_small, not_square, unsupported_type, corrupt_image, file_too_large, too_many_pixels) when a check fails; 409 upload_missing when the file is not in storage yet. Calling it again after success answers the same.
+         */
+        post: operations["complete"];
         delete?: never;
         options?: never;
         head?: never;
@@ -905,7 +1073,7 @@ export interface paths {
             cookie?: never;
         };
         /** The series page (404 when unknown) */
-        get: operations["series"];
+        get: operations["series_1"];
         put?: never;
         post?: never;
         delete?: never;
@@ -940,7 +1108,7 @@ export interface paths {
             cookie?: never;
         };
         /** Released episodes of a series (404 when the series is unknown) */
-        get: operations["episodes"];
+        get: operations["episodes_1"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1147,6 +1315,14 @@ export interface components {
         BecomeCreatorResponse: {
             penName: string;
         };
+        Block: {
+            text?: string | null;
+            type: string;
+        };
+        BlockView: {
+            text?: string | null;
+            type: string;
+        };
         BookmarkState: {
             bookmarked: boolean;
         };
@@ -1208,11 +1384,36 @@ export interface components {
             mine: boolean;
             top: boolean;
         };
+        CreateUploadRequest: {
+            contentType: string;
+            /** @enum {string} */
+            kind: "COVER" | "BANNER" | "THUMBNAIL" | "PANEL";
+            /** Format: int64 */
+            size: number;
+        };
         CreatorDashboard: {
             creator: boolean;
             name?: string | null;
             series: components["schemas"]["CreatorSeries"][];
             totals: components["schemas"]["CreatorTotals"];
+        };
+        CreatorEpisode: {
+            commentsEnabled: boolean;
+            /** Format: date-time */
+            freeAt?: string | null;
+            /** Format: int64 */
+            likes: number;
+            /** Format: int32 */
+            number: number;
+            /** Format: int32 */
+            priceCoins?: number | null;
+            /** Format: date-time */
+            publishedAt?: string | null;
+            status: string;
+            thumbnailUrl?: string | null;
+            title: string;
+            /** Format: int64 */
+            views: number;
         };
         CreatorSeries: {
             /** Format: int64 */
@@ -1328,6 +1529,40 @@ export interface components {
             /** Format: int32 */
             wordCount: number;
         };
+        EpisodeEdit: {
+            blocks: components["schemas"]["BlockView"][];
+            commentsEnabled: boolean;
+            creatorNote?: string | null;
+            /** Format: int32 */
+            freeAfterDays?: number | null;
+            /** Format: date-time */
+            freeAt?: string | null;
+            /** Format: int32 */
+            number: number;
+            panels: components["schemas"]["PanelView"][];
+            /** Format: int32 */
+            priceCoins?: number | null;
+            /** Format: date-time */
+            publishedAt?: string | null;
+            status: string;
+            thumbnailUrl?: string | null;
+            title: string;
+            /** Format: int32 */
+            wordCount: number;
+        };
+        EpisodeInput: {
+            blocks?: components["schemas"]["Block"][] | null;
+            commentsEnabled?: boolean | null;
+            creatorNote?: string | null;
+            fastPass?: components["schemas"]["FastPass"];
+            imageUploadIds?: string[] | null;
+            /** Format: int32 */
+            number?: number | null;
+            publish: components["schemas"]["Publish"];
+            /** Format: uuid */
+            thumbnailUploadId?: string | null;
+            title: string;
+        };
         EpisodeLikeState: {
             liked: boolean;
             /** Format: int64 */
@@ -1365,6 +1600,12 @@ export interface components {
         /** @description Body of every error response. */
         ErrorResponse: {
             error: components["schemas"]["ErrorDetail"];
+        };
+        FastPass: {
+            /** Format: int32 */
+            freeAfterDays?: number | null;
+            /** Format: int32 */
+            priceCoins?: number | null;
         };
         FollowState: {
             /** Format: int64 */
@@ -1428,6 +1669,11 @@ export interface components {
         HomeRankings: {
             comics: components["schemas"]["RankingEntry"][];
             novels: components["schemas"]["RankingEntry"][];
+        };
+        ImageVariant: {
+            url: string;
+            /** Format: int32 */
+            width: number;
         };
         LedgerEntry: {
             /** Format: int32 */
@@ -1519,6 +1765,15 @@ export interface components {
             /** Format: int32 */
             width: number;
         };
+        PanelView: {
+            /** Format: int32 */
+            height: number;
+            /** Format: uuid */
+            uploadId: string;
+            url: string;
+            /** Format: int32 */
+            width: number;
+        };
         PasswordRequest: {
             password: string;
         };
@@ -1530,6 +1785,12 @@ export interface components {
             episode: number;
             /** Format: double */
             progress: number;
+        };
+        Publish: {
+            /** Format: date-time */
+            at?: string | null;
+            /** @enum {string} */
+            mode: "draft" | "now" | "scheduled";
         };
         RankingEntry: {
             /** Format: int32 */
@@ -1663,9 +1924,28 @@ export interface components {
             /** @enum {string} */
             type: "comic" | "novel";
             /** @enum {string|null} */
-            updateDay?: "MONDAY" | "TUESDAY" | "WEDNESDAY" | "THURSDAY" | "FRIDAY" | "SATURDAY" | "SUNDAY" | null;
+            updateDay?: "Mon" | "Tue" | "Wed" | "Thu" | "Fri" | "Sat" | "Sun" | null;
             /** @enum {string} */
             visibility: "draft" | "published" | "hidden";
+        };
+        SeriesInput: {
+            /** @enum {string|null} */
+            ageRating?: "all" | "teen" | "mature" | null;
+            /** Format: uuid */
+            bannerUploadId?: string | null;
+            /** Format: uuid */
+            coverUploadId?: string | null;
+            genre: string;
+            languages: string[];
+            /** @enum {string|null} */
+            status?: "ongoing" | "completed" | "hiatus" | null;
+            summary?: string | null;
+            tags?: string[] | null;
+            title: string;
+            /** @enum {string|null} */
+            type?: "comic" | "novel" | null;
+            /** @enum {string|null} */
+            updateDay?: "Mon" | "Tue" | "Wed" | "Thu" | "Fri" | "Sat" | "Sun" | null;
         };
         SeriesStats: {
             /** Format: int64 */
@@ -1741,6 +2021,32 @@ export interface components {
             series: components["schemas"]["SeriesCard"];
             /** Format: date-time */
             unlockedAt: string;
+        };
+        UploadTicket: {
+            /** Format: date-time */
+            expiresAt: string;
+            headers: {
+                [key: string]: string;
+            };
+            /** Format: uuid */
+            id: string;
+            uploadUrl: string;
+        };
+        UploadView: {
+            /** Format: int32 */
+            height?: number | null;
+            /** Format: uuid */
+            id: string;
+            /** @enum {string} */
+            kind: "COVER" | "BANNER" | "THUMBNAIL" | "PANEL";
+            rejectCode?: string | null;
+            rejectMessage?: string | null;
+            /** @enum {string} */
+            status: "PENDING" | "READY" | "REJECTED";
+            url?: string | null;
+            variants: components["schemas"]["ImageVariant"][];
+            /** Format: int32 */
+            width?: number | null;
         };
         VerifyRequest: {
             code: string;
@@ -2598,7 +2904,72 @@ export interface operations {
             };
         };
     };
-    series_1: {
+    list: {
+        parameters: {
+            query?: {
+                q?: string;
+                visibility?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CreatorSeries"][];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    create_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SeriesInput"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SeriesEdit"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    series: {
         parameters: {
             query?: never;
             header?: never;
@@ -2616,6 +2987,362 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SeriesEdit"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SeriesInput"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SeriesEdit"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    episodes: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CreatorEpisode"][];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    createEpisode: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EpisodeInput"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EpisodeEdit"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    episode: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                number: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EpisodeEdit"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    updateEpisode: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                number: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EpisodeInput"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EpisodeEdit"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    deleteEpisode: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                number: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    publish: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SeriesEdit"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    unpublish: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SeriesEdit"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateUploadRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UploadTicket"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UploadView"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    complete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UploadView"];
                 };
             };
             /** @description Error */
@@ -3403,7 +4130,7 @@ export interface operations {
             };
         };
     };
-    series: {
+    series_1: {
         parameters: {
             query?: never;
             header?: never;
@@ -3506,7 +4233,7 @@ export interface operations {
             };
         };
     };
-    episodes: {
+    episodes_1: {
         parameters: {
             query?: {
                 sort?: "oldest" | "newest";

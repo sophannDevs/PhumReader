@@ -5,7 +5,7 @@ import app.phumreader.series.domain.SeriesStatus;
 import app.phumreader.series.domain.SeriesType;
 import app.phumreader.series.domain.SeriesVisibility;
 import app.phumreader.series.service.CatalogViews.SeriesCard;
-import java.time.DayOfWeek;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 import org.jspecify.annotations.Nullable;
@@ -71,8 +71,51 @@ public final class CreatorViews {
             AgeRating ageRating,
             SeriesStatus status,
             SeriesVisibility visibility,
-            @Nullable DayOfWeek updateDay,
+            @Nullable Weekday updateDay,
             @Nullable String coverUrl,
             @Nullable String bannerUrl,
             List<String> tags) {}
+
+    /** One row of a creator's episode list, any status. */
+    public record CreatorEpisode(
+            int number,
+            String title,
+            String status,
+            @Nullable Instant publishedAt,
+            @Nullable Instant freeAt,
+            @Nullable Integer priceCoins,
+            @Nullable String thumbnailUrl,
+            boolean commentsEnabled,
+            long views,
+            long likes) {}
+
+    /** A panel as the episode form shows it. */
+    public record PanelView(UUID uploadId, String url, int width, int height) {}
+
+    /** A block of chapter text. */
+    public record BlockView(String type, @Nullable String text) {}
+
+    /**
+     * An episode as its creator edits it.
+     *
+     * @param status draft, scheduled or published
+     * @param publishedAt release time (scheduled time for SCHEDULED)
+     * @param freeAfterDays Fast Pass: days after release until it is free; null when free
+     * @param panels comics: the panels in order
+     * @param blocks novels: the chapter text
+     */
+    public record EpisodeEdit(
+            int number,
+            String title,
+            String status,
+            @Nullable Instant publishedAt,
+            @Nullable Instant freeAt,
+            @Nullable Integer priceCoins,
+            @Nullable Integer freeAfterDays,
+            @Nullable String thumbnailUrl,
+            @Nullable String creatorNote,
+            boolean commentsEnabled,
+            List<PanelView> panels,
+            List<BlockView> blocks,
+            int wordCount) {}
 }

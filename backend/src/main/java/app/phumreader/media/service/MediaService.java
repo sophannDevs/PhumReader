@@ -108,6 +108,26 @@ public class MediaService {
         return toView(owned(owner, id));
     }
 
+    /** A finished image: the largest variant's address and the original's size. */
+    public record ReadyImage(UUID id, String url, int width, int height, long bytes) {}
+
+    /**
+     * An upload of this creator that passed its checks, for storing on a series or episode. 400 on
+     * the field when it is someone else's, of another kind, or not ready.
+     */
+    public ReadyImage readyImage(UUID owner, UUID id, UploadKind kind, String field) {
+        Row row = uploads.find(id).filter(r -> r.ownerId().equals(owner)).orElse(null);
+        if (row == null || row.kind() != kind) {
+            throw ApiException.invalidField(field, "upload_invalid", "Upload the image again.");
+        }
+        if (row.status() != UploadStatus.READY) {
+            throw ApiException.invalidField(
+                    field, "upload_not_ready", "The image has not been checked yet.");
+        }
+        UploadView view = toView(row);
+        return new ReadyImage(id, view.url(), row.width(), row.height(), row.declaredSize());
+    }
+
     private Row owned(UUID owner, UUID id) {
         return uploads.find(id)
                 .filter(r -> r.ownerId().equals(owner))

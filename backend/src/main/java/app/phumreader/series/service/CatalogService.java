@@ -126,6 +126,11 @@ public class CatalogService {
 
     // ---------- home ----------
 
+    /** Forgets the cached home feed, so a publish shows on the next visit. */
+    public void refreshHome() {
+        cachedHome.set(null);
+    }
+
     public HomeFeed home() {
         Instant now = clock.instant();
         Weekday today = Weekday.of(now.atZone(ZONE).getDayOfWeek());

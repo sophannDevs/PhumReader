@@ -953,10 +953,96 @@
         "tags" : [ "creator" ]
       }
     },
+    "/api/v1/creator/series" : {
+      "get" : {
+        "description" : "q matches the title; visibility is draft, published or hidden.",
+        "operationId" : "list",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "q",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "visibility",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/CreatorSeries"
+                  }
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "My series, with a text filter and a visibility filter",
+        "tags" : [ "creator" ]
+      },
+      "post" : {
+        "description" : "cover / banner come from finished uploads (POST /creator/uploads). The slug is made from the title and never changes.",
+        "operationId" : "create_1",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/SeriesInput"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SeriesEdit"
+                }
+              }
+            },
+            "description" : "Created"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Create a series as a draft",
+        "tags" : [ "creator" ]
+      }
+    },
     "/api/v1/creator/series/{id}" : {
       "get" : {
         "description" : "403 for another creator's series, 404 when it does not exist.",
-        "operationId" : "series_1",
+        "operationId" : "series",
         "parameters" : [ {
           "in" : "path",
           "name" : "id",
@@ -989,6 +1075,357 @@
           }
         },
         "summary" : "One of the signed-in creator's series, as the edit form shows it",
+        "tags" : [ "creator" ]
+      },
+      "put" : {
+        "description" : "Leave the upload ids out to keep the current cover / banner.",
+        "operationId" : "update",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/SeriesInput"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SeriesEdit"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Edit a series",
+        "tags" : [ "creator" ]
+      }
+    },
+    "/api/v1/creator/series/{id}/episodes" : {
+      "get" : {
+        "operationId" : "episodes",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/CreatorEpisode"
+                  }
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Every episode of the series, newest first, drafts and scheduled too",
+        "tags" : [ "creator" ]
+      },
+      "post" : {
+        "description" : "publish.mode is DRAFT, NOW or SCHEDULED (with publish.at, an instant in the future). Comics send imageUploadIds in reading order (at most 100, 200 MB), novels send blocks. fastPass null means free; otherwise 3-10 coins and free after 1-90 days (defaults 5 and 7). number null takes the next free number.",
+        "operationId" : "createEpisode",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/EpisodeInput"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/EpisodeEdit"
+                }
+              }
+            },
+            "description" : "Created"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Add an episode (comic) or chapter (novel)",
+        "tags" : [ "creator" ]
+      }
+    },
+    "/api/v1/creator/series/{id}/episodes/{number}" : {
+      "delete" : {
+        "description" : "409 episode_published for a live episode.",
+        "operationId" : "deleteEpisode",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }, {
+          "in" : "path",
+          "name" : "number",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "No Content"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Delete a draft or scheduled episode",
+        "tags" : [ "creator" ]
+      },
+      "get" : {
+        "operationId" : "episode",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }, {
+          "in" : "path",
+          "name" : "number",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/EpisodeEdit"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "One episode as the edit form shows it",
+        "tags" : [ "creator" ]
+      },
+      "put" : {
+        "description" : "Send the whole episode. A published episode stays published (publish.mode NOW); drafts and scheduled episodes can change mode.",
+        "operationId" : "updateEpisode",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }, {
+          "in" : "path",
+          "name" : "number",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/EpisodeInput"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/EpisodeEdit"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Edit an episode",
+        "tags" : [ "creator" ]
+      }
+    },
+    "/api/v1/creator/series/{id}/publish" : {
+      "post" : {
+        "description" : "Needs a summary and a cover. 403 hidden_by_admin when an admin hid it.",
+        "operationId" : "publish",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SeriesEdit"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Put the series live",
+        "tags" : [ "creator" ]
+      }
+    },
+    "/api/v1/creator/series/{id}/unpublish" : {
+      "post" : {
+        "operationId" : "unpublish",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SeriesEdit"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Take the series back to a draft",
         "tags" : [ "creator" ]
       }
     },
@@ -2107,7 +2544,7 @@
     },
     "/api/v1/series/{slug}" : {
       "get" : {
-        "operationId" : "series",
+        "operationId" : "series_1",
         "parameters" : [ {
           "in" : "path",
           "name" : "slug",
@@ -2252,7 +2689,7 @@
     },
     "/api/v1/series/{slug}/episodes" : {
       "get" : {
-        "operationId" : "episodes",
+        "operationId" : "episodes_1",
         "parameters" : [ {
           "in" : "path",
           "name" : "slug",
@@ -2989,6 +3426,34 @@
         },
         "required" : [ "penName" ]
       },
+      "Block" : {
+        "type" : "object",
+        "properties" : {
+          "text" : {
+            "type" : [ "string", "null" ],
+            "maxLength" : 20000,
+            "minLength" : 0
+          },
+          "type" : {
+            "type" : "string",
+            "minLength" : 1,
+            "pattern" : "paragraph|quote|scene-break"
+          }
+        },
+        "required" : [ "type" ]
+      },
+      "BlockView" : {
+        "type" : "object",
+        "properties" : {
+          "text" : {
+            "type" : [ "string", "null" ]
+          },
+          "type" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "type" ]
+      },
       "BookmarkState" : {
         "type" : "object",
         "properties" : {
@@ -3209,6 +3674,48 @@
           }
         },
         "required" : [ "creator", "series", "totals" ]
+      },
+      "CreatorEpisode" : {
+        "type" : "object",
+        "properties" : {
+          "commentsEnabled" : {
+            "type" : "boolean"
+          },
+          "freeAt" : {
+            "type" : [ "string", "null" ],
+            "format" : "date-time"
+          },
+          "likes" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "number" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "priceCoins" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int32"
+          },
+          "publishedAt" : {
+            "type" : [ "string", "null" ],
+            "format" : "date-time"
+          },
+          "status" : {
+            "type" : "string"
+          },
+          "thumbnailUrl" : {
+            "type" : [ "string", "null" ]
+          },
+          "title" : {
+            "type" : "string"
+          },
+          "views" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        },
+        "required" : [ "commentsEnabled", "likes", "number", "status", "title", "views" ]
       },
       "CreatorSeries" : {
         "type" : "object",
@@ -3552,6 +4059,114 @@
         },
         "required" : [ "blocks", "comments", "commentsEnabled", "episode", "panels", "series", "total", "viewer", "wordCount" ]
       },
+      "EpisodeEdit" : {
+        "type" : "object",
+        "properties" : {
+          "blocks" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/BlockView"
+            }
+          },
+          "commentsEnabled" : {
+            "type" : "boolean"
+          },
+          "creatorNote" : {
+            "type" : [ "string", "null" ]
+          },
+          "freeAfterDays" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int32"
+          },
+          "freeAt" : {
+            "type" : [ "string", "null" ],
+            "format" : "date-time"
+          },
+          "number" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "panels" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/PanelView"
+            }
+          },
+          "priceCoins" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int32"
+          },
+          "publishedAt" : {
+            "type" : [ "string", "null" ],
+            "format" : "date-time"
+          },
+          "status" : {
+            "type" : "string"
+          },
+          "thumbnailUrl" : {
+            "type" : [ "string", "null" ]
+          },
+          "title" : {
+            "type" : "string"
+          },
+          "wordCount" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        },
+        "required" : [ "blocks", "commentsEnabled", "number", "panels", "status", "title", "wordCount" ]
+      },
+      "EpisodeInput" : {
+        "type" : "object",
+        "properties" : {
+          "blocks" : {
+            "type" : [ "array", "null" ],
+            "items" : {
+              "$ref" : "#/components/schemas/Block"
+            },
+            "maxItems" : 2000,
+            "minItems" : 0
+          },
+          "commentsEnabled" : {
+            "type" : [ "boolean", "null" ]
+          },
+          "creatorNote" : {
+            "type" : [ "string", "null" ],
+            "maxLength" : 1000,
+            "minLength" : 0
+          },
+          "fastPass" : {
+            "$ref" : "#/components/schemas/FastPass"
+          },
+          "imageUploadIds" : {
+            "type" : [ "array", "null" ],
+            "items" : {
+              "type" : "string",
+              "format" : "uuid"
+            },
+            "maxItems" : 100,
+            "minItems" : 0
+          },
+          "number" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int32",
+            "minimum" : 1
+          },
+          "publish" : {
+            "$ref" : "#/components/schemas/Publish"
+          },
+          "thumbnailUploadId" : {
+            "type" : [ "string", "null" ],
+            "format" : "uuid"
+          },
+          "title" : {
+            "type" : "string",
+            "maxLength" : 120,
+            "minLength" : 0
+          }
+        },
+        "required" : [ "publish", "title" ]
+      },
       "EpisodeLikeState" : {
         "type" : "object",
         "properties" : {
@@ -3640,6 +4255,23 @@
           }
         },
         "required" : [ "error" ]
+      },
+      "FastPass" : {
+        "type" : "object",
+        "properties" : {
+          "freeAfterDays" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int32",
+            "maximum" : 90,
+            "minimum" : 1
+          },
+          "priceCoins" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int32",
+            "maximum" : 10,
+            "minimum" : 3
+          }
+        }
       },
       "FollowState" : {
         "type" : "object",
@@ -4066,6 +4698,27 @@
         },
         "required" : [ "alt", "height", "src", "width" ]
       },
+      "PanelView" : {
+        "type" : "object",
+        "properties" : {
+          "height" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "uploadId" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "url" : {
+            "type" : "string"
+          },
+          "width" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        },
+        "required" : [ "height", "uploadId", "url", "width" ]
+      },
       "PasswordRequest" : {
         "type" : "object",
         "properties" : {
@@ -4104,6 +4757,20 @@
           }
         },
         "required" : [ "episode", "progress" ]
+      },
+      "Publish" : {
+        "type" : "object",
+        "properties" : {
+          "at" : {
+            "type" : [ "string", "null" ],
+            "format" : "date-time"
+          },
+          "mode" : {
+            "type" : "string",
+            "enum" : [ "draft", "now", "scheduled" ]
+          }
+        },
+        "required" : [ "mode" ]
       },
       "RankingEntry" : {
         "type" : "object",
@@ -4486,7 +5153,7 @@
           },
           "updateDay" : {
             "type" : [ "string", "null" ],
-            "enum" : [ "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY", null ]
+            "enum" : [ "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun", null ]
           },
           "visibility" : {
             "type" : "string",
@@ -4494,6 +5161,68 @@
           }
         },
         "required" : [ "ageRating", "genre", "id", "languages", "slug", "status", "summary", "tags", "title", "type", "visibility" ]
+      },
+      "SeriesInput" : {
+        "type" : "object",
+        "properties" : {
+          "ageRating" : {
+            "type" : [ "string", "null" ],
+            "enum" : [ "all", "teen", "mature", null ]
+          },
+          "bannerUploadId" : {
+            "type" : [ "string", "null" ],
+            "format" : "uuid"
+          },
+          "coverUploadId" : {
+            "type" : [ "string", "null" ],
+            "format" : "uuid"
+          },
+          "genre" : {
+            "type" : "string",
+            "minLength" : 1
+          },
+          "languages" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string",
+              "pattern" : "en|km"
+            },
+            "minItems" : 1
+          },
+          "status" : {
+            "type" : [ "string", "null" ],
+            "enum" : [ "ongoing", "completed", "hiatus", null ]
+          },
+          "summary" : {
+            "type" : [ "string", "null" ],
+            "maxLength" : 2000,
+            "minLength" : 0
+          },
+          "tags" : {
+            "type" : [ "array", "null" ],
+            "items" : {
+              "type" : "string",
+              "maxLength" : 30,
+              "minLength" : 0
+            },
+            "maxItems" : 10,
+            "minItems" : 0
+          },
+          "title" : {
+            "type" : "string",
+            "maxLength" : 120,
+            "minLength" : 0
+          },
+          "type" : {
+            "type" : [ "string", "null" ],
+            "enum" : [ "comic", "novel", null ]
+          },
+          "updateDay" : {
+            "type" : [ "string", "null" ],
+            "enum" : [ "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun", null ]
+          }
+        },
+        "required" : [ "genre", "languages", "title" ]
       },
       "SeriesStats" : {
         "type" : "object",

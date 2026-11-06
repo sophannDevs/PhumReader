@@ -1,5 +1,5 @@
 import { deflateSync, crc32 } from "node:zlib"
-import { expect, test, type Page } from "@playwright/test"
+import { expect, request as playwrightRequest, test, type Page } from "@playwright/test"
 
 /**
  * Key flows against the real API (the local Spring Boot backend on :8080, dev payment simulator
@@ -260,7 +260,79 @@ test("8. creator image upload: terms, presigned upload to storage, WebP variants
   expect((await fake.complete()).status()).toBe(422)
 })
 
-test("9. delete the account: signed out everywhere, wrong password refused first", async () => {
+test("9. creator writes: draft series, publish, free and Fast Pass episodes, a scheduled episode goes live by itself", async () => {
+  test.setTimeout(150_000)
+  await page.request.get("/api/v1/auth/csrf")
+  const xsrf = (await page.context().cookies()).find((c) => c.name === "XSRF-TOKEN")?.value ?? ""
+  const headers = { "X-XSRF-TOKEN": xsrf }
+  const anonymous = await playwrightRequest.newContext({ baseURL: "http://localhost:3100" })
+
+  async function upload(kind: string, image: Buffer): Promise<string> {
+    const ticket = await (await page.request.post("/api/v1/creator/uploads", { headers, data: { kind, contentType: "image/png", size: image.length } })).json()
+    expect((await page.request.put(ticket.uploadUrl, { headers: ticket.headers, data: image })).ok()).toBe(true)
+    expect((await page.request.post(`/api/v1/creator/uploads/${ticket.id}/complete`, { headers })).status()).toBe(200)
+    return ticket.id
+  }
+  const post = (path: string, data?: unknown) => page.request.post(`/api/v1/creator/series${path}`, { headers, data })
+
+  // A draft series is private; publishing makes it public.
+  const cover = await upload("COVER", png(600, 800))
+  const created = await post("", {
+    title: `E2E Tides ${stamp}`,
+    type: "comic",
+    genre: "fantasy",
+    languages: ["en"],
+    summary: "A sea made of glass.",
+    ageRating: "all",
+    updateDay: "Fri",
+    status: "ongoing",
+    tags: ["sea", "glass"],
+    coverUploadId: cover,
+  })
+  expect(created.status()).toBe(201)
+  const series = await created.json()
+  expect(series.visibility).toBe("draft")
+  expect((await anonymous.get(`/api/v1/series/${series.slug}`)).status()).toBe(404)
+  expect((await post(`/${series.id}/publish`)).status()).toBe(200)
+  expect((await anonymous.get(`/api/v1/series/${series.slug}`)).status()).toBe(200)
+
+  // Episode 1 is free, episode 2 is Fast Pass (anonymous readers get 402), the count follows.
+  const panel = await upload("PANEL", png(800, 1000))
+  const episode = (extra: object) => ({ title: "Episode", number: null, fastPass: null, imageUploadIds: [panel], ...extra })
+  const free = await post(`/${series.id}/episodes`, episode({ title: "Free", publish: { mode: "now" } }))
+  expect(free.status()).toBe(201)
+  const paid = await post(`/${series.id}/episodes`, episode({ title: "Paid", fastPass: {}, publish: { mode: "now" } }))
+  expect(paid.status()).toBe(201)
+  expect(await paid.json()).toMatchObject({ number: 2, priceCoins: 5, freeAfterDays: 7 })
+  expect((await anonymous.get(`/api/v1/series/${series.slug}/episodes/1`)).status()).toBe(200)
+  expect((await anonymous.get(`/api/v1/series/${series.slug}/episodes/2`)).status()).toBe(402)
+  const listed = await (await page.request.get(`/api/v1/creator/series?q=${encodeURIComponent(`E2E Tides ${stamp}`)}`)).json()
+  expect(listed[0].series.totalEpisodes).toBe(2)
+
+  // Rules: a published episode needs panels; 799 px panels cannot even be attached.
+  const empty = await post(`/${series.id}/episodes`, episode({ title: "Empty", imageUploadIds: [], publish: { mode: "now" } }))
+  expect(empty.status()).toBe(400)
+  expect((await empty.json()).error.fields.imageUploadIds).toBe("required")
+
+  // A scheduled episode is hidden, then the publish job (every 30 s) makes it live.
+  const at = new Date(Date.now() + 4000).toISOString()
+  const scheduled = await post(`/${series.id}/episodes`, episode({ title: "Soon", publish: { mode: "scheduled", at } }))
+  expect(scheduled.status()).toBe(201)
+  expect((await scheduled.json()).status).toBe("scheduled")
+  expect((await anonymous.get(`/api/v1/series/${series.slug}/episodes/3`)).status()).toBe(404)
+  await expect
+    .poll(async () => (await anonymous.get(`/api/v1/series/${series.slug}/episodes/3`)).status(), { timeout: 75_000, intervals: [2_000] })
+    .toBe(200)
+  const live = await (await page.request.get(`/api/v1/creator/series/${series.id}/episodes/3`)).json()
+  expect(live.status).toBe("published")
+
+  // Another creator's series is off limits, and the series goes back to a draft so the dev data stays clean.
+  expect((await post(`/${series.id}/unpublish`)).status()).toBe(200)
+  expect((await anonymous.get(`/api/v1/series/${series.slug}`)).status()).toBe(404)
+  await anonymous.dispose()
+})
+
+test("10. delete the account: signed out everywhere, wrong password refused first", async () => {
   await page.goto("/settings")
   await page.getByRole("button", { name: "Delete account" }).first().click()
   const dialog = page.getByRole("dialog")

@@ -413,12 +413,28 @@ Spring Boot owns every business rule; the website never talks to the database di
   - Depends on: P3-05
   - Done when: comments respect the episode's comments on/off setting.
 
-- [ ] **P3-14 Creator API and scheduling**
+- [x] **P3-14 Creator API and scheduling**
   - Build: series create / edit / draft / publish; episode create with images or chapter text; reorder; Fast Pass
     settings (3–10 coins, free after N days, default 5 coins / 7 days, A3); publish now / schedule (stored UTC,
     shown Asia/Phnom_Penh) / draft; scheduled publish job (ShedLock); stats.
   - Depends on: P3-07, P3-05
   - Done when: a scheduled episode goes live within 1 minute of its time; the episode count updates on My series.
+  - Done (2026-11-06), all under `/api/v1/creator/series` (CREATOR only, own series only: 403 otherwise):
+    `GET` (list, `q` and `visibility` filters), `POST` (draft), `PUT /{id}`, `POST /{id}/publish` and `/unpublish`;
+    `GET|POST /{id}/episodes`, `GET|PUT|DELETE /{id}/episodes/{n}`. Covers, banners, thumbnails and panels come from
+    finished uploads (P3-07) by id. Episodes: `publish.mode` draft / now / scheduled (+ `at`), Fast Pass 3–10 coins
+    and free after 1–90 days (defaults 5 and 7, A3), comments on / off, creator's note; comics send panel upload ids in
+    reading order (max 100, 200 MB), novels send text blocks. A scheduled episode goes live by a job every 30 s
+    (`CreatorContentService.publishDueEpisodes`, one instance at a time through the `shedlock` table). Publishing
+    clears the home cache and queues a search update. Migration V5 (`fast_pass_days`, `episode_images.upload_id`).
+    Tests: `CreatorContentApiTest` (10), Playwright real-mode test 9 (the scheduled episode went live by itself).
+  - Decisions: (1) JSON values follow the existing API: lowercase enums (`comic`, `draft`, `published`), weekdays
+    `Mon`…`Sun`, so `publish.mode` is `draft` / `now` / `scheduled` (the upload API from P3-07 still uses uppercase
+    kinds and statuses). (2) The ShedLock library is not used (it has to follow Spring's releases): `JobLock` writes
+    the same `shedlock` table. (3) A series needs a summary and a cover to be published; a published episode cannot go
+    back to a draft or be deleted. (4) A panel's `storage_key` holds the full public URL of its largest WebP.
+    (5) Not yet: deleting a series, reordering several episodes, the per-day publish limits, and refreshing the
+    Next.js pages on publish (the API clears its own home cache; the pages revalidate on their own timer).
 
 - [ ] **P3-15 Search**
   - Build: outbox events keep Meilisearch in sync; search endpoint with type, genre and status filters, sort and

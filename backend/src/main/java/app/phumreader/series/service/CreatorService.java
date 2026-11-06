@@ -58,6 +58,14 @@ public class CreatorService {
         return name;
     }
 
+    /** 403 {@code not_a_creator} unless the account accepted the Creator terms. */
+    public void requireCreator(UUID userId) {
+        if (queries.penName(userId).isEmpty()) {
+            throw ApiException.forbidden(
+                    "not_a_creator", "Accept the Creator terms to publish on PhumReader.");
+        }
+    }
+
     /**
      * Ownership rule for every creator write (P3-05): only the series' own creator passes. An
      * unknown series is 404, somebody else's is 403.
@@ -75,7 +83,7 @@ public class CreatorService {
                 r.ageRating(),
                 r.status(),
                 r.visibility(),
-                r.updateDay(),
+                r.updateDay() == null ? null : Weekday.of(r.updateDay()),
                 r.coverUrl(),
                 r.bannerUrl(),
                 r.tags());
