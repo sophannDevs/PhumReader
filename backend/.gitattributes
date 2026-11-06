@@ -1,0 +1,4 @@
+# Unix line endings for every backend text file (also on Windows), Windows ones for .bat.
+* text=auto eol=lf
+*.bat text eol=crlf
+*.jar binary

@@ -1,0 +1,20 @@
+# Production-like environments (not used in Stage 1). Every value comes from the environment.
+spring:
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
+
+phumreader:
+  frontend-url: ${FRONTEND_URL}
+
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false
+
+logging:
+  structured:
+    format:
+      console: ecs

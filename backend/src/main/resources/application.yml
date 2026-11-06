@@ -1,0 +1,49 @@
+# Settings shared by every profile. Profile files: application-dev.yml (default), -test, -prod.
+spring:
+  application:
+    name: phumreader-api
+  profiles:
+    default: dev
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    locations: classpath:db/migration
+  threads:
+    virtual:
+      enabled: true
+  autoconfigure:
+    # No in-memory demo user with a generated password: sign-in uses JWT cookies (Stage 1 Step 4).
+    exclude: org.springframework.boot.security.autoconfigure.UserDetailsServiceAutoConfiguration
+
+server:
+  port: ${PORT:8080}
+  shutdown: graceful
+
+phumreader:
+  frontend-url: ${FRONTEND_URL:}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: never
+
+springdoc:
+  paths-to-match: /api/**
+  default-produces-media-type: application/json
+  # On for dev and tests (http://localhost:8080/swagger-ui.html); application-prod.yml turns both off.
+  api-docs:
+    enabled: true
+  swagger-ui:
+    enabled: true
+  writer-with-order-by-keys: true
+  writer-with-default-pretty-printer: true
+
+logging:
+  pattern:
+    level: "%5p [%X{requestId:-}]"

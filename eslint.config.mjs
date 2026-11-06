@@ -12,6 +12,10 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Generated from backend/openapi/openapi.json by `npm run api:gen`.
+    "src/lib/api/schema.d.ts",
+    // Spring Boot API (Java).
+    "backend/**",
   ]),
 ]);
 

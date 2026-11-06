@@ -1,0 +1,22 @@
+# Tests run on an embedded PostgreSQL 17 started by the tests (Zonky): no Docker, no network,
+# and backend/.env is never read.
+phumreader:
+  frontend-url: http://localhost:3000
+
+management:
+  endpoint:
+    health:
+      show-details: always
+
+# English server messages whatever the machine's language; only warnings in the test log.
+zonky:
+  test:
+    database:
+      postgres:
+        server:
+          properties:
+            lc_messages: C
+
+logging:
+  level:
+    io.zonky.test.db.postgres.embedded: WARN

@@ -1,0 +1,19 @@
+# Local development (the default profile). Reads backend/.env (copy .env.example and fill it in).
+spring:
+  config:
+    import: optional:file:.env[.properties]
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
+    hikari:
+      maximum-pool-size: 5
+      connection-timeout: 5000
+
+phumreader:
+  frontend-url: ${FRONTEND_URL:http://localhost:3000}
+
+management:
+  endpoint:
+    health:
+      show-details: always

@@ -37,7 +37,7 @@ Sources of truth: the plan doc, `CLAUDE.md`, `docs/BACKEND.md` (decisions and lo
 - Money: balances change only through the ledger, in one transaction with a wallet row lock; every payment and
   unlock call is idempotent. Never build card number fields: cards use the PayWay hosted page.
 
-Progress: 0 / 51 tasks · milestones M1, M3, M4, M5, M6, M7
+Progress: 2 / 51 tasks (P1-07, P1-08) · Stage 1: step 1 of 5 · milestones M1, M3, M4, M5, M6, M7
 
 ---
 
@@ -46,13 +46,16 @@ Progress: 0 / 51 tasks · milestones M1, M3, M4, M5, M6, M7
 Agreed with the user on 2026-11-06. Five steps, done in order; stop and report after each one. Stage 1 has no
 deployment and no Docker. A step is done when its checks pass; tick the plan tasks it completes.
 
-- [ ] **Step 1: Spring Boot project setup** (P1-01, P1-05, P1-06, P1-07, P1-08)
+- [x] **Step 1: Spring Boot project setup** (P1-01, P1-05, P1-06, P1-07, P1-08)
   - `backend/` with Spring Boot 4.1.2, Java 21, Gradle wrapper; one package per feature with a `package-info.java`
     per area; `.env.example` + typed settings that name a missing value; shared error format, request id,
     cursor page; `GET /api/v1/health`; OpenAPI export + drift test; `npm run api:gen` / `api:check`;
     `/api/:path*` rewrite to `BACKEND_URL`; Spotless and ArchUnit.
   - Check: `./gradlew check` passes (the app boots on embedded PostgreSQL, no Docker, no network), and
     `npm run lint && npm run typecheck && npm run build` pass.
+  - Done 2026-11-06: 27 tests green; `bootRun` against Supabase `phumreader-dev` (Flyway off) answers
+    `http://localhost:3000/api/v1/health` with the database UP through the rewrite. Carried over: Flyway's first
+    run on Supabase (P1-05) to Step 2; ESLint import rules for the website's API client (P1-06) to Step 5.
 - [ ] **Step 2: Database setup** (P1-02 database part, P3-01)
   - Supabase `phumreader-dev` through the session pooler; Flyway V1 with every table; seed from
     `demo-data.json` (48 series, 8 genres, episodes, comments, coin packs, demo reader and demo creators).
@@ -114,13 +117,13 @@ P1-03 (Next.js app) and P1-04 (web libraries + shadcn/ui) are done by T01–T06.
   - Depends on: P1-03, P1-05
   - Done when: empty folders + a README per area; import rules enforced by ArchUnit (API) and ESLint (website).
 
-- [ ] **P1-07 OpenAPI → TypeScript client**
+- [x] **P1-07 OpenAPI → TypeScript client** (stale files fail `./gradlew check` and `npm run api:check`; CI in P1-09)
   - Build: springdoc publishes OpenAPI; a Gradle task writes `backend/openapi/openapi.json`; `openapi-typescript`
     generates `src/lib/api/schema.d.ts` (`npm run api:gen`).
   - Depends on: P1-05
   - Done when: changing a Java DTO and running the script changes the TS types; CI fails if they are stale.
 
-- [ ] **P1-08 Configuration and secrets**
+- [x] **P1-08 Configuration and secrets**
   - Build: `.env.example` for both apps; typed config (zod in the website, `@ConfigurationProperties` in the API);
     secrets only from the environment. `next.config` rewrites `/api/:path*` to `BACKEND_URL`.
   - Depends on: P1-03, P1-05

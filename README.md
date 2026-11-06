@@ -1,8 +1,10 @@
 # PhumReader
 
 PhumReader (ភូមិ "village" + Reader) is a webtoon-style site for comics and web novels for readers in
-Cambodia, in English and Khmer. **This is a frontend-only demo**: there is no backend, no real
-login and no real payment. Everything is simulated in the browser.
+Cambodia, in English and Khmer. **The website still runs as a demo**: login, coins and payments are
+simulated in the browser. A Spring Boot backend is being built in [`backend/`](backend/README.md)
+(plan: [docs/BACKEND.md](docs/BACKEND.md), progress: [docs/BACKEND_CHECKLIST.md](docs/BACKEND_CHECKLIST.md));
+the pages switch to it in Stage 1 Step 5.
 
 ## Run it
 
@@ -19,6 +21,20 @@ npm run dev          # http://localhost:3000  (Khmer: http://localhost:3000/km)
 | `npm run typecheck` | `next typegen && tsc --noEmit` |
 | `npm run build` | production build |
 | `npm run test:e2e` | Playwright tests (start with `npx playwright install chromium` once; it starts `npm run dev` itself) |
+| `npm run api:gen` | TypeScript types `src/lib/api/schema.d.ts` from `backend/openapi/openapi.json` |
+| `npm run api:check` | fails when `src/lib/api/schema.d.ts` is out of date |
+
+## Run the backend
+
+No Docker is needed or used. Requires Java 21 (for example Temurin 21).
+
+1. `copy backend\.env.example backend\.env` and fill in the Supabase session pooler settings (see the comments in
+   the file). `backend/.env` is git-ignored.
+2. `cd backend` then `gradlew.bat bootRun` (Git Bash: `./gradlew bootRun`): the API starts on http://localhost:8080.
+3. `npm run dev` in the repo root: the website forwards `/api/...` to the API (`BACKEND_URL` in `.env.local`,
+   default `http://localhost:8080`). Check: http://localhost:3000/api/v1/health shows `{"status":"UP","database":"UP"}`.
+
+Details and commands: [backend/README.md](backend/README.md).
 
 ## Demo account
 
@@ -59,6 +75,8 @@ src/components/layout/       header, footer, tab bar, reader bars, auth layout, 
 src/components/auth/         login / sign up / verify / forgot views
 src/data/                    demo-data.json (the only content source) and typed selectors
 src/lib/                     demo-api.ts, store.ts, queries.ts, format.ts, localize.ts, routes.ts
+src/lib/api/                 schema.d.ts generated from the backend's OpenAPI file (npm run api:gen)
+backend/                     Spring Boot API (Java 21, Gradle), see backend/README.md
 src/messages/                en.json, km.json
 e2e/                         Playwright tests (spec flows 1-6, demo flags, 404)
 design/                      design source of truth (screens, foundations, spec): do not edit

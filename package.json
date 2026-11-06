@@ -8,7 +8,9 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "next typegen && tsc --noEmit",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "api:gen": "openapi-typescript backend/openapi/openapi.json -o src/lib/api/schema.d.ts",
+    "api:check": "openapi-typescript backend/openapi/openapi.json -o src/lib/api/schema.d.ts --check"
   },
   "dependencies": {
     "@hookform/resolvers": "^7.0.3",
@@ -40,6 +42,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.4.5",
+    "openapi-typescript": "^7.13.0",
     "tailwindcss": "^4",
     "typescript": "^5"
   }
