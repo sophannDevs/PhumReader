@@ -42,12 +42,17 @@ Key tokens: --primary #00DC64, --primary-foreground #04210F (never white text on
 
 ## Scope rules
 - Phase 1 (frontend, docs/CHECKLIST.md, finished): NO database, backend, real API, real payments, real auth or deployment.
-- Phase 2 (backend, docs/BACKEND_CHECKLIST.md, design in docs/BACKEND.md): a separate **Spring Boot** API
-  (Java 21, Gradle, Supabase PostgreSQL; no Docker, no Redis) in `backend/`, built one Bxx task at a time. The Next.js frontend stays in the
-  repo root. Demo mode (`NEXT_PUBLIC_DEMO=1`, demo-api.ts, local store) must keep working until B52.
-  Backend commands (no Docker; Supabase settings in `backend/.env`, git-ignored): `cd backend && ./gradlew bootRun`, `cd backend && ./gradlew check`,
+- Phase 2 (backend, docs/BACKEND_CHECKLIST.md, design in docs/BACKEND.md): follows the plan doc "Toonwave V2 –
+  Implementation plan" (https://claude.ai/artifact/9bbCmhSxqAbRZeTbjU8QVT; Toonwave = PhumReader). A separate
+  **Spring Boot** API (Java 21, Gradle; Supabase PostgreSQL, Redis, Meilisearch, Cloudflare R2, ABA PayWay) in `backend/`,
+  built one plan task (P1-01 … P7-05) at a time, starting with "Stage 1" in the checklist. No Docker anywhere in this
+  project: not on development machines (company policy), not in CI, no Dockerfile, no Testcontainers.
+  The Next.js frontend stays in the repo root. Demo mode (`NEXT_PUBLIC_DEMO=1`, demo-api.ts, local store) must keep
+  working until P5-07.
+  Backend commands (no Docker; settings in `backend/.env`, git-ignored): `cd backend && ./gradlew bootRun`, `cd backend && ./gradlew check`,
   `npm run api:gen` (TypeScript types from backend/openapi/openapi.json).
-  A backend task is done when `./gradlew check` passes (plus lint/typecheck/build if the frontend changed), then commit "Bxx: <short description>".
+  A backend task is done when its acceptance criteria pass and `./gradlew check` passes (plus lint/typecheck/build if the
+  frontend changed), then commit "<task id>: <short description>", e.g. "P3-02: sign-in core".
   The rules below that say "demo" describe Phase 1 and demo mode.
 - All content comes from design/demo-data.json (copied to src/data/). Keep it consistent everywhere.
 - Every "server" call goes through src/lib/demo-api.ts:
