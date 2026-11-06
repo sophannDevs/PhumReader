@@ -1,6 +1,6 @@
 "use client"
 
-import { BookOpenIcon, CoinsIcon, LogOutIcon, PenLineIcon, SearchIcon, SlidersHorizontalIcon } from "lucide-react"
+import { BookOpenIcon, CoinsIcon, LogOutIcon, PenLineIcon, SearchIcon, ShieldCheckIcon, SlidersHorizontalIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { CoinChip } from "@/components/pr/coin-chip"
 import { Logo } from "@/components/layout/logo"
@@ -19,7 +19,7 @@ import { Link, usePathname } from "@/i18n/navigation"
 import { initials } from "@/lib/format"
 import { cn } from "@/lib/utils"
 
-export type HeaderUser = { name: string }
+export type HeaderUser = { name: string; roles?: string[] }
 
 // Rankings and Genres have their own pages (T43); Web novels stays on the Home section.
 const navItems = [
@@ -134,6 +134,13 @@ export function SiteHeader({
                     <PenLineIcon /> {t("creatorDashboard")}
                   </Link>
                 </DropdownMenuItem>
+                {user.roles?.includes("ADMIN") ? (
+                  <DropdownMenuItem asChild>
+                    <Link href="/admin">
+                      <ShieldCheckIcon /> {t("admin")}
+                    </Link>
+                  </DropdownMenuItem>
+                ) : null}
                 <DropdownMenuItem asChild>
                   <Link href="/settings">
                     <SlidersHorizontalIcon /> {t("settings")}

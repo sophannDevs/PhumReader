@@ -13,7 +13,7 @@ import type { Locale } from "@/i18n/routing"
  */
 export const STORE_KEY = "phumreader.app"
 
-export type StoredUser = { name: string; email: string }
+export type StoredUser = { name: string; email: string; /** From the real API: READER, CREATOR, ADMIN. */ roles?: string[] }
 export type StoredAccount = StoredUser & { password: string }
 export type StoredPurchase = Purchase & { orderId?: string }
 export type NovelSettings = { size: number; theme: "light" | "sepia" | "dark"; font: "sans" | "serif"; wide: boolean }

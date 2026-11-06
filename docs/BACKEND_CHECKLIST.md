@@ -566,10 +566,24 @@ wiring them are fixed in P5-07.
     404 on the server for slugs missing from the demo data when the real API is on, so a creator's own series and
     episodes can be opened (View episode works).
 
-- [ ] **P4-16 Admin** `/admin` (A8, A9)
+- [x] **P4-16 Admin** `/admin` (A8, A9)
   - Build: users, content, reports queue, orders and refunds, with existing components.
   - Depends on: P2-04 (T12)
   - Done when: only ADMIN can open it; actions show in the audit log.
+  - Done (2026-11-06): `/admin` (`admin-page.tsx`, `admin-lists.tsx`, `admin-dialogs.tsx`, `src/lib/admin.ts`,
+    `src/lib/api/admin.ts`), English and Khmer. Tabs: Overview (counts that link to the lists), Reports (open by
+    default; dismiss, resolve, hide content), Users (search, suspend with a reason, restore), Content (series,
+    episodes, comments; hide and restore), Orders (search, status filter, refund with a reason) and Audit log
+    (filter by area). Lists load 20 at a time with "Load more". Hide, suspend and refund ask for a reason in a dialog;
+    the API's refusals (coins already spent, already suspended, …) show as a readable message inside the dialog.
+    Access: the page asks the API (`GET /admin/overview`); a 403 shows "You do not have access", a guest is asked to
+    log in, the demo explains that the admin area needs the real API. The account menu shows "Admin" for accounts
+    whose `/me` roles include ADMIN (`StoredUser.roles`). Tests: real test 14 (non-admin refused; hide through a
+    report, readers no longer see it, restore; suspend needs a reason; refund refused after coins were spent; audit
+    rows with the admin's name) and `e2e/admin.spec.ts` (demo). `npm run test:e2e:real`: 15/15.
+  - Notes: a role granted in the database reaches the access token only after the next sign-in or refresh. The
+    future account purge must keep `audit_log` rows (the table is append-only and `actor_id` references `users`).
+    Layout at 390 px was not checked in a browser: rows wrap and the tab bar scrolls inside its own box.
 
 - [ ] **P4-17 System and legal pages**
   - Build: offline page for the installable app, Terms, Privacy, Help (placeholder text, A16); 404 and 500 already
