@@ -62,7 +62,7 @@ export const useChapter = (slug: string, n: number) => {
 
 export const useComments = (kind: "series" | "episode", slug: string) => {
   const flag = useDemoFlag()
-  return useQuery({ queryKey: ["comments", kind, slug, flag], queryFn: () => demo.fetchComments(kind, slug) })
+  return useQuery({ queryKey: ["comments", kind, slug, flag], queryFn: () => demo.fetchComments(kind, slug), enabled: DEMO_MODE })
 }
 
 export const useRankings = (kind: "comics" | "novels") => {
@@ -87,7 +87,7 @@ export const useCoinsPage = () => {
 
 export const useLibrary = () => {
   const flag = useDemoFlag()
-  return useQuery({ queryKey: ["library", flag], queryFn: demo.fetchLibrary })
+  return useQuery({ queryKey: ["library", flag], queryFn: demo.fetchLibrary, enabled: DEMO_MODE })
 }
 
 export const useCreator = () => {

@@ -9,9 +9,9 @@ import { Button } from "@/components/ui/button"
 import { chapterCommentCount, fastPassPrice, type Series } from "@/data"
 import type { NovelChapter } from "@/data"
 import { Link } from "@/i18n/navigation"
-import { formatCount, initials, parseCount } from "@/lib/format"
+import { formatCount, initials } from "@/lib/format"
 import { seriesHref } from "@/lib/routes"
-import { likeKey, useAppStore } from "@/lib/store"
+import { useEpisodeReactions } from "@/lib/me"
 import { cn } from "@/lib/utils"
 
 const card = "rounded-card border border-reader-border"
@@ -26,6 +26,7 @@ export function NovelEndSection({
   nextLocked,
   onPrev,
   onNext,
+  finishRef,
 }: {
   series: Series
   chapter: NovelChapter
@@ -33,15 +34,18 @@ export function NovelEndSection({
   nextLocked: boolean
   onPrev: () => void
   onNext: () => void
+  /** Marks the chapter finished once this section scrolls into view. */
+  finishRef?: (el: HTMLElement | null) => void
 }) {
   const t = useTranslations("reader")
   const tt = useTranslations("toasts")
   const n = chapter.n
-  const likedKey = likeKey.episode(series.id, n)
-  const markKey = likeKey.bookmark(series.id, n)
-  const liked = useAppStore((s) => !!s.likes[likedKey])
-  const bookmarked = useAppStore((s) => !!s.likes[markKey])
-  const likeCount = parseCount(chapter.likes) + (liked ? 1 : 0)
+  const { liked, bookmarked, likeCount, toggleLike, toggleBookmark } = useEpisodeReactions({
+    series,
+    n,
+    kind: "novel",
+    likes: chapter.likes,
+  })
   const commentCount = chapterCommentCount(chapter)
 
   async function share() {
@@ -55,7 +59,7 @@ export function NovelEndSection({
 
   return (
     <div className="mt-12 flex flex-col gap-3">
-      <section className={cn(card, "flex flex-col items-center gap-3 px-5 py-5 text-center")}>
+      <section ref={finishRef} className={cn(card, "flex flex-col items-center gap-3 px-5 py-5 text-center")}>
         <p className="type-caption tracking-wider text-reader-quiet uppercase">{t("endOfChapter", { n })}</p>
         <div className="flex flex-wrap justify-center gap-2">
           <Button
@@ -64,7 +68,7 @@ export function NovelEndSection({
             className={pill}
             aria-pressed={liked}
             aria-label={`${formatCount(likeCount)} · ${t("likeLabel", { count: likeCount.toLocaleString("en-US") })}`}
-            onClick={() => useAppStore.getState().toggleLike(likedKey)}
+            onClick={() => void toggleLike()}
           >
             <HeartIcon className={cn(liked && "fill-destructive text-destructive")} />
             <span className="tabular-nums">{formatCount(likeCount)}</span>
@@ -83,10 +87,7 @@ export function NovelEndSection({
             size="sm"
             className={pill}
             aria-pressed={bookmarked}
-            onClick={() => {
-              useAppStore.getState().toggleLike(markKey)
-              toast.success(tt(bookmarked ? "bookmarkRemoved" : "bookmarked"))
-            }}
+            onClick={() => void toggleBookmark()}
           >
             <BookmarkIcon className={cn(bookmarked && "fill-current")} />
             {t("bookmark")}

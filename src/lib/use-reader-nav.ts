@@ -8,6 +8,7 @@ import { useRouter } from "@/i18n/navigation"
 import { useEpisodes } from "@/lib/queries"
 import { readerHref } from "@/lib/routes"
 import { seriesHref } from "@/lib/routes"
+import { useRecordReading, useSeriesViewer } from "@/lib/me"
 import { useAppStore, useCoins, useHydrated } from "@/lib/store"
 
 /**
@@ -19,7 +20,7 @@ export function useReaderNav(series: Series, n: number, total: number) {
   const router = useRouter()
   const coins = useCoins()
   const episodes = useEpisodes(series.slug)
-  const unlocked = useAppStore((s) => s.unlocked[series.id])
+  const { unlocked } = useSeriesViewer(series)
   const { request, dialog } = useSeriesUnlock(series)
 
   const hydrated = useHydrated()
@@ -32,10 +33,7 @@ export function useReaderNav(series: Series, n: number, total: number) {
   // must never show its pages, it goes to the series page with the unlock dialog open.
   const gated = !hydrated || episodes.isPending || lockedHere
 
-  useEffect(() => {
-    if (gated) return
-    useAppStore.getState().markRead(series.id, n)
-  }, [gated, series.id, n])
+  const { finishRef } = useRecordReading(series, n, !gated)
 
   useEffect(() => {
     if (!lockedHere) return
@@ -70,5 +68,5 @@ export function useReaderNav(series: Series, n: number, total: number) {
     locked: isLocked(e),
   }))
 
-  return { go, list, listEpisodes, isLocked, coins, request, dialog, gated }
+  return { go, list, listEpisodes, isLocked, coins, request, dialog, gated, finishRef }
 }

@@ -1,7 +1,10 @@
 "use client"
 
-import { BookOpenIcon, LockOpenIcon, LogInIcon } from "lucide-react"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
+import { BookOpenIcon, LockOpenIcon, LogInIcon, XIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
+import type { ReactNode } from "react"
+import { toast } from "sonner"
 import { ContinueCard } from "@/components/pr/continue-card"
 import { EmptyState } from "@/components/pr/empty-state"
 import { ErrorState } from "@/components/pr/error-state"
@@ -12,6 +15,9 @@ import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import type { ContinueView, Series } from "@/data"
 import { Link, usePathname } from "@/i18n/navigation"
+import { DEMO_MODE } from "@/lib/api/config"
+import * as real from "@/lib/api/me"
+import { meKeys, useAccountEmail, useFailed, useSubscriptions } from "@/lib/me"
 import { useDemoFlag, useEpisodes, useLibrary } from "@/lib/queries"
 import { useAppStore, useUser } from "@/lib/store"
 
@@ -27,6 +33,27 @@ function BrowseButton() {
     <Button asChild variant="outline">
       <Link href="/">{t("browse")}</Link>
     </Button>
+  )
+}
+
+/** A card with a small Remove button in its corner (real API only: the demo keeps its fixed lists). */
+function Removable({ title, onRemove, children }: { title: string; onRemove: (() => void) | undefined; children: ReactNode }) {
+  const t = useTranslations("library")
+  if (!onRemove) return <>{children}</>
+  return (
+    <div className="relative min-w-0">
+      {children}
+      <Button
+        type="button"
+        variant="secondary"
+        size="icon"
+        aria-label={t("remove", { title })}
+        className="absolute top-1 right-1 size-6 rounded-full opacity-90 shadow-xs hover:opacity-100"
+        onClick={onRemove}
+      >
+        <XIcon className="size-3.5" />
+      </Button>
+    </div>
   )
 }
 
@@ -56,7 +83,22 @@ export function LibraryPage() {
   const t = useTranslations("library")
   const user = useUser()
   const pathname = usePathname()
-  const query = useLibrary()
+  const demoQuery = useLibrary()
+  const email = useAccountEmail()
+  const qc = useQueryClient()
+  const tt = useTranslations("toasts")
+  const failed = useFailed()
+  const enabled = !DEMO_MODE && !!email
+  const history = useQuery({ queryKey: meKeys.history(email ?? ""), queryFn: real.fetchHistory, enabled })
+  const subs = useSubscriptions()
+  const unlockedQuery = useQuery({ queryKey: meKeys.unlocked(email ?? ""), queryFn: real.fetchUnlocked, enabled })
+  // One status for the page: the demo's single query, or the three lists of the real API.
+  const parts = DEMO_MODE ? [demoQuery] : [history, subs, unlockedQuery]
+  const query = {
+    isPending: parts.some((q) => q.isPending),
+    isError: parts.some((q) => q.isError),
+    refetch: () => Promise.all(parts.map((q) => q.refetch())),
+  }
   // ?demo=empty shows the empty tabs even when this device has reading history.
   const forcedEmpty = useDemoFlag() === "empty"
   const subscriptions = useAppStore((s) => (forcedEmpty ? NONE_LIST : s.subscriptions))
@@ -84,27 +126,71 @@ export function LibraryPage() {
     )
   }
 
-  const byId = new Map((query.data?.series ?? []).map((s) => [s.id, s]))
+  const demoData = demoQuery.data
+  const byId = new Map((demoData?.series ?? []).map((s) => [s.id, s]))
 
   // Demo entries with the episode raised to `lastRead`, plus series the reader has opened that are not in the demo list.
-  const entries: ContinueView[] = []
-  if (query.data) {
+  const demoEntries: ContinueView[] = []
+  if (demoData) {
     const seen = new Set<string>()
-    for (const c of query.data.continueReading) {
+    for (const c of demoData.continueReading) {
       seen.add(c.seriesData.id)
-      entries.push({ ...c, episode: Math.max(c.episode, lastRead[c.seriesData.id] ?? 0) })
+      demoEntries.push({ ...c, episode: Math.max(c.episode, lastRead[c.seriesData.id] ?? 0) })
     }
     for (const [id, n] of Object.entries(lastRead)) {
       const s = byId.get(id)
       if (s && !seen.has(id) && n > 0) {
-        entries.push({ series: s.slug, seriesData: s, episode: n, progress: Math.min(1, n / s.totalEpisodes) })
+        demoEntries.push({ series: s.slug, seriesData: s, episode: n, progress: Math.min(1, n / s.totalEpisodes) })
       }
     }
   }
-  const subscribed = subscriptions.flatMap((id) => (byId.get(id) ? [byId.get(id)!] : []))
-  const unlockedGroups = Object.entries(unlocked).flatMap(([id, nums]) =>
+  const demoSubscribed = subscriptions.flatMap((id) => (byId.get(id) ? [byId.get(id)!] : []))
+  const demoGroups = Object.entries(unlocked).flatMap(([id, nums]) =>
     byId.get(id) && nums.length ? [{ series: byId.get(id)!, numbers: nums }] : []
   )
+
+  const entries = DEMO_MODE ? demoEntries : (history.data ?? [])
+  const subscribed = DEMO_MODE ? demoSubscribed : (subs.data ?? [])
+  const unlockedGroups = DEMO_MODE ? demoGroups : (unlockedQuery.data ?? [])
+
+  /** Takes a series out of a list now; the toast's Undo puts it back. */
+  async function removeFrom(
+    list: "history" | "subscriptions",
+    series: Series,
+    remove: () => Promise<unknown>,
+    restore: (removed: never) => Promise<unknown>
+  ) {
+    if (!email) return
+    const key = list === "history" ? meKeys.history(email) : meKeys.subscriptions(email)
+    await qc.cancelQueries({ queryKey: key })
+    const before = qc.getQueryData<(Series | ContinueView)[]>(key)
+    qc.setQueryData(
+      key,
+      before?.filter((x) => ("seriesData" in x ? x.seriesData.id : x.id) !== series.id)
+    )
+    try {
+      const removed = await remove()
+      toast(tt("removedFromLibrary", { title: series.title }), {
+        action: {
+          label: tt("undo"),
+          onClick: () =>
+            void restore(removed as never)
+              .catch(failed)
+              .finally(() => void qc.invalidateQueries({ queryKey: key })),
+        },
+      })
+    } catch (error) {
+      qc.setQueryData(key, before)
+      failed(error)
+    }
+  }
+
+  const removeContinue = DEMO_MODE
+    ? undefined
+    : (series: Series) => removeFrom("history", series, () => real.removeFromHistory(series.id), real.restoreHistory)
+  const removeSubscribed = DEMO_MODE
+    ? undefined
+    : (series: Series) => removeFrom("subscriptions", series, () => real.removeSubscription(series.id), real.restoreSubscriptions)
 
   return (
     <div className="container flex flex-col gap-6 py-8 md:py-10">
@@ -134,7 +220,9 @@ export function LibraryPage() {
               ) : (
                 <div className="grid gap-3 md:grid-cols-2 md:gap-4 xl:grid-cols-4">
                   {entries.map((e) => (
-                    <ContinueCard key={e.seriesData.id} series={e.seriesData} episode={e.episode} progress={e.progress} />
+                    <Removable key={e.seriesData.id} title={e.seriesData.title} onRemove={removeContinue && (() => void removeContinue(e.seriesData))}>
+                      <ContinueCard series={e.seriesData} episode={e.episode} progress={e.progress} />
+                    </Removable>
                   ))}
                 </div>
               )}
@@ -146,7 +234,9 @@ export function LibraryPage() {
               ) : (
                 <div className={GRID}>
                   {subscribed.map((s) => (
-                    <SeriesCard key={s.id} series={s} />
+                    <Removable key={s.id} title={s.title} onRemove={removeSubscribed && (() => void removeSubscribed(s))}>
+                      <SeriesCard series={s} />
+                    </Removable>
                   ))}
                 </div>
               )}

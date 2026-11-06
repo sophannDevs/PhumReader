@@ -48,13 +48,12 @@ export function SeriesPage({ slug }: { slug: string }) {
   if (query.isError) return <ErrorState className="container" onRetry={() => void query.refetch()} />
   if (!query.data) notFound()
 
-  const { series, synopsis, stats, related, creatorSeriesCount } = query.data
-  return <SeriesBody series={series} synopsis={synopsis} stats={stats} related={related} creatorSeriesCount={creatorSeriesCount} />
+  return <SeriesBody {...query.data} />
 }
 
 type Detail = NonNullable<ReturnType<typeof useSeries>["data"]>
 
-function SeriesBody({ series, synopsis, stats, related, creatorSeriesCount }: Detail) {
+function SeriesBody({ series, synopsis, stats, related, creatorSeriesCount, creatorId }: Detail) {
   const t = useTranslations("series")
   const { request, dialog } = useSeriesUnlock(series)
 
@@ -82,7 +81,7 @@ function SeriesBody({ series, synopsis, stats, related, creatorSeriesCount }: De
             <CommentsSection kind="series" slug={series.slug} />
           </TabsContent>
         </Tabs>
-        <SeriesSidebar series={series} related={related} creatorSeriesCount={creatorSeriesCount} />
+        <SeriesSidebar series={series} related={related} creatorSeriesCount={creatorSeriesCount} creatorId={creatorId} />
       </div>
       {dialog}
     </>

@@ -12,7 +12,8 @@ import { Button } from "@/components/ui/button"
 import { fastPassPrice, type Episode, type Series } from "@/data"
 import { Link } from "@/i18n/navigation"
 import { useEpisodes } from "@/lib/queries"
-import { useAppStore, useCoins } from "@/lib/store"
+import { useSeriesViewer } from "@/lib/me"
+import { useCoins } from "@/lib/store"
 
 const PAGE = 12
 
@@ -27,8 +28,7 @@ export function EpisodesTab({
   const t = useTranslations("series")
   const th = useTranslations("home")
   const coins = useCoins()
-  const lastRead = useAppStore((s) => s.lastRead[series.id] ?? 0)
-  const unlocked = useAppStore((s) => s.unlocked[series.id])
+  const { lastRead, unlocked } = useSeriesViewer(series)
   const query = useEpisodes(series.slug)
   const [newestFirst, setNewestFirst] = useState(true)
   const [visible, setVisible] = useState(PAGE)

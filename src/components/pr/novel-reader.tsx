@@ -108,7 +108,7 @@ function NovelReaderBody({ series, chapter, total, font }: Loaded & { font: "san
   const t = useTranslations("reader")
   const loc = useLocalize()
   const n = chapter.n
-  const { go, list, listEpisodes, isLocked, coins, dialog, gated } = useReaderNav(series, n, total)
+  const { go, list, listEpisodes, isLocked, coins, dialog, gated, finishRef } = useReaderNav(series, n, total)
   if (gated) return <NovelSkeleton />
   const nextEpisode = list.find((e) => e.n === n + 1)
 
@@ -142,6 +142,7 @@ function NovelReaderBody({ series, chapter, total, font }: Loaded & { font: "san
           </div>
         )}
         <NovelEndSection
+          finishRef={finishRef}
           series={series}
           chapter={chapter}
           total={total}

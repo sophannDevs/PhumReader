@@ -37,7 +37,7 @@ Sources of truth: the plan doc, `CLAUDE.md`, `docs/BACKEND.md` (decisions and lo
 - Money: balances change only through the ledger, in one transaction with a wallet row lock; every payment and
   unlock call is idempotent. Never build card number fields: cards use the PayWay hosted page.
 
-Progress: 3 / 51 tasks (P1-05, P1-07, P1-08) · Stage 1: step 4 of 5 done (all 5 parts), step 5 next · milestones M1, M3, M4, M5, M6, M7
+Progress: 3 / 51 tasks (P1-05, P1-07, P1-08) · Stage 1: step 4 of 5 done (all 5 parts), step 5: parts 1-3 of 5 done · milestones M1, M3, M4, M5, M6, M7
 
 ---
 
@@ -159,8 +159,20 @@ deployment and no Docker. A step is done when its checks pass; tick the plan tas
       and schedule), unknown series and episode (the 404 page), an API 500 (ErrorState, Retry recovers). Demo build
       (`NEXT_PUBLIC_DEMO=1`): the Playwright suite passes except the desktop "404 page" test on a cold server
       (assumption 44).
-    - [ ] Part 3, the reader's own data: progress and Continue reading, read marks, subscribe, follow, likes,
+    - [x] Part 3, the reader's own data: progress and Continue reading, read marks, subscribe, follow, likes,
       bookmarks, library tabs with remove and undo, comments (post, like, delete, report).
+      Done 2026-11-06: `src/lib/api/me.ts` (the calls) and `src/lib/me.ts` / `src/lib/comments.ts` (hooks that read
+      the store in demo mode and the API otherwise, so the components share one code path). Subscriptions are one
+      list query (`/me/subscriptions`) used by every Subscribe button and the Subscribed tab; follow, read marks and
+      unlocked numbers come from `GET /series/{slug}/me`; like and bookmark come with the episode (`viewer`) and
+      update its cache; opening an episode saves progress 0 and reaching its end section saves 1; Home and the
+      Library's Continue reading come from `/me/history`. Optimistic updates roll back on failure. Real check in
+      Chromium on a real-API build against the local API: logged-out Subscribe asks to log in; subscribe and follow
+      persist after a reload; episode like persists; read mark and "Continue episode 2"; Library remove and Undo
+      on Continue reading and Subscribed; Home Continue reading; comment post, like (kept after reload), delete,
+      report; novel chapter bookmark; exactly one progress call per opening. Demo build: the Playwright suite passes
+      (24 tests; the "404 page" test failed once on a cold server, assumption 44, and passed on the rerun).
+      Assumption 103 in docs/CHECKLIST.md.
     - [ ] Part 4, coins: balance in the header, unlock with an Idempotency-Key, packs, orders paid with the dev
       simulator, status polling every 3 s and resuming after a reload (P5-06), purchase history.
     - [ ] Part 5, settings and creator dashboard; Playwright key flows against the local backend and in demo mode.

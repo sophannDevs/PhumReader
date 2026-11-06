@@ -9,9 +9,9 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { episodeCommentCount, type Episode, type Series } from "@/data"
 import { Link } from "@/i18n/navigation"
-import { formatCount, parseCount } from "@/lib/format"
+import { formatCount } from "@/lib/format"
 import { readerHref, seriesHref } from "@/lib/routes"
-import { likeKey, useAppStore } from "@/lib/store"
+import { useEpisodeReactions, useSubscribe } from "@/lib/me"
 import { cn } from "@/lib/utils"
 import { useLocalize } from "@/lib/localize"
 
@@ -26,6 +26,7 @@ export function ComicEndSection({
   next,
   nextLocked,
   onUnlockNext,
+  finishRef,
 }: {
   series: Series
   episode: Episode
@@ -33,14 +34,14 @@ export function ComicEndSection({
   next?: Episode
   nextLocked: boolean
   onUnlockNext: () => void
+  /** Marks the episode finished once this section scrolls into view. */
+  finishRef?: (el: HTMLElement | null) => void
 }) {
   const t = useTranslations("reader")
   const loc = useLocalize()
   const tt = useTranslations("toasts")
-  const key = likeKey.episode(series.id, episode.n)
-  const liked = useAppStore((s) => !!s.likes[key])
-  const subscribed = useAppStore((s) => s.subscriptions.includes(series.id))
-  const likeCount = parseCount(episode.likes) + (liked ? 1 : 0)
+  const { liked, likeCount, toggleLike } = useEpisodeReactions({ series, n: episode.n, kind: "comic", likes: episode.likes })
+  const { subscribed, toggle: toggleSubscribe } = useSubscribe(series)
 
   async function share() {
     try {
@@ -53,7 +54,7 @@ export function ComicEndSection({
 
   return (
     <div className="mx-auto flex w-full max-w-[600px] flex-col gap-3 px-4 py-6">
-      <section className={cn(card, "flex flex-col items-center gap-3 text-center")}>
+      <section ref={finishRef} className={cn(card, "flex flex-col items-center gap-3 text-center")}>
         <p className="type-eyebrow text-surface-quiet">{t("endOf", { n: episode.n })}</p>
         <h2 className="type-h3">{loc.title(episode.title)}</h2>
         <div className="flex flex-wrap items-center justify-center gap-2">
@@ -63,7 +64,7 @@ export function ComicEndSection({
             aria-pressed={liked}
             aria-label={`${formatCount(likeCount)} · ${t("likeLabel", { count: likeCount.toLocaleString("en-US") })}`}
             className={cn(pill, "tabular-nums")}
-            onClick={() => useAppStore.getState().toggleLike(key)}
+            onClick={() => void toggleLike()}
           >
             <HeartIcon className={cn(liked && "fill-destructive text-destructive")} />
             {formatCount(likeCount)}
@@ -73,10 +74,7 @@ export function ComicEndSection({
             size="sm"
             aria-pressed={subscribed}
             className={pill}
-            onClick={() => {
-              useAppStore.getState().toggleSubscription(series.id)
-              toast.success(subscribed ? tt("unsubscribed") : tt("subscribed", { title: series.title }))
-            }}
+            onClick={() => void toggleSubscribe()}
           >
             {subscribed ? <CheckIcon /> : <BellIcon />}
             {subscribed ? t("subscribed") : t("subscribe")}

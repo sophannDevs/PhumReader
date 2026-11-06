@@ -11,7 +11,7 @@ import { Link } from "@/i18n/navigation"
 import type { Series } from "@/data"
 import { initials } from "@/lib/format"
 import { genreHref, readerHref } from "@/lib/routes"
-import { useAppStore } from "@/lib/store"
+import { useSeriesViewer, useSubscribe } from "@/lib/me"
 import { useLocalize } from "@/lib/localize"
 
 const ghostDark =
@@ -19,8 +19,7 @@ const ghostDark =
 
 /** Which episode the main button opens: 1, or "Continue" from the last read one (Assumption 7). */
 export function useContinueTarget(series: Series): { episode: number; continuing: boolean } {
-  const lastRead = useAppStore((s) => s.lastRead[series.id] ?? 0)
-  const unlocked = useAppStore((s) => s.unlocked[series.id])
+  const { lastRead, unlocked } = useSeriesViewer(series)
   if (lastRead <= 0) return { episode: 1, continuing: false }
   const next = lastRead + 1
   const readable = next <= series.totalEpisodes && (next <= series.freeEpisodes || !!unlocked?.includes(next))
@@ -39,7 +38,7 @@ export function SeriesHero({
   const t = useTranslations("series")
   const loc = useLocalize()
   const tt = useTranslations("toasts")
-  const subscribed = useAppStore((s) => s.subscriptions.includes(series.id))
+  const { subscribed, toggle: toggleSubscribe } = useSubscribe(series)
   const { episode, continuing } = useContinueTarget(series)
   const novel = series.type === "novel"
 
@@ -157,11 +156,7 @@ export function SeriesHero({
                 size="lg"
                 aria-pressed={subscribed}
                 className={ghostDark}
-                onClick={() => {
-                  useAppStore.getState().toggleSubscription(series.id)
-                  if (subscribed) toast.success(tt("unsubscribed"))
-                  else toast.success(tt("subscribed", { title: series.title }))
-                }}
+                onClick={() => void toggleSubscribe()}
               >
                 {subscribed ? <CheckIcon /> : <PlusIcon />}
                 {subscribed ? t("subscribed") : t("subscribe")}

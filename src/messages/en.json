@@ -139,7 +139,9 @@
     "avatarOf": "{name}",
     "empty": "Be the first to comment",
     "emptyDesc": "Share what you thought about this story.",
-    "now": "now"
+    "now": "now",
+    "delete": "Delete",
+    "report": "Report"
   },
   "nav": {
     "home": "Home",
@@ -360,7 +362,13 @@
     "paymentCancelled": "Payment cancelled",
     "paymentFailed": "Payment didn't go through",
     "demoReset": "Demo data reset",
-    "publishingSoon": "Publishing opens soon"
+    "publishingSoon": "Publishing opens soon",
+    "loginRequired": "Log in to do this",
+    "actionFailed": "Something went wrong. Please try again.",
+    "commentDeleted": "Comment deleted",
+    "commentReported": "Reported. Thank you.",
+    "removedFromLibrary": "Removed {title}",
+    "undo": "Undo"
   },
   "home": {
     "emptyLink": "Explore genres",
@@ -488,7 +496,8 @@
     "emptyUnlocked": "No unlocked episodes yet",
     "emptyUnlockedDesc": "Episodes you unlock with coins stay here.",
     "browse": "Browse series",
-    "tabs": "Library sections"
+    "tabs": "Library sections",
+    "remove": "Remove {title} from my library"
   },
   "settings": {
     "title": "Settings",
