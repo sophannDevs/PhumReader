@@ -11,6 +11,9 @@
     "test:e2e": "playwright test",
     "test:e2e:real": "playwright test -c playwright.real.config.ts",
     "api:gen": "openapi-typescript backend/openapi/openapi.json -o src/lib/api/schema.d.ts",
+    "services:start": "bash scripts/services.sh start",
+    "services:stop": "bash scripts/services.sh stop",
+    "services:check": "node scripts/check-services.mjs",
     "api:check": "openapi-typescript backend/openapi/openapi.json -o src/lib/api/schema.d.ts --check"
   },
   "dependencies": {

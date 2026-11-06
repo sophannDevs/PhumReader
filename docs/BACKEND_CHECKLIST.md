@@ -65,9 +65,16 @@ deployment and no Docker. A step is done when its checks pass; tick the plan tas
     (41 comics, 7 novels), 3,956 episodes, 30,303 panels, 589 chapters, 12,012 comments, 5 packs, 3 hero slides,
     48 ranking rows; a second run changed nothing (18 users, 1 ledger row). Health through the website: UP.
     41 backend tests green. Staging (P3-01's second half) waits for P1-10.
-- [ ] **Step 3: Other local services** (P1-02 rest) — **moved after Step 4, to be done on the home PC**
+- [ ] **Step 3: Other local services** (P1-02 rest) — services part 1 done 2026-11-06 (see below); stand-in swaps remain
   - Upstash Redis, Meilisearch (`meilisearch.exe`), email printed in the backend console; a services check.
   - Check: the services check shows every service healthy.
+  - Done 2026-11-06 (part 1, on a Mac with Homebrew, no Docker): Redis, Meilisearch, MinIO (R2 stand-in) and Mailpit
+    installed with `brew install` and run by `npm run services:start` / `services:stop` (`scripts/services.sh`; data
+    in git-ignored `.local/`). `npm run services:check` (`scripts/check-services.mjs`) shows all 5 healthy (the 5th is
+    the database through the API). `backend/.env.example` lists the new settings. Not done yet: Upstash and a real
+    R2 bucket (accounts), the MinIO bucket `phumreader-dev` (created by P3-07), and part 2: swap the in-memory
+    stand-ins for Redis (rate limits, codes, view counters), Meilisearch (search + outbox sync) and Mailpit (SMTP),
+    then Google / Facebook login (P3-04).
   - 2026-11-06: the company PC may not download programs, so Step 4 runs first with built-in stand-ins
     (rate limits and codes in memory, search in PostgreSQL, JWT signed with the JDK). At home: install the
     services, fill in `backend/.env`, swap the stand-ins (and optionally the JWT code for a JWT library), add
