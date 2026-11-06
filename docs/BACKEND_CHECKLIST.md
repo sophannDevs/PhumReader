@@ -357,12 +357,26 @@ Spring Boot owns every business rule; the website never talks to the database di
   - Done when: home feed is under 150 ms p95 from cache; publishing an episode refreshes its series page within
     60 s.
 
-- [ ] **P3-07 Media upload and processing**
+- [x] **P3-07 Media upload and processing**
   - Build: presigned R2 upload URLs for covers, banners, thumbnails and comic panels; the worker checks type, size
     and 800 px width (A19: JPG or PNG, 20 MB each, 100 images and 200 MB per episode), makes WebP/AVIF and
     thumbnails with libvips. The seed uploads the demo artwork.
   - Depends on: P3-01
   - Done when: a 799 px image is rejected with a clear reason; processed images appear in R2 with variants.
+  - Done (2026-11-06): `POST /api/v1/creator/uploads` (kind COVER / BANNER / THUMBNAIL / PANEL, type, size) returns a
+    presigned PUT URL (size and type are part of the signature); `POST …/{id}/complete` checks the file's own bytes
+    and makes WebP variants (320, 800, 1200 px, never wider than the original); `GET …/{id}` shows the state.
+    Rejections answer 422 with a code (`image_too_small`, `not_square`, `unsupported_type`, `corrupt_image`,
+    `file_too_large`, `too_many_pixels`). Tests: `MediaApiTest` (10, in-memory store), `S3ObjectStoreTest` (real MinIO,
+    skipped when none runs), Playwright real-mode test 8 (upload to MinIO, WebP read back, 799 px refused).
+  - Decisions: (1) **No libvips and no AVIF.** libvips is not installed here and CLAUDE.md allows no extra system
+    installs, so the JVM does the work: ImageIO checks, scrimage-webp (bundled encoder) makes WebP. AVIF can be added
+    with a Worker/libvips later. (2) Minimum widths: panel 800, banner 800 (A19), cover 600, thumbnail 300 and square
+    (my choice, the plan gives only 800). (3) Processing runs inside the `complete` request, not in a background
+    worker; a 20 MB image takes a second or two. (4) Not yet: the per-episode limits (100 images, 200 MB), cleaning up
+    uploads that never complete, and uploading the demo artwork in the seed (the demo covers are SVG, which the
+    JPG/PNG pipeline refuses; the seed keeps its current `/covers/…` paths). Per-episode limits belong to P3-14.
+    (5) Browser PUTs to MinIO work (MinIO allows any origin); R2 needs a CORS rule on the bucket (Phase 7).
 
 - [ ] **P3-08 Image access Worker**
   - Build: Cloudflare Worker in `infra/image-worker/` that validates a short-lived signed token for paid episode

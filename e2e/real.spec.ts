@@ -1,3 +1,4 @@
+import { deflateSync, crc32 } from "node:zlib"
 import { expect, test, type Page } from "@playwright/test"
 
 /**
@@ -181,7 +182,85 @@ test("7. creator dashboard: empty for a reader, numbers for a creator", async ()
   await page.unroute("**/api/v1/creator/dashboard")
 })
 
-test("8. delete the account: signed out everywhere, wrong password refused first", async () => {
+/** A solid-colour RGB PNG of the given size (no image library needed). */
+function png(width: number, height: number): Buffer {
+  const chunk = (type: string, data: Buffer) => {
+    const body = Buffer.concat([Buffer.from(type), data])
+    const out = Buffer.alloc(8 + data.length + 4)
+    out.writeUInt32BE(data.length, 0)
+    body.copy(out, 4)
+    out.writeUInt32BE(crc32(body) >>> 0, 8 + data.length)
+    return out
+  }
+  const ihdr = Buffer.alloc(13)
+  ihdr.writeUInt32BE(width, 0)
+  ihdr.writeUInt32BE(height, 4)
+  ihdr.set([8, 2, 0, 0, 0], 8) // 8-bit RGB
+  const row = Buffer.alloc(1 + width * 3, 0)
+  for (let x = 0; x < width; x++) row.set([0, 220, 100], 1 + x * 3)
+  const raw = Buffer.concat(Array.from({ length: height }, () => row))
+  return Buffer.concat([
+    Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]),
+    chunk("IHDR", ihdr),
+    chunk("IDAT", deflateSync(raw)),
+    chunk("IEND", Buffer.alloc(0)),
+  ])
+}
+
+test("8. creator image upload: terms, presigned upload to storage, WebP variants, 799 px refused", async () => {
+  // The signed-in browser's cookies; writes need the CSRF header.
+  await page.request.get("/api/v1/auth/csrf")
+  const xsrf = (await page.context().cookies()).find((c) => c.name === "XSRF-TOKEN")?.value ?? ""
+  const headers = { "X-XSRF-TOKEN": xsrf }
+  const startUpload = (size: number) =>
+    page.request.post("/api/v1/creator/uploads", { headers, data: { kind: "PANEL", contentType: "image/png", size } })
+
+  // A reader cannot upload before accepting the Creator terms.
+  expect((await startUpload(1000)).status()).toBe(403)
+  expect((await page.request.post("/api/v1/creator", { headers, data: { penName: "E2E Creator", acceptTerms: false } })).status()).toBe(400)
+  const become = await page.request.post("/api/v1/creator", { headers, data: { penName: "E2E Creator", acceptTerms: true } })
+  expect(become.status()).toBe(201)
+  // The CREATOR role reaches the access token with the next refresh.
+  expect((await page.request.post("/api/v1/auth/refresh", { headers })).ok()).toBe(true)
+
+  async function upload(image: Buffer) {
+    const ticketRes = await startUpload(image.length)
+    expect(ticketRes.status()).toBe(201)
+    const ticket = await ticketRes.json()
+    // The browser's part: PUT the file straight to object storage.
+    const put = await page.request.put(ticket.uploadUrl, { headers: ticket.headers, data: image })
+    expect(put.ok()).toBe(true)
+    return { id: ticket.id as string, complete: () => page.request.post(`/api/v1/creator/uploads/${ticket.id}/complete`, { headers }) }
+  }
+
+  // 800 px wide: accepted, with a 320 and an 800 px WebP in storage.
+  const good = await upload(png(800, 1000))
+  const done = await good.complete()
+  expect(done.status()).toBe(200)
+  const view = await done.json()
+  expect(view.status).toBe("READY")
+  expect(view.variants.map((v: { width: number }) => v.width)).toEqual([320, 800])
+  const webp = await page.request.get(view.url)
+  expect(webp.status()).toBe(200)
+  expect(webp.headers()["content-type"]).toContain("image/webp")
+  const bytes = await webp.body()
+  expect(bytes.subarray(0, 4).toString()).toBe("RIFF")
+  expect(bytes.subarray(8, 12).toString()).toBe("WEBP")
+
+  // 799 px wide: refused with a clear reason.
+  const small = await upload(png(799, 1000))
+  const refused = await small.complete()
+  expect(refused.status()).toBe(422)
+  const error = (await refused.json()).error
+  expect(error.code).toBe("image_too_small")
+  expect(error.message).toBe("The image is 799 px wide; the minimum is 800 px.")
+
+  // The file is checked, not the claim: a text file sent as a PNG is refused too.
+  const fake = await upload(Buffer.from("this is not a png"))
+  expect((await fake.complete()).status()).toBe(422)
+})
+
+test("9. delete the account: signed out everywhere, wrong password refused first", async () => {
   await page.goto("/settings")
   await page.getByRole("button", { name: "Delete account" }).first().click()
   const dialog = page.getByRole("dialog")

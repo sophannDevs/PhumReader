@@ -992,6 +992,123 @@
         "tags" : [ "creator" ]
       }
     },
+    "/api/v1/creator/uploads" : {
+      "post" : {
+        "description" : "Returns a presigned URL: PUT the file to it with the given headers, then call POST /creator/uploads/{id}/complete. 400 for a type or size the rules do not allow.",
+        "operationId" : "create",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/CreateUploadRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/UploadTicket"
+                }
+              }
+            },
+            "description" : "Created"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Start an image upload",
+        "tags" : [ "media" ]
+      }
+    },
+    "/api/v1/creator/uploads/{id}" : {
+      "get" : {
+        "operationId" : "get",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/UploadView"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "The state of one of the signed-in creator's uploads",
+        "tags" : [ "media" ]
+      }
+    },
+    "/api/v1/creator/uploads/{id}/complete" : {
+      "post" : {
+        "description" : "422 with a reason code (image_too_small, not_square, unsupported_type, corrupt_image, file_too_large, too_many_pixels) when a check fails; 409 upload_missing when the file is not in storage yet. Calling it again after success answers the same.",
+        "operationId" : "complete",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/UploadView"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Check the uploaded image and make its WebP variants",
+        "tags" : [ "media" ]
+      }
+    },
     "/api/v1/creators/{id}/follow" : {
       "delete" : {
         "operationId" : "unfollow",
@@ -3053,6 +3170,25 @@
         },
         "required" : [ "author", "body", "canDelete", "createdAt", "id", "liked", "likes", "mine", "top" ]
       },
+      "CreateUploadRequest" : {
+        "type" : "object",
+        "properties" : {
+          "contentType" : {
+            "type" : "string",
+            "minLength" : 1
+          },
+          "kind" : {
+            "type" : "string",
+            "enum" : [ "COVER", "BANNER", "THUMBNAIL", "PANEL" ]
+          },
+          "size" : {
+            "type" : "integer",
+            "format" : "int64",
+            "exclusiveMinimum" : 0
+          }
+        },
+        "required" : [ "contentType", "kind", "size" ]
+      },
       "CreatorDashboard" : {
         "type" : "object",
         "properties" : {
@@ -3687,6 +3823,19 @@
           }
         },
         "required" : [ "comics", "novels" ]
+      },
+      "ImageVariant" : {
+        "type" : "object",
+        "properties" : {
+          "url" : {
+            "type" : "string"
+          },
+          "width" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        },
+        "required" : [ "url", "width" ]
       },
       "LedgerEntry" : {
         "type" : "object",
@@ -4545,6 +4694,70 @@
           }
         },
         "required" : [ "episode", "series", "unlockedAt" ]
+      },
+      "UploadTicket" : {
+        "type" : "object",
+        "properties" : {
+          "expiresAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "headers" : {
+            "type" : "object",
+            "additionalProperties" : {
+              "type" : "string"
+            }
+          },
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "uploadUrl" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "expiresAt", "headers", "id", "uploadUrl" ]
+      },
+      "UploadView" : {
+        "type" : "object",
+        "properties" : {
+          "height" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int32"
+          },
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "kind" : {
+            "type" : "string",
+            "enum" : [ "COVER", "BANNER", "THUMBNAIL", "PANEL" ]
+          },
+          "rejectCode" : {
+            "type" : [ "string", "null" ]
+          },
+          "rejectMessage" : {
+            "type" : [ "string", "null" ]
+          },
+          "status" : {
+            "type" : "string",
+            "enum" : [ "PENDING", "READY", "REJECTED" ]
+          },
+          "url" : {
+            "type" : [ "string", "null" ]
+          },
+          "variants" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/ImageVariant"
+            }
+          },
+          "width" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int32"
+          }
+        },
+        "required" : [ "id", "kind", "status", "variants" ]
       },
       "VerifyRequest" : {
         "type" : "object",
