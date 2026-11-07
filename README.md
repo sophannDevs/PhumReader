@@ -39,7 +39,8 @@ No Docker is needed or used. Requires Java 21 (for example Temurin 21).
 3. `npm run dev` in the repo root: the website forwards `/api/...` to the API (`BACKEND_URL` in `.env.local`,
    default `http://localhost:8080`). Check: http://localhost:3000/api/v1/health shows `{"status":"UP","database":"UP"}`.
 
-Details and commands: [backend/README.md](backend/README.md).
+Details and commands: [backend/README.md](backend/README.md). To let other people try the site for $0 (Vercel + a
+free Supabase database + the API on your computer behind a tunnel): [docs/STAGING.md](docs/STAGING.md).
 
 ## Demo account
 
