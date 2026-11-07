@@ -338,7 +338,7 @@ Spring Boot owns every business rule; the website never talks to the database di
   - Depends on: P1-05, P1-10
   - Done when: the migration runs clean on an empty database and on staging; the seed loads the demo series.
 
-- [ ] **P3-02 Sign-in core**
+- [x] **P3-02 Sign-in core**
   - Build: Spring Security, Argon2 password hashes, RS256 JWT access token (15 min) and rotating refresh token
     (30 days) in Secure HttpOnly SameSite=Lax cookies, CSRF token for writes. Endpoints: signup, verify email
     (6-digit code, 10 min, 5 tries), login, refresh, logout, logout everywhere, forgot, reset. Password rules as in
@@ -346,11 +346,13 @@ Spring Boot owns every business rule; the website never talks to the database di
   - Depends on: P3-01
   - Done when: integration tests cover every endpoint; a reused refresh token logs out that device; tokens never
     appear in JavaScript-readable storage.
+  - Checked 2026-11-07 against "Done when": every endpoint has integration tests (`AuthFlowTest`, `AccountSecurityTest`), a reused refresh token revokes that device's family, and both tokens are HttpOnly cookies (never in JavaScript-readable storage).
 
-- [ ] **P3-03 Rate limits and lockout**
+- [x] **P3-03 Rate limits and lockout**
   - Build: Bucket4j + Redis on login, signup, codes, reset, comments and payments.
   - Depends on: P3-02
   - Done when: the 6th wrong password in 10 minutes is slowed; limits return 429 with a retry time.
+  - Checked 2026-11-07: built as our own Redis counter (`RedisRateLimiter`, one Lua script per key) instead of the Bucket4j library; the behaviour in "Done when" is tested: the 6th wrong password in 10 minutes gets 429 with `retryAfterSeconds`. Applied to login, signup, codes, reset and sign-in start; comments and payments limits are added with their features.
 
 - [ ] **P3-04 Google and Facebook login**
   - Build: OAuth2 client, accounts linked to an existing account by verified email, `user_identities` rows,
@@ -405,11 +407,12 @@ Spring Boot owns every business rule; the website never talks to the database di
   - Depends on: P3-06, P3-08
   - Done when: a locked episode returns 402 with price and free date; free episode content loads.
 
-- [ ] **P3-10 Coins and unlocks**
+- [x] **P3-10 Coins and unlocks**
   - Build: balance from the ledger; unlock in one transaction (lock wallet row, write ledger, write unlock, record
     the creator's earning); idempotency key per request.
   - Depends on: P3-01, P3-05
   - Done when: 50 parallel unlock requests with the same key charge once; the balance is never negative.
+  - Checked 2026-11-07: `CoinConcurrencyTest` runs 50 parallel unlocks with one key (charged once) and 50 with too few coins (balance never below 0); the ledger is the only way a balance changes.
 
 - [ ] **P3-11 ABA PayWay payments**
   - Build: packs from the database (A2), create order, KHQR / ABA Pay / hosted card page, signed webhook, order
