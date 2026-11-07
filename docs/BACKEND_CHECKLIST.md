@@ -330,13 +330,20 @@ P1-03 (Next.js app) and P1-04 (web libraries + shadcn/ui) are done by T01–T06.
 
 Spring Boot owns every business rule; the website never talks to the database directly.
 
-- [ ] **P3-01 Database schema V1**
+- [x] **P3-01 Database schema V1**
   - Build: Flyway `V1` with the tables in `docs/BACKEND.md` ("Main tables"), foreign keys, unique constraints and
     indexes (episodes by series + number, progress by user, ledger by user + time), row level security with no
     policies. Seed profile loads `backend/seed/demo-data.json` (41 comics, 7 novels, 8 genres, coin packs, the demo
     reader `reader@toonwave.app`); running it twice changes nothing.
   - Depends on: P1-05, P1-10
   - Done when: the migration runs clean on an empty database and on staging; the seed loads the demo series.
+  - Staging checked 2026-11-07: new Supabase project `phumreader-staging` (Singapore, session pooler, free plan, Data API off), empty
+    database. The API started against it with the `dev,seed` profiles: Flyway applied V1 to V8 on the empty database
+    (Hibernate's `ddl-auto=validate` then accepted the schema), the seed loaded the same numbers as on dev (8 genres,
+    12 creators, 48 series = 41 comics + 7 novels, 3,956 episodes, 30,303 panels, 589 chapters, 12,012 comments,
+    5 coin packs, 3 hero slides, 48 ranking rows) and `GET /api/v1/health` answered `status UP, database UP`.
+    Not the final staging: that is P1-10 / P7-01 (Pro plan with point-in-time recovery, the host for the API); this
+    one is the free project used by `docs/STAGING.md`.
 
 - [x] **P3-02 Sign-in core**
   - Build: Spring Security, Argon2 password hashes, RS256 JWT access token (15 min) and rotating refresh token
