@@ -40,7 +40,8 @@ public final class ReadingViews {
     /**
      * One comic image.
      *
-     * @param src image address (public path for the demo panels; signed URLs come with P3-08)
+     * @param src image address (public path for the demo panels; for uploaded panels a signed
+     *     address that works for 5 minutes when the image Worker is set up, P3-08)
      */
     public record Panel(String src, int width, int height, String alt) {}
 

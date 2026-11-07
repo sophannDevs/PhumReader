@@ -428,11 +428,20 @@ Spring Boot owns every business rule; the website never talks to the database di
     and read the cache hit rate in the Cloudflare dashboard. Not tried with `wrangler dev` here (wrangler is listed but
     not installed). Free panels and covers stay public.
 
-- [ ] **P3-09 Reading API**
+- [x] **P3-09 Reading API**
   - Build: episode content returns signed image URLs or chapter text only when free, Fast Pass-free (`free_at`
     passed) or unlocked; saves progress and history.
   - Depends on: P3-06, P3-08
   - Done when: a locked episode returns 402 with price and free date; free episode content loads.
+  - Checked and finished 2026-11-07: the rest was built in Stage 1 (402 `episode_locked` with `price` and `freeOn`,
+    free and Fast Pass-free (`free_at` passed) and unlocked access, creators and admins read their own, progress and
+    history; `ReadingApiTest`). Added now: comic panels that creators uploaded are returned as **signed addresses**
+    (`ImageUrlSigner.signStored`, 5 minutes) when `IMAGE_SIGNING_SECRET` and `IMAGE_CDN_URL` are set; the demo's
+    `/panels/…` files and anything outside the storage are returned unchanged (`SignedPanelsTest`). Until the Worker
+    is deployed (P3-08) leave both settings empty and panels stay plain public addresses. Two things to do when the
+    Worker goes live: make the R2 bucket private (only the Worker reads it), and sign the creator's own panel previews
+    (`CreatorContentService.edit`, still the plain address) the same way. Free episodes' panels are signed too: the
+    Worker serves every uploaded panel.
 
 - [x] **P3-10 Coins and unlocks**
   - Build: balance from the ledger; unlock in one transaction (lock wallet row, write ledger, write unlock, record

@@ -62,6 +62,21 @@ public class ImageUrlSigner {
         return cdnUrl + "/" + key + "?t=" + token(secret, "/" + key, exp);
     }
 
+    /**
+     * The address to give a reader for an image address kept in the database. Panels uploaded by
+     * creators are stored as the object's public address; those are signed. Anything else (the
+     * demo's {@code /panels/…} files shipped with the website) is returned as it is.
+     */
+    public String signStored(String stored) {
+        if (!enabled()) {
+            return stored;
+        }
+        String prefix = store.publicUrl("");
+        return stored.startsWith(prefix) && stored.length() > prefix.length()
+                ? sign(stored.substring(prefix.length()))
+                : stored;
+    }
+
     /** {@code <exp>.<sig>} for a path; public so tests can pin the format with a fixed vector. */
     public static String token(String secret, String pathname, long exp) {
         try {
