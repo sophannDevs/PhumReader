@@ -2898,6 +2898,69 @@
         "tags" : [ "account" ]
       }
     },
+    "/api/v1/me/push-token" : {
+      "delete" : {
+        "operationId" : "unregister",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/TokenRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "204" : {
+            "description" : "No Content"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Forgets this browser's push token (the reader turned push off)",
+        "tags" : [ "account" ]
+      },
+      "put" : {
+        "description" : "New-episode notices go to every saved token of the account while Settings > Notifications > New episodes is on.",
+        "operationId" : "register",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/TokenRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "204" : {
+            "description" : "No Content"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Saves this browser's push token",
+        "tags" : [ "account" ]
+      }
+    },
     "/api/v1/me/settings" : {
       "get" : {
         "operationId" : "settings",
@@ -6651,6 +6714,17 @@
           }
         },
         "required" : [ "items" ]
+      },
+      "TokenRequest" : {
+        "type" : "object",
+        "properties" : {
+          "token" : {
+            "type" : "string",
+            "maxLength" : 4096,
+            "minLength" : 0
+          }
+        },
+        "required" : [ "token" ]
       },
       "UnlockResult" : {
         "type" : "object",

@@ -12,7 +12,8 @@ import org.springframework.stereotype.Component;
  * production.
  */
 @Component
-@ConditionalOnExpression("!'${phumreader.mail.host:}'.isBlank()")
+@ConditionalOnExpression(
+        "!'${phumreader.mail.host:}'.isBlank() && '${phumreader.mail.resend-api-key:}'.isBlank()")
 class SmtpEmailSender implements EmailSender {
 
     private final JavaMailSender mailer;

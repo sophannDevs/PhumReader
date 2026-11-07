@@ -8,6 +8,9 @@ phumreader:
     refresh-reuse-grace: 0s
   payments:
     simulator: true
+  notifications:
+    # Tests run the dispatcher by hand.
+    enabled: false
   catalog:
     # Tests change the clock and the data: always build the home feed fresh.
     home-cache-ttl: 0s

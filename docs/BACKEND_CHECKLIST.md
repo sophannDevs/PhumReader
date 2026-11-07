@@ -514,6 +514,29 @@ Spring Boot owns every business rule; the website never talks to the database di
     worker; respects the user's notification settings.
   - Depends on: P3-14
   - Done when: 10,000 subscribers are notified in under 5 minutes without slowing the API.
+  - Code and tests done 2026-11-07; **box stays open until a real Firebase project and Resend account have sent one
+    notice each** (A13, A17). Flow: publishing an episode (created as live, changed from draft / scheduled to live, or
+    made live by the 30-second scheduler) queues one `NOTIFICATION` outbox event in the same transaction; saving a
+    live episode again queues nothing. `NotificationDispatcher` (own scheduler thread, every 5 s, switch
+    `phumreader.notifications.enabled`) claims one event for a 10-minute lease (migration V8: `locked_until`), then
+    reads subscribers in pages of 500 (active accounts, not the creator, "New episodes" not switched off in
+    Settings), sends each page's emails in one batch and its push notices in parallel (32 at a time, virtual threads),
+    and saves its position after every page, so a crash or a failed batch resumes there (at-least-once: a page that
+    failed half way can repeat some notices). No transaction or row lock is held while talking to the providers.
+    Email: Resend's batch API, 100 per request (`RESEND_API_KEY`), else SMTP, else the console; only verified
+    addresses. Push: Firebase Cloud Messaging HTTP v1 with a service account (`FCM_CREDENTIALS_FILE`), else only
+    logged; tokens that FCM says no longer exist are deleted. `PUT/DELETE /api/v1/me/push-token {token}` stores a
+    browser's token (a token moves to the account that registered it last). Notices are plain text in the
+    subscriber's language (English; Khmer is a first draft for a native speaker). Tests: `NotificationDispatcherTest`
+    (who gets what, opted-out / unverified / banned / creator, gone tokens, resume after a failed batch), 10,000
+    subscribers notified in about 1.2 s with fake services while 211 health calls ran beside it (slowest 54 ms), and
+    adapter tests against a local HTTP server (`ProviderAdaptersTest`: Resend batches of 100, Firebase JWT signature,
+    access token reuse and refresh, GONE vs FAILED). **Real-world time:** with ~150 ms per push and Resend's limit of
+    2 requests per second, 10,000 push notices take about 50 s and 100 email batches about 50 s, run one after the
+    other per page, so around 2 minutes: inside the 5-minute budget, but measure on staging. **Not built:** the
+    website does not ask for notification permission or send the token yet (needs the Firebase web config and a
+    service worker; the Settings switch for New episodes already exists and is respected); "Fast Pass" notices
+    (`notify_fast_pass`, an episode turning free) and HTML email templates.
 
 - [x] **P3-17 Account settings API**
   - Build: profile and avatar, change email (with code), change password, devices list and sign-out, language,

@@ -346,20 +346,26 @@ public class CreatorWrites {
     // ---------- scheduled publishing ----------
 
     /**
-     * Makes every scheduled episode whose time has come live; returns the series that changed. Rows
-     * are locked with SKIP LOCKED so two instances never publish the same episode.
+     * Makes every scheduled episode whose time has come live; returns them. Rows are locked with
+     * SKIP LOCKED so two instances never publish the same episode.
      */
-    public List<UUID> publishDue(Instant now) {
+    public List<Published> publishDue(Instant now) {
         return jdbc.sql(
                         """
                         update episodes set status = 'PUBLISHED', updated_at = now()
                         where id in (select id from episodes
                                      where status = 'SCHEDULED' and published_at <= :now
                                      for update skip locked)
-                        returning series_id
+                        returning id, series_id
                         """)
                 .param("now", java.sql.Timestamp.from(now))
-                .query(UUID.class)
+                .query((rs, n) ->
+                        new Published(
+                                rs.getObject("id", UUID.class),
+                                rs.getObject("series_id", UUID.class)))
                 .list();
     }
+
+    /** An episode that just went live. */
+    public record Published(UUID episodeId, UUID seriesId) {}
 }

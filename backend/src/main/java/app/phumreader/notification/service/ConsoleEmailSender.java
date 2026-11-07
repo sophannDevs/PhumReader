@@ -13,7 +13,8 @@ import org.springframework.stereotype.Component;
  */
 @Component
 @Profile("!prod")
-@ConditionalOnExpression("'${phumreader.mail.host:}'.isBlank()")
+@ConditionalOnExpression(
+        "'${phumreader.mail.host:}'.isBlank() && '${phumreader.mail.resend-api-key:}'.isBlank()")
 class ConsoleEmailSender implements EmailSender {
 
     private static final Logger log = LoggerFactory.getLogger(ConsoleEmailSender.class);

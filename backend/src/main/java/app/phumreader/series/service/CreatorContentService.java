@@ -6,6 +6,7 @@ import app.phumreader.common.security.CurrentUser;
 import app.phumreader.media.domain.UploadKind;
 import app.phumreader.media.service.MediaService;
 import app.phumreader.media.service.MediaService.ReadyImage;
+import app.phumreader.notification.service.NotificationEvents;
 import app.phumreader.search.service.SearchEvents;
 import app.phumreader.series.domain.AgeRating;
 import app.phumreader.series.domain.SeriesStatus;
@@ -69,6 +70,7 @@ public class CreatorContentService {
     private final CreatorWrites writes;
     private final MediaService media;
     private final SearchEvents searchEvents;
+    private final NotificationEvents notifications;
     private final CatalogService catalog;
     private final JobLock lock;
     private final JsonMapper json;
@@ -79,6 +81,7 @@ public class CreatorContentService {
             CreatorWrites writes,
             MediaService media,
             SearchEvents searchEvents,
+            NotificationEvents notifications,
             CatalogService catalog,
             JobLock lock,
             JsonMapper json,
@@ -87,6 +90,7 @@ public class CreatorContentService {
         this.writes = writes;
         this.media = media;
         this.searchEvents = searchEvents;
+        this.notifications = notifications;
         this.catalog = catalog;
         this.lock = lock;
         this.json = json;
@@ -264,6 +268,9 @@ public class CreatorContentService {
         writes.insertEpisode(id, seriesId, number, values(user, in, stored, null));
         saveContent(id, series.type(), content);
         afterWrite(seriesId, stored.status());
+        if (stored.status().equals("PUBLISHED")) {
+            notifications.episodePublished(id);
+        }
         return edit(requireEpisode(seriesId, number));
     }
 
@@ -279,6 +286,10 @@ public class CreatorContentService {
         writes.updateEpisode(current.id(), values(user, in, stored, current.thumbnailUrl()));
         saveContent(current.id(), series.type(), content);
         afterWrite(seriesId, stored.status());
+        // Only the step to live announces the episode; saving a live one again does not.
+        if (stored.status().equals("PUBLISHED") && !current.status().equals("PUBLISHED")) {
+            notifications.episodePublished(current.id());
+        }
         return edit(requireEpisode(seriesId, number));
     }
 
@@ -525,12 +536,17 @@ public class CreatorContentService {
     /** Makes scheduled episodes live when their time has come; returns how many went live. */
     @Transactional
     public int publishDueEpisodes() {
-        List<UUID> series = writes.publishDue(clock.instant());
-        if (!series.isEmpty()) {
-            searchEvents.seriesChanged("CHANGED", new LinkedHashSet<>(series));
+        List<CreatorWrites.Published> due = writes.publishDue(clock.instant());
+        if (!due.isEmpty()) {
+            searchEvents.seriesChanged(
+                    "CHANGED",
+                    due.stream()
+                            .map(CreatorWrites.Published::seriesId)
+                            .collect(java.util.stream.Collectors.toCollection(LinkedHashSet::new)));
+            due.forEach(p -> notifications.episodePublished(p.episodeId()));
             catalog.refreshHome();
         }
-        return series.size();
+        return due.size();
     }
 
     /** Every 30 seconds, on one instance at a time. */

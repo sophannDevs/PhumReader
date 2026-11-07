@@ -43,6 +43,11 @@ phumreader:
   mail:
     host: ${MAIL_HOST:}
     from: ${MAIL_FROM:PhumReader <no-reply@phumreader.local>}
+    # Set to send through Resend's API (batches of 100) instead of SMTP.
+    resend-api-key: ${RESEND_API_KEY:}
+  push:
+    # Firebase service account (JSON key file); empty: web push is only logged.
+    fcm-credentials-file: ${FCM_CREDENTIALS_FILE:}
   redis:
     url: ${REDIS_URL:}
   frontend-url: ${FRONTEND_URL:http://localhost:3000}

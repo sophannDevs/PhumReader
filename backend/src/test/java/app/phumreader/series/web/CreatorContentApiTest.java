@@ -308,6 +308,59 @@ class CreatorContentApiTest {
     }
 
     @Test
+    void anEpisodeIsAnnouncedOnceWhenItGoesLive() throws Exception {
+        String id = livingSeries("Announced", "comic");
+        String a = upload("PANEL", 800, 1200);
+        assertThat(notices()).isZero();
+
+        // A draft is not announced; the step to live is, once.
+        episode(id, comic("Soon", "{\"mode\":\"draft\"}", null, a)).andExpect(status().isCreated());
+        assertThat(notices()).isZero();
+        mvc.perform(
+                        put(SERIES + "/" + id + "/episodes/1")
+                                .with(me)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(comic("Soon", "{\"mode\":\"now\"}", null, a)))
+                .andExpect(status().isOk());
+        assertThat(notices()).isEqualTo(1);
+
+        // Saving the live episode again does not announce it again.
+        mvc.perform(
+                        put(SERIES + "/" + id + "/episodes/1")
+                                .with(me)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(comic("Soon, edited", "{\"mode\":\"now\"}", null, a)))
+                .andExpect(status().isOk());
+        assertThat(notices()).isEqualTo(1);
+
+        // A new episode published at once is announced.
+        episode(id, comic("Two", "{\"mode\":\"now\"}", null, a)).andExpect(status().isCreated());
+        assertThat(notices()).isEqualTo(2);
+    }
+
+    @Test
+    void aScheduledEpisodeIsAnnouncedWhenItsTimeComes() throws Exception {
+        String id = livingSeries("Scheduled notice", "comic");
+        String a = upload("PANEL", 800, 1200);
+        java.time.Instant at = clock.instant().plusSeconds(3_600);
+        episode(id, comic("Later", "{\"mode\":\"scheduled\",\"at\":\"" + at + "\"}", null, a))
+                .andExpect(status().isCreated());
+        assertThat(notices()).isZero();
+
+        clock.set(at.plusSeconds(30));
+        assertThat(content.publishDueEpisodes()).isEqualTo(1);
+        assertThat(notices()).isEqualTo(1);
+        assertThat(content.publishDueEpisodes()).isZero();
+        assertThat(notices()).isEqualTo(1);
+    }
+
+    private long notices() {
+        return jdbc.sql("select count(*) from outbox_events where topic = 'NOTIFICATION'")
+                .query(Long.class)
+                .single();
+    }
+
+    @Test
     void editingKeepsTheThumbnailUnlessANewOneIsSent() throws Exception {
         String id = livingSeries("Thumbs", "comic");
         String panel = upload("PANEL", 800, 800);
