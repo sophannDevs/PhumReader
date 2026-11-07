@@ -261,12 +261,18 @@ export function useRecordReading(series: Series, n: number, active: boolean) {
   const email = useAccountEmail()
   const qc = useQueryClient()
   const finished = useRef(false)
+  // Saves go out one after another: on a short chapter the "opened" (0) and "finished" (1) saves
+  // fire together, and the 0 must never reach the server after the 1.
+  const queue = useRef<Promise<unknown>>(Promise.resolve())
 
   const record = useCallback(
     async (progress: number) => {
       if (!email) return
+      const previous = queue.current
+      const save = previous.then(() => real.saveProgress(series.slug, n, progress))
+      queue.current = save.catch(() => undefined)
       try {
-        await real.saveProgress(series.slug, n, progress)
+        await save
       } catch {
         return // Reading must never be interrupted by a failed bookmark of the place.
       }
