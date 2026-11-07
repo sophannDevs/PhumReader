@@ -1,5 +1,6 @@
 package app.phumreader.search.service;
 
+import app.phumreader.search.domain.SearchFilter;
 import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -7,6 +8,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -42,13 +44,25 @@ public class MeilisearchIndex implements SearchIndex {
     }
 
     @Override
-    public List<UUID> search(String query, int limit) {
+    public List<UUID> search(String query, SearchFilter filter, int limit) {
         ensureReady();
-        JsonNode result =
-                call(
-                        "POST",
-                        "/indexes/" + uid + "/search",
-                        Map.of("q", query, "limit", limit, "attributesToRetrieve", List.of("id")));
+        Map<String, Object> request = new LinkedHashMap<>();
+        request.put("q", query);
+        request.put("limit", limit);
+        request.put("attributesToRetrieve", List.of("id"));
+        List<String> clauses = new ArrayList<>();
+        addClause(clauses, "type", filter.type());
+        addClause(clauses, "genreSlug", filter.genreSlug());
+        addClause(clauses, "status", filter.status());
+        if (!clauses.isEmpty()) {
+            request.put("filter", clauses);
+        }
+        switch (filter.sort()) {
+            case POPULAR -> request.put("sort", List.of("views:desc"));
+            case NEWEST -> request.put("sort", List.of("launchedAt:desc"));
+            case RELEVANCE -> {}
+        }
+        JsonNode result = call("POST", "/indexes/" + uid + "/search", request);
         return result.get("hits")
                 .valueStream()
                 .map(h -> UUID.fromString(h.get("id").asString()))
@@ -122,7 +136,7 @@ public class MeilisearchIndex implements SearchIndex {
         }
         Map<String, Object> settings = new LinkedHashMap<>();
         settings.put("searchableAttributes", List.of("title", "creator", "genre"));
-        settings.put("sortableAttributes", List.of("views"));
+        settings.put("sortableAttributes", List.of("views", "launchedAt"));
         settings.put(
                 "rankingRules",
                 List.of(
@@ -133,9 +147,16 @@ public class MeilisearchIndex implements SearchIndex {
                         "sort",
                         "exactness",
                         "views:desc"));
-        settings.put("filterableAttributes", List.of("type"));
+        settings.put("filterableAttributes", List.of("type", "genreSlug", "status"));
         waitFor(call("PATCH", "/indexes/" + uid + "/settings", settings));
         ready = true;
+    }
+
+    /** {@code field = "value"}; the value is quoted so a slug or name cannot add conditions. */
+    private static void addClause(List<String> clauses, String field, String value) {
+        if (value != null) {
+            clauses.add(field + " = \"" + value.replace("\\", "").replace("\"", "") + "\"");
+        }
     }
 
     private static Map<String, Object> document(SearchDoc d) {
@@ -144,7 +165,10 @@ public class MeilisearchIndex implements SearchIndex {
         m.put("title", d.title());
         m.put("creator", d.creator());
         m.put("genre", d.genre());
+        m.put("genreSlug", d.genreSlug());
         m.put("type", d.type());
+        m.put("status", d.status());
+        m.put("launchedAt", d.launchedAt());
         m.put("views", d.views());
         return m;
     }

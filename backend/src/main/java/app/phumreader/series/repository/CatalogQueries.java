@@ -1,5 +1,6 @@
 package app.phumreader.series.repository;
 
+import app.phumreader.search.domain.SearchFilter;
 import app.phumreader.series.domain.AgeRating;
 import app.phumreader.series.domain.SeriesOrder;
 import app.phumreader.series.domain.SeriesStatus;
@@ -317,20 +318,33 @@ public class CatalogQueries {
      * Published series whose title, creator or genre contains {@code query} (any case). Titles that
      * start with it come first, then the most viewed.
      */
-    public List<SeriesRow> search(String query, int limit, OffsetDateTime now) {
+    public List<SeriesRow> search(
+            String query, SearchFilter filter, int limit, OffsetDateTime now) {
+        String order =
+                switch (filter.sort()) {
+                    case RELEVANCE -> "(strpos(lower(%s.title), :q) = 1) desc, %s.view_count desc";
+                    case POPULAR -> "%s.view_count desc, %s.id";
+                    case NEWEST -> "coalesce(%s.launched_at, %s.created_at) desc";
+                };
+        String inner = order.formatted("s", "s");
+        String outer = order.formatted("c", "c");
         String matches =
                 "select s.* from series s join genres g on g.id = s.genre_id"
                         + " join creator_profiles p on p.user_id = s.creator_id"
                         + " where s.visibility = 'PUBLISHED'"
                         + " and (strpos(lower(s.title), :q) > 0 or strpos(lower(p.pen_name), :q) > 0"
                         + " or strpos(lower(g.name), :q) > 0)"
-                        + " order by (strpos(lower(s.title), :q) = 1) desc, s.view_count desc, s.id"
-                        + " limit :limit";
-        return jdbc.sql(
-                        cards(matches)
-                                + " order by (strpos(lower(c.title), :q) = 1) desc,"
-                                + " c.view_count desc, c.id")
+                        + " and (cast(:type as text) is null or s.type = :type)"
+                        + " and (cast(:genre as text) is null or g.slug = :genre)"
+                        + " and (cast(:status as text) is null or s.status = :status)"
+                        + " order by "
+                        + inner
+                        + ", s.id limit :limit";
+        return jdbc.sql(cards(matches) + " order by " + outer + ", c.id")
                 .param("q", query)
+                .param("type", filter.type())
+                .param("genre", filter.genreSlug())
+                .param("status", filter.status())
                 .param("limit", limit)
                 .param("now", now)
                 .query(SERIES)
@@ -342,7 +356,10 @@ public class CatalogQueries {
         String where = "s.visibility = 'PUBLISHED'" + (ids == null ? "" : " and s.id in (:ids)");
         var statement =
                 jdbc.sql(
-                        "select s.id, s.title, p.pen_name, g.name as genre, s.type, s.view_count"
+                        "select s.id, s.title, p.pen_name, g.name as genre, g.slug as genre_slug,"
+                                + " s.type, s.status, s.view_count,"
+                                + " extract(epoch from coalesce(s.launched_at, s.created_at))::bigint"
+                                + " as launched"
                                 + " from series s join genres g on g.id = s.genre_id"
                                 + " join creator_profiles p on p.user_id = s.creator_id where "
                                 + where);
@@ -359,8 +376,11 @@ public class CatalogQueries {
                                 rs.getString("title"),
                                 rs.getString("pen_name"),
                                 rs.getString("genre"),
+                                rs.getString("genre_slug"),
                                 rs.getString("type"),
-                                rs.getLong("view_count")))
+                                rs.getString("status"),
+                                rs.getLong("view_count"),
+                                rs.getLong("launched")))
                 .list();
     }
 
@@ -381,7 +401,15 @@ public class CatalogQueries {
 
     /** One published series as the search index sees it. */
     public record SearchRow(
-            UUID id, String title, String penName, String genre, String type, long views) {}
+            UUID id,
+            String title,
+            String penName,
+            String genre,
+            String genreSlug,
+            String type,
+            String status,
+            long views,
+            long launched) {}
 
     // ---------- episodes ----------
 

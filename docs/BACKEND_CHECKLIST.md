@@ -465,11 +465,24 @@ Spring Boot owns every business rule; the website never talks to the database di
     (5) Not yet: deleting a series, reordering several episodes, the per-day publish limits, and refreshing the
     Next.js pages on publish (the API clears its own home cache; the pages revalidate on their own timer).
 
-- [ ] **P3-15 Search**
+- [x] **P3-15 Search**
   - Build: outbox events keep Meilisearch in sync; search endpoint with type, genre and status filters, sort and
     suggestions.
   - Depends on: P3-06
   - Done when: a new series is searchable within 30 s; Khmer titles return results.
+  - Done 2026-11-07: `GET /api/v1/search?q&limit&type=comic|novel&genre=<slug>&status=ongoing|completed|hiatus&sort=relevance|popular|newest`
+    (an unknown value is 400 `invalid_value` with the field name; an empty query with a filter lists the matching
+    series, an empty query with no filter is still "Popular now") and `GET /api/v1/search/suggestions?q=` (up to 6
+    titles). Meilisearch filters on `type`, `genreSlug`, `status` and sorts by `views` or `launchedAt`; filter values
+    are quoted, so a value cannot add a condition (tested). Without Meilisearch (or when it is down) the PostgreSQL
+    fallback gives the same filters and sorts (`CatalogApiTest`). New series reach the index through the outbox
+    (written when a creator publishes or edits, read every 5 s, so well inside 30 s: `SearchSyncTest`). Khmer: tested
+    against the real Meilisearch 1.56.1 (`MeilisearchIndexTest`, 6 tests, none skipped): whole words, parts of words
+    and creator names in Khmer all match. With Meilisearch "newest" and "popular" order the matches after the
+    relevance rules (typos, words), so a closer match can come before a more popular one; PostgreSQL orders purely by
+    the sort. The website's search page and ⌘K dialog still call plain `/search?q=`: the design has no filter
+    controls, so no UI was added; the API is ready for them. Not run end to end (publish a series through the API,
+    then search it) against a live backend in this session.
 
 - [ ] **P3-16 Notifications**
   - Build: web push tokens (Firebase Cloud Messaging) and email (Resend) for new episodes, sent in batches by the

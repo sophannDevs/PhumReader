@@ -3206,7 +3206,7 @@
     },
     "/api/v1/search" : {
       "get" : {
-        "description" : "An empty query returns the 6 most viewed series (\"Popular now\").",
+        "description" : "An empty query with no filter returns the 6 most viewed series (\"Popular now\"); an empty query with a filter lists the matching series. 400 invalid_value (field: the parameter) for an unknown filter or sort.",
         "operationId" : "search",
         "parameters" : [ {
           "in" : "query",
@@ -3226,6 +3226,40 @@
           "schema" : {
             "type" : [ "integer", "null" ],
             "format" : "int32"
+          }
+        }, {
+          "in" : "query",
+          "name" : "type",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "enum" : [ "comic", "novel" ]
+          }
+        }, {
+          "description" : "Genre slug, e.g. action",
+          "in" : "query",
+          "name" : "genre",
+          "required" : false,
+          "schema" : {
+            "type" : [ "string", "null" ],
+            "maxLength" : 60,
+            "minLength" : 0
+          }
+        }, {
+          "in" : "query",
+          "name" : "status",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "enum" : [ "ongoing", "completed", "hiatus" ]
+          }
+        }, {
+          "in" : "query",
+          "name" : "sort",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "enum" : [ "relevance", "popular", "newest" ]
           }
         } ],
         "responses" : {
@@ -3250,7 +3284,48 @@
             "description" : "Error"
           }
         },
-        "summary" : "Series by title, creator or genre",
+        "summary" : "Series by title, creator or genre, with filters and sort",
+        "tags" : [ "search" ]
+      }
+    },
+    "/api/v1/search/suggestions" : {
+      "get" : {
+        "description" : "An empty query returns the titles of the most viewed series.",
+        "operationId" : "suggestions",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "q",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "default" : "",
+            "maxLength" : 100,
+            "minLength" : 0
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Suggestions"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Up to 6 series titles for search-as-you-type",
         "tags" : [ "search" ]
       }
     },
@@ -6564,6 +6639,18 @@
           }
         },
         "required" : [ "subscribed", "subscribers" ]
+      },
+      "Suggestions" : {
+        "type" : "object",
+        "properties" : {
+          "items" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          }
+        },
+        "required" : [ "items" ]
       },
       "UnlockResult" : {
         "type" : "object",

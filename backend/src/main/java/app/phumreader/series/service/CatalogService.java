@@ -6,6 +6,7 @@ import app.phumreader.common.paging.Cursors;
 import app.phumreader.common.store.InMemoryShortLivedStore;
 import app.phumreader.common.store.ShortLivedStore;
 import app.phumreader.config.AppProperties;
+import app.phumreader.search.domain.SearchFilter;
 import app.phumreader.search.service.SearchDoc;
 import app.phumreader.search.service.SearchIndex;
 import app.phumreader.series.domain.SeriesOrder;
@@ -86,6 +87,7 @@ public class CatalogService {
     static final int SEARCH_DEFAULT = 8;
     static final int SEARCH_MAX = 20;
     static final int SEARCH_POPULAR = 6;
+    static final int SEARCH_SUGGESTIONS = 6;
 
     /** A series keeps the NEW badge this long after launch. */
     static final Duration NEW_FOR = Duration.ofDays(30);
@@ -430,24 +432,42 @@ public class CatalogService {
      * empty query returns the most viewed series ("Popular now").
      */
     public List<SeriesCard> search(@Nullable String query, @Nullable Integer limit) {
+        return search(query, SearchFilter.NONE, limit);
+    }
+
+    /**
+     * Search narrowed by type, genre and status and ordered by relevance, views or launch date. An
+     * empty query with no filter returns the most viewed series; an empty query with a filter lists
+     * the matching series (browsing).
+     */
+    public List<SeriesCard> search(
+            @Nullable String query, SearchFilter filter, @Nullable Integer limit) {
         Instant now = clock.instant();
         OffsetDateTime at = utc(now);
         Cards cards = new Cards(now, today(now));
         String q = query == null ? "" : query.strip().toLowerCase(Locale.ROOT);
-        if (q.isEmpty()) {
+        if (q.isEmpty() && filter.isPlain()) {
             return cards.of(queries.mostViewed(null, SEARCH_POPULAR, at));
         }
         int size = limit == null ? SEARCH_DEFAULT : Math.clamp(limit, 1, SEARCH_MAX);
         SearchIndex index = searchIndex == null ? null : searchIndex.getIfAvailable();
         if (index != null) {
             try {
-                List<UUID> ids = index.search(q, size);
+                List<UUID> ids = index.search(q, filter, size);
                 return cards.of(queries.seriesByIds(ids, at));
             } catch (RuntimeException e) {
                 log.warn("Search index unavailable, using PostgreSQL: {}", e.toString());
             }
         }
-        return cards.of(queries.search(q, size, at));
+        return cards.of(queries.search(q, filter, size, at));
+    }
+
+    /** Up to 6 series titles that match what the reader has typed so far (search-as-you-type). */
+    public List<String> suggestions(@Nullable String query) {
+        return search(query, SearchFilter.NONE, SEARCH_SUGGESTIONS).stream()
+                .map(SeriesCard::title)
+                .distinct()
+                .toList();
     }
 
     /** Published series for the search index: all of them, or just these ids. */
@@ -455,7 +475,15 @@ public class CatalogService {
         return queries.searchRows(ids).stream()
                 .map(r ->
                         new SearchDoc(
-                                r.id(), r.title(), r.penName(), r.genre(), r.type(), r.views()))
+                                r.id(),
+                                r.title(),
+                                r.penName(),
+                                r.genre(),
+                                r.genreSlug(),
+                                r.type(),
+                                r.status(),
+                                r.views(),
+                                r.launched()))
                 .toList();
     }
 

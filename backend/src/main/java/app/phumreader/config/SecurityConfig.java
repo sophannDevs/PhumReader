@@ -45,6 +45,7 @@ public class SecurityConfig {
         "/api/v1/series/*/comments",
         "/api/v1/series/*/episodes/*/comments",
         "/api/v1/search",
+        "/api/v1/search/suggestions",
         // Coin packs on the Coins page (P3-11).
         "/api/v1/coins/packs",
         "/actuator/health",

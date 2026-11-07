@@ -3,6 +3,8 @@ package app.phumreader.search;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
+import app.phumreader.search.domain.SearchFilter;
+import app.phumreader.search.domain.SearchSort;
 import app.phumreader.search.service.MeilisearchIndex;
 import app.phumreader.search.service.SearchDoc;
 import java.net.URI;
@@ -99,5 +101,86 @@ class MeilisearchIndexTest {
         index.replaceAll(List.of(c));
         assertThat(index.search("tale", 8)).containsExactly(c.id());
         assertThat(index.count()).isEqualTo(1);
+    }
+
+    private static SearchDoc full(
+            String title,
+            String genre,
+            String slug,
+            String type,
+            String status,
+            long views,
+            long launched) {
+        return new SearchDoc(
+                UUID.randomUUID(), title, "Creator", genre, slug, type, status, views, launched);
+    }
+
+    @Test
+    void filtersByTypeGenreAndStatusAndSortsByViewsOrLaunchDate() {
+        SearchDoc oldHit = full("Star Road", "Sci-fi", "sci-fi", "COMIC", "COMPLETED", 900, 1_000);
+        SearchDoc newHit = full("Star Harbor", "Sci-fi", "sci-fi", "NOVEL", "ONGOING", 50, 3_000);
+        SearchDoc midHit =
+                full("Star Garden", "Fantasy", "fantasy", "COMIC", "ONGOING", 500, 2_000);
+        index.upsert(List.of(oldHit, newHit, midHit));
+
+        assertThat(
+                        index.search(
+                                "star",
+                                new SearchFilter("NOVEL", null, null, SearchSort.RELEVANCE),
+                                8))
+                .containsExactly(newHit.id());
+        assertThat(
+                        index.search(
+                                "star",
+                                new SearchFilter(null, "fantasy", null, SearchSort.RELEVANCE),
+                                8))
+                .containsExactly(midHit.id());
+        assertThat(
+                        index.search(
+                                "star",
+                                new SearchFilter(null, null, "COMPLETED", SearchSort.RELEVANCE),
+                                8))
+                .containsExactly(oldHit.id());
+        assertThat(
+                        index.search(
+                                "star",
+                                new SearchFilter(
+                                        "COMIC", "sci-fi", "ONGOING", SearchSort.RELEVANCE),
+                                8))
+                .isEmpty();
+        // An empty query lists what the filter allows (browsing).
+        assertThat(index.search("", new SearchFilter("COMIC", null, null, SearchSort.POPULAR), 8))
+                .containsExactly(oldHit.id(), midHit.id());
+
+        assertThat(index.search("star", new SearchFilter(null, null, null, SearchSort.POPULAR), 8))
+                .containsExactly(oldHit.id(), midHit.id(), newHit.id());
+        assertThat(index.search("star", new SearchFilter(null, null, null, SearchSort.NEWEST), 8))
+                .containsExactly(newHit.id(), midHit.id(), oldHit.id());
+    }
+
+    @Test
+    void aFilterValueCannotInjectAnotherCondition() {
+        SearchDoc a = full("Star Road", "Sci-fi", "sci-fi", "COMIC", "ONGOING", 1, 1);
+        index.upsert(List.of(a));
+
+        assertThat(
+                        index.search(
+                                "star",
+                                new SearchFilter(
+                                        null, "x\" OR type = \"COMIC", null, SearchSort.RELEVANCE),
+                                8))
+                .isEmpty();
+    }
+
+    @Test
+    void khmerTitlesCreatorsAndPartsOfWordsAreFound() {
+        SearchDoc village = doc("ដំណើរផ្សងព្រេងនៃភូមិ", "សុខា", "Fantasy", 10);
+        SearchDoc other = doc("កំណត់ហេតុអ្នកបណ្ដាញ", "ដារា", "Drama", 20);
+        index.upsert(List.of(village, other));
+
+        assertThat(index.search("ភូមិ", 8)).containsExactly(village.id());
+        assertThat(index.search("ផ្សងព្រេង", 8)).containsExactly(village.id());
+        assertThat(index.search("សុខា", 8)).containsExactly(village.id());
+        assertThat(index.search("ដារ", 8)).containsExactly(other.id());
     }
 }

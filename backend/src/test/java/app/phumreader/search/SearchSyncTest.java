@@ -2,6 +2,7 @@ package app.phumreader.search;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import app.phumreader.search.domain.SearchFilter;
 import app.phumreader.search.repository.OutboxEvents;
 import app.phumreader.search.service.SearchDoc;
 import app.phumreader.search.service.SearchIndex;
@@ -126,7 +127,7 @@ class SearchSyncTest {
         }
 
         @Override
-        public List<UUID> search(String query, int limit) {
+        public List<UUID> search(String query, SearchFilter filter, int limit) {
             check();
             return new ArrayList<>(docs.keySet());
         }

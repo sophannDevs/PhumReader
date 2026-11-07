@@ -1301,10 +1301,30 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Series by title, creator or genre
-         * @description An empty query returns the 6 most viewed series ("Popular now").
+         * Series by title, creator or genre, with filters and sort
+         * @description An empty query with no filter returns the 6 most viewed series ("Popular now"); an empty query with a filter lists the matching series. 400 invalid_value (field: the parameter) for an unknown filter or sort.
          */
         get: operations["search"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/search/suggestions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Up to 6 series titles for search-as-you-type
+         * @description An empty query returns the titles of the most viewed series.
+         */
+        get: operations["suggestions"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2419,6 +2439,9 @@ export interface components {
             subscribed: boolean;
             /** Format: int64 */
             subscribers: number;
+        };
+        Suggestions: {
+            items: string[];
         };
         UnlockResult: {
             alreadyUnlocked: boolean;
@@ -5027,6 +5050,11 @@ export interface operations {
                 q?: string;
                 /** @description 1-20 (default 8) */
                 limit?: number | null;
+                type?: "comic" | "novel";
+                /** @description Genre slug, e.g. action */
+                genre?: string | null;
+                status?: "ongoing" | "completed" | "hiatus";
+                sort?: "relevance" | "popular" | "newest";
             };
             header?: never;
             path?: never;
@@ -5041,6 +5069,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SearchResults"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    suggestions: {
+        parameters: {
+            query?: {
+                q?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Suggestions"];
                 };
             };
             /** @description Error */
