@@ -508,11 +508,17 @@ Spring Boot owns every business rule; the website never talks to the database di
 The other Phase 4 pages (P4-01 to P4-08, P4-10 to P4-12) are built by T20–T45; differences found while
 wiring them are fixed in P5-07.
 
-- [ ] **P4-09 Sign-in pages: reset and addressable steps**
+- [x] **P4-09 Sign-in pages: reset and addressable steps**
   - Build: `/reset` (new password from the emailed link) and addressable `/signup`, `/verify`, `/forgot` (the
     existing views in `/login`); 6-digit code with resend after 30 s; return to the previous page.
   - Depends on: P2-04 (T15)
   - Done when: every error from the API shows next to its field or as an alert; typed input is never lost.
+  - Done 2026-11-07: `/reset` already existed (T-series + real API). New routes `/signup`, `/forgot` and `/verify?email=`
+    render the same `AuthFlow` on their own view (`/verify` without an email falls back to Log in); the address
+    follows the view (`/login` <-> `/signup` <-> `/forgot` <-> `/verify?email=`), `/login?mode=signup|forgot` still
+    works, the language switch keeps the view. Resend after 30 s, `returnTo` and error display were already in the
+    views. A direct `/verify` visit starts with no countdown (Resend is usable at once; the API limits it to once
+    per 30 s). e2e test 4b added; lint, typecheck, build green.
 
 - [x] **P4-13 Creator › My series** `/creator/series` (A1)
   - Build: list with filter and search, Create series, Add episode per row, success notice with "Add the first

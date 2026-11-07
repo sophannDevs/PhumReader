@@ -49,7 +49,8 @@ export async function logIn(email: string, password: string, remember: boolean):
  */
 export function socialLogIn(provider: "google" | "facebook", locale: string): Promise<StoredUser> {
   if (DEMO_MODE) return demo.socialLogin(provider)
-  window.location.assign(`/api/v1/auth/oauth/${provider}/start?locale=${locale === "km" ? "km" : "en"}`)
+  // A full page navigation to the API (not a Next.js page).
+  window.location.href = `/api/v1/auth/oauth/${provider}/start?locale=${locale === "km" ? "km" : "en"}`
   return new Promise<StoredUser>(() => undefined)
 }
 

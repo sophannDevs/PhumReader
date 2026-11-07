@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, Kantumruy_Pro, Noto_Serif } from "next/font/google";
 import { notFound } from "next/navigation";
+import Script from "next/script";
 import { hasLocale, NextIntlClientProvider } from "next-intl";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import "../globals.css";
@@ -75,10 +76,9 @@ export default async function LocaleLayout({
       suppressHydrationWarning
       className={cn("h-full antialiased font-sans", inter.variable, kantumruy.variable, notoSerif.variable)}
     >
-      <head>
-        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
-      </head>
       <body className="min-h-full flex flex-col">
+        {/* Sets the dark class before first paint, so the page does not flash. */}
+        <Script id="theme-init" strategy="beforeInteractive" dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
         <NextIntlClientProvider locale={locale} messages={messages}>
           <Providers>{children}</Providers>
           <ServiceWorker />

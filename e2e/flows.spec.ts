@@ -69,6 +69,22 @@ test.describe("key flows (spec §7)", () => {
     await expect(visible(page.getByRole("button", { name: /Account menu/ }))).toBeVisible()
   })
 
+  test("4b. /signup, /forgot and /verify open on their own view, and the address follows the view", async ({ page }) => {
+    await page.goto("/signup")
+    await expect(visible(page.getByRole("heading", { name: "Create your account" }))).toBeVisible()
+    await page.goto("/forgot")
+    await expect(visible(page.getByRole("heading", { name: "Reset your password" }))).toBeVisible()
+    await page.goto("/verify?email=reader@example.com")
+    await expect(visible(page.getByRole("heading", { name: "Check your email" }))).toBeVisible()
+    // /verify without an email falls back to Log in.
+    await page.goto("/verify")
+    await expect(visible(page.getByRole("heading", { name: "Welcome back" }))).toBeVisible()
+    // Switching views moves the address.
+    await page.goto("/login")
+    await visible(page.getByRole("tab", { name: "Sign up" })).click()
+    await expect(page).toHaveURL(/\/signup$/)
+  })
+
   test("5. Novel: size / Sepia / Serif survive a reload", async ({ page }) => {
     await page.goto("/novel/ink-witch/1")
     await visible(page.getByRole("button", { name: "Reading settings" })).click()
