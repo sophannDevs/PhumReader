@@ -37,8 +37,16 @@ export function NovelSkeleton() {
   )
 }
 
-// The demo text is the same for every chapter; the design shows "6 min read".
-const READ_MINUTES = 6
+/**
+ * Reading time from the chapter text: about 200 English words a minute. Khmer has no spaces between
+ * words, so its letters are counted instead (about 1000 a minute). Never less than 1 minute.
+ */
+export function readMinutes(blocks: NovelBlock[]): number {
+  const text = blocks.map((b) => ("text" in b ? b.text : "")).join(" ")
+  const khmer = (text.match(/[\u1780-\u17FF]/g) ?? []).length
+  const words = text.replace(/[\u1780-\u17FF]+/g, " ").split(/\s+/).filter(Boolean).length
+  return Math.max(1, Math.ceil(words / 200 + khmer / 1000))
+}
 
 /** Chapter body: paragraphs, headings, italic quotes with a green rule, centred "* * *" scene breaks; **bold** and *italic* marks. */
 export function NovelBody({ blocks }: { blocks: NovelBlock[] }) {
@@ -136,7 +144,7 @@ function NovelReaderBody({ series, chapter, total, font }: Loaded & { font: "san
           <p className="type-eyebrow">{t("chapterEyebrow", { n })}</p>
           <h1 className="type-h1">{chapter.name}</h1>
           <p className="type-small font-normal text-reader-quiet">
-            {series.creator} · {loc.date(chapter.date)} · {t("minRead", { count: READ_MINUTES })}
+            {series.creator} · {loc.date(chapter.date)} · {t("minRead", { count: readMinutes(chapter.blocks) })}
           </p>
         </header>
         {chapter.blocks.length === 0 ? (

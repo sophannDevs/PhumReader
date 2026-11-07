@@ -20,6 +20,18 @@ const nextConfig: NextConfig = {
   async rewrites() {
     return [{ source: "/api/:path*", destination: `${backendUrl}/api/:path*` }];
   },
+  images: {
+    // Uploaded covers/panels are served from object storage (local MinIO in development).
+    remotePatterns: [
+      { protocol: "http", hostname: "127.0.0.1", port: "9000", pathname: "/**" },
+      { protocol: "http", hostname: "localhost", port: "9000", pathname: "/**" },
+      ...(process.env.IMAGE_HOST
+        ? [{ protocol: "https" as const, hostname: process.env.IMAGE_HOST, pathname: "/**" }]
+        : []),
+    ],
+    // Next.js blocks optimizing images from private IPs; the local MinIO is one.
+    dangerouslyAllowLocalIP: process.env.NODE_ENV !== "production",
+  },
   partialPrefetching: true,
   turbopack: {
     rules: {
