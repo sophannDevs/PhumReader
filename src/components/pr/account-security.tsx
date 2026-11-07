@@ -29,7 +29,8 @@ import { Skeleton } from "@/components/ui/skeleton"
 import * as account from "@/lib/api/account"
 import { errorCode, fieldErrors, retryAfterSeconds } from "@/lib/api/errors"
 import { formatDate } from "@/lib/format"
-import { logOut } from "@/lib/session"
+import { ImageUploadField, type ImageValue } from "@/components/pr/image-upload-field"
+import { logOut, toUser } from "@/lib/session"
 import { useAppStore, useUser } from "@/lib/store"
 import { useRestoreFocus } from "@/lib/use-restore-focus"
 import { useWaitText } from "@/lib/use-wait-text"
@@ -55,6 +56,34 @@ function useFailureToast() {
 const field = "flex flex-col gap-1.5"
 const fieldError = "type-small font-normal text-destructive"
 
+// ---------------------------------------------------------------- profile picture
+
+/** Pick a square JPG / PNG: it is uploaded and set as the profile picture at once; Remove goes back to initials. */
+export function AvatarEditor() {
+  const t = useTranslations("account")
+  const user = useUser()
+  const failed = useFailureToast()
+  const save = useMutation({
+    mutationFn: (image: ImageValue | null) => (image?.uploadId ? account.setAvatar(image.uploadId) : account.removeAvatar()),
+    onSuccess: (me, image) => {
+      useAppStore.getState().login(toUser(me))
+      toast.success(image ? t("avatarSaved") : t("avatarRemoved"))
+    },
+    onError: failed,
+  })
+  if (!user) return null
+  return (
+    <ImageUploadField
+      kind="AVATAR"
+      label={t("avatar")}
+      hint={t("avatarHint")}
+      aspect="size-20"
+      value={user.avatarUrl ? { uploadId: null, url: user.avatarUrl } : null}
+      onChange={(image) => save.mutate(image)}
+    />
+  )
+}
+
 // ---------------------------------------------------------------- display name
 
 export function DisplayNameEditor() {
@@ -69,7 +98,7 @@ export function DisplayNameEditor() {
   const save = useMutation({
     mutationFn: () => account.patchProfile(name.trim()),
     onSuccess: (me) => {
-      useAppStore.getState().login({ name: me.displayName, email: me.email })
+      useAppStore.getState().login(toUser(me))
       toast.success(t("nameSaved"))
       setEditing(false)
     },

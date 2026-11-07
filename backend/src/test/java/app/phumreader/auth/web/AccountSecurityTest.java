@@ -14,6 +14,7 @@ import app.phumreader.support.AuthTestConfig;
 import app.phumreader.support.IntegrationTest;
 import app.phumreader.support.MutableClock;
 import app.phumreader.support.RecordingEmailSender;
+import app.phumreader.user.service.AccountErasureService;
 import com.jayway.jsonpath.JsonPath;
 import jakarta.servlet.http.Cookie;
 import java.time.Duration;
@@ -58,6 +59,7 @@ class AccountSecurityTest {
     @Autowired RateLimiter limiter;
     @Autowired ShortLivedStore store;
     @Autowired JdbcClient jdbc;
+    @Autowired AccountErasureService erasure;
 
     /** The two sign-in cookies of one device. */
     record Session(Cookie access, Cookie refresh) {}
@@ -252,6 +254,49 @@ class AccountSecurityTest {
                                 .single())
                 .isTrue();
         assertThat(emails.lastTo(email).orElseThrow().subject()).contains("is staying");
+    }
+
+    @Test
+    void afterThirtyDaysTheNightlyJobErasesThePersonalDataAndFreesTheEmail() throws Exception {
+        String email = confirmedAccount();
+        Session here = logIn(email, PASSWORD, CHROME_ON_WINDOWS);
+        deleteAccount(here, PASSWORD).andExpect(status().isOk());
+
+        clock.advance(Duration.ofDays(29));
+        assertThat(erasure.eraseExpired()).as("still in the grace period").isZero();
+        assertThat(accountStatus(email)).isEqualTo("DELETION_PENDING");
+
+        clock.advance(Duration.ofDays(1).plusMinutes(1));
+        assertThat(erasure.eraseExpired()).isEqualTo(1);
+        assertThat(erasure.eraseExpired()).as("a second run changes nothing").isZero();
+
+        long erased =
+                jdbc.sql(
+                                "select count(*) from users where status = 'DELETED'"
+                                        + " and display_name = 'Deleted account'"
+                                        + " and password_hash is null"
+                                        + " and email like 'deleted-%@deleted.invalid'")
+                        .query(Long.class)
+                        .single();
+        assertThat(erased).isGreaterThanOrEqualTo(1);
+        assertThat(
+                        jdbc.sql("select count(*) from users where lower(email) = :e")
+                                .param("e", email)
+                                .query(Long.class)
+                                .single())
+                .as("the old address is gone")
+                .isZero();
+        // The old address is gone and free again; the old password no longer works.
+        logInRequest(email, PASSWORD, null).andExpect(status().isUnauthorized());
+        mvc.perform(
+                        json(
+                                post("/api/v1/auth/signup"),
+                                "{\"name\":\"New Owner\",\"email\":\""
+                                        + email
+                                        + "\",\"password\":\""
+                                        + PASSWORD
+                                        + "\"}"))
+                .andExpect(status().isCreated());
     }
 
     @Test

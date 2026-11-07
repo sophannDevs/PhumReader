@@ -20,6 +20,10 @@ export const patchSettings = (change: SettingsChange) => api.patch<Settings>("/m
 
 export const patchProfile = (displayName: string) => api.patch<Me>("/me/profile", { displayName })
 
+/** Sets the picture from a finished AVATAR upload / goes back to the initials. */
+export const setAvatar = (uploadId: string) => api.put<Me>("/me/avatar", { uploadId })
+export const removeAvatar = () => api.delete<Me>("/me/avatar")
+
 export const changePassword = (currentPassword: string, newPassword: string) =>
   api.post<void>("/auth/change-password", { currentPassword, newPassword })
 

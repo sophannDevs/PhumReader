@@ -9,10 +9,14 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import java.util.UUID;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -56,6 +60,26 @@ class SettingsController {
             @Valid @RequestBody ProfileRequest body) {
         return MeResponse.from(users.rename(user.id(), body.displayName()));
     }
+
+    @PutMapping("/avatar")
+    @Operation(
+            summary = "Sets the profile picture from a finished AVATAR upload",
+            description =
+                    "Upload with POST /creator/uploads (kind AVATAR) and /complete first. 400"
+                            + " upload_invalid or upload_not_ready (field uploadId).")
+    MeResponse setAvatar(
+            @Parameter(hidden = true) @AuthenticationPrincipal CurrentUser user,
+            @Valid @RequestBody AvatarRequest body) {
+        return MeResponse.from(users.setAvatar(user.id(), body.uploadId()));
+    }
+
+    @DeleteMapping("/avatar")
+    @Operation(summary = "Removes the profile picture (the website shows initials again)")
+    MeResponse removeAvatar(@Parameter(hidden = true) @AuthenticationPrincipal CurrentUser user) {
+        return MeResponse.from(users.removeAvatar(user.id()));
+    }
+
+    record AvatarRequest(@NotNull UUID uploadId) {}
 
     record ProfileRequest(@NotBlank @Size(max = 60) String displayName) {}
 }

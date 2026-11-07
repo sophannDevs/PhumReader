@@ -179,7 +179,11 @@
     "deleteTitle": "Delete your account?",
     "deleteBody": "You'll be signed out everywhere. Your account and reading data are erased after 30 days unless you log in again before then.",
     "confirmDelete": "Delete account",
-    "deleted": "Your account will be deleted on {date}."
+    "deleted": "Your account will be deleted on {date}.",
+    "avatar": "Profile picture",
+    "avatarHint": "Square JPG or PNG, at least 200 px wide, up to 20 MB.",
+    "avatarSaved": "Profile picture saved",
+    "avatarRemoved": "Profile picture removed"
   },
   "nav": {
     "home": "Home",

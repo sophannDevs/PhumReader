@@ -10,7 +10,7 @@ export type UploadedImage = Schemas["UploadView"]
 
 /** A19 and the API's own rules: JPG or PNG, 20 MB, and the smallest width for each kind. */
 export const MAX_IMAGE_BYTES = 20 * 1024 * 1024
-export const MIN_WIDTH: Record<UploadKind, number> = { COVER: 600, BANNER: 800, THUMBNAIL: 300, PANEL: 800 }
+export const MIN_WIDTH: Record<UploadKind, number> = { COVER: 600, BANNER: 800, THUMBNAIL: 300, PANEL: 800, AVATAR: 200 }
 
 /** Why an image was refused: the API's codes (image_too_small, …) plus network_error, upload_cancelled. */
 export class UploadError extends Error {
@@ -46,7 +46,7 @@ export async function checkImage(file: File, kind: UploadKind): Promise<void> {
   if (file.size > MAX_IMAGE_BYTES) throw new UploadError("file_too_large")
   const { width, height } = await readSize(file)
   if (width < MIN_WIDTH[kind]) throw new UploadError("image_too_small", { width, min: MIN_WIDTH[kind] })
-  if (kind === "THUMBNAIL" && width !== height) throw new UploadError("not_square")
+  if ((kind === "THUMBNAIL" || kind === "AVATAR") && width !== height) throw new UploadError("not_square")
 }
 
 function put(url: string, headers: Record<string, string>, file: File, onProgress?: (percent: number) => void, signal?: AbortSignal): Promise<void> {

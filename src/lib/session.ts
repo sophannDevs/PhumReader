@@ -12,7 +12,7 @@ import { useAppStore, type StoredUser } from "@/lib/store"
 
 type Me = Schemas["MeResponse"]
 
-const toUser = (me: Me): StoredUser => ({ name: me.displayName, email: me.email, roles: me.roles })
+export const toUser = (me: Me): StoredUser => ({ name: me.displayName, email: me.email, roles: me.roles, avatarUrl: me.avatarUrl ?? null })
 
 export type SignupData = { name: string; email: string; password: string }
 

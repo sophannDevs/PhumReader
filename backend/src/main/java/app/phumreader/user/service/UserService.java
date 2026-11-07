@@ -1,6 +1,8 @@
 package app.phumreader.user.service;
 
 import app.phumreader.common.error.ApiException;
+import app.phumreader.media.domain.UploadKind;
+import app.phumreader.media.service.MediaService;
 import app.phumreader.user.domain.SocialProvider;
 import app.phumreader.user.domain.User;
 import app.phumreader.user.domain.UserIdentity;
@@ -36,13 +38,16 @@ public class UserService {
     private final UserRepository users;
     private final UserSettingsRepository settings;
     private final UserIdentityRepository identities;
+    private final MediaService media;
     private final Clock clock;
 
     public UserService(
             UserRepository users,
             UserSettingsRepository settings,
             UserIdentityRepository identities,
+            MediaService media,
             Clock clock) {
+        this.media = media;
         this.users = users;
         this.settings = settings;
         this.identities = identities;
@@ -150,6 +155,20 @@ public class UserService {
         }
         User user = require(userId);
         user.rename(name);
+        return Account.of(user);
+    }
+
+    /** Sets the profile picture from one of this account's finished AVATAR uploads. */
+    public Account setAvatar(UUID userId, UUID uploadId) {
+        User user = require(userId);
+        user.changeAvatar(media.readyImage(userId, uploadId, UploadKind.AVATAR, "uploadId").url());
+        return Account.of(user);
+    }
+
+    /** Back to the initials. */
+    public Account removeAvatar(UUID userId) {
+        User user = require(userId);
+        user.changeAvatar(null);
         return Account.of(user);
     }
 

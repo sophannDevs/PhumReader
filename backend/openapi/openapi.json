@@ -2494,6 +2494,73 @@
         "tags" : [ "account" ]
       }
     },
+    "/api/v1/me/avatar" : {
+      "delete" : {
+        "operationId" : "removeAvatar",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/MeResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Removes the profile picture (the website shows initials again)",
+        "tags" : [ "account" ]
+      },
+      "put" : {
+        "description" : "Upload with POST /creator/uploads (kind AVATAR) and /complete first. 400 upload_invalid or upload_not_ready (field uploadId).",
+        "operationId" : "setAvatar",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/AvatarRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/MeResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Sets the profile picture from a finished AVATAR upload",
+        "tags" : [ "account" ]
+      }
+    },
     "/api/v1/me/coins" : {
       "get" : {
         "operationId" : "wallet",
@@ -4311,6 +4378,16 @@
         },
         "required" : [ "action", "createdAt", "details", "id", "targetType" ]
       },
+      "AvatarRequest" : {
+        "type" : "object",
+        "properties" : {
+          "uploadId" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        },
+        "required" : [ "uploadId" ]
+      },
       "Badges" : {
         "type" : "object",
         "properties" : {
@@ -4564,7 +4641,7 @@
           },
           "kind" : {
             "type" : "string",
-            "enum" : [ "COVER", "BANNER", "THUMBNAIL", "PANEL" ]
+            "enum" : [ "COVER", "BANNER", "THUMBNAIL", "PANEL", "AVATAR" ]
           },
           "size" : {
             "type" : "integer",
@@ -6561,7 +6638,7 @@
           },
           "kind" : {
             "type" : "string",
-            "enum" : [ "COVER", "BANNER", "THUMBNAIL", "PANEL" ]
+            "enum" : [ "COVER", "BANNER", "THUMBNAIL", "PANEL", "AVATAR" ]
           },
           "rejectCode" : {
             "type" : [ "string", "null" ]

@@ -1027,6 +1027,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/me/avatar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Sets the profile picture from a finished AVATAR upload
+         * @description Upload with POST /creator/uploads (kind AVATAR) and /complete first. 400 upload_invalid or upload_not_ready (field uploadId).
+         */
+        put: operations["setAvatar"];
+        post?: never;
+        /** Removes the profile picture (the website shows initials again) */
+        delete: operations["removeAvatar"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/me/coins": {
         parameters: {
             query?: never;
@@ -1631,6 +1652,10 @@ export interface components {
             targetId?: string | null;
             targetType: string;
         };
+        AvatarRequest: {
+            /** Format: uuid */
+            uploadId: string;
+        };
         Badges: {
             isNew: boolean;
             up: boolean;
@@ -1714,7 +1739,7 @@ export interface components {
         CreateUploadRequest: {
             contentType: string;
             /** @enum {string} */
-            kind: "COVER" | "BANNER" | "THUMBNAIL" | "PANEL";
+            kind: "COVER" | "BANNER" | "THUMBNAIL" | "PANEL" | "AVATAR";
             /** Format: int64 */
             size: number;
         };
@@ -2426,7 +2451,7 @@ export interface components {
             /** Format: uuid */
             id: string;
             /** @enum {string} */
-            kind: "COVER" | "BANNER" | "THUMBNAIL" | "PANEL";
+            kind: "COVER" | "BANNER" | "THUMBNAIL" | "PANEL" | "AVATAR";
             rejectCode?: string | null;
             rejectMessage?: string | null;
             /** @enum {string} */
@@ -4412,6 +4437,68 @@ export interface operations {
         };
     };
     me: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MeResponse"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    setAvatar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AvatarRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MeResponse"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    removeAvatar: {
         parameters: {
             query?: never;
             header?: never;

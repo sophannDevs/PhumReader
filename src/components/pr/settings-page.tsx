@@ -5,9 +5,9 @@ import { useTheme } from "@/lib/theme"
 import { useState, useSyncExternalStore } from "react"
 import { toast } from "sonner"
 import { ReadingSettingsControls } from "@/components/layout/reading-settings"
-import { DisplayNameEditor, SecuritySection } from "@/components/pr/account-security"
+import { AvatarEditor, DisplayNameEditor, SecuritySection } from "@/components/pr/account-security"
 import { EmptyState } from "@/components/pr/empty-state"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -119,8 +119,10 @@ export function SettingsPage() {
 
       <Section id="profile-title" title={t("profile")}>
         {user ? (
+          <div className="flex flex-col gap-4">
           <div className="flex flex-wrap items-center gap-4">
             <Avatar variant="brand" size="lg" className="size-14 text-lg">
+              {user.avatarUrl ? <AvatarImage src={user.avatarUrl} alt="" /> : null}
               <AvatarFallback>{initials(user.name)}</AvatarFallback>
             </Avatar>
             <dl className="flex min-w-0 flex-col gap-1 text-sm">
@@ -138,6 +140,8 @@ export function SettingsPage() {
                 <DisplayNameEditor />
               </div>
             )}
+          </div>
+            {!DEMO_MODE ? <AvatarEditor /> : null}
           </div>
         ) : (
           <EmptyState

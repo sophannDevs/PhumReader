@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl"
 import { CoinChip } from "@/components/pr/coin-chip"
 import { Logo } from "@/components/layout/logo"
 import { ThemeToggle } from "@/components/layout/theme-toggle"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -19,7 +19,7 @@ import { Link, usePathname } from "@/i18n/navigation"
 import { initials } from "@/lib/format"
 import { cn } from "@/lib/utils"
 
-export type HeaderUser = { name: string; roles?: string[] }
+export type HeaderUser = { name: string; roles?: string[]; avatarUrl?: string | null }
 
 // Rankings and Genres have their own pages (T43); Web novels stays on the Home section.
 const navItems = [
@@ -108,6 +108,7 @@ export function SiteHeader({
                 className="rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
               >
                 <Avatar variant="brand">
+                  {user.avatarUrl ? <AvatarImage src={user.avatarUrl} alt="" /> : null}
                   <AvatarFallback aria-hidden>{initials(user.name)}</AvatarFallback>
                 </Avatar>
               </DropdownMenuTrigger>

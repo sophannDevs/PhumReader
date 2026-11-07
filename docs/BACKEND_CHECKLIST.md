@@ -477,11 +477,26 @@ Spring Boot owns every business rule; the website never talks to the database di
   - Depends on: P3-14
   - Done when: 10,000 subscribers are notified in under 5 minutes without slowing the API.
 
-- [ ] **P3-17 Account settings API**
+- [x] **P3-17 Account settings API**
   - Build: profile and avatar, change email (with code), change password, devices list and sign-out, language,
     notification and content settings, reader settings, delete account (30-day grace, A18).
   - Depends on: P3-02
   - Done when: every Settings section can be saved and reloaded.
+  - Done 2026-11-07 (the three gaps from Stage 1): (1) **Avatar:** upload kind `AVATAR` (square, at least 200 px; migration V7)
+    through the same upload endpoints (any signed-in reader may upload this kind, other kinds stay creator-only);
+    `PUT /api/v1/me/avatar {uploadId}` and `DELETE /api/v1/me/avatar`; `avatarUrl` is in `/me`. Settings > Profile has
+    "Profile picture" (the creator forms' `ImageUploadField`, closest existing pattern: no design exists) and the
+    header and Settings avatars show it. `AvatarApiTest` (4). Not run in a browser against the real API here (use
+    `npm run test:e2e:real` or try it by hand). (2) **Erasing accounts:** `AccountErasureService` runs nightly at 03:15
+    Phnom Penh and erases accounts 30 days after the request: email becomes `deleted-<id>@deleted.invalid` (the real
+    address is free to sign up again), name becomes "Deleted account", password, avatar, Google / Facebook links,
+    devices, push tokens, settings and creator bio are removed. **Decision (A18 left it open):** comments, the coin
+    ledger, orders, unlocks and a creator's pen name and series are kept, pointing at "Deleted account", so readers
+    keep their library and paid episodes. Test in `AccountSecurityTest`. (3) **Content settings: not built.** The
+    plan names them but neither design/spec.md nor the Settings design has such a setting, so there is nothing to
+    save; tell me what it should be (for example mature-content filter) and it becomes one more field in
+    `GET/PATCH /me/settings`. Every Settings section that exists saves and reloads. The profile rename now keeps the
+    roles and avatar in the header (it used to drop the roles).
 
 - [x] **P3-18 Admin API and audit log**
   - Build: users (ban), content (hide), reports, orders (refund to the ledger).

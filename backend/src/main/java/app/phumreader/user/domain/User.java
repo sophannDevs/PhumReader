@@ -117,6 +117,11 @@ public class User implements Persistable<UUID> {
         roles.add(Role.CREATOR);
     }
 
+    /** A new profile picture, or none ({@code null}) to go back to the initials. */
+    public void changeAvatar(@Nullable String avatarUrl) {
+        this.avatarUrl = avatarUrl;
+    }
+
     public void rename(String displayName) {
         this.displayName = displayName.trim();
     }
@@ -144,6 +149,21 @@ public class User implements Persistable<UUID> {
         }
         status = UserStatus.ACTIVE;
         return true;
+    }
+
+    /**
+     * Erases the personal data when the grace period is over (A18): the address becomes a unique
+     * placeholder that cannot receive mail (and is free to sign up with again), the name, password
+     * and avatar are removed. The row stays, so comments, ledger entries and the creator's series
+     * keep pointing at someone.
+     */
+    public void erase() {
+        email = "deleted-" + id + "@deleted.invalid";
+        displayName = "Deleted account";
+        passwordHash = null;
+        avatarUrl = null;
+        status = UserStatus.DELETED;
+        deletionRequestedAt = null;
     }
 
     /** Starts the 30-day grace period (A18); asking again keeps the first date. */

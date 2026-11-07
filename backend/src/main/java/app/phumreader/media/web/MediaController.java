@@ -24,10 +24,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-/** Image uploads for creators: covers, banners, episode thumbnails and comic panels. */
+/**
+ * Image uploads: covers, banners, episode thumbnails and comic panels for creators, and profile
+ * pictures (AVATAR) for any signed-in reader. Every upload belongs to the account that made it.
+ */
 @RestController
 @RequestMapping("/api/v1/creator/uploads")
-@PreAuthorize("hasRole('CREATOR')")
 @Tag(name = "media")
 class MediaController {
 
@@ -45,6 +47,7 @@ class MediaController {
             @NotNull UploadKind kind, @NotBlank String contentType, @Positive long size) {}
 
     @PostMapping
+    @PreAuthorize("hasRole('CREATOR') or #body.kind().name() == 'AVATAR'")
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(
             summary = "Start an image upload",
