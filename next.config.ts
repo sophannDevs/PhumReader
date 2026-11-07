@@ -17,6 +17,11 @@ const backendUrl = env.BACKEND_URL.replace(/\/+$/, "");
 const nextConfig: NextConfig = {
   /* config options here */
   cacheComponents: true,
+  async redirects() {
+    // Browsers ask for /favicon.ico by habit; the icon is /icon.svg (src/app/icon.svg). Without this the
+    // request falls into the [locale] segment and logs a 404 error in development.
+    return [{ source: "/favicon.ico", destination: "/icon.svg", permanent: false }];
+  },
   async rewrites() {
     return [{ source: "/api/:path*", destination: `${backendUrl}/api/:path*` }];
   },
