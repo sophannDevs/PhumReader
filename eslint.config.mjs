@@ -16,6 +16,8 @@ const eslintConfig = defineConfig([
     "src/lib/api/schema.d.ts",
     // Spring Boot API (Java).
     "backend/**",
+    // Cloudflare Worker with its own package and tests (node --test).
+    "infra/**",
   ]),
 ]);
 

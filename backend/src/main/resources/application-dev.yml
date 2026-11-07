@@ -37,6 +37,8 @@ phumreader:
     secret-key: ${S3_SECRET_KEY:}
     region: ${S3_REGION:us-east-1}
     public-base-url: ${S3_PUBLIC_URL:}
+    image-signing-secret: ${IMAGE_SIGNING_SECRET:}
+    image-cdn-url: ${IMAGE_CDN_URL:}
     create-bucket: true
   mail:
     host: ${MAIL_HOST:}

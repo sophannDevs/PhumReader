@@ -411,6 +411,22 @@ Spring Boot owns every business rule; the website never talks to the database di
     images; the token is not part of the cache key.
   - Depends on: P3-07
   - Done when: a paid image URL works for 5 minutes for the buyer, then 403; CDN hit rate stays high.
+  - Code and tests done 2026-11-07, **not deployed, so the box stays open**: `infra/image-worker/` (Cloudflare Worker, TypeScript,
+    `npm test` = `node --test`, 9 tests with a fake R2 bucket and edge cache). An address is
+    `<IMAGE_CDN_URL>/<r2 key>?t=<exp>.<sig>`, `sig = base64url(HMAC-SHA256(secret, "/<key>\n<exp>"))`, tied to the image's
+    path. The Worker checks the token on every request (403 when missing, forged, moved to another image or expired),
+    then looks the image up in the edge cache under the address **without the query string** (every reader shares one
+    cached copy; a second reader with a different token does not touch the bucket: tested), reads R2 on a miss (404
+    when absent) and tells the browser `private, max-age=<seconds the token has left, at most 300>`. A rotation secret
+    (`SIGNING_SECRET_PREVIOUS`) is accepted too. The API side is `ImageUrlSigner` (`media.service`, 5-minute lifetime,
+    `IMAGE_SIGNING_SECRET` + `IMAGE_CDN_URL`; unset in development = plain public addresses, so nothing changes
+    until the Worker exists); Java and TypeScript are tested against the same token vector. `P3-09` will call
+    `ImageUrlSigner.sign(key)` for the images of an episode the reader may read.
+    Left for deployment (Phase 7, needs the Cloudflare account and the domain, A15): create the R2 bucket
+    `phumreader-images` and fill `wrangler.toml` routes, `npm install` in `infra/image-worker`, `npx wrangler secret put
+    SIGNING_SECRET`, `npm run deploy`; then check on staging that a paid panel loads for 5 minutes and then answers 403,
+    and read the cache hit rate in the Cloudflare dashboard. Not tried with `wrangler dev` here (wrangler is listed but
+    not installed). Free panels and covers stay public.
 
 - [ ] **P3-09 Reading API**
   - Build: episode content returns signed image URLs or chapter text only when free, Fast Pass-free (`free_at`

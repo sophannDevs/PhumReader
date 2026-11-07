@@ -1,0 +1,16 @@
+# Image access Worker (plan P3-08). Deploy with `npm run deploy` once the Cloudflare account exists (A15).
+name = "phumreader-image-worker"
+main = "src/index.ts"
+compatibility_date = "2026-11-01"
+
+# The R2 bucket that holds the processed images (the API writes it, the Worker only reads).
+[[r2_buckets]]
+binding = "IMAGES"
+bucket_name = "phumreader-images"
+
+# Route the Worker on the image host, e.g. img.phumreader.com/*  (set after the domain is bought):
+# routes = [{ pattern = "img.phumreader.com/*", zone_name = "phumreader.com" }]
+
+# Secrets are not in this file. Set them with:
+#   npx wrangler secret put SIGNING_SECRET            (same value as the API's IMAGE_SIGNING_SECRET)
+#   npx wrangler secret put SIGNING_SECRET_PREVIOUS   (only while rotating)
