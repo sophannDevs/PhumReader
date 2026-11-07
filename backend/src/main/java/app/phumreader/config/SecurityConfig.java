@@ -29,6 +29,9 @@ public class SecurityConfig {
     static final String[] PUBLIC_GET = {
         "/api/v1/health",
         "/api/v1/auth/csrf",
+        // Google and Facebook login: browser navigations to and from the provider (P3-04).
+        "/api/v1/auth/oauth/*/start",
+        "/api/v1/auth/oauth/*/callback",
         // Public catalog (P3-06) and search.
         "/api/v1/home",
         "/api/v1/rankings",

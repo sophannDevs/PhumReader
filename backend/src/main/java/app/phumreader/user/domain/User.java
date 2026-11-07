@@ -73,6 +73,13 @@ public class User implements Persistable<UUID> {
         return user;
     }
 
+    /** A new reader from Google or Facebook: the provider confirmed the email; no password. */
+    public static User newSocialReader(String email, String displayName, Instant now) {
+        User user = newReader(email, displayName, null);
+        user.emailVerifiedAt = now;
+        return user;
+    }
+
     /** Emails are stored trimmed and in lower case; compare with this. */
     public static String normalizeEmail(String email) {
         return email.trim().toLowerCase(Locale.ROOT);
@@ -87,6 +94,14 @@ public class User implements Persistable<UUID> {
         if (emailVerifiedAt == null) {
             emailVerifiedAt = now;
         }
+    }
+
+    /**
+     * Removes the password of an account that never confirmed its email: whoever typed it may not
+     * be the owner of the address (used when the real owner signs in with Google or Facebook).
+     */
+    public void removePassword() {
+        this.passwordHash = null;
     }
 
     public void changePassword(String passwordHash) {

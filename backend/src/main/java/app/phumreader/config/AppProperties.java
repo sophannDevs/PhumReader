@@ -65,6 +65,7 @@ public record AppProperties(
      *     stop working after a restart and the website refreshes them silently
      * @param fixedVerificationCode dev only: every email code is this value (lets end-to-end tests
      *     sign up); never set in production
+     * @param social Google and Facebook app credentials (A14); a provider without them is off
      */
     public record Auth(
             @DefaultValue("15m") Duration accessTokenTtl,
@@ -73,5 +74,30 @@ public record AppProperties(
             @DefaultValue("true") boolean secureCookies,
             @Nullable String jwtPrivateKey,
             @DefaultValue("false") boolean generateDevKeys,
-            @Nullable @Pattern(regexp = "\\d{6}") String fixedVerificationCode) {}
+            @Nullable @Pattern(regexp = "\\d{6}") String fixedVerificationCode,
+            @Valid @DefaultValue Social social) {
+
+        /**
+         * Credentials of the OAuth apps; the redirect URI is {@code
+         * <frontend-url>/api/v1/auth/oauth/<provider>/callback}.
+         */
+        public record Social(@DefaultValue Provider google, @DefaultValue Provider facebook) {
+
+            /** Neither provider is set up (tests). */
+            public static Social none() {
+                return new Social(new Provider(null, null), new Provider(null, null));
+            }
+        }
+
+        /** One OAuth app (client id and secret); both empty means the provider is not set up. */
+        public record Provider(@Nullable String clientId, @Nullable String clientSecret) {
+
+            public boolean configured() {
+                return clientId != null
+                        && !clientId.isBlank()
+                        && clientSecret != null
+                        && !clientSecret.isBlank();
+            }
+        }
+    }
 }

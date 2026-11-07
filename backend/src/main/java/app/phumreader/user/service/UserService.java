@@ -1,8 +1,11 @@
 package app.phumreader.user.service;
 
 import app.phumreader.common.error.ApiException;
+import app.phumreader.user.domain.SocialProvider;
 import app.phumreader.user.domain.User;
+import app.phumreader.user.domain.UserIdentity;
 import app.phumreader.user.domain.UserSettings;
+import app.phumreader.user.repository.UserIdentityRepository;
 import app.phumreader.user.repository.UserRepository;
 import app.phumreader.user.repository.UserSettingsRepository;
 import app.phumreader.user.service.SettingsViews.NotificationSettings;
@@ -32,12 +35,56 @@ public class UserService {
 
     private final UserRepository users;
     private final UserSettingsRepository settings;
+    private final UserIdentityRepository identities;
     private final Clock clock;
 
-    public UserService(UserRepository users, UserSettingsRepository settings, Clock clock) {
+    public UserService(
+            UserRepository users,
+            UserSettingsRepository settings,
+            UserIdentityRepository identities,
+            Clock clock) {
         this.users = users;
         this.settings = settings;
+        this.identities = identities;
         this.clock = clock;
+    }
+
+    // ---------- Google and Facebook (P3-04) ----------
+
+    /** The account that signed in with this provider before. */
+    @Transactional(readOnly = true)
+    public Optional<User> findByIdentity(SocialProvider provider, String providerUserId) {
+        return identities
+                .findByProviderAndProviderUserId(provider, providerUserId)
+                .flatMap(identity -> users.findById(identity.getUserId()));
+    }
+
+    /**
+     * Ties a provider sign-in to an account. The provider has confirmed the email, so the account's
+     * email counts as confirmed; a password typed at sign-up before confirming is dropped.
+     */
+    public void linkIdentity(
+            User user, SocialProvider provider, String providerUserId, String email) {
+        if (!user.isEmailVerified()) {
+            user.removePassword();
+            user.verifyEmail(clock.instant());
+        }
+        identities.save(
+                UserIdentity.link(user.getId(), provider, providerUserId, email, clock.instant()));
+    }
+
+    /** A reader whose email the provider has confirmed; no password. */
+    public User createSocialReader(
+            String email,
+            String displayName,
+            String language,
+            SocialProvider provider,
+            String providerUserId) {
+        User user = users.save(User.newSocialReader(email, displayName, clock.instant()));
+        settings.save(UserSettings.defaults(user.getId(), language));
+        identities.save(
+                UserIdentity.link(user.getId(), provider, providerUserId, email, clock.instant()));
+        return user;
     }
 
     @Transactional(readOnly = true)

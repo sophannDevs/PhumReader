@@ -42,10 +42,15 @@ export async function logIn(email: string, password: string, remember: boolean):
   return toUser(await api.post<Me>("/auth/login", { email: email.trim(), password, remember }))
 }
 
-/** Google / Facebook: simulated in the demo; the real API gets them with P3-04. */
-export async function socialLogIn(provider: "google" | "facebook"): Promise<StoredUser> {
+/**
+ * Google / Facebook: simulated in the demo. With the real API the whole page goes to the provider
+ * (through the API's `start` endpoint) and comes back to `/login?social=<result>`, so this promise
+ * never settles: the page is being left.
+ */
+export function socialLogIn(provider: "google" | "facebook", locale: string): Promise<StoredUser> {
   if (DEMO_MODE) return demo.socialLogin(provider)
-  throw new ApiError(501, { code: "social_login_unavailable", message: "Google and Facebook log in come later." })
+  window.location.assign(`/api/v1/auth/oauth/${provider}/start?locale=${locale === "km" ? "km" : "en"}`)
+  return new Promise<StoredUser>(() => undefined)
 }
 
 /** Creates the account (real API) and emails the code. */

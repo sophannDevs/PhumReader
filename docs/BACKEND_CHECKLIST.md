@@ -110,6 +110,21 @@ deployment and no Docker. A step is done when its checks pass; tick the plan tas
     1 episode view in Redis; after the flush Glass Compass went from 1,600,000 to 1,600,001 views. Known gap: the page
     shows the stored total, up to one flush interval behind; the first views after a restart of a no-Redis API are lost
     if it stops before a flush.
+  - Done 2026-11-07 (part 2e, Google and Facebook login, P3-04 code): `GET /api/v1/auth/oauth/{google|facebook}/start`
+    (302 to the provider with a random `state`, kept 10 min in the short-lived store and in an HttpOnly
+    `phumreader_oauth` cookie) and `/callback` (checks both copies of the state, uses it up, swaps the code for a
+    profile, sets the sign-in cookies, 302 to `/login?social=<done|cancelled|unavailable|error code>`, with `/km` when
+    started from Khmer). Matching: the provider's id first (`user_identities`), then a verified email (linked; an
+    unconfirmed sign-up's password is removed so a squatter cannot keep it), else a new confirmed account without a
+    password. Facebook has no "verified" flag: a returned email counts as verified. Credentials:
+    `GOOGLE_CLIENT_ID/SECRET`, `FACEBOOK_APP_ID/SECRET` in `backend/.env`; without them the provider answers
+    `unavailable` and the website shows "not set up yet". Redirect URI to register:
+    `<FRONTEND_URL>/api/v1/auth/oauth/<provider>/callback`. The website sends the browser to `start` (the buttons on
+    `/login`) and reads `?social=` on return, then continues to `returnTo`. 12 new tests with a fake Google
+    (`SocialLoginTest`), `./gradlew check` green, lint / typecheck / build green. **Not verified against the real
+    providers** (needs the A14 apps: Google Cloud OAuth client, Meta app with Facebook Login), so P3-04 stays
+    unticked until a sign-in works on dev or staging with each provider. Still open in Step 3: Upstash and R2
+    accounts, MinIO bucket (P3-07).
   - 2026-11-06: the company PC may not download programs, so Step 4 runs first with built-in stand-ins
     (rate limits and codes in memory, search in PostgreSQL, JWT signed with the JDK). At home: install the
     services, fill in `backend/.env`, swap the stand-ins (and optionally the JWT code for a JWT library), add

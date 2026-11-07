@@ -34,7 +34,8 @@ class ViewCountingTest {
                             false,
                             null,
                             true,
-                            null),
+                            null,
+                            AppProperties.Auth.Social.none()),
                     new AppProperties.Catalog(Duration.ZERO),
                     new AppProperties.Payments(false, Duration.ofMinutes(10)),
                     new AppProperties.Views(true, Duration.ofMinutes(30), Duration.ofSeconds(60)));
