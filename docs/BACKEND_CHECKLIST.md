@@ -366,13 +366,24 @@ Spring Boot owns every business rule; the website never talks to the database di
   - Depends on: P3-02
   - Done when: a creator cannot edit another creator's series (403), proven by tests.
 
-- [ ] **P3-06 Catalog API**
+- [x] **P3-06 Catalog API**
   - Build: home feed (featured, daily by weekday, trending, genres, web novels), series detail, episode list
     (paged, newest / oldest), rankings, genres; Redis cache; tells Next.js which pages to refresh on publish.
     Response shapes follow `src/data/types.ts` so the frontend swaps only its fetch layer.
   - Depends on: P3-01
   - Done when: home feed is under 150 ms p95 from cache; publishing an episode refreshes its series page within
     60 s.
+  - Done 2026-11-07: the home feed is cached in the short-lived store (`cache:home:<DAY>`, one copy per weekday,
+    TTL `phumreader.catalog.home-cache-ttl`, default 60 s): Redis when `REDIS_URL` is set, so every API instance
+    serves the same feed and a publish / unpublish / admin hide clears it for all of them (`refreshHome`); in
+    memory otherwise. A cache that cannot be read or written never fails a request (the feed is built from the
+    database). `HomeFeedCacheApiTest` (4 tests): cached copy identical to a fresh one, cleared by a publish,
+    expires after the TTL, 200 cached calls under 150 ms at p95 (in-process; measure again on staging with
+    real network). **"Tells Next.js which pages to refresh" needs no extra call:** the website's pages fetch the
+    API in the browser (TanStack Query, `staleTime` 30 s) and the series / episode endpoints are not cached on
+    the server, so a published episode shows within about 30 s (limit 60 s). If pages are ever rendered on the
+    server with cached data, add a revalidation call from `CreatorContentService` then. Not checked against a
+    real Redis in this session (the tests use the in-memory store behind the same interface).
 
 - [x] **P3-07 Media upload and processing**
   - Build: presigned R2 upload URLs for covers, banners, thumbnails and comic panels; the worker checks type, size
