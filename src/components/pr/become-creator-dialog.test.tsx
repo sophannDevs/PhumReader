@@ -52,6 +52,12 @@ describe("BecomeCreatorDialog: open and close", () => {
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
   })
 
+  it("returns the focus to the button that opened it", async () => {
+    const { user } = await open()
+    await user.keyboard("{Escape}")
+    expect(screen.getByRole("button", { name: "Open creator" })).toHaveFocus()
+  })
+
   it("links to the creator guidelines", async () => {
     await open()
     expect(screen.getByRole("link", { name: "Read the creator guidelines" })).toHaveAttribute("href", "/creator#guidelines")

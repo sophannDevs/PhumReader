@@ -44,6 +44,12 @@ describe("ReasonDialog: open and close", () => {
     expect(ask.run).not.toHaveBeenCalled()
   })
 
+  it("returns the focus to the button that opened it", async () => {
+    const { user } = await open(makeAsk())
+    await user.keyboard("{Escape}")
+    expect(screen.getByRole("button", { name: "Open admin" })).toHaveFocus()
+  })
+
   it("closes with Escape and with the X", async () => {
     const { user } = await open(makeAsk())
     await user.keyboard("{Escape}")

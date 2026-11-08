@@ -28,6 +28,7 @@ import { creatorKeys } from "@/lib/creator"
 import { inlineMarks } from "@/lib/inline-marks"
 import { readerHref } from "@/lib/routes"
 import { MAX_EPISODE_BYTES, usePanelUploads, type PanelItem } from "@/lib/use-panel-uploads"
+import { useRestoreFocus } from "@/lib/use-restore-focus"
 import { useWaitText } from "@/lib/use-wait-text"
 
 const ZONE = "Asia/Phnom_Penh"
@@ -539,9 +540,10 @@ function PreviewDialog({
   blocks: EditorBlock[]
 }) {
   const t = useTranslations("episodeForm")
+  const restoreFocus = useRestoreFocus()
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] gap-4 overflow-y-auto sm:max-w-[480px]">
+      <DialogContent className="max-h-[90vh] gap-4 overflow-y-auto sm:max-w-[480px]" {...restoreFocus}>
         <DialogHeader>
           <DialogTitle>{t("previewTitle")}</DialogTitle>
           <DialogDescription>{t("previewDesc")}</DialogDescription>

@@ -15,6 +15,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ApiError } from "@/lib/api/client";
+import { useRestoreFocus } from "@/lib/use-restore-focus";
 
 export type ReasonAsk = {
   title: string;
@@ -123,9 +124,10 @@ export function ReasonDialog({
   ask: ReasonAsk | null;
   onClose: () => void;
 }) {
+  const restoreFocus = useRestoreFocus();
   return (
     <Dialog open={ask !== null} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent>
+      <DialogContent {...restoreFocus}>
         {ask ? <ReasonForm ask={ask} onClose={onClose} /> : null}
       </DialogContent>
     </Dialog>

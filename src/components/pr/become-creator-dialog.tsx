@@ -13,6 +13,7 @@ import { Label } from "@/components/ui/label"
 import { Link } from "@/i18n/navigation"
 import { fieldErrors, retryAfterSeconds } from "@/lib/api/errors"
 import { useBecomeCreator } from "@/lib/creator"
+import { useRestoreFocus } from "@/lib/use-restore-focus"
 import { useUser } from "@/lib/store"
 import { useWaitText } from "@/lib/use-wait-text"
 
@@ -28,6 +29,7 @@ export function BecomeCreatorDialog({ open, onOpenChange, onDone }: { open: bool
   const ts = useTranslations("states")
   const tauth = useTranslations("auth")
   const waitText = useWaitText()
+  const restoreFocus = useRestoreFocus()
   const user = useUser()
   const become = useBecomeCreator()
   const form = useForm<Values>({
@@ -56,7 +58,7 @@ export function BecomeCreatorDialog({ open, onOpenChange, onDone }: { open: bool
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent {...restoreFocus}>
         <form onSubmit={form.handleSubmit(submit)} noValidate className="flex flex-col gap-4">
           <DialogHeader>
             <DialogTitle>{t("becomeTitle")}</DialogTitle>
