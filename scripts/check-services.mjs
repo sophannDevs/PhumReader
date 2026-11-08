@@ -63,7 +63,7 @@ const checks = [
     },
   ],
   [
-    "Object storage (MinIO / R2)",
+    "Object storage (S3 / R2)",
     async () => {
       const r = await fetch(`${s3}/minio/health/live`, { signal: timeout(3000) });
       if (!r.ok) throw new Error(`HTTP ${r.status}`);
