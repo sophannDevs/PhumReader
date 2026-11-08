@@ -289,13 +289,21 @@ P1-03 (Next.js app) and P1-04 (web libraries + shadcn/ui) are done by T01–T06.
   - Done when: `/actuator/health` is UP; Flyway runs an empty baseline on the dev database; `./gradlew check`
     passes with a smoke test on embedded PostgreSQL.
 
-- [ ] **P1-06 Folder structure**
+- [x] **P1-06 Folder structure**
   - Build: one package per feature in the API (auth, user, series, episode, library, coin, payment, comment,
     search, notification, media, admin, common, config), each with `web` / `service` / `repository` / `domain`,
     and a README per area. ArchUnit rules: controllers do not use repositories, no entity in a controller
     signature, features do not reach into each other's internals.
   - Depends on: P1-03, P1-05
   - Done when: empty folders + a README per area; import rules enforced by ArchUnit (API) and ESLint (website).
+  - Done 2026-11-08: API side: 15 feature packages, each with a `package-info.java` as its README, and the ArchUnit
+    rules in `ArchitectureTest` (already in Step 1). Website side, new in `eslint.config.mjs`: (1) outside
+    `src/lib/api/` nothing may call `fetch`, `window.fetch` or `XMLHttpRequest`; (2) components and pages may not
+    import the generated `@/lib/api/schema`, and components may not import `@/lib/api/server` (server pages in
+    `src/app` only); (3) `src/lib/api/` may not import components or pages. Checked with throwaway files that each
+    rule fires; `npm run lint` and `typecheck` pass on the real code. Not covered: other files in `src/lib`
+    (`query.tsx`, `comments.ts`, `use-reader-nav.ts`) import components, so a general "lib never imports
+    components" rule is left for a later refactor.
 
 - [x] **P1-07 OpenAPI → TypeScript client** (stale files fail `./gradlew check` and `npm run api:check`; CI in P1-09)
   - Build: springdoc publishes OpenAPI; a Gradle task writes `backend/openapi/openapi.json`; `openapi-typescript`
