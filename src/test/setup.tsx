@@ -69,6 +69,8 @@ globalThis.fetch = ((input: RequestInfo | URL, init?: RequestInit) =>
   nativeFetch(typeof input === "string" && input.startsWith("/") ? new URL(input, window.location.origin).href : input, init)) as typeof fetch
 
 const initialStore = useAppStore.getInitialState()
+// The app loads the stored state after the first render (StoreHydrator); tests start hydrated.
+void useAppStore.persist.rehydrate()
 
 beforeAll(() => server.listen({ onUnhandledFrame: "error" }))
 afterEach(() => {
