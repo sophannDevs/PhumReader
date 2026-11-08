@@ -45,11 +45,12 @@ Key tokens: --primary #00DC64, --primary-foreground #04210F (never white text on
 - Phase 2 (backend, docs/BACKEND_CHECKLIST.md, design in docs/BACKEND.md): follows the plan doc "Toonwave V2 –
   Implementation plan" (https://claude.ai/artifact/9bbCmhSxqAbRZeTbjU8QVT; Toonwave = PhumReader). A separate
   **Spring Boot** API (Java 21, Gradle; Supabase PostgreSQL, Redis, Meilisearch, Cloudflare R2, ABA PayWay) in `backend/`,
-  built one plan task (P1-01 … P7-05) at a time, starting with "Stage 1" in the checklist. No Docker anywhere in this
-  project: not on development machines (company policy), not in CI, no Dockerfile, no Testcontainers.
+  built one plan task (P1-01 … P7-05) at a time, starting with "Stage 1" in the checklist. Docker is allowed only for
+  the optional local helper services (`docker-compose.yml`: Redis, Meilisearch, S3 storage (RustFS), Mailpit; `npm run services:docker:up`).
+  Still no Dockerfile, no Testcontainers and no Docker in CI: `./gradlew check` and the tests need no Docker.
   The Next.js frontend stays in the repo root. Demo mode (`NEXT_PUBLIC_DEMO=1`, demo-api.ts, local store) must keep
   working until P5-07.
-  Backend commands (no Docker; settings in `backend/.env`, git-ignored): `cd backend && ./gradlew bootRun`, `cd backend && ./gradlew check`,
+  Backend commands (settings in `backend/.env`, git-ignored): `cd backend && ./gradlew bootRun`, `cd backend && ./gradlew check`,
   `npm run api:gen` (TypeScript types from backend/openapi/openapi.json).
   A backend task is done when its acceptance criteria pass and `./gradlew check` passes (plus lint/typecheck/build if the
   frontend changed), then commit "<task id>: <short description>", e.g. "P3-02: sign-in core".
@@ -83,10 +84,25 @@ docs/CHECKLIST.md               implementation checklist (source of progress)
   No horizontal scrolling from 320 px to 1920 px.
 - Accessibility: visible focus ring, keyboard works for every control, dialogs trap focus,
   images have alt text, Khmer text has lang="km".
-- After each task, all of these must pass:
-  npm run lint && npm run typecheck && npm run build
+- After each task or bugfix, all of these must pass:
+  npm run lint && npm run typecheck && npm run test:e2e
+  (and npm run build before final commit)
 - Then tick the task in docs/CHECKLIST.md and commit: "T05: <short description>".
 - Never delete or rewrite design/ files.
+
+## Harness Multi-Agent Architecture
+This project is configured with the **Harness AI** framework (`revfactory/harness`):
+- **Agents** (`.claude/agents/`, `.agents/agents/`):
+  - `frontend-developer`: Next.js 16, React 19, Tailwind CSS, Zustand, i18n
+  - `backend-developer`: Spring Boot, Java 21, Gradle, Supabase, Redis
+  - `qa-verifier`: Playwright E2E testing, API boundary coherence, type & lint verification
+- **Skills** (`.claude/skills/`, `.agents/skills/`):
+  - `phumreader-orchestrator`: Pipeline & Producer-Reviewer coordinator
+  - `playwright-qa`: Targeted & full E2E test executions, trace diagnostics
+  - `api-sync`: OpenAPI schema sync and contract enforcement
+  - `harness`: Meta-skill for agent team engineering and updates
+  - `harness-evolve`: Retrospective feedback and harness improvement
+- **Verification Trigger**: After fixing any defect or adding a flow, always execute Playwright tests (`npx playwright test e2e/<file>.spec.ts` or `npm run test:e2e`).
 
 ## Commands
 npm install          install dependencies
