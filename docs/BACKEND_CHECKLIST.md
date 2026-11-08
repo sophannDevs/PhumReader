@@ -409,6 +409,13 @@ Spring Boot owns every business rule; the website never talks to the database di
     return to the page the user came from.
   - Depends on: P3-02, A14
   - Done when: new and returning users can sign in with each provider on staging.
+  - Google verified locally 2026-11-08 (Google Cloud project with an External consent screen in Testing mode, Web client,
+    redirect URI `http://localhost:3000/api/v1/auth/oauth/google/callback`, keys in `backend/.env`): a new user signed in
+    (website `/login?social=done`, one `user_identities` row GOOGLE, user ACTIVE with `email_verified_at`), then a returning
+    sign-in changed nothing but `last_login_at` and added a session (still 1 identity, 1 user). Not yet checked: the
+    cancel screen, linking to an existing password account (covered by `SocialLoginTest` only), and Facebook (no Meta
+    app yet). **The box stays open** until both providers work on staging (P1-10). Production needs its own redirect URI
+    and a published consent screen (P7-04).
 
 - [x] **P3-05 Roles and ownership**
   - Build: roles READER / CREATOR / ADMIN, `@PreAuthorize` rules, ownership checks on every creator write;
