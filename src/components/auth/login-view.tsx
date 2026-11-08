@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { demoData } from "@/data"
+import { DEMO_MODE } from "@/lib/api/config"
 import { errorCode, retryAfterSeconds } from "@/lib/api/errors"
 import { currentUser, logIn, socialLogIn, type PendingCode } from "@/lib/session"
 import { useAppStore, type StoredUser } from "@/lib/store"
@@ -196,9 +196,11 @@ export function LoginView({
         </Button>
       </form>
 
-      <p className="type-small text-center font-normal text-muted-foreground">
-        {t("demoHint", { email: demoData.demoAccount.email, password: demoData.demoAccount.password })}
-      </p>
+      {DEMO_MODE ? (
+        <p className="type-small text-center font-normal text-muted-foreground">
+          {t("demoHint", { email: "reader@toonwave.app", password: "password123" })}
+        </p>
+      ) : null}
     </div>
   )
 }

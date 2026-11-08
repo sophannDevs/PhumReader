@@ -13,7 +13,9 @@ import { useAppStore } from "@/lib/store"
  * The demo keeps its own balance in the store.
  */
 
-export const walletKey = (email: string) => ["wallet", email] as const
+import { walletKeys } from "@/lib/api/keys"
+
+export const walletKey = (email: string) => walletKeys.balance(email)
 
 export function useWallet() {
   const email = useAccountEmail()

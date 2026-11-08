@@ -88,6 +88,10 @@ export function CommentsSection({
           </div>
         ) : query.isError ? (
           <ErrorState onRetry={() => void query.refetch()} />
+        ) : comments.length === 0 ? (
+          <p className={cn("py-6 text-center text-sm", themed ? "text-reader-quiet" : "text-surface-quiet")}>
+            {t("empty")}
+          </p>
         ) : (
           <CommentList
             tone={themed ? "themed" : "dark"}

@@ -3,7 +3,7 @@ import { coinPacks, faq, paymentMethods } from "@/data"
 import { demoData } from "@/data/demo"
 import { allPages } from "@/lib/api/catalog"
 import { api, idempotencyKey, type Schemas } from "@/lib/api/client"
-import type { CoinsPageData } from "@/lib/demo-api"
+import type { CoinsPageData } from "@/lib/api/types"
 
 /**
  * Coins from the real API (Stage 1 Step 5 part 4): the wallet, packs and orders, in the shapes the
@@ -74,6 +74,16 @@ export async function fetchCoinsPage(signedIn: boolean): Promise<RealCoinsPage> 
 
 // ---------------------------------------------------------------- orders
 
+/** How to take a PayWay payment (only the answer that creates the order has it). */
+export type Checkout = {
+  qrImage: string | null
+  qrString: string | null
+  abaDeeplink: string | null
+  /** Card: post these fields to this address (PayWay's hosted page). */
+  formAction: string | null
+  formFields: Record<string, string> | null
+}
+
 export type OrderState = {
   orderNumber: string
   status: Order["status"]
@@ -84,6 +94,7 @@ export type OrderState = {
   totalCoins: number
   /** ms since 1970 */
   expiresAt: number
+  checkout: Checkout | null
 }
 
 const toState = (o: Order): OrderState => ({
@@ -93,6 +104,15 @@ const toState = (o: Order): OrderState => ({
   coins: o.coins,
   totalCoins: o.totalCoins,
   expiresAt: new Date(o.expiresAt).getTime(),
+  checkout: o.checkout
+    ? {
+        qrImage: o.checkout.qrImage ?? null,
+        qrString: o.checkout.qrString ?? null,
+        abaDeeplink: o.checkout.abaDeeplink ?? null,
+        formAction: o.checkout.formAction ?? null,
+        formFields: o.checkout.formFields ?? null,
+      }
+    : null,
 })
 
 /** A new attempt: a new Idempotency-Key. */

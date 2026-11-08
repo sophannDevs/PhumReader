@@ -12,6 +12,21 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { useHome } from "@/lib/queries"
 import { useTranslations } from "next-intl"
 
+export function HomeSkeleton() {
+  return (
+    <div className="container flex flex-col gap-14 pt-6" aria-busy="true" aria-hidden>
+      <Skeleton className="h-[560px] rounded-[16px] md:h-[470px] md:rounded-hero" />
+      <ContinueReadingSkeleton />
+      <DailyUpdatesSkeleton />
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-14 lg:grid-cols-2 lg:items-start lg:gap-8">
+        <TrendingSkeleton />
+        <GenreSkeleton />
+      </div>
+      <NovelsSkeleton />
+    </div>
+  )
+}
+
 /** Home page body. Sections are added one task at a time (T20-T23); T46 completes their states. */
 export function HomeContent() {
   const home = useHome()
@@ -21,16 +36,7 @@ export function HomeContent() {
     <div className="container flex flex-col gap-14 pt-6">
       <h1 className="sr-only">{tc("siteName")} · {tc("tagline")}</h1>
       {home.isPending ? (
-        <>
-          <Skeleton className="h-[560px] rounded-[16px] md:h-[470px] md:rounded-hero" />
-          <ContinueReadingSkeleton />
-          <DailyUpdatesSkeleton />
-          <div className="grid grid-cols-[minmax(0,1fr)] gap-14 lg:grid-cols-2 lg:items-start lg:gap-8">
-            <TrendingSkeleton />
-            <GenreSkeleton />
-          </div>
-          <NovelsSkeleton />
-        </>
+        <HomeSkeleton />
       ) : home.isError ? (
         <ErrorState onRetry={() => void home.refetch()} />
       ) : (

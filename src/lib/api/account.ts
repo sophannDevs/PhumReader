@@ -1,7 +1,7 @@
 import type { Series } from "@/data/types"
 import { toSeries } from "@/lib/api/catalog"
 import { api, type Schemas } from "@/lib/api/client"
-import type { CreatorData } from "@/lib/demo-api"
+import type { CreatorData } from "@/lib/api/types"
 import { formatCount } from "@/lib/format"
 
 /**

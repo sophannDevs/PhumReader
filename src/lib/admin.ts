@@ -6,13 +6,14 @@ import {
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
+import { adminKeys } from "@/lib/api/keys";
 import { DEMO_MODE } from "@/lib/api/config";
 import * as real from "@/lib/api/admin";
 import { useAccountEmail } from "@/lib/me";
 
 /** Query keys of the admin pages; every key starts with "admin" so one invalidation refreshes them all. */
 const key = (email: string | undefined, ...rest: unknown[]) =>
-  ["admin", email ?? "", ...rest] as const;
+  adminKeys.list(email, String(rest[0] ?? ""), ...rest.slice(1));
 
 /** The start page's counts. Also tells whether the account may use the admin area (403 when not). */
 export function useOverview() {

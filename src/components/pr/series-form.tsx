@@ -19,6 +19,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Textarea } from "@/components/ui/textarea"
 import { genreSchema, weekdaySchema } from "@/data/types"
 import { Link, useRouter } from "@/i18n/navigation"
+import { revalidateCatalogTags } from "@/lib/actions/revalidate"
 import * as api from "@/lib/api/creator"
 import { errorCode, fieldErrors, retryAfterSeconds } from "@/lib/api/errors"
 import { creatorKeys } from "@/lib/creator"
@@ -182,6 +183,7 @@ export function SeriesForm({ initial }: { initial?: api.SeriesEdit }) {
       let series = editing ? await api.updateSeries(initial.id, toInput(values)) : await api.createSeries(toInput(values))
       if (publish && series.visibility !== "published") series = await api.publishSeries(series.id)
       await qc.invalidateQueries({ queryKey: creatorKeys.all })
+      void revalidateCatalogTags(["home", `series-${series.slug}`, "series", "catalog"])
       if (editing) {
         setStatus(series.visibility)
         form.setValue("cover", saved(series.coverUrl))
@@ -207,6 +209,7 @@ export function SeriesForm({ initial }: { initial?: api.SeriesEdit }) {
     try {
       await api.unpublishSeries(initial.id)
       await qc.invalidateQueries({ queryKey: creatorKeys.all })
+      void revalidateCatalogTags(["home", `series-${initial.slug}`, "series", "catalog"])
       setStatus("draft")
       toast.success(t("unpublished"))
     } catch (error) {

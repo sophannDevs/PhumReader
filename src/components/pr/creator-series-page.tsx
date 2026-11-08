@@ -128,7 +128,7 @@ function Row({ item }: { item: MySeries }) {
   )
 }
 
-function Skeleton() {
+export function CreatorSeriesSkeleton() {
   return (
     <div className="flex flex-col gap-4 rounded-card border p-4" aria-hidden>
       {Array.from({ length: 4 }, (_, i) => (
@@ -201,7 +201,7 @@ function SeriesList() {
       </div>
 
       {pending ? (
-        <Skeleton />
+        <CreatorSeriesSkeleton />
       ) : error ? (
         <ErrorState onRetry={() => void (DEMO_MODE ? dashboard : real).refetch()} />
       ) : items.length === 0 ? (

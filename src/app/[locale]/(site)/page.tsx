@@ -1,6 +1,7 @@
 import type { Metadata } from "next"
+import { Suspense } from "react"
 import { getTranslations, setRequestLocale } from "next-intl/server"
-import { HomeContent } from "@/components/pr/home-content"
+import { HomeContent, HomeSkeleton } from "@/components/pr/home-content"
 
 export async function generateMetadata({ params }: PageProps<"/[locale]">): Promise<Metadata> {
   const { locale } = await params
@@ -11,5 +12,9 @@ export async function generateMetadata({ params }: PageProps<"/[locale]">): Prom
 export default async function HomePage({ params }: PageProps<"/[locale]">) {
   const { locale } = await params
   setRequestLocale(locale)
-  return <HomeContent />
+  return (
+    <Suspense fallback={<HomeSkeleton />}>
+      <HomeContent />
+    </Suspense>
+  )
 }

@@ -121,7 +121,20 @@ export function CreatorPage() {
           <ErrorState onRetry={() => void query.refetch()} />
         ) : query.data.series.length === 0 ? (
           <div className="rounded-card border bg-card">
-            <EmptyState title={t("empty")} description={t("emptyDesc")} />
+            <EmptyState
+              icon={PenLineIcon}
+              title={t("empty")}
+              description={t("emptyDesc")}
+              action={
+                DEMO_MODE ? undefined : (
+                  <Button asChild variant="brand">
+                    <Link href="/creator/series/new">
+                      {t("startPublishing")}
+                    </Link>
+                  </Button>
+                )
+              }
+            />
           </div>
         ) : (
           <div className="rounded-card border bg-card p-2 shadow-xs">

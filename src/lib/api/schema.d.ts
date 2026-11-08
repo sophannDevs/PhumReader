@@ -1727,6 +1727,15 @@ export interface components {
             currentPassword: string;
             newPassword: string;
         };
+        Checkout: {
+            abaDeeplink?: string | null;
+            formAction?: string | null;
+            formFields?: {
+                [key: string]: string;
+            } | null;
+            qrImage?: string | null;
+            qrString?: string | null;
+        };
         CodeRequest: {
             code: string;
         };
@@ -2148,6 +2157,7 @@ export interface components {
         OrderView: {
             /** Format: int32 */
             bonusCoins: number;
+            checkout?: components["schemas"]["Checkout"];
             /** Format: int32 */
             coins: number;
             /** Format: date-time */

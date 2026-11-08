@@ -1,7 +1,7 @@
 "use client"
 
 import { useQuery, useQueryClient } from "@tanstack/react-query"
-import { BookOpenIcon, LockOpenIcon, LogInIcon, XIcon } from "lucide-react"
+import { BookOpenIcon, HeartIcon, LockOpenIcon, LogInIcon, XIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import type { ReactNode } from "react"
 import { toast } from "sonner"
@@ -126,14 +126,14 @@ export function LibraryPage() {
     )
   }
 
-  const demoData = demoQuery.data
-  const byId = new Map((demoData?.series ?? []).map((s) => [s.id, s]))
+  const demoResult = demoQuery.data
+  const byId = new Map((demoResult?.series ?? []).map((s) => [s.id, s]))
 
   // Demo entries with the episode raised to `lastRead`, plus series the reader has opened that are not in the demo list.
   const demoEntries: ContinueView[] = []
-  if (demoData) {
+  if (demoResult) {
     const seen = new Set<string>()
-    for (const c of demoData.continueReading) {
+    for (const c of demoResult.continueReading) {
       seen.add(c.seriesData.id)
       demoEntries.push({ ...c, episode: Math.max(c.episode, lastRead[c.seriesData.id] ?? 0) })
     }
@@ -230,7 +230,7 @@ export function LibraryPage() {
 
             <TabsContent value="subscribed">
               {subscribed.length === 0 ? (
-                <EmptyState title={t("emptySubscribed")} description={t("emptySubscribedDesc")} action={<BrowseButton />} />
+                <EmptyState icon={HeartIcon} title={t("emptySubscribed")} description={t("emptySubscribedDesc")} action={<BrowseButton />} />
               ) : (
                 <div className={GRID}>
                   {subscribed.map((s) => (

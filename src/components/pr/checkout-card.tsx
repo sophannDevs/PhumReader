@@ -5,6 +5,7 @@ import { ArrowRightIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useLocalize } from "@/lib/localize"
 import { type Flow, packTotal } from "@/components/pr/checkout-flow"
+import type { Checkout } from "@/lib/api/coins"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import type { CoinPack, PaymentMethod } from "@/data"
@@ -67,6 +68,7 @@ export function CheckoutCard({
   onReset,
   starting = false,
   canSimulate = true,
+  checkout = null,
 }: {
   flow: Flow
   remaining: number
@@ -82,6 +84,8 @@ export function CheckoutCard({
   starting?: boolean
   /** Shows the "simulate failure" button (the demo and the dev simulator). */
   canSimulate?: boolean
+  /** Real API with ABA PayWay: the real QR code, app link or card form. */
+  checkout?: Checkout | null
 }) {
   const t = useTranslations("coins")
   const loc = useLocalize()
@@ -187,14 +191,32 @@ export function CheckoutCard({
         </p>
 
         <div className="mt-4">
-          {kind === "khqr" ? (
+          {checkout?.formAction && checkout.formFields ? (
+            // PayWay's own page takes the payment (and the card number): PhumReader never sees it.
+            <form action={checkout.formAction} method="post" target="_blank" className="flex flex-col items-center gap-3 rounded-card border px-4 py-6 text-center">
+              {Object.entries(checkout.formFields).map(([name, value]) => (
+                <input key={name} type="hidden" name={name} value={value} />
+              ))}
+              <p className="type-caption font-normal text-muted-foreground">{t("cardRedirectHint")}</p>
+              <Button type="submit" variant="brand" size="lg" className="w-full">
+                {t("payNow")}
+              </Button>
+            </form>
+          ) : kind === "khqr" ? (
             <>
               <div className="overflow-hidden rounded-card border text-center">
                 <div className="bg-destructive py-2 text-sm font-bold tracking-wide text-destructive-foreground">{t("khqrBadge")}</div>
                 <div className="flex flex-col items-center gap-1.5 px-4 py-4">
-                  <QrPlaceholder />
-                  <p className="type-caption font-normal text-muted-foreground">{t("khqrPlaceholder")}</p>
-                  <p className="text-base font-semibold">{pack.priceKHR}</p>
+                  {checkout?.qrImage ? (
+                    // eslint-disable-next-line @next/next/no-img-element -- a data: image from PayWay
+                    <img src={checkout.qrImage} alt={t("qrAlt")} className="size-52 bg-white p-1" />
+                  ) : (
+                    <>
+                      <QrPlaceholder />
+                      <p className="type-caption font-normal text-muted-foreground">{t("khqrPlaceholder")}</p>
+                    </>
+                  )}
+                  <p className="text-base font-semibold">{checkout ? pack.priceUSD : pack.priceKHR}</p>
                 </div>
               </div>
               <ol className="type-caption mt-3 list-decimal space-y-1 pl-5 font-normal text-muted-foreground">
@@ -203,6 +225,18 @@ export function CheckoutCard({
                 <li>{t("khqrStep3")}</li>
               </ol>
             </>
+          ) : kind === "aba" && checkout?.abaDeeplink ? (
+            <div className="flex flex-col items-center gap-3 rounded-card border px-4 py-6 text-center">
+              <SmartphoneIcon className="size-8 text-muted-foreground" aria-hidden />
+              <Button asChild variant="brand" size="lg" className="w-full">
+                <a href={checkout.abaDeeplink}>{t("openAba")}</a>
+              </Button>
+              <p className="type-caption font-normal text-muted-foreground">{t("abaOpenHint")}</p>
+              {checkout.qrImage ? (
+                // eslint-disable-next-line @next/next/no-img-element -- a data: image from PayWay
+                <img src={checkout.qrImage} alt={t("qrAlt")} className="size-40 bg-white p-1" />
+              ) : null}
+            </div>
           ) : kind === "aba" ? (
             <div className="flex flex-col items-center gap-2 rounded-card border border-dashed px-4 py-8 text-center">
               <SmartphoneIcon className="size-8 text-muted-foreground" aria-hidden />
@@ -217,14 +251,20 @@ export function CheckoutCard({
           )}
         </div>
 
-        <Button variant="brand" size="lg" className="mt-4 w-full" onClick={() => onSubmit("success")}>
-          {t(kind === "card" ? "payNow" : "paid")}
-        </Button>
+        {checkout ? (
+          <p className="type-small mt-4 text-center font-normal text-muted-foreground" aria-live="polite">
+            {t("waitingPayment")}
+          </p>
+        ) : (
+          <Button variant="brand" size="lg" className="mt-4 w-full" onClick={() => onSubmit("success")}>
+            {t(kind === "card" ? "payNow" : "paid")}
+          </Button>
+        )}
         <div className="mt-2 flex items-center justify-between">
           <Button variant="ghost" size="sm" onClick={onCancel}>
             {t("cancel")}
           </Button>
-          {canSimulate ? (
+          {canSimulate && !checkout ? (
             <Button variant="ghost" size="sm" onClick={() => onSubmit("failed")}>
               {t("simulateFail")}
             </Button>

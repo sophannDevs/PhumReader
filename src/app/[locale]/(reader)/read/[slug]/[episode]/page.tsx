@@ -6,6 +6,7 @@ import { ComicReader, ReaderSkeleton } from "@/components/pr/comic-reader"
 import { episodesFor, getSeries, getSeriesBySlug } from "@/data"
 import { redirect } from "@/i18n/navigation"
 import { DEMO_MODE } from "@/lib/api/config"
+import { fetchSeriesServer } from "@/lib/api/server"
 import { routing } from "@/i18n/routing"
 
 // Episode 1 of every comic is prerendered; other episodes render on request.
@@ -18,8 +19,13 @@ export function generateStaticParams() {
 }
 
 export async function generateMetadata({ params }: PageProps<"/[locale]/read/[slug]/[episode]">): Promise<Metadata> {
+  "use cache"
   const { locale, slug, episode } = await params
-  const series = getSeriesBySlug(slug)
+  let series = getSeriesBySlug(slug)
+  if (!series && !DEMO_MODE) {
+    const detail = await fetchSeriesServer(slug).catch(() => null)
+    if (detail) series = detail.series
+  }
   if (!series) return {}
   const t = await getTranslations({ locale, namespace: "reader" })
   return { title: `${series.title} · ${t("episodeLabel", { n: episode })}` }
@@ -39,7 +45,11 @@ async function ComicContent({ params }: { params: PageProps<"/[locale]/read/[slu
   return <ComicReader slug={slug} n={n} />
 }
 
-export default function Page({ params }: PageProps<"/[locale]/read/[slug]/[episode]">) {
+export default async function Page({ params }: PageProps<"/[locale]/read/[slug]/[episode]">) {
+  const { slug, episode } = await params
+  const series = getSeriesBySlug(slug)
+  const n = Number(episode)
+  if (DEMO_MODE ? !series || !Number.isInteger(n) || n < 1 || n > episodesFor(slug).length : !Number.isInteger(n) || n < 1) notFound()
   return (
     <Suspense fallback={<ReaderSkeleton />}>
       <ComicContent params={params} />

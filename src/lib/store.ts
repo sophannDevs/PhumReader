@@ -3,8 +3,9 @@
 import { useSyncExternalStore } from "react"
 import { create } from "zustand"
 import { createJSONStorage, persist } from "zustand/middleware"
-import { demoData, purchaseHistory, type PaymentMethodId, type Purchase } from "@/data"
+import type { PaymentMethodId, Purchase } from "@/data/types"
 import type { Locale } from "@/i18n/routing"
+import { DEMO_MODE } from "@/lib/api/config"
 
 /**
  * Simulated app state (login, coins, subscriptions, unlocks, reading progress,
@@ -75,16 +76,16 @@ export const likeKey = {
   bookmark: (seriesId: string, n: number) => `bookmark:${seriesId}:${n}`,
 }
 
-const defaultPack = demoData.coinPacks.find((p) => p.tag === "Popular")?.coins ?? demoData.coinPacks[0].coins
+const defaultPack = 30
 
 const initialState = (): AppState => ({
   user: null,
-  coins: 3,
+  coins: DEMO_MODE ? 3 : 0,
   subscriptions: [],
   follows: [],
   unlocked: {},
   lastRead: {},
-  purchases: purchaseHistory().map((p) => ({ ...p })),
+  purchases: [],
   returnTo: null,
   shopReturn: null,
   pendingUnlock: null,
@@ -134,10 +135,21 @@ export const useAppStore = create<AppState & AppActions>()(
     }),
     {
       name: STORE_KEY,
-      version: 1,
+      version: 2,
       storage: createJSONStorage(() => localStorage),
       // Rehydrated once on mount (StoreHydrator) so server and first client render match.
       skipHydration: true,
+      migrate: (persistedState: unknown, version: number) => {
+        const state = (persistedState && typeof persistedState === "object" ? persistedState : {}) as Record<string, unknown>
+        if (version < 2 && !DEMO_MODE) {
+          return {
+            ...state,
+            coins: 0,
+            purchases: [],
+          }
+        }
+        return state
+      },
     }
   )
 )

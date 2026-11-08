@@ -1,4 +1,4 @@
-import { API_BASE } from "@/lib/api/config"
+import { API_BASE, BACKEND_URL } from "@/lib/api/config"
 import type { components } from "@/lib/api/schema"
 
 /**
@@ -62,6 +62,11 @@ export type RequestOptions = {
   query?: Query
   headers?: Record<string, string>
   signal?: AbortSignal
+  cache?: RequestCache
+  next?: {
+    revalidate?: number | false
+    tags?: string[]
+  }
 }
 
 // ---------------------------------------------------------------- session lost
@@ -77,6 +82,7 @@ export function onSessionLost(listener: () => void): () => void {
 // ---------------------------------------------------------------- CSRF and refresh
 
 function readCookie(name: string): string | undefined {
+  if (typeof document === "undefined") return undefined
   const prefix = `${name}=`
   const found = document.cookie.split("; ").find((c) => c.startsWith(prefix))
   return found ? decodeURIComponent(found.slice(prefix.length)) : undefined
@@ -118,13 +124,14 @@ function url(path: string, query?: Query): string {
     if (value !== undefined && value !== null && value !== "") params.set(key, String(value))
   }
   const qs = params.toString()
-  return `${API_BASE}${path}${qs ? `?${qs}` : ""}`
+  const base = typeof window === "undefined" ? `${BACKEND_URL}${API_BASE}` : API_BASE
+  return `${base}${path}${qs ? `?${qs}` : ""}`
 }
 
 async function send(method: string, path: string, options: RequestOptions, freshCsrf = false): Promise<Response> {
   const headers = new Headers(options.headers)
   headers.set("Accept", "application/json")
-  if (method !== "GET") {
+  if (method !== "GET" && typeof document !== "undefined") {
     const token = await csrfToken(freshCsrf)
     if (token) headers.set("X-XSRF-TOKEN", token)
   }
@@ -133,14 +140,20 @@ async function send(method: string, path: string, options: RequestOptions, fresh
     headers.set("Content-Type", "application/json")
     body = JSON.stringify(options.body)
   }
-  return fetch(url(path, options.query), {
+  const init: RequestInit & { next?: { revalidate?: number | false; tags?: string[] } } = {
     method,
     headers,
     body,
-    credentials: "same-origin",
-    cache: "no-store",
     signal: options.signal,
-  })
+  }
+  if (typeof window !== "undefined") {
+    init.credentials = "same-origin"
+    init.cache = options.cache ?? "no-store"
+  } else {
+    if (options.cache) init.cache = options.cache
+    if (options.next) init.next = options.next
+  }
+  return fetch(url(path, options.query), init)
 }
 
 async function sendOrThrow(method: string, path: string, options: RequestOptions, freshCsrf = false) {

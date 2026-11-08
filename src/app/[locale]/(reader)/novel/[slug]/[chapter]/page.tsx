@@ -6,6 +6,7 @@ import { NovelReader, NovelSkeleton } from "@/components/pr/novel-reader"
 import { episodesFor, getSeries, getSeriesBySlug } from "@/data"
 import { redirect } from "@/i18n/navigation"
 import { DEMO_MODE } from "@/lib/api/config"
+import { fetchSeriesServer } from "@/lib/api/server"
 import { routing } from "@/i18n/routing"
 
 // Chapter 1 of every novel is prerendered; other chapters render on request.
@@ -18,8 +19,13 @@ export function generateStaticParams() {
 }
 
 export async function generateMetadata({ params }: PageProps<"/[locale]/novel/[slug]/[chapter]">): Promise<Metadata> {
+  "use cache"
   const { locale, slug, chapter } = await params
-  const series = getSeriesBySlug(slug)
+  let series = getSeriesBySlug(slug)
+  if (!series && !DEMO_MODE) {
+    const detail = await fetchSeriesServer(slug).catch(() => null)
+    if (detail) series = detail.series
+  }
   if (!series) return {}
   const t = await getTranslations({ locale, namespace: "reader" })
   return { title: `${series.title} · ${t("chapterLabel", { n: chapter })}` }
@@ -39,7 +45,11 @@ async function NovelContent({ params }: { params: PageProps<"/[locale]/novel/[sl
   return <NovelReader slug={slug} n={n} />
 }
 
-export default function Page({ params }: PageProps<"/[locale]/novel/[slug]/[chapter]">) {
+export default async function Page({ params }: PageProps<"/[locale]/novel/[slug]/[chapter]">) {
+  const { slug, chapter } = await params
+  const series = getSeriesBySlug(slug)
+  const n = Number(chapter)
+  if (DEMO_MODE ? !series || !Number.isInteger(n) || n < 1 || n > episodesFor(slug).length : !Number.isInteger(n) || n < 1) notFound()
   return (
     <Suspense fallback={<NovelSkeleton />}>
       <NovelContent params={params} />

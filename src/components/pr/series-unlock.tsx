@@ -11,7 +11,6 @@ import { DEMO_MODE } from "@/lib/api/config"
 import * as realCoins from "@/lib/api/coins"
 import { ApiError, idempotencyKey } from "@/lib/api/client"
 import type { Viewer } from "@/lib/api/me"
-import { unlock } from "@/lib/demo-api"
 import { meKeys, useAccountEmail } from "@/lib/me"
 import { useEpisodes } from "@/lib/queries"
 import { readerHref, seriesHref } from "@/lib/routes"
@@ -101,6 +100,7 @@ export function useSeriesUnlock(series: Series) {
         setLoading(true)
         try {
           if (DEMO_MODE) {
+            const { unlock } = await import("@/lib/demo-api")
             await unlock(series.id, target.n)
             store().spendCoins(price)
             store().unlockEpisode(series.id, target.n)

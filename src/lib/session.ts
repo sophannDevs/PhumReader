@@ -2,7 +2,6 @@
 
 import { DEMO_MODE } from "@/lib/api/config"
 import { ApiError, api, type Schemas } from "@/lib/api/client"
-import * as demo from "@/lib/demo-api"
 import { useAppStore, type StoredUser } from "@/lib/store"
 
 /**
@@ -38,7 +37,10 @@ export async function currentUser(): Promise<StoredUser | null> {
 }
 
 export async function logIn(email: string, password: string, remember: boolean): Promise<StoredUser> {
-  if (DEMO_MODE) return demo.login(email, password, useAppStore.getState().accounts)
+  if (DEMO_MODE) {
+    const demo = await import("@/lib/demo-api")
+    return demo.login(email, password, useAppStore.getState().accounts)
+  }
   return toUser(await api.post<Me>("/auth/login", { email: email.trim(), password, remember }))
 }
 
@@ -47,8 +49,11 @@ export async function logIn(email: string, password: string, remember: boolean):
  * (through the API's `start` endpoint) and comes back to `/login?social=<result>`, so this promise
  * never settles: the page is being left.
  */
-export function socialLogIn(provider: "google" | "facebook", locale: string): Promise<StoredUser> {
-  if (DEMO_MODE) return demo.socialLogin(provider)
+export async function socialLogIn(provider: "google" | "facebook", locale: string): Promise<StoredUser> {
+  if (DEMO_MODE) {
+    const demo = await import("@/lib/demo-api")
+    return demo.socialLogin(provider)
+  }
   // A full page navigation to the API (not a Next.js page), so the lint rule for internal pages does not apply.
   // eslint-disable-next-line @next/next/no-location-assign-relative-destination
   window.location.href = `/api/v1/auth/oauth/${provider}/start?locale=${locale === "km" ? "km" : "en"}`
@@ -58,6 +63,7 @@ export function socialLogIn(provider: "google" | "facebook", locale: string): Pr
 /** Creates the account (real API) and emails the code. */
 export async function signUp(data: SignupData, language: string): Promise<PendingCode> {
   if (DEMO_MODE) {
+    const demo = await import("@/lib/demo-api")
     await demo.signUp(data, useAppStore.getState().accounts.map((a) => a.email))
     return { email: data.email, signup: data, resendAfterSeconds: RESEND_SECONDS }
   }
@@ -68,6 +74,7 @@ export async function signUp(data: SignupData, language: string): Promise<Pendin
 /** The right code confirms the email and signs in. */
 export async function verifyEmail(pending: PendingCode, code: string): Promise<StoredUser> {
   if (DEMO_MODE) {
+    const demo = await import("@/lib/demo-api")
     await demo.verifyCode(code)
     const signup = pending.signup ?? { name: pending.email, email: pending.email, password: "" }
     useAppStore.getState().addAccount(signup)
@@ -83,7 +90,10 @@ export async function resendCode(email: string): Promise<void> {
 
 /** Emails a reset link; resolves with the address it was sent to. */
 export async function requestPasswordReset(email: string): Promise<string> {
-  if (DEMO_MODE) return (await demo.sendResetLink(email)).email
+  if (DEMO_MODE) {
+    const demo = await import("@/lib/demo-api")
+    return (await demo.sendResetLink(email)).email
+  }
   await api.post("/auth/forgot-password", { email: email.trim() })
   return email.trim()
 }
@@ -92,6 +102,7 @@ export async function requestPasswordReset(email: string): Promise<string> {
 export async function resetPassword(token: string, password: string): Promise<void> {
   if (DEMO_MODE) {
     // The demo sends no emails, so any link "works".
+    const demo = await import("@/lib/demo-api")
     await demo.withDemo(() => undefined)
     return
   }

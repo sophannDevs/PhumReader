@@ -21,6 +21,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
 import { Link } from "@/i18n/navigation"
+import { revalidateCatalogTags } from "@/lib/actions/revalidate"
 import * as api from "@/lib/api/creator"
 import { errorCode, fieldErrors, retryAfterSeconds } from "@/lib/api/errors"
 import { creatorKeys } from "@/lib/creator"
@@ -218,6 +219,7 @@ export function EpisodeForm({
     try {
       const saved = editing ? await api.updateEpisode(series.id, initial.number, input) : await api.createEpisode(series.id, input)
       await qc.invalidateQueries({ queryKey: creatorKeys.all })
+      void revalidateCatalogTags(["home", `series-${series.slug}`, `episodes-${series.slug}`, "series", "catalog"])
       setDone({ number: saved.number, status: saved.status as Done["status"], at: saved.publishedAt ?? undefined })
     } catch (error) {
       failed(error)
