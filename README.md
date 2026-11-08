@@ -1,31 +1,31 @@
 # PhumReader
 
 PhumReader (ភូមិ "village" + Reader) is a webtoon-style site for comics and web novels for readers in
-Cambodia, in English and Khmer. The Spring Boot API lives in [`backend/`](backend/README.md)
-(plan: [docs/BACKEND.md](docs/BACKEND.md), progress: [docs/BACKEND_CHECKLIST.md](docs/BACKEND_CHECKLIST.md)).
-**The website is moving onto it page by page (Stage 1 Step 5)**: sign-in and the catalog (Home, Rankings,
-Genres, Search, series pages, both readers) already use the API; the library, coins, comments, settings and
-creator pages still use the demo data until their part is done. Set `NEXT_PUBLIC_DEMO=1` in `.env.local` to run the whole
-Phase 1 demo without a backend.
+Cambodia, in English and Khmer. The website (Next.js) is in the repo root; the Spring Boot API lives in
+[`backend/`](backend/README.md) (plan: [docs/BACKEND.md](docs/BACKEND.md), progress:
+[docs/BACKEND_CHECKLIST.md](docs/BACKEND_CHECKLIST.md)). The website can run on its own in **demo mode**
+(`NEXT_PUBLIC_DEMO=1`: fake data kept in your browser, no backend needed) or against the API.
 
 ## Run it
 
-Requires Node 22 or newer and npm.
+Requires Node 22 or newer and npm. Nothing else is needed for the quickest start, demo mode (about 2 minutes):
 
 ```bash
+git clone https://github.com/sophannDevs/PhumReader.git && cd PhumReader
 npm install
-npm run dev          # http://localhost:3000  (Khmer: http://localhost:3000/km)
+echo "NEXT_PUBLIC_DEMO=1" > .env.local     # works in macOS, Linux, Git Bash and Windows Command Prompt
+npm run dev                                # http://localhost:3000  (Khmer: http://localhost:3000/km)
 ```
 
-`npm run dev` talks to the API (start it first, see below). Without a backend, put `NEXT_PUBLIC_DEMO=1` in
-`.env.local` (see `.env.example`) and restart `npm run dev`.
+Without `NEXT_PUBLIC_DEMO=1` the website talks to the API, so start the API first (next section); with no API
+running, the pages show their error state. `.env.example` lists every setting; restart `npm run dev` after changing `.env.local`.
 
 | Command | What it does |
 | --- | --- |
 | `npm run lint` | ESLint |
 | `npm run typecheck` | `next typegen && tsc --noEmit` |
 | `npm run build` | production build |
-| `npm run test:e2e` | Playwright tests in demo mode (start with `npx playwright install chromium` once; it starts `npm run dev` with `NEXT_PUBLIC_DEMO=1` itself, or reuses a dev server already on port 3000) |
+| `npm run test:e2e` | Playwright tests in demo mode (run `npx playwright install chromium` once; it starts `npm run dev` with `NEXT_PUBLIC_DEMO=1` itself, or reuses a dev server already on port 3000, so stop your own dev server first or it will test that one instead; with `CI=true` it builds and tests the production site, as GitHub does) |
 | `npm run api:gen` | TypeScript types `src/lib/api/schema.d.ts` from `backend/openapi/openapi.json` |
 | `npm run api:check` | fails when `src/lib/api/schema.d.ts` is out of date |
 
@@ -34,11 +34,16 @@ npm run dev          # http://localhost:3000  (Khmer: http://localhost:3000/km)
 Requires Java 21 (for example Temurin 21). Docker is optional: it only runs the local helper services (Redis,
 Meilisearch, S3 storage, Mailpit); the API and its tests do not need it.
 
-1. `copy backend\.env.example backend\.env` and fill in the Supabase session pooler settings (see the comments in
-   the file). `backend/.env` is git-ignored.
-2. `cd backend` then `gradlew.bat bootRun` (Git Bash: `./gradlew bootRun`): the API starts on http://localhost:8080.
-3. `npm run dev` in the repo root: the website forwards `/api/...` to the API (`BACKEND_URL` in `.env.local`,
-   default `http://localhost:8080`). Check: http://localhost:3000/api/v1/health shows `{"status":"UP","database":"UP"}`.
+1. `cp backend/.env.example backend/.env` (Windows Command Prompt: `copy backend\.env.example backend\.env`) and fill
+   in `DB_URL`, `DB_USER` and `DB_PASSWORD` from your Supabase project's session pooler (see the comments in the
+   file). `backend/.env` is git-ignored. If they are missing the API stops at start-up and names them.
+2. `cd backend` then `./gradlew bootRun` (Windows Command Prompt: `gradlew.bat bootRun`): the API starts on
+   http://localhost:8080.
+3. In another terminal, `npm run dev` in the repo root with `NEXT_PUBLIC_DEMO` unset or `0` in `.env.local`: the website
+   forwards `/api/...` to the API (`BACKEND_URL` in `.env.local`, default `http://localhost:8080`). Check:
+   http://localhost:3000/api/v1/health shows `{"status":"UP","database":"UP"}`.
+
+To run the API's tests and style checks: `cd backend && ./gradlew check` (no database, no network, no Docker).
 
 Local services (optional, for Redis, search, file storage and email; the API falls back to built-in stand-ins
 without them). Pick one way; both use the same ports:

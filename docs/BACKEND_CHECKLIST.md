@@ -272,11 +272,24 @@ Resend), Phase 6 gates.
 
 P1-03 (Next.js app) and P1-04 (web libraries + shadcn/ui) are done by T01–T06.
 
-- [ ] **P1-01 Repository and README**
+- [x] **P1-01 Repository and README**
   - Build: `backend/` (Spring Boot, Gradle), `infra/` (Cloudflare Worker, deploy files), `src/lib/api/` for the
     generated client, `docs/`. Root README gains a "Run the backend" section.
   - Depends on: —
   - Done when: clone + README steps start both apps on a new machine in under 15 minutes (without Docker).
+  - Done 2026-11-08: folders `backend/`, `infra/image-worker/`, `src/lib/api/` and `docs/` exist; the root README has a
+    "Run it" quick start and a "Run the backend" section. Checked on a fresh `git clone` of the pull request branch, the
+    README steps in order: clone 4 s, `npm install` 6 s, demo mode with `echo "NEXT_PUBLIC_DEMO=1" > .env.local` loads
+    the home page with no error box (headless browser), `CI=true npm run test:e2e` builds and passes 48 of 48 in 62 s,
+    `cd backend && ./gradlew check` passes 245 tests in 61 s with no Docker. Times were taken on the development
+    machine with warm npm and Gradle caches; a first run on a new machine also downloads Node packages, Gradle, the
+    JDK toolchain and the embedded PostgreSQL binaries (not measured, expect a few more minutes). Not tried: the API
+    against a database on a second machine (needs the Supabase password, which stays out of the repo).
+    Found and fixed on the way: README said `copy` (Windows only), never said to create `.env.local` (a newcomer saw
+    error screens without a backend) and described an older stage of the project; and starting the API without
+    `backend/.env` ended in "'url' must start with jdbc" without naming `DB_URL`. New `config/RequiredSettings` stops
+    the API at start-up with "Missing required setting(s): DB_URL, ..." (3 tests; normal start and `./gradlew check`
+    still pass), which makes P1-08's "names it" true for the database settings.
 
 - [ ] **P1-02 Local services (no Docker)**
   - Build: the plan's five local services without Docker: Supabase dev project `phumreader-dev` (Singapore,
