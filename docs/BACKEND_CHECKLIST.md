@@ -413,8 +413,10 @@ Spring Boot owns every business rule; the website never talks to the database di
     redirect URI `http://localhost:3000/api/v1/auth/oauth/google/callback`, keys in `backend/.env`): a new user signed in
     (website `/login?social=done`, one `user_identities` row GOOGLE, user ACTIVE with `email_verified_at`), then a returning
     sign-in changed nothing but `last_login_at` and added a session (still 1 identity, 1 user). Not yet checked: the
-    cancel screen, linking to an existing password account (covered by `SocialLoginTest` only), and Facebook (no Meta
-    app yet). **The box stays open** until both providers work on staging (P1-10). Production needs its own redirect URI
+    cancel screen and linking to an existing password account (covered by `SocialLoginTest` only). **Facebook skipped for
+    now (owner decision 2026-11-08):** the code is written and tested with a fake provider, but there is no Meta app, and
+    the login page keeps showing "not set up yet" for it. **The box stays open** until Google works on staging (P1-10) and
+    Facebook is either set up or dropped from the plan. Production needs its own redirect URI
     and a published consent screen (P7-04).
 
 - [x] **P3-05 Roles and ownership**
