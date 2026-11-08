@@ -4,11 +4,11 @@ import { AuthBackLink } from "@/components/auth/auth-back-link"
 import { SkipLink } from "@/components/layout/skip-link"
 import { LanguageSwitch } from "@/components/layout/language-switch"
 import { Logo } from "@/components/layout/logo"
-import { demoData } from "@/data"
+import { getSeries } from "@/data"
 import type { Locale } from "@/i18n/routing"
 import { cn } from "@/lib/utils"
 
-const COLLAGE_COVERS = demoData.series.slice(0, 16)
+const COLLAGE_COVERS = getSeries().slice(0, 16)
 
 /** "Chan Sreyleak, creator of Lantern Alley" -> name + series (series is italic). */
 function splitByline(by: string) {
@@ -34,7 +34,7 @@ export function AuthSplitLayout({
 }) {
   const locale = useLocale() as Locale
   const t = useTranslations("auth")
-  const byline = splitByline(demoData.authQuote.by)
+  const byline = splitByline("Chan Sreyleak, creator of Lantern Alley")
 
   return (
     <div className={cn("grid min-h-svh md:grid-cols-[46fr_54fr]", className)}>

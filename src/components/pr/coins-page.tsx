@@ -93,7 +93,7 @@ function FirstPurchaseAlert() {
   )
 }
 
-function CoinsSkeleton() {
+export function CoinsSkeleton() {
   return (
     <div className="flex flex-col gap-8" aria-hidden>
       <Skeleton className="h-6 w-40" />
@@ -177,6 +177,7 @@ function CoinsBody({ data }: { data: CoinsData }) {
         method={method}
         offer={offer}
         expiryMinutes={data.khqrExpiryMinutes}
+        checkout={checkout.checkout}
         onContinue={checkout.start}
         onCancel={checkout.cancel}
         onSubmit={(outcome) => void checkout.submit(outcome)}

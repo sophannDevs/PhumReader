@@ -168,6 +168,37 @@ public class PaymentQueries {
                 .update();
     }
 
+    /**
+     * PayWay orders still unpaid (open, expired or failed) created since {@code since}, oldest
+     * first: the ones reconciliation asks PayWay about.
+     */
+    public List<OrderRow> unpaidPayWayOrders(OffsetDateTime since, int limit) {
+        return jdbc.sql(
+                        "select "
+                                + ORDER_COLUMNS
+                                + " from payment_orders where provider = 'PAYWAY'"
+                                + " and status in ('PENDING', 'EXPIRED', 'FAILED', 'CANCELLED')"
+                                + " and created_at >= :since order by created_at limit :limit")
+                .param("since", since)
+                .param("limit", limit)
+                .query((rs, n) -> order(rs))
+                .list();
+    }
+
+    /** PayWay orders still PENDING whose time ran out. */
+    public List<OrderRow> expiredPayWayOrders(OffsetDateTime now, int limit) {
+        return jdbc.sql(
+                        "select "
+                                + ORDER_COLUMNS
+                                + " from payment_orders where provider = 'PAYWAY'"
+                                + " and status = 'PENDING' and expires_at <= :now"
+                                + " order by expires_at limit :limit")
+                .param("now", now)
+                .param("limit", limit)
+                .query((rs, n) -> order(rs))
+                .list();
+    }
+
     /** Whether the user has a paid order other than {@code exceptOrderId}. */
     public boolean hasPaidOrder(UUID userId, @Nullable UUID exceptOrderId) {
         return jdbc.sql(

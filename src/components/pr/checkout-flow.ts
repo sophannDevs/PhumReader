@@ -7,7 +7,6 @@ import { useTranslations } from "next-intl"
 import type { CoinPack, PaymentMethod } from "@/data"
 import { DEMO_MODE } from "@/lib/api/config"
 import * as coins from "@/lib/api/coins"
-import { DemoApiError, pay } from "@/lib/demo-api"
 import { today } from "@/lib/format"
 import { useAccountEmail } from "@/lib/me"
 import { useAppStore } from "@/lib/store"
@@ -17,7 +16,7 @@ import { applyBalance } from "@/lib/wallet"
 const PENDING_KEY = "phumreader.pendingOrder"
 const POLL_MS = 3000
 
-type Pending = { email: string; number: string }
+type Pending = { email: string; number: string; checkout?: coins.Checkout | null }
 const readPending = (): Pending | null => {
   try {
     return JSON.parse(localStorage.getItem(PENDING_KEY) ?? "null")
@@ -73,6 +72,8 @@ export function useCheckout({
   const order = useRef<string | null>(null)
   const settled = useRef(false)
   const [flow, setFlow] = useState<Flow>({ step: "review" })
+  /** Real API with ABA PayWay: the QR code, app link or card form to show while the reader pays. */
+  const [checkout, setCheckout] = useState<coins.Checkout | null>(null)
   const inFlight = useRef(false)
   const [remaining, setRemaining] = useState(expiryMinutes * 60)
   const total = packTotal(pack, offer)
@@ -151,6 +152,7 @@ export function useCheckout({
         settled.current = false
         if (state.status === "pending" && state.expiresAt > Date.now()) {
           setDraft({ pack: state.coins, method: state.method })
+          setCheckout(pending.checkout ?? null)
           setRemaining(Math.max(0, Math.ceil((state.expiresAt - Date.now()) / 1000)))
           setFlow({ step: "pay", deadline: state.expiresAt })
         } else void settle(state)
@@ -166,7 +168,8 @@ export function useCheckout({
       const state = await coins.createOrder(packId, method.id)
       order.current = state.orderNumber
       settled.current = false
-      writePending({ email, number: state.orderNumber })
+      writePending({ email, number: state.orderNumber, checkout: state.checkout })
+      setCheckout(state.checkout)
       setRemaining(Math.max(0, Math.ceil((state.expiresAt - Date.now()) / 1000)))
       setFlow({ step: "pay", deadline: state.expiresAt })
     } catch {
@@ -229,6 +232,7 @@ export function useCheckout({
     }
     setFlow({ step: "confirming" })
     try {
+      const { pay } = await import("@/lib/demo-api")
       const result = await pay(
         { coins: pack.coins, bonus: pack.bonus, firstBonus: offer ? pack.coins : 0, method: method.id },
         outcome
@@ -245,7 +249,7 @@ export function useCheckout({
         method: method.id,
       })
     } catch (e) {
-      if (e instanceof DemoApiError) record("Failed", `PR-FAILED${Date.now() % 100000}`)
+      if (typeof e === "object" && e !== null && "name" in e && e.name === "DemoApiError") record("Failed", `PR-FAILED${Date.now() % 100000}`)
       toast.error(tt("paymentFailed"))
       setFlow({ step: "failed", reason: "declined" })
     } finally {
@@ -262,6 +266,7 @@ export function useCheckout({
     start,
     cancel,
     submit,
+    checkout,
     reset: () => setFlow({ step: "review" }),
   }
 }

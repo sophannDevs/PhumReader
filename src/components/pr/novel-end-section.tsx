@@ -3,6 +3,7 @@
 import { BookmarkIcon, ChevronLeftIcon, ChevronRightIcon, HeartIcon, ListIcon, MessageSquareIcon, Share2Icon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { toast } from "sonner"
+import { ReaderDiscover } from "@/components/pr/reader-discover"
 import { CommentsSection } from "@/components/pr/comments-section"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
@@ -121,6 +122,8 @@ export function NovelEndSection({
           <ChevronRightIcon />
         </Button>
       </div>
+
+      <ReaderDiscover series={series} tone="novel" />
 
       <Link
         href={seriesHref(series)}

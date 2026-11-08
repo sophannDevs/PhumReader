@@ -2,7 +2,7 @@
 
 import { useSearchParams } from "next/navigation"
 import { useTranslations } from "next-intl"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { DoneView } from "@/components/auth/done-view"
 import { ForgotView } from "@/components/auth/forgot-view"
 import { LoginView } from "@/components/auth/login-view"
@@ -10,6 +10,7 @@ import { VerifyView } from "@/components/auth/verify-view"
 import { SignupView } from "@/components/auth/signup-view"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import type { PendingCode } from "@/lib/session"
+import { useAppStore } from "@/lib/store"
 
 type View = "login" | "signup" | "verify" | "forgot" | "done"
 
@@ -43,6 +44,13 @@ export function AuthFlow({ initial = "login" }: { initial?: StartView }) {
     startView === "verify" ? { email: emailParam, resendAfterSeconds: 0 } : null,
   )
   const [verifyFrom, setVerifyFrom] = useState<"signup" | "login">(initial === "verify" ? "login" : "signup")
+
+  useEffect(() => {
+    const returnTo = params.get("returnTo") || params.get("next")
+    if (returnTo && returnTo.startsWith("/")) {
+      useAppStore.getState().setReturnTo(returnTo)
+    }
+  }, [params])
 
   // The address follows the view (/login, /signup, /forgot, /verify?email=) so a reload or the language
   // switch (which opens the other locale's route) lands on the same view. Done is not persisted.

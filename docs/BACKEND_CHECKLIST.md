@@ -125,6 +125,13 @@ deployment and no Docker. A step is done when its checks pass; tick the plan tas
     providers** (needs the A14 apps: Google Cloud OAuth client, Meta app with Facebook Login), so P3-04 stays
     unticked until a sign-in works on dev or staging with each provider. Still open in Step 3: Upstash and R2
     accounts, MinIO bucket (P3-07).
+  - Done 2026-11-08 (Docker option): `docker-compose.yml` + `npm run services:docker:up` / `services:docker:down` run Redis 8,
+    Meilisearch 1.56.1 (same version as the brew one; v1.15 failed the Khmer search test), S3 storage and Mailpit, and
+    create the `phumreader-dev` bucket. Docker replaces nothing: the brew scripts still work, but not at the same time
+    (same ports). MinIO's images are no longer published, so the S3 stand-in is RustFS 1.0.4 (`rustfs/rustfs`). Checked:
+    `npm run services:check` shows all 5 healthy; the real-service tests pass against the containers
+    (`S3ObjectStoreTest`, `MeilisearchIndexTest` 6/6, `RedisStandInsTest`, `RedisViewCounterTest`); an object was
+    written, read and deleted in the bucket. Still open: Upstash and a real R2 bucket (accounts), Google / Facebook apps.
   - 2026-11-06: the company PC may not download programs, so Step 4 runs first with built-in stand-ins
     (rate limits and codes in memory, search in PostgreSQL, JWT signed with the JDK). At home: install the
     services, fill in `backend/.env`, swap the stand-ins (and optionally the JWT code for a JWT library), add

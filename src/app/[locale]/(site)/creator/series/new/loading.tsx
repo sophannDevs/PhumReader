@@ -1,5 +1,5 @@
-import { SkeletonPage } from "@/components/pr/skeletons"
+import { SkeletonForm } from "@/components/pr/skeletons"
 
 export default function Loading() {
-  return <SkeletonPage />
+  return <SkeletonForm />
 }

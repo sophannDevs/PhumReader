@@ -7,6 +7,7 @@ import { toast } from "sonner"
 import type { CommentView } from "@/components/pr/comment-list"
 import { DEMO_MODE } from "@/lib/api/config"
 import * as real from "@/lib/api/me"
+import { commentsKeys } from "@/lib/api/keys"
 import { useAccountEmail, useAskToLogin, useFailed } from "@/lib/me"
 import { useComments } from "@/lib/queries"
 import { likeKey, useAppStore, useUser } from "@/lib/store"
@@ -31,7 +32,7 @@ export function useCommentThread(kind: "series" | "episode", slug: string, justN
   // loaded again after the post (the key changes when the account is read): keep the reader's own.
   const [mineByThread, setMineByThread] = useState<Record<string, real.ApiComment[]>>({})
   const scope = `${kind}:${slug}`
-  const key = ["thread", email ?? "", slug] as const
+  const key = commentsKeys.threadAccount(email ?? "", slug)
   const realQuery = useQuery({ queryKey: key, queryFn: () => real.fetchThread(slug), enabled: !DEMO_MODE })
 
   const mine = mineByThread[slug]

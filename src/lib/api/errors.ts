@@ -1,9 +1,11 @@
 import { ApiError } from "@/lib/api/client"
-import { DemoApiError } from "@/lib/demo-api"
 
 /** The machine-readable code of an API or demo error (e.g. "invalid_credentials"). */
 export function errorCode(error: unknown): string | undefined {
-  if (error instanceof ApiError || error instanceof DemoApiError) return error.code
+  if (error instanceof ApiError) return error.code
+  if (typeof error === "object" && error !== null && "code" in error && typeof (error as { code: unknown }).code === "string") {
+    return (error as { code: string }).code
+  }
   return undefined
 }
 

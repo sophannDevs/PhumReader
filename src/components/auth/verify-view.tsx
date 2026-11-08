@@ -8,7 +8,7 @@ import { useEffect, useRef, useState } from "react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp"
-import { demoData } from "@/data"
+import { DEMO_MODE } from "@/lib/api/config"
 import { errorCode, retryAfterSeconds } from "@/lib/api/errors"
 import { resendCode, verifyEmail, type PendingCode } from "@/lib/session"
 import { useAppStore } from "@/lib/store"
@@ -137,9 +137,11 @@ export function VerifyView({
           </button>
         )}
       </p>
-      <p className="type-small font-normal text-muted-foreground">
-        {t("demoCode", { code: demoData.demoAccount.verificationCode })}
-      </p>
+      {DEMO_MODE ? (
+        <p className="type-small font-normal text-muted-foreground">
+          {t("demoCode", { code: "123456" })}
+        </p>
+      ) : null}
 
       <button
         type="button"

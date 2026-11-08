@@ -21,12 +21,8 @@ import { likeKey, useAppStore, useHydrated, useUser } from "@/lib/store"
  * Query keys carry the account's email, so one account never sees another's cached data.
  */
 
-export const meKeys = {
-  viewer: (email: string, slug: string) => ["viewer", email, slug] as const,
-  subscriptions: (email: string) => ["subscriptions", email] as const,
-  history: (email: string) => ["history", email] as const,
-  unlocked: (email: string) => ["unlocked", email] as const,
-}
+import { meKeys } from "@/lib/api/keys"
+export { meKeys }
 
 /** The signed-in account's email once the stored state is loaded; undefined when logged out. */
 export function useAccountEmail(): string | undefined {

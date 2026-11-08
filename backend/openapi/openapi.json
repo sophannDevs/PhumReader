@@ -4631,6 +4631,29 @@
         },
         "required" : [ "currentPassword", "newPassword" ]
       },
+      "Checkout" : {
+        "type" : "object",
+        "properties" : {
+          "abaDeeplink" : {
+            "type" : [ "string", "null" ]
+          },
+          "formAction" : {
+            "type" : [ "string", "null" ]
+          },
+          "formFields" : {
+            "type" : [ "object", "null" ],
+            "additionalProperties" : {
+              "type" : "string"
+            }
+          },
+          "qrImage" : {
+            "type" : [ "string", "null" ]
+          },
+          "qrString" : {
+            "type" : [ "string", "null" ]
+          }
+        }
+      },
       "CodeRequest" : {
         "type" : "object",
         "properties" : {
@@ -5844,6 +5867,9 @@
           "bonusCoins" : {
             "type" : "integer",
             "format" : "int32"
+          },
+          "checkout" : {
+            "$ref" : "#/components/schemas/Checkout"
           },
           "coins" : {
             "type" : "integer",

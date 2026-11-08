@@ -31,13 +31,22 @@ npm run dev          # http://localhost:3000  (Khmer: http://localhost:3000/km)
 
 ## Run the backend
 
-No Docker is needed or used. Requires Java 21 (for example Temurin 21).
+Requires Java 21 (for example Temurin 21). Docker is optional: it only runs the local helper services (Redis,
+Meilisearch, S3 storage, Mailpit); the API and its tests do not need it.
 
 1. `copy backend\.env.example backend\.env` and fill in the Supabase session pooler settings (see the comments in
    the file). `backend/.env` is git-ignored.
 2. `cd backend` then `gradlew.bat bootRun` (Git Bash: `./gradlew bootRun`): the API starts on http://localhost:8080.
 3. `npm run dev` in the repo root: the website forwards `/api/...` to the API (`BACKEND_URL` in `.env.local`,
    default `http://localhost:8080`). Check: http://localhost:3000/api/v1/health shows `{"status":"UP","database":"UP"}`.
+
+Local services (optional, for Redis, search, file storage and email; the API falls back to built-in stand-ins
+without them). Pick one way; both use the same ports:
+
+- Docker: `npm run services:docker:up` (stop with `npm run services:docker:down`), see `docker-compose.yml`.
+- Homebrew on macOS: `npm run services:start` / `npm run services:stop`.
+
+`npm run services:check` shows whether each service is healthy.
 
 Details and commands: [backend/README.md](backend/README.md). To let other people try the site for $0 (Vercel + a
 free Supabase database + the API on your computer behind a tunnel): [docs/STAGING.md](docs/STAGING.md).

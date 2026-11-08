@@ -14,3 +14,6 @@ export const DEMO_MODE = demoSetting === "1"
 
 /** The API base path; Next.js forwards it to BACKEND_URL (next.config.ts). */
 export const API_BASE = "/api/v1"
+
+/** The backend server URL for server-side fetches (Next.js server components / actions). */
+export const BACKEND_URL = (process.env.BACKEND_URL || "http://localhost:8080").replace(/\/+$/, "")

@@ -10,7 +10,7 @@ import { SeriesCard } from "@/components/pr/series-card"
 import { SkeletonCard } from "@/components/pr/skeletons"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { useRouter } from "@/i18n/navigation"
+import { Link, useRouter } from "@/i18n/navigation"
 import { useSearchSeries } from "@/lib/queries"
 
 const GRID = "grid grid-cols-3 gap-3 md:grid-cols-4 md:gap-4 lg:grid-cols-6 lg:gap-5"
@@ -63,7 +63,18 @@ export function SearchPage() {
       ) : query.isError ? (
         <ErrorState onRetry={() => void query.refetch()} />
       ) : query.data.length === 0 ? (
-        <EmptyState title={t("empty")} />
+        <div className="rounded-card border bg-card">
+          <EmptyState
+            icon={SearchIcon}
+            title={t("noResults")}
+            description={t("empty")}
+            action={
+              <Button asChild variant="outline">
+                <Link href="/genres">{t("browseGenres")}</Link>
+              </Button>
+            }
+          />
+        </div>
       ) : (
         <section aria-live="polite" className="flex flex-col gap-4">
           <h2 className="type-h3">{q.trim() ? t("resultsFor", { count: query.data.length, q }) : t("popularHeading")}</h2>

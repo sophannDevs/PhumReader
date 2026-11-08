@@ -1,7 +1,8 @@
 import type { HeroSlideView, NovelChapter, RankingEntry } from "@/data/selectors"
 import type { Episode, Genre, NovelBlock, Series, Weekday } from "@/data/types"
 import { ApiError, api, type Schemas } from "@/lib/api/client"
-import type { ChapterData, EpisodeData, HomeData, SeriesDetail } from "@/lib/demo-api"
+import type { ChapterData, EpisodeData, HomeData, SeriesDetail } from "@/lib/api/types"
+export type { SeriesDetail }
 import { formatCount, formatDate } from "@/lib/format"
 import { genreSlug } from "@/lib/routes"
 
@@ -67,7 +68,7 @@ export function movementOf(rank: number, previousRank: number | null | undefined
   return diff > 0 ? `▲ ${diff}` : diff < 0 ? `▼ ${-diff}` : "—"
 }
 
-const toRanking = (r: Schemas["RankingEntry"]): RankingEntry => ({
+export const toRanking = (r: Schemas["RankingEntry"]): RankingEntry => ({
   rank: r.rank,
   series: toSeries(r.series),
   movement: movementOf(r.rank, r.previousRank),
