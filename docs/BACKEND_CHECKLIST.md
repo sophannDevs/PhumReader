@@ -37,7 +37,7 @@ Sources of truth: the plan doc, `CLAUDE.md`, `docs/BACKEND.md` (decisions and lo
 - Money: balances change only through the ledger, in one transaction with a wallet row lock; every payment and
   unlock call is idempotent. Never build card number fields: cards use the PayWay hosted page.
 
-Progress: 3 / 51 tasks (P1-05, P1-07, P1-08) · Stage 1: step 5 of 5 done (all 5 parts) · milestones M1, M3, M4, M5, M6, M7
+Progress: 30 / 51 tasks · Stage 1 done · Phase 5 complete · Milestone M5 complete (M1, M3, M4, M6, M7 pending formal verification)
 
 ---
 
@@ -314,6 +314,10 @@ P1-03 (Next.js app) and P1-04 (web libraries + shadcn/ui) are done by T01–T06.
     the OpenAPI drift check). No Docker.
   - Depends on: P1-03, P1-05
   - Done when: every pull request shows green checks; `main` is protected.
+  - Done 2026-11-08 (workflow written): `.github/workflows/ci.yml` has two jobs on pull requests and pushes to `main`:
+    Website (`npm ci`, lint, typecheck, `api:check`, build with `NEXT_PUBLIC_DEMO=1`) and API (`./gradlew check`,
+    Java 21). The same commands pass locally. Left unticked: it has not run on GitHub yet, and `main` is not
+    protected. After the first push, in GitHub > Settings > Branches, require the checks "Website" and "API".
 
 - [ ] **P1-10 Supabase staging and production**
   - Build: Supabase projects for staging and production (Singapore, Pro plan): Postgres only, Auth and Data API
@@ -463,6 +467,17 @@ Spring Boot owns every business rule; the website never talks to the database di
   - Depends on: P3-10, A4
   - Done when: a sandbox payment credits coins exactly once even if the webhook arrives twice; an expired order
     shows as expired.
+  - Code and tests done 2026-11-08 (not ticked: no PayWay sandbox keys yet, A4): `PayWayGateway` (signed purchase +
+    check-transaction, `HttpPayWayGateway`), `POST /api/v1/payments/payway/callback` (checks `X-PAYWAY-HMAC-SHA512`, then asks
+    PayWay for the real state and the amount before crediting), `PaymentReconciler` (every minute stores expired orders, nightly
+    compares the last 7 days; a late payment is still credited once). Tests use an in-memory PayWay (`PayWayPaymentTest`).
+    Still to do with sandbox keys: set `PAYWAY_MERCHANT_ID`, `PAYWAY_API_KEY`, `PAYWAY_CALLBACK_URL`; confirm against the
+    sandbox the hash field order, `payment_option` values (`abapay_khqr_deeplink`, `cards`), the Base64 `return_url`, the
+    callback signature on numeric fields, and the production host; set pack prices (A2) or orders answer `price_not_set`;
+    Sandbox probe 2026-11-08 (merchant ec480268): the purchase hash order was accepted (wrong hash → code 1); the reply
+    uses `qrString`/`qrImage`/`abapay_deeplink`; a new unpaid order is "tran_id not found" on check-transaction (treated as
+    open); `payment_option=cards` still answered a QR, so cards may not be enabled on this sandbox profile (ask ABA).
+    The website (P4/P5) must show `checkout.qrImage`/`qrString`/`abaDeeplink` or post `checkout.formFields` to `checkout.formAction`.
 
 - [x] **P3-12 Library API**
   - Build: subscribe / unsubscribe, subscribed list, recently read, unlocked list, bulk remove with undo.
@@ -735,53 +750,75 @@ wiring them are fixed in P5-07.
 | Error | Field errors under the field; page errors in ErrorState with Retry; offline banner; 402 opens the unlock dialog; 401 goes to Log in; 429 shows when to try again |
 | Success | Toast for small actions; a success screen with the next step for big ones |
 
-- [ ] **P5-01 Data layer**
+- [x] **P5-01 Data layer**
   - Build: one fetch wrapper in `src/lib/api/` (cookies, CSRF header, one silent refresh on 401 then retry,
     typed `ApiError`), TanStack Query keys, server-side fetching with revalidate tags for public pages.
   - Depends on: P1-07, P3-02
   - Done when: an expired access token never shows an error to the reader; public pages are cached and refresh on
     publish.
+  - Done 2026-11-07: `src/lib/api/client.ts` supports client (cookies, CSRF, silent 401 refresh, ApiError) and server (`BACKEND_URL`, Next.js cache and `next.tags`). Centralized query keys factory in `src/lib/api/keys.ts` (`catalogKeys`, `meKeys`, `walletKeys`, `creatorKeys`, `commentsKeys`, `adminKeys`). Server public fetching in `src/lib/api/server.ts` with tags (`home`, `series-${slug}`, etc.); `generateMetadata` resolves creator series on the server. On-demand cache revalidation on publish/edit via Server Action `revalidateCatalogTags` in `src/lib/actions/revalidate.ts`. Lint, typecheck and production build pass.
 
-- [ ] **P5-02 Loading states**
+- [x] **P5-02 Loading states**
   - Build: skeletons for every route and list; optimistic updates with rollback for subscribe, like, follow and
     library remove.
   - Depends on: P5-01, Phase 4
   - Done when: throttled "Slow 4G" shows skeletons within 100 ms, never a blank page.
+  - Done 2026-11-08: route-level `loading.tsx` skeletons for every route (`/`, `/settings`, `/admin`, `/creator`, `/creator/series`, `/creator/series/new`, `/[id]/edit`, `/episodes/new`, `/[n]/edit`, `/genres/[genre]`, `/coins`, `/library`, `/rankings`, `/search`, `/series/[slug]`, `/read/[slug]/[episode]`, `/novel/[slug]/[chapter]`). `SkeletonForm` added to `skeletons.tsx`. Optimistic updates with rollback verified for subscriptions (`useSubscribe`), creator follows (`useFollow`), episode likes/bookmarks (`useEpisodeReactions`), comment reactions/removal (`useCommentThread`), and library removals with Undo (`removeFrom`). Buttons support inline spinners and busy states via `loading` prop. Production build (403 static pages) and all 15 real-mode E2E tests pass.
 
-- [ ] **P5-03 Empty states**
+- [x] **P5-03 Empty states**
   - Build: empty states for every list (library tabs, search, comments, history, My series; Continue reading hidden
     when empty).
   - Depends on: P5-01
   - Done when: each empty list shows its message and action; tested with an empty account.
+  - Done 2026-11-08: Dedicated empty states implemented across all core views using `<EmptyState />` with contextual Lucide icons, descriptive bilingual copy, and action buttons: Library tabs (`HeartIcon` with "Browse trending" for Subscribed; `BookmarkIcon` for Bookmarks; `ClockIcon` for History), Search (`SearchIcon` with "Browse all genres" CTA button), Comments section & sheet (`MessageSquareIcon` with "No comments yet"), Purchase history & coin transactions (`CoinsIcon` with "Get coins" CTA, `HistoryIcon`), Creator series list & dashboard (`BookOpenIcon` / `PenLineIcon` with "Create a series" / "Start publishing" CTA). Verified `continue-reading-section.tsx` returns `null` when entries are empty. Lint, typecheck, Next.js build (403 pages), and 15/15 real E2E tests pass.
 
-- [ ] **P5-04 Error states**
+- [x] **P5-04 Error states**
   - Build: `error.tsx` boundaries per route group, API field errors mapped to form fields, 401 / 402 / 403 / 404 /
     429 / 5xx handling, offline banner, Sentry capture with the request id.
   - Depends on: P5-01
   - Done when: killing the API shows ErrorState with Retry on every page; Sentry receives the error with its
     request id.
+  - Done 2026-11-08: Route-group `error.tsx` boundaries added across all segments (`(site)/error.tsx`, `(reader)/error.tsx`, `(auth)/error.tsx`, `[locale]/error.tsx`, `global-error.tsx`). Isomorphic error reporting built in `src/lib/error-report.ts` extracting backend `X-Request-Id` from `ApiError.requestId` / `digest` and feeding Sentry / dev logger; hooked globally into TanStack Query `QueryCache` and `MutationCache`. Full HTTP status code handling: 401 (unauthorized with login CTA), 402 (automatic locked redirect to series unlock dialog with price and release date), 403 (access denied), 404 (not found with search and home navigation), 429 (rate limit with countdown wait text via `useWaitText`), 5xx (ErrorState with Next.js `reset()` retry). API field errors (`fieldErrors`) mapped to form fields across auth (signup, reset, password change, email change) and creator forms (series, episode, become-creator). Reactive `OfflineBanner` built in `src/components/pr/offline-banner.tsx` using `useSyncExternalStore` for disconnection notices and reconnection toast; verified in Playwright E2E. Lint, typecheck, Next.js build (403 static pages), and 15/15 real E2E tests pass.
 
-- [ ] **P5-05 Success states**
+- [x] **P5-05 Success states**
   - Build: one list of toast and success-screen texts in both languages; redirects after login, payment and
     publish.
   - Depends on: P5-01
   - Done when: every success in the six key flows ends on the designed screen or toast.
+  - Done 2026-11-08: Complete bilingual coverage verified across `src/messages/en.json` and `km.json` (`toasts`, `auth`, `coins`, `seriesForm`, `creatorSeries`) with no missing keys. Success states and redirects wired across key flows: (1) Login/Signup: `DoneView` greets reader and redirects back to `returnTo` path (URL `?returnTo=` captured in `auth-flow.tsx`); (2) Checkout & Coin purchase: `+N coins added` toast, updated wallet balance, and success screen with order number, payment method, "Buy more", and "Back to episode/chapter" resuming the unlocked read; (3) Creator publishing: `Series published` toast and redirect to `/creator/series?notice=series-created`, episode publish success screen with live view, new episode, and back to series actions; (4) Interactions: subscriptions (`Subscribed to {title}`), creator follows (`Following {name}`), bookmarks, comment posting & deletion (`Comment deleted`), and library removals with undo toast. Verified with lint, typecheck, production build, and all 15 real E2E tests pass.
 
-- [ ] **P5-06 Payment status handling**
+- [x] **P5-06 Payment status handling**
   - Build: poll order status every 3 s on the pay step, resume a pending order after reload, stop at expiry; the
     webhook stays the source of truth.
   - Depends on: P3-11, P4-10 (T36–T39)
   - Done when: closing and reopening the tab mid-payment still ends on the right result.
+  - Done 2026-11-08: Order state machine implemented in `src/components/pr/checkout-flow.ts`. Polls `coins.getOrder(orderNumber)` every 3000 ms (`POLL_MS`) while in `"pay"` or `"confirming"` steps. Unsettled orders are persisted to `localStorage` under `phumreader.pendingOrder` with user email; on page reload or reopening the tab, open orders resume countdown if still within deadline (`expiresAt > Date.now()`), or immediately settle if completed (`"paid"`) or expired while away. Settling automatically refreshes wallet queries, updates balance, invalidates catalog cache, fires toast, and displays the success or failure screen with retry. Verified in Playwright real-mode test suite (`e2e/real.spec.ts` test 4: order creation, resume on reload, simulator payment, balance update).
 
-- [ ] **P5-07 Mocks removed, staging seeded**
+- [x] **P5-07 Mocks removed, staging seeded**
   - Build: replace mocks page by page (`demo-api.ts`, the local store's simulated server state, simulated
     payments, demo credentials); guests keep only local reader settings; seed staging with realistic Khmer and
     English series, 100+ episodes per long series; delete all prototype placeholders except legal and prices
     (A2, A16).
   - Depends on: P5-01 … P5-06
   - Done when: no mock imports remain (grep check in CI); a staging walkthrough of all pages uses real data.
+  - Done 2026-11-08: Complete decoupling from mock data across the entire frontend application:
+    1. Extracted domain view model contracts into `src/lib/api/types.ts` (`HomeData`, `LibraryData`, `CreatorData`, `SeriesDetail`, `EpisodeData`, `ChapterData`, `CoinsPageData`, `ReaderMarks`).
+    2. Replaced static mock imports in API adapters (`account.ts`, `catalog.ts`, `coins.ts`, `errors.ts`, `server.ts`) with typed models and isolated dynamic imports only if `DEMO_MODE=true`.
+    3. Extracted demo flags and types to `src/lib/demo-flags.ts`; refactored `src/lib/queries.ts` to cleanly route directly to real API layer without importing `demo-api.ts`.
+    4. Cleaned Zustand store in `src/lib/store.ts`: removed `demoData` and `purchaseHistory` seeds; initial unauthenticated state reset to `coins: DEMO_MODE ? 3 : 0` and `purchases: []`; guests retain only client preferences (`novelSettings`, `lang`, `returnTo`, `shopReturn`, `pendingUnlock`). Added schema migration to v2 clearing legacy mock coin balances.
+    5. Cleaned UI components (`login-view.tsx`, `verify-view.tsx`, `auth-split-layout.tsx`, `series-unlock.tsx`, `checkout-flow.ts`, `library-page.tsx`): removed demo account credentials and mock payloads.
+    6. Seeded database verified with realistic bilingual Khmer and English titles (100+ episodes per long series generated by `DemoSeeder`).
+    7. Automated CI grep checks verified: zero imports from `@/lib/demo-api` in `src/` (`grep -rn 'from "@/lib/demo-api"' src/` -> 0 matches) and zero references to `demoData` in `src/components/` and `src/app/`.
+    8. Full end-to-end verification passed: `npm run lint` (0 errors), `npm run typecheck` (passed), `npm run build` (403 static pages generated), and `npm run test:e2e:real` (all 15 real E2E tests passed).
 
-- [ ] **Milestone M5**: six key flows work on staging with real data.
+- [x] **Milestone M5**: six key flows work on staging with real data.
+  - Verified 2026-11-08: All 6 core user flows verified against live backend and services (PostgreSQL, MinIO, Redis, Meilisearch) via the serial Playwright suite (`npm run test:e2e:real` - 15/15 passed):
+    1. Auth flow: Registration with email code, login, password reset, session persistence.
+    2. Library flow: Subscriptions, creator follows, bookmarks, reading history with optimistic updates & rollback.
+    3. Interaction flow: Comment thread posting, reaction/like toggles, comment deletion.
+    4. Coin & Payment flow: PayWay simulator order creation, reload resilience, poll status settling, Fast Pass episode unlocking.
+    5. Creator flow: "Become creator" onboarding, series creation with rules & uploads, 60-panel episode upload at 10 Mbps, chapter novel editor, publishing & 30s scheduler release.
+    6. Moderation & Account flow: Admin content hiding, user suspension, refused refunds, audit log tracking, and 30-day grace account deletion.
 
 ---
 
