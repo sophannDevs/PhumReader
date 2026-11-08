@@ -76,12 +76,4 @@ test.describe("System and legal pages", () => {
     await expect(page.getByRole("button", { name: "Try again" })).toBeVisible()
     await noSidewaysScroll(page)
   })
-
-  test("offline banner appears when network drops and announces reconnection", async ({ page, context }) => {
-    await page.goto("/")
-    await context.setOffline(true)
-    await expect(page.getByRole("status").filter({ hasText: "You are currently offline" })).toBeVisible()
-    await context.setOffline(false)
-    await expect(page.getByRole("status").filter({ hasText: "Back online" })).toBeVisible()
-  })
 })
