@@ -20,6 +20,7 @@ import app.phumreader.payment.service.PaymentViews.CoinShop;
 import app.phumreader.payment.service.PaymentViews.CreatedOrder;
 import app.phumreader.payment.service.PaymentViews.OrderView;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.math.BigDecimal;
 import java.security.SecureRandom;
 import java.time.Clock;
 import java.time.Duration;
@@ -34,6 +35,7 @@ import java.util.UUID;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.core.env.Environment;
 import org.springframework.core.env.Profiles;
 import org.springframework.http.HttpStatus;
@@ -56,6 +58,7 @@ public class PaymentService {
 
     static final String ORDER_SCOPE = "order";
     static final String SIMULATOR = "DEV_SIMULATOR";
+    static final String PAYWAY = "PAYWAY";
     static final int ORDERS_PER_HOUR = 20;
 
     private final PaymentQueries queries;
@@ -64,6 +67,7 @@ public class PaymentService {
     private final RateLimiter limiter;
     private final Clock clock;
     private final boolean simulator;
+    private final @Nullable PayWayGateway payWay;
     private final Duration orderTtl;
     private final SecureRandom random = new SecureRandom();
 
@@ -74,7 +78,8 @@ public class PaymentService {
             RateLimiter limiter,
             Clock clock,
             AppProperties properties,
-            Environment environment) {
+            Environment environment,
+            ObjectProvider<PayWayGateway> payWayProvider) {
         this.queries = queries;
         this.coins = coins;
         this.idempotency = idempotency;
@@ -82,6 +87,12 @@ public class PaymentService {
         this.clock = clock;
         this.simulator = properties.payments().simulator();
         this.orderTtl = properties.payments().orderTtl();
+        this.payWay = payWayProvider.getIfAvailable();
+        if (!simulator && payWay == null && environment.acceptsProfiles(Profiles.of("prod"))) {
+            throw new IllegalStateException(
+                    "Set phumreader.payments.payway (merchant-id, api-key, callback-url): production"
+                            + " needs ABA PayWay.");
+        }
         if (simulator) {
             if (environment.acceptsProfiles(Profiles.of("prod"))) {
                 throw new IllegalStateException(
@@ -143,13 +154,14 @@ public class PaymentService {
                         .orElseThrow(() ->
                                 ApiException.invalidField(
                                         "packId", "unknown_pack", "There is no such coin pack."));
-        if (!simulator) {
+        if (!simulator && payWay == null) {
             // ABA PayWay is wired up with its merchant keys (A4).
             throw new ApiException(
                     HttpStatus.SERVICE_UNAVAILABLE,
                     "payments_unavailable",
                     "Payments are not available yet.");
         }
+        Money price = simulator ? null : price(pack);
         limiter.acquire(
                 "orders:" + user.id(), ORDERS_PER_HOUR, Duration.ofHours(1), "too_many_orders");
         int firstBonus = queries.hasPaidOrder(user.id(), null) ? 0 : pack.coins();
@@ -163,19 +175,45 @@ public class PaymentService {
                                     pack,
                                     firstBonus,
                                     method,
-                                    SIMULATOR,
+                                    simulator ? SIMULATOR : PAYWAY,
                                     now,
                                     now.plus(orderTtl))
                             .orElse(null);
         }
+        PayWayGateway.Checkout checkout = null;
+        if (price != null) {
+            // If PayWay refuses, the exception rolls the new order back.
+            checkout =
+                    payWay.start(
+                            order.orderNumber(),
+                            price.amount(),
+                            price.currency(),
+                            method,
+                            (int) orderTtl.toMinutes());
+        }
         idempotency.save(
                 user.id(), ORDER_SCOPE, key, request, new CreatedOrder(order.orderNumber()));
-        return view(order);
+        return view(order, checkout);
     }
 
     /** One of the reader's orders (the website polls it while the reader pays). */
+    @Transactional
     public OrderView order(CurrentUser user, String orderNumber) {
-        return view(ownOrder(user, orderNumber));
+        OrderRow order = ownOrder(user, orderNumber);
+        if (payWay != null
+                && PAYWAY.equals(order.provider())
+                && order.status() == OrderStatus.PENDING
+                && effectiveStatus(order) == OrderStatus.PENDING) {
+            // The website polls this while the reader pays: ask PayWay too, so the payment shows
+            // up even when its callback cannot reach us (local development) or got lost.
+            try {
+                settleFromPayWay(order.orderNumber(), false);
+                order = ownOrder(user, orderNumber);
+            } catch (RuntimeException e) {
+                log.warn("Could not ask PayWay about {}: {}", order.orderNumber(), e.toString());
+            }
+        }
+        return view(order);
     }
 
     /** Cancels an open order (the reader closed the payment). Cancelling twice changes nothing. */
@@ -222,6 +260,15 @@ public class PaymentService {
      */
     @Transactional
     public OrderView confirmPaid(UUID orderId, String providerRef) {
+        return confirmPaid(orderId, providerRef, false);
+    }
+
+    /**
+     * @param providerTookMoney PayWay itself says the payment was approved: credit the coins even
+     *     if the order expired, failed or was cancelled meanwhile (the reader paid), unless it was
+     *     already paid or refunded
+     */
+    private OrderView confirmPaid(UUID orderId, String providerRef, boolean providerTookMoney) {
         UUID userId =
                 queries.ownerOf(orderId)
                         .orElseThrow(
@@ -230,10 +277,10 @@ public class PaymentService {
         int balance = coins.lockWallet(userId);
         OrderRow order = queries.lock(orderId);
         OrderStatus status = effectiveStatus(order);
-        if (status == OrderStatus.PAID) {
+        if (status == OrderStatus.PAID || (providerTookMoney && status == OrderStatus.REFUNDED)) {
             return view(order);
         }
-        if (status != OrderStatus.PENDING) {
+        if (status != OrderStatus.PENDING && !providerTookMoney) {
             closeIfExpired(order, status);
             throw notPending(status);
         }
@@ -324,6 +371,115 @@ public class PaymentService {
         return new CursorPage<>(page.stream().map(this::view).toList(), next);
     }
 
+    // ---------- ABA PayWay ----------
+
+    /** What a PayWay callback or reconciliation did to an order. */
+    public enum Settlement {
+        PAID,
+        STILL_OPEN,
+        CLOSED,
+        UNKNOWN_ORDER
+    }
+
+    /**
+     * PayWay says something happened to {@code tranId}. The callback is only a nudge: this asks
+     * PayWay for the payment's real state and credits the coins once if it was approved for the
+     * order's price (a repeated callback changes nothing).
+     *
+     * @param closeExpired also store the order as EXPIRED when PayWay still shows it unpaid and its
+     *     time is up
+     */
+    @Transactional
+    public Settlement settleFromPayWay(String tranId, boolean closeExpired) {
+        PayWayGateway gateway = payWay;
+        if (gateway == null) {
+            return Settlement.UNKNOWN_ORDER;
+        }
+        OrderRow found = queries.byNumber(tranId.toUpperCase(Locale.ROOT)).orElse(null);
+        if (found == null || !PAYWAY.equals(found.provider())) {
+            return Settlement.UNKNOWN_ORDER;
+        }
+        PayWayGateway.Check check = gateway.check(found.orderNumber());
+        switch (check.status()) {
+            case APPROVED -> {
+                Money price = price(found);
+                if (check.paidAmount() == null
+                        || check.paidAmount().compareTo(new BigDecimal(price.amount())) != 0
+                        || (check.currency() != null
+                                && !check.currency().equalsIgnoreCase(price.currency()))) {
+                    log.error(
+                            "PayWay approved {} for {} {}, expected {} {}: not crediting",
+                            found.orderNumber(),
+                            check.paidAmount(),
+                            check.currency(),
+                            price.amount(),
+                            price.currency());
+                    return Settlement.CLOSED;
+                }
+                confirmPaid(found.id(), found.orderNumber(), true);
+                return Settlement.PAID;
+            }
+            case PENDING, NOT_FOUND -> {
+                // PayWay does not know an order until the reader tries to pay: "not found" is
+                // still open, never a reason to close it.
+                if (closeExpired) {
+                    OrderRow order = queries.lock(found.id());
+                    closeIfExpired(order, effectiveStatus(order));
+                }
+                return Settlement.STILL_OPEN;
+            }
+            case DECLINED, CANCELLED, REFUNDED -> {
+                OrderRow order = queries.lock(found.id());
+                OrderStatus status = effectiveStatus(order);
+                if (status == OrderStatus.PENDING) {
+                    boolean declined = check.status() == PayWayGateway.Status.DECLINED;
+                    queries.setStatus(
+                            order.id(),
+                            declined ? OrderStatus.FAILED : OrderStatus.CANCELLED,
+                            now());
+                } else {
+                    closeIfExpired(order, status);
+                }
+                return Settlement.CLOSED;
+            }
+        }
+        return Settlement.CLOSED;
+    }
+
+    /** PayWay orders whose time ran out but that are still stored as open. */
+    public List<String> expiredOrderNumbers() {
+        return queries.expiredPayWayOrders(now(), 200).stream().map(OrderRow::orderNumber).toList();
+    }
+
+    /** Unpaid PayWay orders of the last 7 days (PayWay's status check reaches back that far). */
+    public List<String> unpaidOrderNumbers() {
+        return queries.unpaidPayWayOrders(now().minusDays(7), 1000).stream()
+                .map(OrderRow::orderNumber)
+                .toList();
+    }
+
+    private record Money(String amount, String currency) {}
+
+    /** The price PayWay is asked for: dollars when the pack has a dollar price, else riel. */
+    private static Money price(PackRow pack) {
+        return price(pack.priceUsdCents(), pack.priceKhr());
+    }
+
+    private static Money price(OrderRow order) {
+        return price(order.priceUsdCents(), order.priceKhr());
+    }
+
+    private static Money price(@Nullable Integer usdCents, @Nullable Integer khr) {
+        if (usdCents != null) {
+            return new Money(BigDecimal.valueOf(usdCents, 2).setScale(2).toPlainString(), "USD");
+        }
+        if (khr != null) {
+            return new Money(String.valueOf(khr), "KHR");
+        }
+        throw new ApiException(
+                HttpStatus.SERVICE_UNAVAILABLE, "price_not_set", "This pack has no price yet.");
+    }
+
     // ---------- helpers ----------
 
     private OrderRow ownOrder(CurrentUser user, String orderNumber) {
@@ -359,6 +515,10 @@ public class PaymentService {
     }
 
     private OrderView view(OrderRow o) {
+        return view(o, null);
+    }
+
+    private OrderView view(OrderRow o, PayWayGateway.@Nullable Checkout checkout) {
         return new OrderView(
                 o.orderNumber(),
                 effectiveStatus(o),
@@ -373,7 +533,8 @@ public class PaymentService {
                 o.provider().toLowerCase(Locale.ROOT),
                 o.createdAt().toInstant(),
                 o.expiresAt().toInstant(),
-                o.paidAt() == null ? null : o.paidAt().toInstant());
+                o.paidAt() == null ? null : o.paidAt().toInstant(),
+                checkout);
     }
 
     /** "PR-" and 8 random digits. */

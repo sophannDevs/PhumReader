@@ -49,6 +49,8 @@ public final class PaymentViews {
      *     once it is paid
      * @param totalCoins coins + bonus + first-purchase bonus
      * @param provider {@code dev_simulator} in development, {@code payway} in production
+     * @param checkout how to take the payment (QR code and app link, or the signed card-page form);
+     *     only in the answer that creates a PayWay order
      */
     public record OrderView(
             String orderNumber,
@@ -64,7 +66,8 @@ public final class PaymentViews {
             String provider,
             Instant createdAt,
             Instant expiresAt,
-            @Nullable Instant paidAt) {}
+            @Nullable Instant paidAt,
+            PayWayGateway.@Nullable Checkout checkout) {}
 
     /** Stored for an order's Idempotency-Key: the order it created. */
     public record CreatedOrder(String orderNumber) {}
