@@ -309,15 +309,19 @@ P1-03 (Next.js app) and P1-04 (web libraries + shadcn/ui) are done by T01–T06.
   - Depends on: P1-03, P1-05
   - Done when: each app refuses to start with a missing required setting and names it.
 
-- [ ] **P1-09 CI pipeline**
+- [x] **P1-09 CI pipeline**
   - Build: GitHub Actions: website lint, typecheck, build, `npm run api:check`; API `./gradlew check` (includes
     the OpenAPI drift check). No Docker.
   - Depends on: P1-03, P1-05
   - Done when: every pull request shows green checks; `main` is protected.
-  - Done 2026-11-08 (workflow written): `.github/workflows/ci.yml` has two jobs on pull requests and pushes to `main`:
-    Website (`npm ci`, lint, typecheck, `api:check`, build with `NEXT_PUBLIC_DEMO=1`) and API (`./gradlew check`,
-    Java 21). The same commands pass locally. Left unticked: it has not run on GitHub yet, and `main` is not
-    protected. After the first push, in GitHub > Settings > Branches, require the checks "Website" and "API".
+  - Done 2026-11-08: `.github/workflows/ci.yml` runs three jobs on pull requests and pushes to `main`: Website
+    (`npm ci`, lint, typecheck, `api:check`, build with `NEXT_PUBLIC_DEMO=1`), API (`./gradlew check`, Java 21) and
+    E2E (Playwright in demo mode, 48 tests, against the production build: `CI=true` makes
+    `playwright.config.ts` run `npm run build && npm run start`). Pull request #1 went green on all three and was
+    merged. The ruleset `protect-main` requires a pull request and the three checks, and blocks force pushes.
+    Known: an unknown series URL answers 200 with the 404 page (noindex), not HTTP 404, because the page streams
+    (Next.js 16 `cacheComponents`); the E2E test checks the page and the noindex tag. The offline-banner test
+    (P5-04) is not in CI until the banner is committed.
 
 - [ ] **P1-10 Supabase staging and production**
   - Build: Supabase projects for staging and production (Singapore, Pro plan): Postgres only, Auth and Data API
