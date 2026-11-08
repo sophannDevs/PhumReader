@@ -309,13 +309,20 @@ P1-03 (Next.js app) and P1-04 (web libraries + shadcn/ui) are done by T01–T06.
   - Done when: `/actuator/health` is UP; Flyway runs an empty baseline on the dev database; `./gradlew check`
     passes with a smoke test on embedded PostgreSQL.
 
-- [ ] **P1-06 Folder structure**
+- [x] **P1-06 Folder structure**
   - Build: one package per feature in the API (auth, user, series, episode, library, coin, payment, comment,
     search, notification, media, admin, common, config), each with `web` / `service` / `repository` / `domain`,
     and a README per area. ArchUnit rules: controllers do not use repositories, no entity in a controller
     signature, features do not reach into each other's internals.
   - Depends on: P1-03, P1-05
   - Done when: empty folders + a README per area; import rules enforced by ArchUnit (API) and ESLint (website).
+  - Done 2026-11-08: the feature packages already existed (P1-05). Added a `README.md` in each of the 15 areas under
+    `app.phumreader` (14 plus `seed`), a new ArchUnit rule (`webClassesAreNotUsedByOtherFeaturesServices`: other
+    features use a feature's `service` and `domain`; only another web layer or `config` may touch its `web`), and
+    ESLint `no-restricted-imports` rules in `eslint.config.mjs`: nothing imports `src/app`, nothing imports
+    `backend/` or `infra/`, `components/ui` cannot import PhumReader components or demo data, `src/data` cannot
+    import components. Not covered: the `demo-api` rule (it is loaded with dynamic `import()`, which this ESLint
+    rule does not see; demo mode is removed in P5-07).
 
 - [x] **P1-07 OpenAPI → TypeScript client** (stale files fail `./gradlew check` and `npm run api:check`; CI in P1-09)
   - Build: springdoc publishes OpenAPI; a Gradle task writes `backend/openapi/openapi.json`; `openapi-typescript`
