@@ -12,16 +12,18 @@ export default defineConfig({
   retries: 0,
   reporter: [["list"]],
   use: {
+    headless: process.env.CI ? true : false,
     baseURL: "http://localhost:3000",
     trace: "retain-on-failure",
   },
   webServer: {
-    command: "npm run dev",
+    // CI tests the production build: the service worker and real 404 status codes only exist there.
+    command: process.env.CI ? "npm run build && npm run start" : "npm run dev",
     // The suite tests the demo until Stage 1 Step 5 part 5 adds runs against the real API.
     env: { NEXT_PUBLIC_DEMO: "1" },
     url: "http://localhost:3000",
     reuseExistingServer: true,
-    timeout: 120_000,
+    timeout: process.env.CI ? 300_000 : 120_000,
   },
   projects: [
     { name: "desktop", use: { ...devices["Desktop Chrome"], viewport: { width: 1440, height: 900 } } },
