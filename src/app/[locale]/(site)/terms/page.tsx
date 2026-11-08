@@ -1,0 +1,15 @@
+import type { Metadata } from "next"
+import { getTranslations, setRequestLocale } from "next-intl/server"
+import { LegalPage } from "@/components/pr/legal-page"
+
+export async function generateMetadata({ params }: PageProps<"/[locale]/terms">): Promise<Metadata> {
+  const { locale } = await params
+  const t = await getTranslations({ locale, namespace: "legal" })
+  return { title: t("terms.title") }
+}
+
+export default async function Page({ params }: PageProps<"/[locale]/terms">) {
+  const { locale } = await params
+  setRequestLocale(locale)
+  return <LegalPage kind="terms" />
+}

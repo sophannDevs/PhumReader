@@ -14,6 +14,7 @@ import type { NovelBlock } from "@/data"
 import { Link } from "@/i18n/navigation"
 import { useChapter } from "@/lib/queries"
 import { seriesHref } from "@/lib/routes"
+import { inlineMarks } from "@/lib/inline-marks"
 import { useAppStore } from "@/lib/store"
 import { useLockedRedirect } from "@/lib/use-locked-redirect"
 import { useReaderNav } from "@/lib/use-reader-nav"
@@ -36,10 +37,18 @@ export function NovelSkeleton() {
   )
 }
 
-// The demo text is the same for every chapter; the design shows "6 min read".
-const READ_MINUTES = 6
+/**
+ * Reading time from the chapter text: about 200 English words a minute. Khmer has no spaces between
+ * words, so its letters are counted instead (about 1000 a minute). Never less than 1 minute.
+ */
+export function readMinutes(blocks: NovelBlock[]): number {
+  const text = blocks.map((b) => ("text" in b ? b.text : "")).join(" ")
+  const khmer = (text.match(/[\u1780-\u17FF]/g) ?? []).length
+  const words = text.replace(/[\u1780-\u17FF]+/g, " ").split(/\s+/).filter(Boolean).length
+  return Math.max(1, Math.ceil(words / 200 + khmer / 1000))
+}
 
-/** Chapter body: paragraphs, italic quotes with a green rule, centred "* * *" scene breaks. */
+/** Chapter body: paragraphs, headings, italic quotes with a green rule, centred "* * *" scene breaks; **bold** and *italic* marks. */
 export function NovelBody({ blocks }: { blocks: NovelBlock[] }) {
   return (
     <div className="flex flex-col gap-[1.1em]">
@@ -48,12 +57,16 @@ export function NovelBody({ blocks }: { blocks: NovelBlock[] }) {
           <p key={i} aria-hidden className="py-2 text-center tracking-[1em] text-reader-quiet">
             * * *
           </p>
+        ) : b.type === "heading" ? (
+          <h2 key={i} className="pt-2 text-[1.25em] leading-snug font-semibold">
+            {inlineMarks(b.text)}
+          </h2>
         ) : b.type === "quote" ? (
           <blockquote key={i} className="border-l-[3px] border-primary pl-4 italic">
-            {b.text}
+            {inlineMarks(b.text)}
           </blockquote>
         ) : (
-          <p key={i}>{b.text}</p>
+          <p key={i}>{inlineMarks(b.text)}</p>
         )
       )}
     </div>
@@ -108,7 +121,7 @@ function NovelReaderBody({ series, chapter, total, font }: Loaded & { font: "san
   const t = useTranslations("reader")
   const loc = useLocalize()
   const n = chapter.n
-  const { go, list, listEpisodes, isLocked, coins, dialog, gated } = useReaderNav(series, n, total)
+  const { go, list, listEpisodes, isLocked, coins, dialog, gated, finishRef } = useReaderNav(series, n, total)
   if (gated) return <NovelSkeleton />
   const nextEpisode = list.find((e) => e.n === n + 1)
 
@@ -131,7 +144,7 @@ function NovelReaderBody({ series, chapter, total, font }: Loaded & { font: "san
           <p className="type-eyebrow">{t("chapterEyebrow", { n })}</p>
           <h1 className="type-h1">{chapter.name}</h1>
           <p className="type-small font-normal text-reader-quiet">
-            {series.creator} · {loc.date(chapter.date)} · {t("minRead", { count: READ_MINUTES })}
+            {series.creator} · {loc.date(chapter.date)} · {t("minRead", { count: readMinutes(chapter.blocks) })}
           </p>
         </header>
         {chapter.blocks.length === 0 ? (
@@ -142,6 +155,7 @@ function NovelReaderBody({ series, chapter, total, font }: Loaded & { font: "san
           </div>
         )}
         <NovelEndSection
+          finishRef={finishRef}
           series={series}
           chapter={chapter}
           total={total}

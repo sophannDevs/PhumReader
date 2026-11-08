@@ -10,6 +10,633 @@
     "description" : "Same origin as the website"
   } ],
   "paths" : {
+    "/api/v1/admin/audit" : {
+      "get" : {
+        "operationId" : "audit",
+        "parameters" : [ {
+          "description" : "Action prefix, e.g. user. or order.refund",
+          "in" : "query",
+          "name" : "action",
+          "required" : false,
+          "schema" : {
+            "type" : [ "string", "null" ]
+          }
+        }, {
+          "in" : "query",
+          "name" : "actor",
+          "required" : false,
+          "schema" : {
+            "type" : [ "string", "null" ],
+            "format" : "uuid"
+          }
+        }, {
+          "description" : "nextCursor of the previous page; omit for the first page",
+          "in" : "query",
+          "name" : "cursor",
+          "required" : false,
+          "schema" : {
+            "type" : [ "string", "null" ]
+          }
+        }, {
+          "description" : "Page size, 1-100 (default 20)",
+          "in" : "query",
+          "name" : "limit",
+          "required" : false,
+          "schema" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int32"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CursorPageAuditEntry"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "The audit log, newest first",
+        "tags" : [ "admin" ]
+      }
+    },
+    "/api/v1/admin/content" : {
+      "get" : {
+        "operationId" : "content_1",
+        "parameters" : [ {
+          "description" : "series, episode or comment",
+          "in" : "query",
+          "name" : "type",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "q",
+          "required" : false,
+          "schema" : {
+            "type" : [ "string", "null" ]
+          }
+        }, {
+          "description" : "A state of that type, e.g. published or hidden",
+          "in" : "query",
+          "name" : "status",
+          "required" : false,
+          "schema" : {
+            "type" : [ "string", "null" ]
+          }
+        }, {
+          "description" : "nextCursor of the previous page; omit for the first page",
+          "in" : "query",
+          "name" : "cursor",
+          "required" : false,
+          "schema" : {
+            "type" : [ "string", "null" ]
+          }
+        }, {
+          "description" : "Page size, 1-100 (default 20)",
+          "in" : "query",
+          "name" : "limit",
+          "required" : false,
+          "schema" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int32"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CursorPageAdminContent"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Series, episodes or comments, newest first",
+        "tags" : [ "admin" ]
+      }
+    },
+    "/api/v1/admin/content/{type}/{id}/hide" : {
+      "post" : {
+        "operationId" : "hide",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "type",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ReasonRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "204" : {
+            "description" : "No Content"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Take live content down; its open reports are resolved",
+        "tags" : [ "admin" ]
+      }
+    },
+    "/api/v1/admin/content/{type}/{id}/restore" : {
+      "post" : {
+        "operationId" : "restore",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "type",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/OptionalReasonRequest"
+              }
+            }
+          }
+        },
+        "responses" : {
+          "204" : {
+            "description" : "No Content"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Put hidden content back",
+        "tags" : [ "admin" ]
+      }
+    },
+    "/api/v1/admin/orders" : {
+      "get" : {
+        "operationId" : "orders_1",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "q",
+          "required" : false,
+          "schema" : {
+            "type" : [ "string", "null" ]
+          }
+        }, {
+          "description" : "pending, paid, failed, cancelled, expired or refunded",
+          "in" : "query",
+          "name" : "status",
+          "required" : false,
+          "schema" : {
+            "type" : [ "string", "null" ]
+          }
+        }, {
+          "description" : "nextCursor of the previous page; omit for the first page",
+          "in" : "query",
+          "name" : "cursor",
+          "required" : false,
+          "schema" : {
+            "type" : [ "string", "null" ]
+          }
+        }, {
+          "description" : "Page size, 1-100 (default 20)",
+          "in" : "query",
+          "name" : "limit",
+          "required" : false,
+          "schema" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int32"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CursorPageAdminOrder"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Coin orders, newest first; search by order number, email or name",
+        "tags" : [ "admin" ]
+      }
+    },
+    "/api/v1/admin/orders/{id}/refund" : {
+      "post" : {
+        "operationId" : "refund",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ReasonRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/RefundResult"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Refund a paid order: its coins are taken back through the ledger",
+        "tags" : [ "admin" ]
+      }
+    },
+    "/api/v1/admin/overview" : {
+      "get" : {
+        "operationId" : "overview",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Overview"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Counts for the admin start page",
+        "tags" : [ "admin" ]
+      }
+    },
+    "/api/v1/admin/reports" : {
+      "get" : {
+        "operationId" : "reports",
+        "parameters" : [ {
+          "description" : "open, resolved or dismissed; omit for all",
+          "in" : "query",
+          "name" : "status",
+          "required" : false,
+          "schema" : {
+            "type" : [ "string", "null" ]
+          }
+        }, {
+          "description" : "nextCursor of the previous page; omit for the first page",
+          "in" : "query",
+          "name" : "cursor",
+          "required" : false,
+          "schema" : {
+            "type" : [ "string", "null" ]
+          }
+        }, {
+          "description" : "Page size, 1-100 (default 20)",
+          "in" : "query",
+          "name" : "limit",
+          "required" : false,
+          "schema" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int32"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CursorPageAdminReport"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "The report queue, newest first",
+        "tags" : [ "admin" ]
+      }
+    },
+    "/api/v1/admin/reports/{id}/settle" : {
+      "post" : {
+        "operationId" : "settle",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/SettleRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AdminReport"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Dismiss, resolve or hide the reported content",
+        "tags" : [ "admin" ]
+      }
+    },
+    "/api/v1/admin/users" : {
+      "get" : {
+        "operationId" : "users",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "q",
+          "required" : false,
+          "schema" : {
+            "type" : [ "string", "null" ]
+          }
+        }, {
+          "description" : "active, banned, deletion_pending or deleted",
+          "in" : "query",
+          "name" : "status",
+          "required" : false,
+          "schema" : {
+            "type" : [ "string", "null" ]
+          }
+        }, {
+          "description" : "nextCursor of the previous page; omit for the first page",
+          "in" : "query",
+          "name" : "cursor",
+          "required" : false,
+          "schema" : {
+            "type" : [ "string", "null" ]
+          }
+        }, {
+          "description" : "Page size, 1-100 (default 20)",
+          "in" : "query",
+          "name" : "limit",
+          "required" : false,
+          "schema" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int32"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CursorPageAdminUser"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Users, newest first; search by email or name",
+        "tags" : [ "admin" ]
+      }
+    },
+    "/api/v1/admin/users/{id}/ban" : {
+      "post" : {
+        "operationId" : "ban",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ReasonRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AdminUser"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Suspend an account and sign it out everywhere",
+        "tags" : [ "admin" ]
+      }
+    },
+    "/api/v1/admin/users/{id}/unban" : {
+      "post" : {
+        "operationId" : "unban",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/OptionalReasonRequest"
+              }
+            }
+          }
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AdminUser"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Lift a suspension",
+        "tags" : [ "admin" ]
+      }
+    },
     "/api/v1/auth/change-email" : {
       "post" : {
         "description" : "400 wrong_password (field password) or same_email; 409 email_taken; 429 resend_too_soon within 30 s.",
@@ -359,6 +986,96 @@
           }
         },
         "summary" : "Signs the account out on every device",
+        "tags" : [ "auth" ]
+      }
+    },
+    "/api/v1/auth/oauth/{provider}/callback" : {
+      "get" : {
+        "description" : "Sets the sign-in cookies and redirects to /login?social=<result>.",
+        "operationId" : "callback",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "provider",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "code",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "state",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "error",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Where the provider sends the browser back to",
+        "tags" : [ "auth" ]
+      }
+    },
+    "/api/v1/auth/oauth/{provider}/start" : {
+      "get" : {
+        "description" : "302 to the provider. Without app credentials: 302 to /login?social=unavailable.",
+        "operationId" : "start",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "provider",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "locale",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Sends the browser to Google or Facebook to sign in",
         "tags" : [ "auth" ]
       }
     },
@@ -883,6 +1600,46 @@
         "tags" : [ "comments" ]
       }
     },
+    "/api/v1/creator" : {
+      "post" : {
+        "description" : "Adds the CREATOR role. Call POST /auth/refresh afterwards so the access token carries it. 409 already_creator when the account already is one.",
+        "operationId" : "become",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/BecomeCreatorRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/BecomeCreatorResponse"
+                }
+              }
+            },
+            "description" : "Created"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Accept the Creator terms and become a creator",
+        "tags" : [ "creator" ]
+      }
+    },
     "/api/v1/creator/dashboard" : {
       "get" : {
         "description" : "Readers who are not creators get creator: false and no series (the page's empty state).",
@@ -911,6 +1668,599 @@
         },
         "summary" : "The signed-in creator's series and their numbers",
         "tags" : [ "creator" ]
+      }
+    },
+    "/api/v1/creator/series" : {
+      "get" : {
+        "description" : "q matches the title; visibility is draft, published or hidden.",
+        "operationId" : "list",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "q",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "visibility",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/CreatorSeries"
+                  }
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "My series, with a text filter and a visibility filter",
+        "tags" : [ "creator" ]
+      },
+      "post" : {
+        "description" : "cover / banner come from finished uploads (POST /creator/uploads). The slug is made from the title and never changes.",
+        "operationId" : "create_1",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/SeriesInput"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SeriesEdit"
+                }
+              }
+            },
+            "description" : "Created"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Create a series as a draft",
+        "tags" : [ "creator" ]
+      }
+    },
+    "/api/v1/creator/series/{id}" : {
+      "get" : {
+        "description" : "403 for another creator's series, 404 when it does not exist.",
+        "operationId" : "series",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SeriesEdit"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "One of the signed-in creator's series, as the edit form shows it",
+        "tags" : [ "creator" ]
+      },
+      "put" : {
+        "description" : "Leave the upload ids out to keep the current cover / banner.",
+        "operationId" : "update",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/SeriesInput"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SeriesEdit"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Edit a series",
+        "tags" : [ "creator" ]
+      }
+    },
+    "/api/v1/creator/series/{id}/episodes" : {
+      "get" : {
+        "operationId" : "episodes",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/CreatorEpisode"
+                  }
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Every episode of the series, newest first, drafts and scheduled too",
+        "tags" : [ "creator" ]
+      },
+      "post" : {
+        "description" : "publish.mode is DRAFT, NOW or SCHEDULED (with publish.at, an instant in the future). Comics send imageUploadIds in reading order (at most 100, 200 MB), novels send blocks. fastPass null means free; otherwise 3-10 coins and free after 1-90 days (defaults 5 and 7). number null takes the next free number.",
+        "operationId" : "createEpisode",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/EpisodeInput"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/EpisodeEdit"
+                }
+              }
+            },
+            "description" : "Created"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Add an episode (comic) or chapter (novel)",
+        "tags" : [ "creator" ]
+      }
+    },
+    "/api/v1/creator/series/{id}/episodes/{number}" : {
+      "delete" : {
+        "description" : "409 episode_published for a live episode.",
+        "operationId" : "deleteEpisode",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }, {
+          "in" : "path",
+          "name" : "number",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "No Content"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Delete a draft or scheduled episode",
+        "tags" : [ "creator" ]
+      },
+      "get" : {
+        "operationId" : "episode",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }, {
+          "in" : "path",
+          "name" : "number",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/EpisodeEdit"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "One episode as the edit form shows it",
+        "tags" : [ "creator" ]
+      },
+      "put" : {
+        "description" : "Send the whole episode. A published episode stays published (publish.mode NOW); drafts and scheduled episodes can change mode.",
+        "operationId" : "updateEpisode",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }, {
+          "in" : "path",
+          "name" : "number",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/EpisodeInput"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/EpisodeEdit"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Edit an episode",
+        "tags" : [ "creator" ]
+      }
+    },
+    "/api/v1/creator/series/{id}/publish" : {
+      "post" : {
+        "description" : "Needs a summary and a cover. 403 hidden_by_admin when an admin hid it.",
+        "operationId" : "publish",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SeriesEdit"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Put the series live",
+        "tags" : [ "creator" ]
+      }
+    },
+    "/api/v1/creator/series/{id}/unpublish" : {
+      "post" : {
+        "operationId" : "unpublish",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SeriesEdit"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Take the series back to a draft",
+        "tags" : [ "creator" ]
+      }
+    },
+    "/api/v1/creator/uploads" : {
+      "post" : {
+        "description" : "Returns a presigned URL: PUT the file to it with the given headers, then call POST /creator/uploads/{id}/complete. 400 for a type or size the rules do not allow.",
+        "operationId" : "create",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/CreateUploadRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/UploadTicket"
+                }
+              }
+            },
+            "description" : "Created"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Start an image upload",
+        "tags" : [ "media" ]
+      }
+    },
+    "/api/v1/creator/uploads/{id}" : {
+      "get" : {
+        "operationId" : "get",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/UploadView"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "The state of one of the signed-in creator's uploads",
+        "tags" : [ "media" ]
+      }
+    },
+    "/api/v1/creator/uploads/{id}/complete" : {
+      "post" : {
+        "description" : "422 with a reason code (image_too_small, not_square, unsupported_type, corrupt_image, file_too_large, too_many_pixels) when a check fails; 409 upload_missing when the file is not in storage yet. Calling it again after success answers the same.",
+        "operationId" : "complete",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/UploadView"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Check the uploaded image and make its WebP variants",
+        "tags" : [ "media" ]
       }
     },
     "/api/v1/creators/{id}/follow" : {
@@ -1141,6 +2491,73 @@
           }
         },
         "summary" : "The signed-in account (401 when not signed in)",
+        "tags" : [ "account" ]
+      }
+    },
+    "/api/v1/me/avatar" : {
+      "delete" : {
+        "operationId" : "removeAvatar",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/MeResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Removes the profile picture (the website shows initials again)",
+        "tags" : [ "account" ]
+      },
+      "put" : {
+        "description" : "Upload with POST /creator/uploads (kind AVATAR) and /complete first. 400 upload_invalid or upload_not_ready (field uploadId).",
+        "operationId" : "setAvatar",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/AvatarRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/MeResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Sets the profile picture from a finished AVATAR upload",
         "tags" : [ "account" ]
       }
     },
@@ -1481,6 +2898,69 @@
         "tags" : [ "account" ]
       }
     },
+    "/api/v1/me/push-token" : {
+      "delete" : {
+        "operationId" : "unregister",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/TokenRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "204" : {
+            "description" : "No Content"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Forgets this browser's push token (the reader turned push off)",
+        "tags" : [ "account" ]
+      },
+      "put" : {
+        "description" : "New-episode notices go to every saved token of the account while Settings > Notifications > New episodes is on.",
+        "operationId" : "register",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/TokenRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "204" : {
+            "description" : "No Content"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Saves this browser's push token",
+        "tags" : [ "account" ]
+      }
+    },
     "/api/v1/me/settings" : {
       "get" : {
         "operationId" : "settings",
@@ -1789,7 +3269,7 @@
     },
     "/api/v1/search" : {
       "get" : {
-        "description" : "An empty query returns the 6 most viewed series (\"Popular now\").",
+        "description" : "An empty query with no filter returns the 6 most viewed series (\"Popular now\"); an empty query with a filter lists the matching series. 400 invalid_value (field: the parameter) for an unknown filter or sort.",
         "operationId" : "search",
         "parameters" : [ {
           "in" : "query",
@@ -1809,6 +3289,40 @@
           "schema" : {
             "type" : [ "integer", "null" ],
             "format" : "int32"
+          }
+        }, {
+          "in" : "query",
+          "name" : "type",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "enum" : [ "comic", "novel" ]
+          }
+        }, {
+          "description" : "Genre slug, e.g. action",
+          "in" : "query",
+          "name" : "genre",
+          "required" : false,
+          "schema" : {
+            "type" : [ "string", "null" ],
+            "maxLength" : 60,
+            "minLength" : 0
+          }
+        }, {
+          "in" : "query",
+          "name" : "status",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "enum" : [ "ongoing", "completed", "hiatus" ]
+          }
+        }, {
+          "in" : "query",
+          "name" : "sort",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "enum" : [ "relevance", "popular", "newest" ]
           }
         } ],
         "responses" : {
@@ -1833,7 +3347,48 @@
             "description" : "Error"
           }
         },
-        "summary" : "Series by title, creator or genre",
+        "summary" : "Series by title, creator or genre, with filters and sort",
+        "tags" : [ "search" ]
+      }
+    },
+    "/api/v1/search/suggestions" : {
+      "get" : {
+        "description" : "An empty query returns the titles of the most viewed series.",
+        "operationId" : "suggestions",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "q",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "default" : "",
+            "maxLength" : 100,
+            "minLength" : 0
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Suggestions"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Up to 6 series titles for search-as-you-type",
         "tags" : [ "search" ]
       }
     },
@@ -1911,7 +3466,7 @@
     },
     "/api/v1/series/{slug}" : {
       "get" : {
-        "operationId" : "series",
+        "operationId" : "series_1",
         "parameters" : [ {
           "in" : "path",
           "name" : "slug",
@@ -2056,7 +3611,7 @@
     },
     "/api/v1/series/{slug}/episodes" : {
       "get" : {
-        "operationId" : "episodes",
+        "operationId" : "episodes_1",
         "parameters" : [ {
           "in" : "path",
           "name" : "slug",
@@ -2758,6 +4313,219 @@
   },
   "components" : {
     "schemas" : {
+      "AdminContent" : {
+        "type" : "object",
+        "properties" : {
+          "createdAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "episodeNumber" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int32"
+          },
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "openReports" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "owner" : {
+            "type" : "string"
+          },
+          "seriesSlug" : {
+            "type" : "string"
+          },
+          "status" : {
+            "type" : "string"
+          },
+          "title" : {
+            "type" : "string"
+          },
+          "type" : {
+            "type" : "string",
+            "enum" : [ "series", "episode", "comment" ]
+          }
+        },
+        "required" : [ "createdAt", "id", "openReports", "owner", "seriesSlug", "status", "title", "type" ]
+      },
+      "AdminOrder" : {
+        "type" : "object",
+        "properties" : {
+          "coins" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "createdAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "displayName" : {
+            "type" : "string"
+          },
+          "email" : {
+            "type" : "string"
+          },
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "method" : {
+            "type" : "string"
+          },
+          "orderNumber" : {
+            "type" : "string"
+          },
+          "paidAt" : {
+            "type" : [ "string", "null" ],
+            "format" : "date-time"
+          },
+          "priceKhr" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int32"
+          },
+          "priceUsdCents" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int32"
+          },
+          "refundable" : {
+            "type" : "boolean"
+          },
+          "refundedAt" : {
+            "type" : [ "string", "null" ],
+            "format" : "date-time"
+          },
+          "status" : {
+            "type" : "string"
+          },
+          "userId" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        },
+        "required" : [ "coins", "createdAt", "displayName", "email", "id", "method", "orderNumber", "refundable", "status", "userId" ]
+      },
+      "AdminReport" : {
+        "type" : "object",
+        "properties" : {
+          "createdAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "details" : {
+            "type" : [ "string", "null" ]
+          },
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "note" : {
+            "type" : [ "string", "null" ]
+          },
+          "reason" : {
+            "type" : "string"
+          },
+          "reporter" : {
+            "type" : "string"
+          },
+          "resolvedAt" : {
+            "type" : [ "string", "null" ],
+            "format" : "date-time"
+          },
+          "resolvedBy" : {
+            "type" : [ "string", "null" ]
+          },
+          "status" : {
+            "type" : "string"
+          },
+          "target" : {
+            "$ref" : "#/components/schemas/ReportTarget"
+          }
+        },
+        "required" : [ "createdAt", "id", "reason", "reporter", "status", "target" ]
+      },
+      "AdminUser" : {
+        "type" : "object",
+        "properties" : {
+          "createdAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "displayName" : {
+            "type" : "string"
+          },
+          "email" : {
+            "type" : "string"
+          },
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "lastLoginAt" : {
+            "type" : [ "string", "null" ],
+            "format" : "date-time"
+          },
+          "roles" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "status" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "createdAt", "displayName", "email", "id", "roles", "status" ]
+      },
+      "AuditEntry" : {
+        "type" : "object",
+        "properties" : {
+          "action" : {
+            "type" : "string"
+          },
+          "actorId" : {
+            "type" : [ "string", "null" ],
+            "format" : "uuid"
+          },
+          "actorName" : {
+            "type" : [ "string", "null" ]
+          },
+          "createdAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "details" : {
+            "type" : "object",
+            "additionalProperties" : { }
+          },
+          "id" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "requestId" : {
+            "type" : [ "string", "null" ]
+          },
+          "targetId" : {
+            "type" : [ "string", "null" ]
+          },
+          "targetType" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "action", "createdAt", "details", "id", "targetType" ]
+      },
+      "AvatarRequest" : {
+        "type" : "object",
+        "properties" : {
+          "uploadId" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        },
+        "required" : [ "uploadId" ]
+      },
       "Badges" : {
         "type" : "object",
         "properties" : {
@@ -2769,6 +4537,57 @@
           }
         },
         "required" : [ "isNew", "up" ]
+      },
+      "BecomeCreatorRequest" : {
+        "type" : "object",
+        "properties" : {
+          "acceptTerms" : {
+            "type" : "boolean"
+          },
+          "penName" : {
+            "type" : "string",
+            "maxLength" : 60,
+            "minLength" : 0
+          }
+        },
+        "required" : [ "acceptTerms", "penName" ]
+      },
+      "BecomeCreatorResponse" : {
+        "type" : "object",
+        "properties" : {
+          "penName" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "penName" ]
+      },
+      "Block" : {
+        "type" : "object",
+        "properties" : {
+          "text" : {
+            "type" : [ "string", "null" ],
+            "maxLength" : 20000,
+            "minLength" : 0
+          },
+          "type" : {
+            "type" : "string",
+            "minLength" : 1,
+            "pattern" : "paragraph|heading|quote|scene-break"
+          }
+        },
+        "required" : [ "type" ]
+      },
+      "BlockView" : {
+        "type" : "object",
+        "properties" : {
+          "text" : {
+            "type" : [ "string", "null" ]
+          },
+          "type" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "type" ]
       },
       "BookmarkState" : {
         "type" : "object",
@@ -2951,6 +4770,25 @@
         },
         "required" : [ "author", "body", "canDelete", "createdAt", "id", "liked", "likes", "mine", "top" ]
       },
+      "CreateUploadRequest" : {
+        "type" : "object",
+        "properties" : {
+          "contentType" : {
+            "type" : "string",
+            "minLength" : 1
+          },
+          "kind" : {
+            "type" : "string",
+            "enum" : [ "COVER", "BANNER", "THUMBNAIL", "PANEL", "AVATAR" ]
+          },
+          "size" : {
+            "type" : "integer",
+            "format" : "int64",
+            "exclusiveMinimum" : 0
+          }
+        },
+        "required" : [ "contentType", "kind", "size" ]
+      },
       "CreatorDashboard" : {
         "type" : "object",
         "properties" : {
@@ -2971,6 +4809,48 @@
           }
         },
         "required" : [ "creator", "series", "totals" ]
+      },
+      "CreatorEpisode" : {
+        "type" : "object",
+        "properties" : {
+          "commentsEnabled" : {
+            "type" : "boolean"
+          },
+          "freeAt" : {
+            "type" : [ "string", "null" ],
+            "format" : "date-time"
+          },
+          "likes" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "number" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "priceCoins" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int32"
+          },
+          "publishedAt" : {
+            "type" : [ "string", "null" ],
+            "format" : "date-time"
+          },
+          "status" : {
+            "type" : "string"
+          },
+          "thumbnailUrl" : {
+            "type" : [ "string", "null" ]
+          },
+          "title" : {
+            "type" : "string"
+          },
+          "views" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        },
+        "required" : [ "commentsEnabled", "likes", "number", "status", "title", "views" ]
       },
       "CreatorSeries" : {
         "type" : "object",
@@ -3034,6 +4914,81 @@
           }
         },
         "required" : [ "comments", "earnedCoins", "likes", "series", "subscribers", "unlocks", "views" ]
+      },
+      "CursorPageAdminContent" : {
+        "type" : "object",
+        "properties" : {
+          "items" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/AdminContent"
+            }
+          },
+          "nextCursor" : {
+            "type" : [ "string", "null" ]
+          }
+        },
+        "required" : [ "items" ]
+      },
+      "CursorPageAdminOrder" : {
+        "type" : "object",
+        "properties" : {
+          "items" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/AdminOrder"
+            }
+          },
+          "nextCursor" : {
+            "type" : [ "string", "null" ]
+          }
+        },
+        "required" : [ "items" ]
+      },
+      "CursorPageAdminReport" : {
+        "type" : "object",
+        "properties" : {
+          "items" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/AdminReport"
+            }
+          },
+          "nextCursor" : {
+            "type" : [ "string", "null" ]
+          }
+        },
+        "required" : [ "items" ]
+      },
+      "CursorPageAdminUser" : {
+        "type" : "object",
+        "properties" : {
+          "items" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/AdminUser"
+            }
+          },
+          "nextCursor" : {
+            "type" : [ "string", "null" ]
+          }
+        },
+        "required" : [ "items" ]
+      },
+      "CursorPageAuditEntry" : {
+        "type" : "object",
+        "properties" : {
+          "items" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/AuditEntry"
+            }
+          },
+          "nextCursor" : {
+            "type" : [ "string", "null" ]
+          }
+        },
+        "required" : [ "items" ]
       },
       "CursorPageCommentView" : {
         "type" : "object",
@@ -3314,6 +5269,114 @@
         },
         "required" : [ "blocks", "comments", "commentsEnabled", "episode", "panels", "series", "total", "viewer", "wordCount" ]
       },
+      "EpisodeEdit" : {
+        "type" : "object",
+        "properties" : {
+          "blocks" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/BlockView"
+            }
+          },
+          "commentsEnabled" : {
+            "type" : "boolean"
+          },
+          "creatorNote" : {
+            "type" : [ "string", "null" ]
+          },
+          "freeAfterDays" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int32"
+          },
+          "freeAt" : {
+            "type" : [ "string", "null" ],
+            "format" : "date-time"
+          },
+          "number" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "panels" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/PanelView"
+            }
+          },
+          "priceCoins" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int32"
+          },
+          "publishedAt" : {
+            "type" : [ "string", "null" ],
+            "format" : "date-time"
+          },
+          "status" : {
+            "type" : "string"
+          },
+          "thumbnailUrl" : {
+            "type" : [ "string", "null" ]
+          },
+          "title" : {
+            "type" : "string"
+          },
+          "wordCount" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        },
+        "required" : [ "blocks", "commentsEnabled", "number", "panels", "status", "title", "wordCount" ]
+      },
+      "EpisodeInput" : {
+        "type" : "object",
+        "properties" : {
+          "blocks" : {
+            "type" : [ "array", "null" ],
+            "items" : {
+              "$ref" : "#/components/schemas/Block"
+            },
+            "maxItems" : 2000,
+            "minItems" : 0
+          },
+          "commentsEnabled" : {
+            "type" : [ "boolean", "null" ]
+          },
+          "creatorNote" : {
+            "type" : [ "string", "null" ],
+            "maxLength" : 1000,
+            "minLength" : 0
+          },
+          "fastPass" : {
+            "$ref" : "#/components/schemas/FastPass"
+          },
+          "imageUploadIds" : {
+            "type" : [ "array", "null" ],
+            "items" : {
+              "type" : "string",
+              "format" : "uuid"
+            },
+            "maxItems" : 100,
+            "minItems" : 0
+          },
+          "number" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int32",
+            "minimum" : 1
+          },
+          "publish" : {
+            "$ref" : "#/components/schemas/Publish"
+          },
+          "thumbnailUploadId" : {
+            "type" : [ "string", "null" ],
+            "format" : "uuid"
+          },
+          "title" : {
+            "type" : "string",
+            "maxLength" : 120,
+            "minLength" : 0
+          }
+        },
+        "required" : [ "publish", "title" ]
+      },
       "EpisodeLikeState" : {
         "type" : "object",
         "properties" : {
@@ -3402,6 +5465,23 @@
           }
         },
         "required" : [ "error" ]
+      },
+      "FastPass" : {
+        "type" : "object",
+        "properties" : {
+          "freeAfterDays" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int32",
+            "maximum" : 90,
+            "minimum" : 1
+          },
+          "priceCoins" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int32",
+            "maximum" : 10,
+            "minimum" : 3
+          }
+        }
       },
       "FollowState" : {
         "type" : "object",
@@ -3586,6 +5666,19 @@
         },
         "required" : [ "comics", "novels" ]
       },
+      "ImageVariant" : {
+        "type" : "object",
+        "properties" : {
+          "url" : {
+            "type" : "string"
+          },
+          "width" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        },
+        "required" : [ "url", "width" ]
+      },
       "LedgerEntry" : {
         "type" : "object",
         "properties" : {
@@ -3716,10 +5809,20 @@
           },
           "type" : {
             "type" : "string",
-            "enum" : [ "paragraph", "quote", "scene-break" ]
+            "enum" : [ "paragraph", "heading", "quote", "scene-break" ]
           }
         },
         "required" : [ "type" ]
+      },
+      "OptionalReasonRequest" : {
+        "type" : "object",
+        "properties" : {
+          "reason" : {
+            "type" : [ "string", "null" ],
+            "maxLength" : 500,
+            "minLength" : 0
+          }
+        }
       },
       "OrderRequest" : {
         "type" : "object",
@@ -3786,7 +5889,7 @@
           },
           "status" : {
             "type" : "string",
-            "enum" : [ "pending", "paid", "failed", "cancelled", "expired" ]
+            "enum" : [ "pending", "paid", "failed", "cancelled", "expired", "refunded" ]
           },
           "totalCoins" : {
             "type" : "integer",
@@ -3794,6 +5897,36 @@
           }
         },
         "required" : [ "bonusCoins", "coins", "createdAt", "expiresAt", "firstBonusCoins", "method", "orderNumber", "packId", "provider", "status", "totalCoins" ]
+      },
+      "Overview" : {
+        "type" : "object",
+        "properties" : {
+          "bannedUsers" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "hiddenComments" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "hiddenEpisodes" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "hiddenSeries" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "openReports" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "refundedOrders" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        },
+        "required" : [ "bannedUsers", "hiddenComments", "hiddenEpisodes", "hiddenSeries", "openReports", "refundedOrders" ]
       },
       "Panel" : {
         "type" : "object",
@@ -3814,6 +5947,27 @@
           }
         },
         "required" : [ "alt", "height", "src", "width" ]
+      },
+      "PanelView" : {
+        "type" : "object",
+        "properties" : {
+          "height" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "uploadId" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "url" : {
+            "type" : "string"
+          },
+          "width" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        },
+        "required" : [ "height", "uploadId", "url", "width" ]
       },
       "PasswordRequest" : {
         "type" : "object",
@@ -3853,6 +6007,20 @@
           }
         },
         "required" : [ "episode", "progress" ]
+      },
+      "Publish" : {
+        "type" : "object",
+        "properties" : {
+          "at" : {
+            "type" : [ "string", "null" ],
+            "format" : "date-time"
+          },
+          "mode" : {
+            "type" : "string",
+            "enum" : [ "draft", "now", "scheduled" ]
+          }
+        },
+        "required" : [ "mode" ]
       },
       "RankingEntry" : {
         "type" : "object",
@@ -3929,6 +6097,30 @@
           }
         },
         "required" : [ "bookmarked", "liked", "signedIn", "unlocked" ]
+      },
+      "ReasonRequest" : {
+        "type" : "object",
+        "properties" : {
+          "reason" : {
+            "type" : "string",
+            "maxLength" : 500,
+            "minLength" : 0
+          }
+        },
+        "required" : [ "reason" ]
+      },
+      "RefundResult" : {
+        "type" : "object",
+        "properties" : {
+          "order" : {
+            "$ref" : "#/components/schemas/AdminOrder"
+          },
+          "refundedCoins" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        },
+        "required" : [ "order", "refundedCoins" ]
       },
       "RemoveRequest" : {
         "type" : "object",
@@ -4028,6 +6220,33 @@
           }
         },
         "required" : [ "reason" ]
+      },
+      "ReportTarget" : {
+        "type" : "object",
+        "properties" : {
+          "episodeNumber" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int32"
+          },
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "seriesSlug" : {
+            "type" : [ "string", "null" ]
+          },
+          "status" : {
+            "type" : [ "string", "null" ]
+          },
+          "title" : {
+            "type" : [ "string", "null" ]
+          },
+          "type" : {
+            "type" : "string",
+            "enum" : [ "series", "episode", "comment" ]
+          }
+        },
+        "required" : [ "id", "type" ]
       },
       "ResetPasswordRequest" : {
         "type" : "object",
@@ -4184,6 +6403,128 @@
         },
         "required" : [ "creatorId", "creatorSeriesCount", "related", "series", "stats", "synopsis" ]
       },
+      "SeriesEdit" : {
+        "type" : "object",
+        "properties" : {
+          "ageRating" : {
+            "type" : "string",
+            "enum" : [ "all", "teen", "mature" ]
+          },
+          "bannerUrl" : {
+            "type" : [ "string", "null" ]
+          },
+          "coverUrl" : {
+            "type" : [ "string", "null" ]
+          },
+          "genre" : {
+            "type" : "string"
+          },
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "languages" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "slug" : {
+            "type" : "string"
+          },
+          "status" : {
+            "type" : "string",
+            "enum" : [ "ongoing", "completed", "hiatus" ]
+          },
+          "summary" : {
+            "type" : "string"
+          },
+          "tags" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "title" : {
+            "type" : "string"
+          },
+          "type" : {
+            "type" : "string",
+            "enum" : [ "comic", "novel" ]
+          },
+          "updateDay" : {
+            "type" : [ "string", "null" ],
+            "enum" : [ "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun", null ]
+          },
+          "visibility" : {
+            "type" : "string",
+            "enum" : [ "draft", "published", "hidden" ]
+          }
+        },
+        "required" : [ "ageRating", "genre", "id", "languages", "slug", "status", "summary", "tags", "title", "type", "visibility" ]
+      },
+      "SeriesInput" : {
+        "type" : "object",
+        "properties" : {
+          "ageRating" : {
+            "type" : [ "string", "null" ],
+            "enum" : [ "all", "teen", "mature", null ]
+          },
+          "bannerUploadId" : {
+            "type" : [ "string", "null" ],
+            "format" : "uuid"
+          },
+          "coverUploadId" : {
+            "type" : [ "string", "null" ],
+            "format" : "uuid"
+          },
+          "genre" : {
+            "type" : "string",
+            "minLength" : 1
+          },
+          "languages" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string",
+              "pattern" : "en|km"
+            },
+            "minItems" : 1
+          },
+          "status" : {
+            "type" : [ "string", "null" ],
+            "enum" : [ "ongoing", "completed", "hiatus", null ]
+          },
+          "summary" : {
+            "type" : [ "string", "null" ],
+            "maxLength" : 2000,
+            "minLength" : 0
+          },
+          "tags" : {
+            "type" : [ "array", "null" ],
+            "items" : {
+              "type" : "string",
+              "maxLength" : 30,
+              "minLength" : 0
+            },
+            "maxItems" : 10,
+            "minItems" : 0
+          },
+          "title" : {
+            "type" : "string",
+            "maxLength" : 120,
+            "minLength" : 0
+          },
+          "type" : {
+            "type" : [ "string", "null" ],
+            "enum" : [ "comic", "novel", null ]
+          },
+          "updateDay" : {
+            "type" : [ "string", "null" ],
+            "enum" : [ "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun", null ]
+          }
+        },
+        "required" : [ "genre", "languages", "title" ]
+      },
       "SeriesStats" : {
         "type" : "object",
         "properties" : {
@@ -4268,6 +6609,21 @@
           }
         }
       },
+      "SettleRequest" : {
+        "type" : "object",
+        "properties" : {
+          "action" : {
+            "type" : "string",
+            "enum" : [ "dismiss", "resolve", "hide" ]
+          },
+          "note" : {
+            "type" : [ "string", "null" ],
+            "maxLength" : 1000,
+            "minLength" : 0
+          }
+        },
+        "required" : [ "action" ]
+      },
       "SignupRequest" : {
         "type" : "object",
         "properties" : {
@@ -4347,6 +6703,29 @@
         },
         "required" : [ "subscribed", "subscribers" ]
       },
+      "Suggestions" : {
+        "type" : "object",
+        "properties" : {
+          "items" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          }
+        },
+        "required" : [ "items" ]
+      },
+      "TokenRequest" : {
+        "type" : "object",
+        "properties" : {
+          "token" : {
+            "type" : "string",
+            "maxLength" : 4096,
+            "minLength" : 0
+          }
+        },
+        "required" : [ "token" ]
+      },
       "UnlockResult" : {
         "type" : "object",
         "properties" : {
@@ -4383,6 +6762,70 @@
           }
         },
         "required" : [ "episode", "series", "unlockedAt" ]
+      },
+      "UploadTicket" : {
+        "type" : "object",
+        "properties" : {
+          "expiresAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "headers" : {
+            "type" : "object",
+            "additionalProperties" : {
+              "type" : "string"
+            }
+          },
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "uploadUrl" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "expiresAt", "headers", "id", "uploadUrl" ]
+      },
+      "UploadView" : {
+        "type" : "object",
+        "properties" : {
+          "height" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int32"
+          },
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "kind" : {
+            "type" : "string",
+            "enum" : [ "COVER", "BANNER", "THUMBNAIL", "PANEL", "AVATAR" ]
+          },
+          "rejectCode" : {
+            "type" : [ "string", "null" ]
+          },
+          "rejectMessage" : {
+            "type" : [ "string", "null" ]
+          },
+          "status" : {
+            "type" : "string",
+            "enum" : [ "PENDING", "READY", "REJECTED" ]
+          },
+          "url" : {
+            "type" : [ "string", "null" ]
+          },
+          "variants" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/ImageVariant"
+            }
+          },
+          "width" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int32"
+          }
+        },
+        "required" : [ "id", "kind", "status", "variants" ]
       },
       "VerifyRequest" : {
         "type" : "object",

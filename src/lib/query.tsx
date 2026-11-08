@@ -1,10 +1,11 @@
 "use client"
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
-import { ThemeProvider } from "next-themes"
+import { ThemeProvider } from "@/lib/theme"
 import { useState } from "react"
 import { Toaster } from "@/components/ui/sonner"
 import { SessionSync } from "@/lib/session-sync"
+import { SettingsSync } from "@/lib/settings-sync"
 import { StoreHydrator } from "@/lib/store-hydrator"
 
 /**
@@ -19,10 +20,11 @@ export function Providers({ children }: { children: React.ReactNode }) {
       })
   )
   return (
-    <ThemeProvider attribute="class" defaultTheme="system" enableSystem storageKey="phumreader.theme" disableTransitionOnChange>
+    <ThemeProvider>
       <QueryClientProvider client={client}>
         <StoreHydrator />
         <SessionSync />
+        <SettingsSync />
         {children}
         <Toaster />
       </QueryClientProvider>

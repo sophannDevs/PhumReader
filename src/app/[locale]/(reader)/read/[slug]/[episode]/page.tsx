@@ -5,6 +5,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server"
 import { ComicReader, ReaderSkeleton } from "@/components/pr/comic-reader"
 import { episodesFor, getSeries, getSeriesBySlug } from "@/data"
 import { redirect } from "@/i18n/navigation"
+import { DEMO_MODE } from "@/lib/api/config"
 import { routing } from "@/i18n/routing"
 
 // Episode 1 of every comic is prerendered; other episodes render on request.
@@ -30,9 +31,10 @@ async function ComicContent({ params }: { params: PageProps<"/[locale]/read/[slu
 
   const series = getSeriesBySlug(slug)
   const n = Number(episode)
-  if (!series || !Number.isInteger(n) || n < 1 || n > episodesFor(slug).length) notFound()
+  // The demo knows its series here; with the real API the page asks the API (series made by creators are not in the demo data).
+  if (DEMO_MODE ? !series || !Number.isInteger(n) || n < 1 || n > episodesFor(slug).length : !Number.isInteger(n) || n < 1) notFound()
   // A web novel opened under /read goes to the novel reader.
-  if (series.type === "novel") redirect({ href: `/novel/${slug}/${n}`, locale })
+  if (series?.type === "novel") redirect({ href: `/novel/${slug}/${n}`, locale })
 
   return <ComicReader slug={slug} n={n} />
 }

@@ -10,6 +10,7 @@ import app.phumreader.episode.service.ReadingViews.EpisodeLikeState;
 import app.phumreader.episode.service.ReadingViews.NovelBlock;
 import app.phumreader.episode.service.ReadingViews.Panel;
 import app.phumreader.episode.service.ReadingViews.ReaderState;
+import app.phumreader.media.service.ImageUrlSigner;
 import app.phumreader.series.domain.SeriesType;
 import app.phumreader.series.service.CatalogRefs.EpisodeRef;
 import app.phumreader.series.service.CatalogRefs.SeriesRef;
@@ -36,9 +37,15 @@ public class ReadingService {
     private final ReadingQueries queries;
     private final JsonMapper json;
     private final Clock clock;
+    private final ImageUrlSigner imageUrls;
 
     public ReadingService(
-            CatalogService catalog, ReadingQueries queries, JsonMapper json, Clock clock) {
+            CatalogService catalog,
+            ReadingQueries queries,
+            JsonMapper json,
+            Clock clock,
+            ImageUrlSigner imageUrls) {
+        this.imageUrls = imageUrls;
         this.catalog = catalog;
         this.queries = queries;
         this.json = json;
@@ -65,7 +72,12 @@ public class ReadingService {
         List<Panel> panels =
                 comic
                         ? queries.panels(episode.id()).stream()
-                                .map(p -> new Panel(p.storageKey(), p.width(), p.height(), p.alt()))
+                                .map(p ->
+                                        new Panel(
+                                                imageUrls.signStored(p.storageKey()),
+                                                p.width(),
+                                                p.height(),
+                                                p.alt()))
                                 .toList()
                         : List.of();
         ChapterRow chapter = comic ? null : queries.chapter(episode.id()).orElse(null);

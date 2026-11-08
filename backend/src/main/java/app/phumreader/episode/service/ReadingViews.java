@@ -40,17 +40,23 @@ public final class ReadingViews {
     /**
      * One comic image.
      *
-     * @param src image address (public path for the demo panels; signed URLs come with P3-08)
+     * @param src image address (public path for the demo panels; for uploaded panels a signed
+     *     address that works for 5 minutes when the image Worker is set up, P3-08)
      */
     public record Panel(String src, int width, int height, String alt) {}
 
-    /** A paragraph, a quote or a scene break ({@code text} is null for a scene break). */
+    /**
+     * A paragraph, a heading, a quote or a scene break ({@code text} is null for a scene break).
+     * Text may carry {@code **bold**} and {@code *italic*} marks.
+     */
     public record NovelBlock(BlockType type, @Nullable String text) {}
 
     /** Kinds of chapter text block. */
     public enum BlockType {
         @JsonProperty("paragraph")
         PARAGRAPH,
+        @JsonProperty("heading")
+        HEADING,
         @JsonProperty("quote")
         QUOTE,
         @JsonProperty("scene-break")

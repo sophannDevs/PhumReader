@@ -5,6 +5,7 @@ import { DEMO_MODE } from "@/lib/api/config"
 import { onSessionLost } from "@/lib/api/client"
 import { currentUser } from "@/lib/session"
 import { useAppStore, useHydrated } from "@/lib/store"
+import { useWalletSync } from "@/lib/wallet"
 
 /**
  * Real API only: once the stored state is loaded, asks `GET /me` who is signed in (the stored
@@ -13,6 +14,7 @@ import { useAppStore, useHydrated } from "@/lib/store"
  */
 export function SessionSync() {
   const hydrated = useHydrated()
+  useWalletSync()
 
   useEffect(() => {
     if (DEMO_MODE) return

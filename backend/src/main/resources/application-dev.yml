@@ -13,7 +13,43 @@ spring:
         # Sends batched INSERTs as multi-row statements (fast seeding over the network).
         reWriteBatchedInserts: true
 
+  mail:
+    # Empty: emails are printed in the backend console. With Mailpit: 127.0.0.1 and 1025.
+    host: ${MAIL_HOST:}
+    port: ${MAIL_PORT:1025}
+  data:
+    redis:
+      # Empty: no Redis, rate limits and email codes stay in this API's memory.
+      url: ${REDIS_URL:}
+
 phumreader:
+  views:
+    enabled: true
+  search:
+    # Empty: search uses PostgreSQL. With Meilisearch: http://127.0.0.1:7700 and its master key.
+    url: ${MEILI_URL:}
+    key: ${MEILI_MASTER_KEY:}
+  storage:
+    # Empty: images stay in memory. With MinIO: http://127.0.0.1:9000 (the bucket is made at start-up).
+    endpoint: ${S3_ENDPOINT:}
+    bucket: ${S3_BUCKET:phumreader-dev}
+    access-key: ${S3_ACCESS_KEY:}
+    secret-key: ${S3_SECRET_KEY:}
+    region: ${S3_REGION:us-east-1}
+    public-base-url: ${S3_PUBLIC_URL:}
+    image-signing-secret: ${IMAGE_SIGNING_SECRET:}
+    image-cdn-url: ${IMAGE_CDN_URL:}
+    create-bucket: true
+  mail:
+    host: ${MAIL_HOST:}
+    from: ${MAIL_FROM:PhumReader <no-reply@phumreader.local>}
+    # Set to send through Resend's API (batches of 100) instead of SMTP.
+    resend-api-key: ${RESEND_API_KEY:}
+  push:
+    # Firebase service account (JSON key file); empty: web push is only logged.
+    fcm-credentials-file: ${FCM_CREDENTIALS_FILE:}
+  redis:
+    url: ${REDIS_URL:}
   frontend-url: ${FRONTEND_URL:http://localhost:3000}
   auth:
     # Throw-away signing key; set PHUMREADER_JWT_PRIVATE_KEY to keep sign-ins across restarts.
@@ -23,6 +59,13 @@ phumreader:
     secure-cookies: false
     # Every email code is 123456 in development (as in the demo), so end-to-end tests can sign up.
     fixed-verification-code: "123456"
+    social:
+      google:
+        client-id: ${GOOGLE_CLIENT_ID:}
+        client-secret: ${GOOGLE_CLIENT_SECRET:}
+      facebook:
+        client-id: ${FACEBOOK_APP_ID:}
+        client-secret: ${FACEBOOK_APP_SECRET:}
   payments:
     # No PayWay keys on development machines: coin orders are paid with the dev simulator.
     simulator: true

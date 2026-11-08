@@ -61,7 +61,7 @@ function ComicReaderBody({ series, episode, total, panels }: { series: Series; e
   const n = episode.n
   const t = useTranslations("reader")
   const loc = useLocalize()
-  const { go, list, listEpisodes, isLocked, coins, dialog, gated } = useReaderNav(series, n, total)
+  const { go, list, listEpisodes, isLocked, coins, dialog, gated, finishRef } = useReaderNav(series, n, total)
   if (gated) return <ReaderSkeleton />
 
   return (
@@ -95,6 +95,7 @@ function ComicReaderBody({ series, episode, total, panels }: { series: Series; e
         ))}
       </article>
       <ComicEndSection
+        finishRef={finishRef}
         series={series}
         episode={episode}
         next={list.find((e) => e.n === n + 1)}

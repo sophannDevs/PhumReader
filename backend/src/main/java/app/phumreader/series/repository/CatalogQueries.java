@@ -1,5 +1,6 @@
 package app.phumreader.series.repository;
 
+import app.phumreader.search.domain.SearchFilter;
 import app.phumreader.series.domain.AgeRating;
 import app.phumreader.series.domain.SeriesOrder;
 import app.phumreader.series.domain.SeriesStatus;
@@ -317,25 +318,98 @@ public class CatalogQueries {
      * Published series whose title, creator or genre contains {@code query} (any case). Titles that
      * start with it come first, then the most viewed.
      */
-    public List<SeriesRow> search(String query, int limit, OffsetDateTime now) {
+    public List<SeriesRow> search(
+            String query, SearchFilter filter, int limit, OffsetDateTime now) {
+        String order =
+                switch (filter.sort()) {
+                    case RELEVANCE -> "(strpos(lower(%s.title), :q) = 1) desc, %s.view_count desc";
+                    case POPULAR -> "%s.view_count desc, %s.id";
+                    case NEWEST -> "coalesce(%s.launched_at, %s.created_at) desc";
+                };
+        String inner = order.formatted("s", "s");
+        String outer = order.formatted("c", "c");
         String matches =
                 "select s.* from series s join genres g on g.id = s.genre_id"
                         + " join creator_profiles p on p.user_id = s.creator_id"
                         + " where s.visibility = 'PUBLISHED'"
                         + " and (strpos(lower(s.title), :q) > 0 or strpos(lower(p.pen_name), :q) > 0"
                         + " or strpos(lower(g.name), :q) > 0)"
-                        + " order by (strpos(lower(s.title), :q) = 1) desc, s.view_count desc, s.id"
-                        + " limit :limit";
-        return jdbc.sql(
-                        cards(matches)
-                                + " order by (strpos(lower(c.title), :q) = 1) desc,"
-                                + " c.view_count desc, c.id")
+                        + " and (cast(:type as text) is null or s.type = :type)"
+                        + " and (cast(:genre as text) is null or g.slug = :genre)"
+                        + " and (cast(:status as text) is null or s.status = :status)"
+                        + " order by "
+                        + inner
+                        + ", s.id limit :limit";
+        return jdbc.sql(cards(matches) + " order by " + outer + ", c.id")
                 .param("q", query)
+                .param("type", filter.type())
+                .param("genre", filter.genreSlug())
+                .param("status", filter.status())
                 .param("limit", limit)
                 .param("now", now)
                 .query(SERIES)
                 .list();
     }
+
+    /** What the search index needs for published series: all of them, or just these ids. */
+    public List<SearchRow> searchRows(@Nullable Collection<UUID> ids) {
+        String where = "s.visibility = 'PUBLISHED'" + (ids == null ? "" : " and s.id in (:ids)");
+        var statement =
+                jdbc.sql(
+                        "select s.id, s.title, p.pen_name, g.name as genre, g.slug as genre_slug,"
+                                + " s.type, s.status, s.view_count,"
+                                + " extract(epoch from coalesce(s.launched_at, s.created_at))::bigint"
+                                + " as launched"
+                                + " from series s join genres g on g.id = s.genre_id"
+                                + " join creator_profiles p on p.user_id = s.creator_id where "
+                                + where);
+        if (ids != null) {
+            if (ids.isEmpty()) {
+                return List.of();
+            }
+            statement = statement.param("ids", ids);
+        }
+        return statement
+                .query((rs, n) ->
+                        new SearchRow(
+                                rs.getObject("id", UUID.class),
+                                rs.getString("title"),
+                                rs.getString("pen_name"),
+                                rs.getString("genre"),
+                                rs.getString("genre_slug"),
+                                rs.getString("type"),
+                                rs.getString("status"),
+                                rs.getLong("view_count"),
+                                rs.getLong("launched")))
+                .list();
+    }
+
+    /** Published series by id, as cards, in the order of {@code ids}. */
+    public List<SeriesRow> seriesByIds(List<UUID> ids, OffsetDateTime now) {
+        if (ids.isEmpty()) {
+            return List.of();
+        }
+        Map<UUID, SeriesRow> byId = new LinkedHashMap<>();
+        jdbc.sql(cards("select * from series where visibility = 'PUBLISHED' and id in (:ids)"))
+                .param("ids", ids)
+                .param("now", now)
+                .query(SERIES)
+                .list()
+                .forEach(r -> byId.put(r.id(), r));
+        return ids.stream().map(byId::get).filter(java.util.Objects::nonNull).toList();
+    }
+
+    /** One published series as the search index sees it. */
+    public record SearchRow(
+            UUID id,
+            String title,
+            String penName,
+            String genre,
+            String genreSlug,
+            String type,
+            String status,
+            long views,
+            long launched) {}
 
     // ---------- episodes ----------
 

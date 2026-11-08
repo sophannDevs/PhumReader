@@ -2,7 +2,9 @@
 
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useMutation } from "@tanstack/react-query"
-import { useTranslations } from "next-intl"
+import { useLocale, useTranslations } from "next-intl"
+import { useSearchParams } from "next/navigation"
+import { useEffect, useRef } from "react"
 import { Controller, useForm } from "react-hook-form"
 import { toast } from "sonner"
 import { FacebookIcon, GoogleIcon } from "@/components/auth/social-icons"
@@ -14,7 +16,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { demoData } from "@/data"
 import { errorCode, retryAfterSeconds } from "@/lib/api/errors"
-import { logIn, socialLogIn, type PendingCode } from "@/lib/session"
+import { currentUser, logIn, socialLogIn, type PendingCode } from "@/lib/session"
 import { useAppStore, type StoredUser } from "@/lib/store"
 import { useWaitText } from "@/lib/use-wait-text"
 
@@ -64,14 +66,38 @@ export function LoginView({
       }
     },
   })
+  const locale = useLocale()
   const social = useMutation({
-    mutationFn: socialLogIn,
+    mutationFn: (provider: "google" | "facebook") => socialLogIn(provider, locale),
     onSuccess: finish,
-    onError: (e) =>
-      errorCode(e) === "social_login_unavailable"
-        ? toast.info(t("socialSoon"), { duration: 5000 })
-        : toast.error(ts("errorTitle"), { description: ts("errorDescription"), duration: 5000 }),
+    onError: () => toast.error(ts("errorTitle"), { description: ts("errorDescription"), duration: 5000 }),
   })
+
+  // Back from Google / Facebook: the API redirected here with `?social=<result>` (cookies already set).
+  const params = useSearchParams()
+  const handled = useRef(false)
+  useEffect(() => {
+    const result = params.get("social")
+    if (!result || handled.current) return
+    handled.current = true
+    const url = new URL(window.location.href)
+    url.searchParams.delete("social")
+    window.history.replaceState(null, "", url)
+    const failed = () => toast.error(ts("errorTitle"), { description: t("socialFailed"), duration: 5000 })
+    if (result === "done") {
+      currentUser()
+        .then((user) => (user ? finish(user) : failed()))
+        .catch(failed)
+    } else if (result === "cancelled") toast.info(t("socialCancelled"), { duration: 5000 })
+    else if (result === "unavailable") toast.info(t("socialSoon"), { duration: 5000 })
+    else if (result === "social_no_email") toast.error(t("socialNoEmail"), { duration: 5000 })
+    else if (result === "social_email_unverified") toast.error(t("socialUnverified"), { duration: 5000 })
+    else if (result === "account_banned") toast.error(t("banned"), { duration: 5000 })
+    else if (result === "too_many_requests") toast.error(t("tooManyTitle"), { duration: 5000 })
+    else failed()
+    // finish only calls the store and onDone; it is safe to leave out of the dependencies.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [params])
   const busy = emailLogin.isPending || social.isPending
 
   return (

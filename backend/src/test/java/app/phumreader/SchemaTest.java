@@ -93,8 +93,9 @@ class SchemaTest {
                 creator);
         assertThatThrownBy(() ->
                         jdbc.update(
-                                "insert into episodes (series_id, number, title, price_coins)"
-                                        + " values (?, 1, 'Episode 1', 5)",
+                                "insert into episodes (series_id, number, title, status, published_at,"
+                                        + " price_coins) values (?, 1, 'Episode 1', 'PUBLISHED',"
+                                        + " now(), 5)",
                                 series))
                 .isInstanceOf(DataIntegrityViolationException.class)
                 .hasMessageContaining("episodes_fast_pass_check");

@@ -2,14 +2,13 @@
 
 import Image from "next/image"
 import { useTranslations } from "next-intl"
-import { toast } from "sonner"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import type { Series } from "@/data"
 import { Link } from "@/i18n/navigation"
 import { initials } from "@/lib/format"
 import { seriesHref } from "@/lib/routes"
-import { useAppStore } from "@/lib/store"
+import { useFollow } from "@/lib/me"
 import { useLocalize } from "@/lib/localize"
 
 const cardClass = "rounded-card border bg-card p-5 shadow-xs"
@@ -19,15 +18,17 @@ export function SeriesSidebar({
   series,
   related,
   creatorSeriesCount,
+  creatorId,
 }: {
   series: Series
   related: Series[]
   creatorSeriesCount: number
+  /** Real API: the id the Follow button needs. */
+  creatorId?: string
 }) {
   const t = useTranslations("series")
   const loc = useLocalize()
-  const tt = useTranslations("toasts")
-  const following = useAppStore((s) => s.follows.includes(series.creator))
+  const { following, toggle: toggleFollow } = useFollow(series, creatorId)
 
   return (
     <aside className="flex flex-col gap-4">
@@ -50,10 +51,7 @@ export function SeriesSidebar({
           variant="outline"
           aria-pressed={following}
           className="w-full"
-          onClick={() => {
-            useAppStore.getState().toggleFollow(series.creator)
-            toast.success(tt(following ? "unfollowed" : "followed", { name: series.creator }))
-          }}
+          onClick={() => void toggleFollow()}
         >
           {following ? t("following") : t("follow")}
         </Button>

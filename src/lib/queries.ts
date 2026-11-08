@@ -5,14 +5,17 @@ import { useSyncExternalStore } from "react"
 import type { Genre } from "@/data"
 import { usePathname } from "@/i18n/navigation"
 import * as real from "@/lib/api/catalog"
+import * as realAccount from "@/lib/api/account"
+import * as realCoins from "@/lib/api/coins"
 import { DEMO_MODE } from "@/lib/api/config"
 import * as demo from "@/lib/demo-api"
 import { getDemoFlag, type DemoFlag } from "@/lib/demo-api"
+import { useHydrated, useUser } from "@/lib/store"
 
 /**
  * The catalog pages read the demo (`NEXT_PUBLIC_DEMO=1`) or the real API; both give the same
- * shapes. Comments, the coins page, the library and the creator dashboard are still the demo
- * until their part of Stage 1 Step 5.
+ * shapes. `useComments` and `useLibrary` are the demo-mode paths only (`enabled: DEMO_MODE`): the real
+ * API versions live in `src/lib/comments.ts` and `src/components/pr/library-page.tsx`.
  */
 type Catalog = Pick<
   typeof demo,
@@ -62,7 +65,7 @@ export const useChapter = (slug: string, n: number) => {
 
 export const useComments = (kind: "series" | "episode", slug: string) => {
   const flag = useDemoFlag()
-  return useQuery({ queryKey: ["comments", kind, slug, flag], queryFn: () => demo.fetchComments(kind, slug) })
+  return useQuery({ queryKey: ["comments", kind, slug, flag], queryFn: () => demo.fetchComments(kind, slug), enabled: DEMO_MODE })
 }
 
 export const useRankings = (kind: "comics" | "novels") => {
@@ -80,17 +83,37 @@ export const useSearchSeries = (query: string) => {
   return useQuery({ queryKey: ["search", query.trim().toLowerCase(), flag], queryFn: () => catalog.search(query) })
 }
 
+/** The Coins page: the demo's, or the API's packs plus the reader's own purchase history. */
 export const useCoinsPage = () => {
   const flag = useDemoFlag()
-  return useQuery({ queryKey: ["coins-page", flag], queryFn: demo.fetchCoinsPage })
+  const user = useUser()
+  const hydrated = useHydrated()
+  const email = hydrated ? user?.email : undefined
+  const demoQuery = useQuery({ queryKey: ["coins-page", flag], queryFn: demo.fetchCoinsPage, enabled: DEMO_MODE })
+  const realQuery = useQuery({
+    queryKey: ["coins-page", "real", email ?? ""],
+    queryFn: () => realCoins.fetchCoinsPage(!!email),
+    enabled: !DEMO_MODE && hydrated,
+  })
+  return DEMO_MODE ? demoQuery : realQuery
 }
 
 export const useLibrary = () => {
   const flag = useDemoFlag()
-  return useQuery({ queryKey: ["library", flag], queryFn: demo.fetchLibrary })
+  return useQuery({ queryKey: ["library", flag], queryFn: demo.fetchLibrary, enabled: DEMO_MODE })
 }
 
+/** The creator dashboard: the demo's stand-in creator, or the signed-in account's own series. */
 export const useCreator = () => {
   const flag = useDemoFlag()
-  return useQuery({ queryKey: ["creator", flag], queryFn: demo.fetchCreator })
+  const user = useUser()
+  const hydrated = useHydrated()
+  const email = hydrated ? user?.email : undefined
+  const demoQuery = useQuery({ queryKey: ["creator", flag], queryFn: demo.fetchCreator, enabled: DEMO_MODE })
+  const realQuery = useQuery({
+    queryKey: ["creator", "real", email ?? ""],
+    queryFn: realAccount.fetchCreator,
+    enabled: !DEMO_MODE && !!email,
+  })
+  return DEMO_MODE ? demoQuery : realQuery
 }

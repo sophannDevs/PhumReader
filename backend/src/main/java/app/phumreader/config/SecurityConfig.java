@@ -29,6 +29,9 @@ public class SecurityConfig {
     static final String[] PUBLIC_GET = {
         "/api/v1/health",
         "/api/v1/auth/csrf",
+        // Google and Facebook login: browser navigations to and from the provider (P3-04).
+        "/api/v1/auth/oauth/*/start",
+        "/api/v1/auth/oauth/*/callback",
         // Public catalog (P3-06) and search.
         "/api/v1/home",
         "/api/v1/rankings",
@@ -42,6 +45,7 @@ public class SecurityConfig {
         "/api/v1/series/*/comments",
         "/api/v1/series/*/episodes/*/comments",
         "/api/v1/search",
+        "/api/v1/search/suggestions",
         // Coin packs on the Coins page (P3-11).
         "/api/v1/coins/packs",
         "/actuator/health",
@@ -96,6 +100,8 @@ public class SecurityConfig {
                                 .permitAll()
                                 .requestMatchers(HttpMethod.POST, PUBLIC_POST)
                                 .permitAll()
+                                .requestMatchers("/api/v1/admin/**")
+                                .hasRole("ADMIN")
                                 .anyRequest()
                                 .authenticated())
                 // 401 and 403 use the same JSON error body as every other error.

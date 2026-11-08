@@ -7,13 +7,15 @@ import { SectionHeader } from "@/components/pr/section-header"
 import { SkeletonRow } from "@/components/pr/skeletons"
 import type { ContinueView } from "@/data"
 import { Link } from "@/i18n/navigation"
+import { useContinueEntries } from "@/lib/me"
 import { useAppStore } from "@/lib/store"
 
 /**
  * Continue reading: the demo entries, with the episode replaced by `lastRead`
  * when the reader has gone further (Assumption 8). Hidden when empty.
  */
-export function ContinueReadingSection({ entries }: { entries: ContinueView[] }) {
+export function ContinueReadingSection({ entries: demoEntries }: { entries: ContinueView[] }) {
+  const entries = useContinueEntries(demoEntries)
   const t = useTranslations("home")
   const loggedIn = useAppStore((s) => s.user !== null)
   const lastRead = useAppStore((s) => s.lastRead)

@@ -113,7 +113,8 @@ public class ReadingQueries {
 
     /**
      * Remembers the episode opened last in the series and how far into it; the highest episode
-     * opened only ever goes up.
+     * opened only ever goes up. Saving the same episode again never lowers its progress, so
+     * reopening a finished chapter keeps it at 100%.
      */
     public void saveProgress(
             UUID userId,
@@ -128,8 +129,11 @@ public class ReadingQueries {
                             (user_id, series_id, episode_id, progress, max_episode_number, updated_at)
                         values (:u, :s, :e, :p, :n, :now)
                         on conflict (user_id, series_id) do update set
+                            progress = case
+                                when reading_progress.episode_id = excluded.episode_id
+                                    then greatest(reading_progress.progress, excluded.progress)
+                                else excluded.progress end,
                             episode_id = excluded.episode_id,
-                            progress = excluded.progress,
                             max_episode_number = greatest(reading_progress.max_episode_number,
                                                           excluded.max_episode_number),
                             updated_at = excluded.updated_at

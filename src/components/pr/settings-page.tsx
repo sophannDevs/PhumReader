@@ -1,12 +1,13 @@
 "use client"
 
 import { useLocale, useTranslations } from "next-intl"
-import { useTheme } from "next-themes"
+import { useTheme } from "@/lib/theme"
 import { useState, useSyncExternalStore } from "react"
 import { toast } from "sonner"
 import { ReadingSettingsControls } from "@/components/layout/reading-settings"
+import { AvatarEditor, DisplayNameEditor, SecuritySection } from "@/components/pr/account-security"
 import { EmptyState } from "@/components/pr/empty-state"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -22,6 +23,8 @@ import { Switch } from "@/components/ui/switch"
 import { Link, usePathname, useRouter } from "@/i18n/navigation"
 import { type Locale } from "@/i18n/routing"
 import { cn } from "@/lib/utils"
+import { DEMO_MODE } from "@/lib/api/config"
+import { patchSettings } from "@/lib/api/account"
 import { initials } from "@/lib/format"
 import { logOut } from "@/lib/session"
 import { useAppStore, useUser } from "@/lib/store"
@@ -105,6 +108,8 @@ export function SettingsPage() {
   function changeLanguage(next: string) {
     if (next === locale) return
     useAppStore.getState().setLang(next as Locale)
+    // The account remembers the language; the address decides the page's.
+    if (!DEMO_MODE && user) void patchSettings({ language: next as Locale }).catch(() => undefined)
     router.replace(`${pathname}${window.location.search}`, { locale: next as Locale })
   }
 
@@ -114,8 +119,10 @@ export function SettingsPage() {
 
       <Section id="profile-title" title={t("profile")}>
         {user ? (
-          <div className="flex items-center gap-4">
+          <div className="flex flex-col gap-4">
+          <div className="flex flex-wrap items-center gap-4">
             <Avatar variant="brand" size="lg" className="size-14 text-lg">
+              {user.avatarUrl ? <AvatarImage src={user.avatarUrl} alt="" /> : null}
               <AvatarFallback>{initials(user.name)}</AvatarFallback>
             </Avatar>
             <dl className="flex min-w-0 flex-col gap-1 text-sm">
@@ -128,6 +135,13 @@ export function SettingsPage() {
                 <dd className="truncate text-muted-foreground">{user.email}</dd>
               </div>
             </dl>
+            {DEMO_MODE ? null : (
+              <div className="ml-auto">
+                <DisplayNameEditor />
+              </div>
+            )}
+          </div>
+            {!DEMO_MODE ? <AvatarEditor /> : null}
           </div>
         ) : (
           <EmptyState
@@ -170,7 +184,7 @@ export function SettingsPage() {
         <ReadingPreview />
       </Section>
 
-      <Section id="notify-title" title={t("notifications")} desc={t("notifyNote")}>
+      <Section id="notify-title" title={t("notifications")} desc={DEMO_MODE || !user ? t("notifyNote") : t("notifySaved")}>
         {(
           [
             ["episodes", "notifyEpisodes", "notifyEpisodesDesc"],
@@ -193,6 +207,9 @@ export function SettingsPage() {
         ))}
       </Section>
 
+      {!DEMO_MODE && user ? <SecuritySection card={card} /> : null}
+
+      {DEMO_MODE || user ? (
       <Section id="account-title" title={t("account")}>
         {user ? (
           <div className="flex items-center justify-between gap-4">
@@ -207,13 +224,16 @@ export function SettingsPage() {
             </Button>
           </div>
         ) : null}
-        <div className="flex items-center justify-between gap-4">
-          <span className="type-small font-normal text-muted-foreground">{t("resetDesc")}</span>
-          <Button variant="destructive" onClick={() => setConfirmOpen(true)}>
-            {t("reset")}
-          </Button>
-        </div>
+        {DEMO_MODE ? (
+          <div className="flex items-center justify-between gap-4">
+            <span className="type-small font-normal text-muted-foreground">{t("resetDesc")}</span>
+            <Button variant="destructive" onClick={() => setConfirmOpen(true)}>
+              {t("reset")}
+            </Button>
+          </div>
+        ) : null}
       </Section>
+      ) : null}
 
       <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <DialogContent {...restoreFocus}>

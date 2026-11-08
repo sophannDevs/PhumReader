@@ -2,6 +2,9 @@ package app.phumreader.series.web;
 
 import app.phumreader.common.error.ApiException;
 import app.phumreader.common.paging.CursorPage;
+import app.phumreader.common.security.CurrentUser;
+import app.phumreader.common.views.ViewRecorder;
+import app.phumreader.common.web.Viewer;
 import app.phumreader.series.domain.SeriesOrder;
 import app.phumreader.series.domain.SeriesType;
 import app.phumreader.series.service.CatalogService;
@@ -17,9 +20,11 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.List;
 import java.util.Map;
 import org.jspecify.annotations.Nullable;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -37,8 +42,11 @@ class CatalogController {
 
     private final CatalogService catalog;
 
-    CatalogController(CatalogService catalog) {
+    private final ViewRecorder views;
+
+    CatalogController(CatalogService catalog, ViewRecorder views) {
         this.catalog = catalog;
+        this.views = views;
     }
 
     @GetMapping("/home")
@@ -118,8 +126,13 @@ class CatalogController {
 
     @GetMapping("/series/{slug}")
     @Operation(summary = "The series page (404 when unknown)")
-    SeriesDetail series(@PathVariable String slug) {
-        return catalog.series(slug);
+    SeriesDetail series(
+            @PathVariable String slug,
+            @Parameter(hidden = true) @AuthenticationPrincipal @Nullable CurrentUser user,
+            @Parameter(hidden = true) HttpServletRequest request) {
+        SeriesDetail detail = catalog.series(slug);
+        views.series(detail.series().id(), Viewer.of(user, request));
+        return detail;
     }
 
     @GetMapping("/series/{slug}/episodes")

@@ -1,8 +1,13 @@
 package app.phumreader.user.service;
 
 import app.phumreader.common.error.ApiException;
+import app.phumreader.media.domain.UploadKind;
+import app.phumreader.media.service.MediaService;
+import app.phumreader.user.domain.SocialProvider;
 import app.phumreader.user.domain.User;
+import app.phumreader.user.domain.UserIdentity;
 import app.phumreader.user.domain.UserSettings;
+import app.phumreader.user.repository.UserIdentityRepository;
 import app.phumreader.user.repository.UserRepository;
 import app.phumreader.user.repository.UserSettingsRepository;
 import app.phumreader.user.service.SettingsViews.NotificationSettings;
@@ -32,12 +37,59 @@ public class UserService {
 
     private final UserRepository users;
     private final UserSettingsRepository settings;
+    private final UserIdentityRepository identities;
+    private final MediaService media;
     private final Clock clock;
 
-    public UserService(UserRepository users, UserSettingsRepository settings, Clock clock) {
+    public UserService(
+            UserRepository users,
+            UserSettingsRepository settings,
+            UserIdentityRepository identities,
+            MediaService media,
+            Clock clock) {
+        this.media = media;
         this.users = users;
         this.settings = settings;
+        this.identities = identities;
         this.clock = clock;
+    }
+
+    // ---------- Google and Facebook (P3-04) ----------
+
+    /** The account that signed in with this provider before. */
+    @Transactional(readOnly = true)
+    public Optional<User> findByIdentity(SocialProvider provider, String providerUserId) {
+        return identities
+                .findByProviderAndProviderUserId(provider, providerUserId)
+                .flatMap(identity -> users.findById(identity.getUserId()));
+    }
+
+    /**
+     * Ties a provider sign-in to an account. The provider has confirmed the email, so the account's
+     * email counts as confirmed; a password typed at sign-up before confirming is dropped.
+     */
+    public void linkIdentity(
+            User user, SocialProvider provider, String providerUserId, String email) {
+        if (!user.isEmailVerified()) {
+            user.removePassword();
+            user.verifyEmail(clock.instant());
+        }
+        identities.save(
+                UserIdentity.link(user.getId(), provider, providerUserId, email, clock.instant()));
+    }
+
+    /** A reader whose email the provider has confirmed; no password. */
+    public User createSocialReader(
+            String email,
+            String displayName,
+            String language,
+            SocialProvider provider,
+            String providerUserId) {
+        User user = users.save(User.newSocialReader(email, displayName, clock.instant()));
+        settings.save(UserSettings.defaults(user.getId(), language));
+        identities.save(
+                UserIdentity.link(user.getId(), provider, providerUserId, email, clock.instant()));
+        return user;
     }
 
     @Transactional(readOnly = true)
@@ -70,6 +122,16 @@ public class UserService {
         user.changeUnverifiedSignup(displayName, passwordHash);
     }
 
+    /** Makes the account a creator. The access token carries the role after its next refresh. */
+    public void grantCreator(UUID userId) {
+        User user =
+                users.findById(userId)
+                        .orElseThrow(
+                                () -> ApiException.notFound("user_not_found", "No such account."));
+        user.grantCreator();
+        users.saveAndFlush(user);
+    }
+
     public void changePassword(User user, String passwordHash) {
         user.changePassword(passwordHash);
     }
@@ -93,6 +155,20 @@ public class UserService {
         }
         User user = require(userId);
         user.rename(name);
+        return Account.of(user);
+    }
+
+    /** Sets the profile picture from one of this account's finished AVATAR uploads. */
+    public Account setAvatar(UUID userId, UUID uploadId) {
+        User user = require(userId);
+        user.changeAvatar(media.readyImage(userId, uploadId, UploadKind.AVATAR, "uploadId").url());
+        return Account.of(user);
+    }
+
+    /** Back to the initials. */
+    public Account removeAvatar(UUID userId) {
+        User user = require(userId);
+        user.changeAvatar(null);
         return Account.of(user);
     }
 
@@ -174,6 +250,22 @@ public class UserService {
     /** Logging in during the grace period keeps the account; {@code true} when it was pending. */
     public boolean cancelDeletion(User user) {
         return user.cancelDeletion();
+    }
+
+    /** Suspends the account; {@code false} when it already was. */
+    public boolean ban(UUID userId) {
+        User user = require(userId);
+        boolean changed = user.ban();
+        users.saveAndFlush(user);
+        return changed;
+    }
+
+    /** Lifts a suspension; {@code false} when the account was not suspended. */
+    public boolean unban(UUID userId) {
+        User user = require(userId);
+        boolean changed = user.unban();
+        users.saveAndFlush(user);
+        return changed;
     }
 
     private User require(UUID userId) {

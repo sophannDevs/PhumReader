@@ -4,14 +4,13 @@ import { ArrowRightIcon, BookOpenIcon, CalendarIcon, ChevronLeftIcon, ChevronRig
 import Image from "next/image"
 import { useTranslations } from "next-intl"
 import { useCallback, useEffect, useState, useSyncExternalStore } from "react"
-import { toast } from "sonner"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Carousel, CarouselContent, CarouselItem } from "@/components/ui/carousel"
 import type { HeroSlideView } from "@/data"
 import { Link } from "@/i18n/navigation"
 import { readerHref, seriesHref } from "@/lib/routes"
-import { useAppStore } from "@/lib/store"
+import { useSubscribe } from "@/lib/me"
 import { cn } from "@/lib/utils"
 import { useLocalize } from "@/lib/localize"
 
@@ -44,8 +43,7 @@ function useSelectedIndex(api: EmblaApi) {
 
 function SubscribeButton({ slide }: { slide: HeroSlideView }) {
   const t = useTranslations("home")
-  const tt = useTranslations("toasts")
-  const subscribed = useAppStore((s) => s.subscriptions.includes(slide.seriesData.id))
+  const { subscribed, toggle } = useSubscribe(slide.seriesData)
 
   return (
     <Button
@@ -53,11 +51,7 @@ function SubscribeButton({ slide }: { slide: HeroSlideView }) {
       size="lg"
       aria-pressed={subscribed}
       className="border-surface-border-strong bg-surface-panel/60 text-surface-foreground hover:bg-surface-panel hover:text-surface-foreground focus-visible:ring-offset-surface"
-      onClick={() => {
-        useAppStore.getState().toggleSubscription(slide.seriesData.id)
-        if (subscribed) toast.success(tt("unsubscribed"))
-        else toast.success(tt("subscribed", { title: slide.seriesData.title }))
-      }}
+      onClick={() => void toggle()}
     >
       {subscribed ? <CheckIcon /> : <PlusIcon />}
       {subscribed ? t("subscribed") : t("subscribe")}

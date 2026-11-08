@@ -2,7 +2,10 @@ package app.phumreader.payment.domain;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-/** PENDING, then PAID, FAILED, CANCELLED or EXPIRED. Stored upper case, sent lower case. */
+/**
+ * PENDING, then PAID (later REFUNDED by an admin), FAILED, CANCELLED or EXPIRED. Stored upper case,
+ * sent lower case.
+ */
 public enum OrderStatus {
     @JsonProperty("pending")
     PENDING,
@@ -13,5 +16,7 @@ public enum OrderStatus {
     @JsonProperty("cancelled")
     CANCELLED,
     @JsonProperty("expired")
-    EXPIRED
+    EXPIRED,
+    @JsonProperty("refunded")
+    REFUNDED
 }

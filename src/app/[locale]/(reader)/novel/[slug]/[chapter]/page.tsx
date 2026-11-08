@@ -5,6 +5,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server"
 import { NovelReader, NovelSkeleton } from "@/components/pr/novel-reader"
 import { episodesFor, getSeries, getSeriesBySlug } from "@/data"
 import { redirect } from "@/i18n/navigation"
+import { DEMO_MODE } from "@/lib/api/config"
 import { routing } from "@/i18n/routing"
 
 // Chapter 1 of every novel is prerendered; other chapters render on request.
@@ -30,9 +31,10 @@ async function NovelContent({ params }: { params: PageProps<"/[locale]/novel/[sl
 
   const series = getSeriesBySlug(slug)
   const n = Number(chapter)
-  if (!series || !Number.isInteger(n) || n < 1 || n > episodesFor(slug).length) notFound()
+  // The demo knows its series here; with the real API the page asks the API (series made by creators are not in the demo data).
+  if (DEMO_MODE ? !series || !Number.isInteger(n) || n < 1 || n > episodesFor(slug).length : !Number.isInteger(n) || n < 1) notFound()
   // A comic opened under /novel goes to the comic reader.
-  if (series.type === "comic") redirect({ href: `/read/${slug}/${n}`, locale })
+  if (series?.type === "comic") redirect({ href: `/read/${slug}/${n}`, locale })
 
   return <NovelReader slug={slug} n={n} />
 }

@@ -3,7 +3,12 @@ package app.phumreader.series.service;
 import app.phumreader.common.error.ApiException;
 import app.phumreader.common.paging.CursorPage;
 import app.phumreader.common.paging.Cursors;
+import app.phumreader.common.store.InMemoryShortLivedStore;
+import app.phumreader.common.store.ShortLivedStore;
 import app.phumreader.config.AppProperties;
+import app.phumreader.search.domain.SearchFilter;
+import app.phumreader.search.service.SearchDoc;
+import app.phumreader.search.service.SearchIndex;
 import app.phumreader.series.domain.SeriesOrder;
 import app.phumreader.series.domain.SeriesStatus;
 import app.phumreader.series.domain.SeriesType;
@@ -45,18 +50,25 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * The public catalog: home feed, rankings, genres, series lists and pages, episode lists and the
  * PostgreSQL search stand-in (plan P3-06; Meilisearch replaces the search in P3-15).
  *
- * <p>Badges and access follow the real clock in Asia/Phnom_Penh. The home feed is kept in memory
- * for {@code phumreader.catalog.home-cache-ttl} (Redis takes over in Stage 1 step 3).
+ * <p>Badges and access follow the real clock in Asia/Phnom_Penh. The home feed is kept for {@code
+ * phumreader.catalog.home-cache-ttl} in the short-lived store (Redis when {@code REDIS_URL} is set,
+ * so every API instance serves the same feed and a publish clears it for all of them; otherwise
+ * this instance's memory). The cache is only a speed-up: if it cannot be read or written, the feed
+ * is built from the database.
  */
 @Service
 public class CatalogService {
@@ -70,9 +82,12 @@ public class CatalogService {
     static final int HOME_RANKING = 8;
     static final int CREATOR_COVERS = 3;
     static final int RELATED = 4;
+    private static final Logger log = LoggerFactory.getLogger(CatalogService.class);
+
     static final int SEARCH_DEFAULT = 8;
     static final int SEARCH_MAX = 20;
     static final int SEARCH_POPULAR = 6;
+    static final int SEARCH_SUGGESTIONS = 6;
 
     /** A series keeps the NEW badge this long after launch. */
     static final Duration NEW_FOR = Duration.ofDays(30);
@@ -83,12 +98,28 @@ public class CatalogService {
     private final CatalogQueries queries;
     private final Clock clock;
     private final Duration homeCacheTtl;
-    private final AtomicReference<CachedHome> cachedHome = new AtomicReference<>();
+    private final ShortLivedStore cache;
+    private final JsonMapper json = JsonMapper.builder().build();
 
-    public CatalogService(CatalogQueries queries, Clock clock, AppProperties properties) {
+    private final ObjectProvider<SearchIndex> searchIndex;
+
+    @Autowired
+    public CatalogService(
+            CatalogQueries queries,
+            Clock clock,
+            AppProperties properties,
+            ObjectProvider<SearchIndex> searchIndex,
+            ShortLivedStore cache) {
         this.queries = queries;
+        this.cache = cache;
         this.clock = clock;
         this.homeCacheTtl = properties.catalog().homeCacheTtl();
+        this.searchIndex = searchIndex;
+    }
+
+    /** Without a search index: search uses PostgreSQL. */
+    public CatalogService(CatalogQueries queries, Clock clock, AppProperties properties) {
+        this(queries, clock, properties, null, new InMemoryShortLivedStore(clock));
     }
 
     /** Kinds of ranking ("comics", "novels"). */
@@ -105,18 +136,50 @@ public class CatalogService {
 
     // ---------- home ----------
 
+    /** Forgets the cached home feed (every day's copy), so a publish shows on the next visit. */
+    public void refreshHome() {
+        for (Weekday day : Weekday.values()) {
+            try {
+                cache.remove(homeKey(day));
+            } catch (RuntimeException ex) {
+                log.warn("Could not clear the cached home feed", ex);
+            }
+        }
+    }
+
     public HomeFeed home() {
         Instant now = clock.instant();
         Weekday today = Weekday.of(now.atZone(ZONE).getDayOfWeek());
-        CachedHome cached = cachedHome.get();
-        if (cached != null && cached.isFresh(now, today, homeCacheTtl)) {
-            return cached.feed();
+        if (!homeCacheTtl.isPositive()) {
+            return buildHome(now, today);
+        }
+        HomeFeed cached = readCachedHome(today);
+        if (cached != null) {
+            return cached;
         }
         HomeFeed feed = buildHome(now, today);
-        if (homeCacheTtl.isPositive()) {
-            cachedHome.set(new CachedHome(now, today, feed));
+        try {
+            cache.put(homeKey(today), json.writeValueAsString(feed), now.plus(homeCacheTtl));
+        } catch (RuntimeException ex) {
+            log.warn("Could not cache the home feed", ex);
         }
         return feed;
+    }
+
+    private @Nullable HomeFeed readCachedHome(Weekday today) {
+        try {
+            Optional<String> text = cache.get(homeKey(today));
+            return text.isPresent() ? json.readValue(text.get(), HomeFeed.class) : null;
+        } catch (RuntimeException ex) {
+            // Redis down, or a copy written by an older version of the app: build it again.
+            log.warn("Could not read the cached home feed", ex);
+            return null;
+        }
+    }
+
+    /** One copy per day of the week, so the feed changes at midnight in Phnom Penh. */
+    private static String homeKey(Weekday day) {
+        return "cache:home:" + day.name();
     }
 
     private HomeFeed buildHome(Instant now, Weekday today) {
@@ -365,19 +428,63 @@ public class CatalogService {
     }
 
     /**
-     * Search by title, creator or genre (PostgreSQL stand-in for P3-15). An empty query returns the
-     * most viewed series ("Popular now").
+     * Search by title, creator or genre (Meilisearch when configured, PostgreSQL otherwise). An
+     * empty query returns the most viewed series ("Popular now").
      */
     public List<SeriesCard> search(@Nullable String query, @Nullable Integer limit) {
+        return search(query, SearchFilter.NONE, limit);
+    }
+
+    /**
+     * Search narrowed by type, genre and status and ordered by relevance, views or launch date. An
+     * empty query with no filter returns the most viewed series; an empty query with a filter lists
+     * the matching series (browsing).
+     */
+    public List<SeriesCard> search(
+            @Nullable String query, SearchFilter filter, @Nullable Integer limit) {
         Instant now = clock.instant();
         OffsetDateTime at = utc(now);
         Cards cards = new Cards(now, today(now));
         String q = query == null ? "" : query.strip().toLowerCase(Locale.ROOT);
-        if (q.isEmpty()) {
+        if (q.isEmpty() && filter.isPlain()) {
             return cards.of(queries.mostViewed(null, SEARCH_POPULAR, at));
         }
         int size = limit == null ? SEARCH_DEFAULT : Math.clamp(limit, 1, SEARCH_MAX);
-        return cards.of(queries.search(q, size, at));
+        SearchIndex index = searchIndex == null ? null : searchIndex.getIfAvailable();
+        if (index != null) {
+            try {
+                List<UUID> ids = index.search(q, filter, size);
+                return cards.of(queries.seriesByIds(ids, at));
+            } catch (RuntimeException e) {
+                log.warn("Search index unavailable, using PostgreSQL: {}", e.toString());
+            }
+        }
+        return cards.of(queries.search(q, filter, size, at));
+    }
+
+    /** Up to 6 series titles that match what the reader has typed so far (search-as-you-type). */
+    public List<String> suggestions(@Nullable String query) {
+        return search(query, SearchFilter.NONE, SEARCH_SUGGESTIONS).stream()
+                .map(SeriesCard::title)
+                .distinct()
+                .toList();
+    }
+
+    /** Published series for the search index: all of them, or just these ids. */
+    public List<SearchDoc> searchDocuments(@Nullable Collection<UUID> ids) {
+        return queries.searchRows(ids).stream()
+                .map(r ->
+                        new SearchDoc(
+                                r.id(),
+                                r.title(),
+                                r.penName(),
+                                r.genre(),
+                                r.genreSlug(),
+                                r.type(),
+                                r.status(),
+                                r.views(),
+                                r.launched()))
+                .toList();
     }
 
     // ---------- rules ----------
@@ -511,16 +618,5 @@ public class CatalogService {
 
     private static OffsetDateTime utc(Instant instant) {
         return instant.atOffset(ZoneOffset.UTC);
-    }
-
-    /** The last home feed built, for one day of the week. */
-    private record CachedHome(Instant builtAt, Weekday today, HomeFeed feed) {
-
-        boolean isFresh(Instant now, Weekday day, Duration ttl) {
-            return ttl.isPositive()
-                    && today == day
-                    && !now.isBefore(builtAt)
-                    && now.isBefore(builtAt.plus(ttl));
-        }
     }
 }

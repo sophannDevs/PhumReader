@@ -4,22 +4,26 @@ import { defineConfig, devices } from "@playwright/test"
 // expectations get 15 s and no test sleeps longer than that.
 export default defineConfig({
   testDir: "./e2e",
+  // The real-API flows have their own config (npm run test:e2e:real).
+  testIgnore: "**/real.spec.ts",
   timeout: 60_000,
   expect: { timeout: 15_000 },
   fullyParallel: true,
   retries: 0,
   reporter: [["list"]],
   use: {
+    headless: process.env.CI ? true : false,
     baseURL: "http://localhost:3000",
     trace: "retain-on-failure",
   },
   webServer: {
-    command: "npm run dev",
+    // CI tests the production build: the service worker and real 404 status codes only exist there.
+    command: process.env.CI ? "npm run build && npm run start" : "npm run dev",
     // The suite tests the demo until Stage 1 Step 5 part 5 adds runs against the real API.
     env: { NEXT_PUBLIC_DEMO: "1" },
     url: "http://localhost:3000",
     reuseExistingServer: true,
-    timeout: 120_000,
+    timeout: process.env.CI ? 300_000 : 120_000,
   },
   projects: [
     { name: "desktop", use: { ...devices["Desktop Chrome"], viewport: { width: 1440, height: 900 } } },

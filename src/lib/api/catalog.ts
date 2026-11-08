@@ -78,7 +78,7 @@ const toBlock = (b: Schemas["NovelBlock"]): NovelBlock =>
 
 // ---------------------------------------------------------------- helpers
 
-async function notFoundAsNull<T>(promise: Promise<T>): Promise<T | null> {
+export async function notFoundAsNull<T>(promise: Promise<T>): Promise<T | null> {
   try {
     return await promise
   } catch (error) {
@@ -88,7 +88,7 @@ async function notFoundAsNull<T>(promise: Promise<T>): Promise<T | null> {
 }
 
 /** Every item of a cursor-paged list. */
-async function allPages<T>(path: string, query: Record<string, string>): Promise<T[]> {
+export async function allPages<T>(path: string, query: Record<string, string>): Promise<T[]> {
   const items: T[] = []
   let cursor: string | null | undefined
   do {
@@ -101,6 +101,8 @@ async function allPages<T>(path: string, query: Record<string, string>): Promise
   return items
 }
 
+const marksOf = (c: Schemas["EpisodeContent"]) => ({ liked: c.viewer.liked, bookmarked: c.viewer.bookmarked })
+
 // ---------------------------------------------------------------- reads
 
 export async function fetchHome(): Promise<HomeData> {
@@ -111,7 +113,7 @@ export async function fetchHome(): Promise<HomeData> {
     hero: feed.hero.map(
       (h): HeroSlideView => ({ series: h.series, tag: h.tag, blurb: h.blurb, seriesData: toSeries(h.seriesData) })
     ),
-    // The reader's own Continue reading comes with Step 5 part 3.
+    // The reader's own Continue reading comes from /me/history (src/lib/me.ts).
     continueReading: [],
     daily: Object.fromEntries(WEEKDAYS.map((d) => [d, cards(feed.daily[d])])) as Record<Weekday, Series[]>,
     rankings: { comics: feed.rankings.comics.map(toRanking), novels: feed.rankings.novels.map(toRanking) },
@@ -132,6 +134,7 @@ export async function fetchSeries(slug: string): Promise<SeriesDetail | null> {
     stats: { subscribers: formatCount(d.stats.subscribers), comments: formatCount(d.stats.comments) },
     related: d.related.map(toSeries),
     creatorSeriesCount: d.creatorSeriesCount,
+    creatorId: d.creatorId,
   }
 }
 
@@ -146,7 +149,7 @@ export async function fetchEpisode(slug: string, n: number): Promise<EpisodeData
   const c = await notFoundAsNull(api.get<Schemas["EpisodeContent"]>(`/series/${slug}/episodes/${n}`))
   if (!c) return null
   const series = toSeries(c.series)
-  return { series, episode: toEpisode(c.episode, series.cover), total: c.total, panels: c.panels }
+  return { series, episode: toEpisode(c.episode, series.cover), total: c.total, panels: c.panels, viewer: marksOf(c) }
 }
 
 export async function fetchChapter(slug: string, n: number): Promise<ChapterData | null> {
@@ -163,7 +166,7 @@ export async function fetchChapter(slug: string, n: number): Promise<ChapterData
     creatorNote: c.creatorNote ?? "",
     likes: episode.likes,
   }
-  return { series, chapter, total: c.total }
+  return { series, chapter, total: c.total, viewer: marksOf(c) }
 }
 
 export async function fetchRankings(kind: "comics" | "novels"): Promise<RankingEntry[]> {

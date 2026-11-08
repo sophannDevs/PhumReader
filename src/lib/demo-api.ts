@@ -146,6 +146,10 @@ export type CreatorData = {
   name: string
   series: Series[]
   totals: { views: string; likes: string }
+  /** Real API only: the account has the creator role. */
+  isCreator?: boolean
+  /** Real API only: coins earned from unlocks. */
+  earnedCoins?: number
 }
 
 /** The demo has no creator accounts: the dashboard shows Chan Sreyleak's series. */
@@ -173,6 +177,8 @@ export type SeriesDetail = {
   stats: { subscribers: string; comments: string }
   related: Series[]
   creatorSeriesCount: number
+  /** Real API only: the id the Follow button needs. */
+  creatorId?: string
 }
 
 /** null when the slug is unknown (pages call notFound()). Not affected by ?demo=empty. */
@@ -198,7 +204,11 @@ export type EpisodeData = {
   episode: Episode
   total: number
   panels: Panel[]
+  /** Real API only: what the signed-in reader did with this episode. */
+  viewer?: ReaderMarks
 }
+
+export type ReaderMarks = { liked: boolean; bookmarked: boolean }
 
 /** null when the series or the episode number does not exist. */
 export const fetchEpisode = (slug: string, n: number) =>
@@ -218,7 +228,7 @@ export const fetchEpisode = (slug: string, n: number) =>
     }
   )
 
-export type ChapterData = { series: Series; chapter: NovelChapter; total: number }
+export type ChapterData = { series: Series; chapter: NovelChapter; total: number; viewer?: ReaderMarks }
 
 export const fetchChapter = (slug: string, n: number) =>
   withDemo<ChapterData | null>(
@@ -272,6 +282,10 @@ export type CoinsPageData = {
   firstPurchaseBonus: string
   khqrExpiryMinutes: number
   fastPassPrice: number
+  /** Real API only: pack size (coins) -> pack id. */
+  packIds?: Record<number, number>
+  /** Real API only: the dev payment simulator is on. */
+  simulator?: boolean
 }
 
 export const fetchCoinsPage = () =>

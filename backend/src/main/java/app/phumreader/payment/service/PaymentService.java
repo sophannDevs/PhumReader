@@ -260,6 +260,53 @@ public class PaymentService {
         return view(queries.lock(orderId));
     }
 
+    /**
+     * An admin refunds a paid order (plan P3-18): every coin the order credited (pack, bonus and
+     * first-purchase bonus) leaves the wallet through one REFUND ledger row. Refused when the
+     * reader already spent some of them. Giving the money back is done in the payment provider's
+     * dashboard.
+     *
+     * @return the order number and the coins taken back
+     */
+    @Transactional
+    public Refund refund(UUID orderId, String reason) {
+        UUID userId =
+                queries.ownerOf(orderId)
+                        .orElseThrow(
+                                () -> ApiException.notFound("order_not_found", "Order not found."));
+        int balance = coins.lockWallet(userId);
+        OrderRow order = queries.lock(orderId);
+        if (order.status() != OrderStatus.PAID) {
+            throw ApiException.conflict(
+                    "order_not_refundable",
+                    order.status() == OrderStatus.REFUNDED
+                            ? "This order was already refunded."
+                            : "Only a paid order can be refunded.");
+        }
+        int total = order.coins() + order.bonusCoins() + order.firstBonusCoins();
+        if (balance < total) {
+            throw ApiException.conflict(
+                    "coins_spent",
+                    "The reader already spent "
+                            + (total - balance)
+                            + " of these "
+                            + total
+                            + " coins, so the order cannot be refunded.");
+        }
+        coins.debit(
+                userId,
+                balance,
+                total,
+                LedgerReason.REFUND,
+                orderId,
+                "Refund " + order.orderNumber() + ": " + reason);
+        queries.markRefunded(orderId, now());
+        return new Refund(order.orderNumber(), userId, total);
+    }
+
+    /** What a refund took back. */
+    public record Refund(String orderNumber, UUID userId, int coins) {}
+
     /** The reader's orders, newest first (purchase history). */
     public CursorPage<OrderView> orders(
             CurrentUser user, @Nullable String cursor, @Nullable Integer limit) {

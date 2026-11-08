@@ -4,8 +4,8 @@ import java.time.Instant;
 import java.util.Optional;
 
 /**
- * Small values that expire by themselves: email codes and password-reset tokens. In memory for now;
- * a Redis version comes with Stage 1 Step 3 (values survive an API restart there).
+ * Small values that expire by themselves: email codes and password-reset tokens. In Redis when
+ * {@code phumreader.redis.url} is set (values survive an API restart), otherwise in memory.
  */
 public interface ShortLivedStore {
 

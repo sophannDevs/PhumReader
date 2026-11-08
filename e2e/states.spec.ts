@@ -57,7 +57,10 @@ test.describe("demo flags", () => {
     const res = await page.goto("/this-page-does-not-exist")
     expect(res?.status()).toBe(404)
     await expect(visible(page.getByRole("heading", { level: 1 }))).toBeVisible()
-    const unknown = await page.goto("/series/nope")
-    expect(unknown?.status()).toBe(404)
+    // An unknown series streams (Next.js sends the shell with 200 before notFound() runs), so check what
+    // the visitor and search engines get: the 404 page, marked noindex.
+    await page.goto("/series/nope")
+    await expect(visible(page.getByRole("heading", { level: 1 }))).toBeVisible()
+    expect(await page.locator('meta[name="robots"][content*="noindex"]').count()).toBeGreaterThan(0)
   })
 })

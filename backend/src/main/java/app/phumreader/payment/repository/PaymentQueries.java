@@ -159,11 +159,20 @@ public class PaymentQueries {
                 .update();
     }
 
+    public void markRefunded(UUID orderId, OffsetDateTime now) {
+        jdbc.sql(
+                        "update payment_orders set status = 'REFUNDED', refunded_at = :now,"
+                                + " updated_at = :now where id = :id")
+                .param("id", orderId)
+                .param("now", now)
+                .update();
+    }
+
     /** Whether the user has a paid order other than {@code exceptOrderId}. */
     public boolean hasPaidOrder(UUID userId, @Nullable UUID exceptOrderId) {
         return jdbc.sql(
                         "select exists(select 1 from payment_orders where user_id = :u"
-                                + " and status = 'PAID' and id is distinct from :except)")
+                                + " and status in ('PAID', 'REFUNDED') and id is distinct from :except)")
                 .param("u", userId)
                 .param("except", exceptOrderId, Types.OTHER)
                 .query(Boolean.class)

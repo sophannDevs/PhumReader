@@ -18,11 +18,19 @@ import { getSeriesBySlug } from "@/data"
 import type { PaymentMethodId } from "@/data"
 import { useRouter } from "@/i18n/navigation"
 import { useCoinsPage } from "@/lib/queries"
+import { DEMO_MODE } from "@/lib/api/config"
+import { useAccountEmail } from "@/lib/me"
 import { useAppStore, useCoins } from "@/lib/store"
+import { useWallet } from "@/lib/wallet"
 
 /** The first-purchase offer lasts until a payment made in this browser succeeds (Assumption 9). */
 export function useFirstPurchaseOffer() {
-  return useAppStore((s) => !s.purchases.some((p) => p.status === "Paid" && p.orderId))
+  const demoOffer = useAppStore((s) => !s.purchases.some((p) => p.status === "Paid" && p.orderId))
+  const email = useAccountEmail()
+  const wallet = useWallet().data
+  if (DEMO_MODE) return demoOffer
+  // The API knows: once per account. Logged out, or before the wallet loads, the offer is shown.
+  return !email || (wallet?.firstPurchaseBonus ?? true)
 }
 
 function BalanceCard() {
@@ -114,7 +122,15 @@ function CoinsBody({ data }: { data: CoinsData }) {
   const setDraft = useAppStore.getState().setCheckoutDraft
   const pack = data.packs.find((p) => p.coins === draft.pack) ?? data.packs[0]
   const method = data.methods.find((m) => m.id === draft.method) ?? data.methods[0]
-  const checkout = useCheckout({ pack, method, offer, expiryMinutes: data.khqrExpiryMinutes })
+  const checkout = useCheckout({
+    pack,
+    method,
+    offer,
+    expiryMinutes: data.khqrExpiryMinutes,
+    packId: data.packIds?.[pack.coins],
+    simulator: DEMO_MODE || data.simulator,
+  })
+  const storePurchases = useAppStore((s) => s.purchases)
 
   return (
     <div className="grid grid-cols-[minmax(0,1fr)] gap-x-8 gap-y-10 lg:grid-cols-[minmax(0,1fr)_380px] lg:items-start">
@@ -165,8 +181,10 @@ function CoinsBody({ data }: { data: CoinsData }) {
         onCancel={checkout.cancel}
         onSubmit={(outcome) => void checkout.submit(outcome)}
         onReset={checkout.reset}
+        starting={checkout.starting}
+        canSimulate={DEMO_MODE || !!data.simulator}
       />
-      <PurchaseHistory methods={data.methods} />
+      <PurchaseHistory methods={data.methods} purchases={DEMO_MODE ? storePurchases : data.history} />
       <CoinsFaq items={data.faq} />
     </div>
   )

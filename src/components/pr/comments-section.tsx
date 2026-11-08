@@ -1,15 +1,14 @@
 "use client"
 
 import { useTranslations } from "next-intl"
-import { useMemo, useRef, useState } from "react"
-import { toast } from "sonner"
+import { useRef, useState } from "react"
 import { CommentComposer } from "@/components/pr/comment-composer"
-import { CommentList, type CommentView } from "@/components/pr/comment-list"
+import { CommentList } from "@/components/pr/comment-list"
 import { EmptyState } from "@/components/pr/empty-state"
 import { ErrorState } from "@/components/pr/error-state"
 import { Skeleton } from "@/components/ui/skeleton"
-import { useComments } from "@/lib/queries"
-import { likeKey, useAppStore, useUser } from "@/lib/store"
+import { useCommentThread } from "@/lib/comments"
+import { useUser } from "@/lib/store"
 import { MessageSquareIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -34,28 +33,15 @@ export function CommentsSection({
 }) {
   const t = useTranslations("comments")
   const tr = useTranslations("reader")
-  const tt = useTranslations("toasts")
   const user = useUser()
-  const likes = useAppStore((s) => s.likes)
-  const query = useComments(kind, slug)
-  const [posted, setPosted] = useState<CommentView[]>([])
+  const thread = useCommentThread(kind, slug, t("now"))
+  const { comments, query } = thread
   const [draft, setDraft] = useState("")
   const composerRef = useRef<HTMLTextAreaElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
-  const scope = `${kind}:${slug}`
 
-  const comments = useMemo<CommentView[]>(() => {
-    const base = (query.data ?? []).map((c, i) => ({ ...c, id: `d${i}` }))
-    return [...posted, ...base].map((c) => ({ ...c, liked: !!likes[likeKey.comment(scope, c.id)] }))
-  }, [query.data, posted, likes, scope])
-
-  function submit() {
-    if (!user) {
-      toast.success(tt("loginToComment"))
-      return
-    }
-    setPosted((p) => [{ id: `p${p.length}`, name: user.name, when: t("now"), text: draft.trim(), likes: 0 }, ...p])
-    setDraft("")
+  async function submit() {
+    if (await thread.post(draft)) setDraft("")
   }
 
   if (variant === "reader" || variant === "novel") {
@@ -78,7 +64,7 @@ export function CommentsSection({
           className="flex gap-2"
           onSubmit={(e) => {
             e.preventDefault()
-            if (draft.trim()) submit()
+            if (draft.trim()) void submit()
           }}
         >
           <Input
@@ -107,7 +93,9 @@ export function CommentsSection({
             tone={themed ? "themed" : "dark"}
             className="gap-4"
             comments={comments}
-            onToggleLike={(id) => useAppStore.getState().toggleLike(likeKey.comment(scope, id))}
+            onToggleLike={(id) => void thread.toggleLike(id)}
+            onDelete={thread.remove && ((id) => void thread.remove?.(id))}
+            onReport={thread.report && ((id) => void thread.report?.(id))}
             onReply={(name) => {
               setDraft(`@${name} `)
               inputRef.current?.focus()
@@ -120,7 +108,7 @@ export function CommentsSection({
 
   return (
     <div className="flex flex-col gap-6">
-      <CommentComposer value={draft} onChange={setDraft} onSubmit={submit} textareaRef={composerRef} />
+      <CommentComposer value={draft} onChange={setDraft} onSubmit={() => void submit()} textareaRef={composerRef} />
 
       {query.isPending ? (
         <div className="flex flex-col gap-6" aria-hidden>
@@ -141,7 +129,9 @@ export function CommentsSection({
       ) : (
         <CommentList
           comments={comments}
-          onToggleLike={(id) => useAppStore.getState().toggleLike(likeKey.comment(scope, id))}
+          onToggleLike={(id) => void thread.toggleLike(id)}
+            onDelete={thread.remove && ((id) => void thread.remove?.(id))}
+            onReport={thread.report && ((id) => void thread.report?.(id))}
           onReply={(name) => {
             setDraft(`@${name} `)
             composerRef.current?.focus()

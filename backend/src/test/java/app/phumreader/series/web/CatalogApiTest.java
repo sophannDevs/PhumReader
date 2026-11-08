@@ -487,7 +487,49 @@ class CatalogApiTest {
                 .andExpect(jsonPath("$.error.code").value("validation_failed"));
     }
 
+    @Test
+    void searchFiltersByTypeGenreAndStatusAndSorts() throws Exception {
+        List<JsonNode> novels = list(getJson("/api/v1/search?type=novel&limit=20").get("items"));
+        assertThat(novels).hasSize(7).allMatch(c -> c.get("type").asString().equals("novel"));
+
+        List<JsonNode> sciFiComics =
+                list(getJson("/api/v1/search?type=comic&genre=sci-fi&limit=20").get("items"));
+        assertThat(sciFiComics)
+                .isNotEmpty()
+                .allMatch(c -> c.get("genre").asString().equals("Sci-fi"))
+                .allMatch(c -> c.get("type").asString().equals("comic"));
+
+        // A text query inside a filter.
+        assertThat(list(getJson("/api/v1/search?q=glass&type=novel").get("items"))).isEmpty();
+        assertThat(list(getJson("/api/v1/search?q=glass&type=comic").get("items"))).isNotEmpty();
+
+        assertViewsNeverRise(
+                list(getJson("/api/v1/search?genre=sci-fi&sort=popular&limit=20").get("items")));
+        assertThat(list(getJson("/api/v1/search?status=completed").get("items"))).isEmpty();
+        assertThat(list(getJson("/api/v1/search?status=ongoing&limit=3").get("items"))).hasSize(3);
+        assertThat(list(getJson("/api/v1/search?sort=newest&limit=5").get("items"))).hasSize(5);
+
+        for (String bad : List.of("type=audio", "status=gone", "sort=random")) {
+            mvc.perform(get("/api/v1/search?" + bad))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.error.code").value("invalid_value"));
+        }
+    }
+
+    @Test
+    void suggestionsAreTitles() throws Exception {
+        List<String> glass = titles(getJson("/api/v1/search/suggestions?q=glas"));
+        assertThat(glass).contains("Glass Compass").doesNotHaveDuplicates();
+
+        assertThat(titles(getJson("/api/v1/search/suggestions"))).hasSize(6);
+        assertThat(titles(getJson("/api/v1/search/suggestions?q=zzzz"))).isEmpty();
+    }
+
     // ---------- helpers ----------
+
+    private List<String> titles(JsonNode suggestions) {
+        return list(suggestions.get("items")).stream().map(JsonNode::asString).toList();
+    }
 
     private JsonNode getJson(String url) throws Exception {
         String body =

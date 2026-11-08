@@ -116,9 +116,12 @@ class HomeFeedCacheTest {
                                 false,
                                 null,
                                 true,
-                                null),
+                                null,
+                                AppProperties.Auth.Social.none()),
                         new AppProperties.Catalog(ttl),
-                        new AppProperties.Payments(false, Duration.ofMinutes(10)));
+                        new AppProperties.Payments(false, Duration.ofMinutes(10)),
+                        new AppProperties.Views(
+                                false, Duration.ofMinutes(30), Duration.ofSeconds(60)));
         return new CatalogService(queries, clock, properties);
     }
 }
