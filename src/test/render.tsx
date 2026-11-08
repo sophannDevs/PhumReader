@@ -3,6 +3,7 @@ import { render, type RenderOptions } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { NextIntlClientProvider } from "next-intl"
 import type { ReactElement, ReactNode } from "react"
+import { ThemeProvider } from "@/lib/theme"
 import en from "@/messages/en.json"
 import km from "@/messages/km.json"
 
@@ -16,7 +17,9 @@ export function renderUi(ui: ReactElement, { locale = "en", ...options }: { loca
   const client = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } })
   const Wrapper = ({ children }: { children: ReactNode }) => (
     <NextIntlClientProvider locale={locale} messages={messages[locale]} timeZone="Asia/Phnom_Penh">
-      <QueryClientProvider client={client}>{children}</QueryClientProvider>
+      <QueryClientProvider client={client}>
+        <ThemeProvider>{children}</ThemeProvider>
+      </QueryClientProvider>
     </NextIntlClientProvider>
   )
   return { user: userEvent.setup(), client, ...render(ui, { wrapper: Wrapper, ...options }) }

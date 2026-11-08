@@ -78,6 +78,7 @@ afterEach(() => {
   server.resetHandlers(...defaultHandlers)
   resetNavigation()
   localStorage.clear()
+  document.documentElement.classList.remove("dark")
   document.cookie.split("; ").forEach((c) => (document.cookie = `${c.split("=")[0]}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`))
   useAppStore.setState(initialStore, true)
 })
