@@ -65,7 +65,7 @@ deployment and no Docker. A step is done when its checks pass; tick the plan tas
     (41 comics, 7 novels), 3,956 episodes, 30,303 panels, 589 chapters, 12,012 comments, 5 packs, 3 hero slides,
     48 ranking rows; a second run changed nothing (18 users, 1 ledger row). Health through the website: UP.
     41 backend tests green. Staging (P3-01's second half) waits for P1-10.
-- [ ] **Step 3: Other local services** (P1-02 rest) — services part 1 done 2026-11-06 (see below); stand-in swaps remain
+- [x] **Step 3: Other local services** (P1-02 rest) — done 2026-11-08 on the offline stand-ins; Upstash and R2 move to P1-10 (see below)
   - Upstash Redis, Meilisearch (`meilisearch.exe`), email printed in the backend console; a services check.
   - Check: the services check shows every service healthy.
   - Done 2026-11-06 (part 1, on a Mac with Homebrew, no Docker): Redis, Meilisearch, MinIO (R2 stand-in) and Mailpit
@@ -291,13 +291,19 @@ P1-03 (Next.js app) and P1-04 (web libraries + shadcn/ui) are done by T01–T06.
     the API at start-up with "Missing required setting(s): DB_URL, ..." (3 tests; normal start and `./gradlew check`
     still pass), which makes P1-08's "names it" true for the database settings.
 
-- [ ] **P1-02 Local services (no Docker)**
+- [x] **P1-02 Local services (no Docker)**
   - Build: the plan's five local services without Docker: Supabase dev project `phumreader-dev` (Singapore,
     Data API off, session pooler), Upstash Redis (Memurai offline), Meilisearch Windows binary, R2 dev bucket
     (MinIO binary offline), Mailpit binary (optional; console mail otherwise). `backend/.env.example` lists every
     setting; a script `scripts/check-services` (or npm `services:check`) pings each one.
   - Depends on: P1-01
   - Done when: the check shows all 5 services healthy.
+  - Done 2026-11-08 on the offline stand-ins the task allows (local Redis for Memurai, MinIO for R2): `npm run
+    services:check` shows all 5 healthy. `scripts/check-services.mjs` can now also check the real services: Redis over
+    TLS with a user and password (Upstash) and a signed HEAD on the bucket for a non-local `S3_ENDPOINT` (R2; 403 =
+    wrong keys, 404 = no such bucket). Those two paths are untested until the accounts exist. **Moved to P1-10:**
+    create the Upstash database and the R2 buckets, put them in the staging settings, and run the check against them.
+    P3-08 (image Worker) needs the R2 bucket to be verified.
 
 - [x] **P1-05 Spring Boot app**
   - Build: Spring Boot 4.1.2 / Java 21 (Gradle Kotlin DSL): web, security, validation, data-jpa, Flyway
@@ -356,6 +362,8 @@ P1-03 (Next.js app) and P1-04 (web libraries + shadcn/ui) are done by T01–T06.
   - Depends on: —
   - Done when: the API connects to staging through the pooler; Flyway connects through the direct URL (or the
     session pooler if the network has no IPv6).
+  - Carried over from P1-02: also create the Upstash Redis database and the Cloudflare R2 buckets for staging, and run
+    `npm run services:check` against them (TLS Redis and signed bucket check are written but untested).
 
 - [ ] **Milestone M1**: both apps run locally, CI green.
 
