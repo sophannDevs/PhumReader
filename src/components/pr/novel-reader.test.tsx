@@ -92,7 +92,7 @@ const chapterBody = (n: number, blocks: unknown[] = [{ type: "paragraph", text: 
   viewer: { bookmarked: false, liked: false, signedIn: false, unlocked: false },
 })
 const list = () => http.get(`${API}/series/${SLUG}/episodes`, () => HttpResponse.json({ items: [summary(1), summary(2), summary(3, "fastpass")], nextCursor: null }))
-const chapterAt = (n: number, body: unknown = chapterBody(n)) => http.get(`${API}/series/${SLUG}/episodes/${n}`, () => HttpResponse.json(body))
+const chapterAt = (n: number, body: object = chapterBody(n)) => http.get(`${API}/series/${SLUG}/episodes/${n}`, () => HttpResponse.json(body))
 
 async function open(n = 2, blocks?: unknown[]) {
   server.use(list(), chapterAt(n, chapterBody(n, blocks)))

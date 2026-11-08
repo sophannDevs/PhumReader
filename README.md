@@ -25,6 +25,7 @@ running, the pages show their error state. `.env.example` lists every setting; r
 | `npm run lint` | ESLint |
 | `npm run typecheck` | `next typegen && tsc --noEmit` |
 | `npm run build` | production build |
+| `npm test` | Vitest + Testing Library + MSW: unit and component tests in `src/**/*.test.ts(x)` (forms, dialogs, readers; the API is mocked, no backend needed). `npm run test:watch` re-runs on save |
 | `npm run test:e2e` | Playwright tests in demo mode (run `npx playwright install chromium` once; it starts `npm run dev` with `NEXT_PUBLIC_DEMO=1` itself, or reuses a dev server already on port 3000, so stop your own dev server first or it will test that one instead; with `CI=true` it builds and tests the production site, as GitHub does) |
 | `npm run api:gen` | TypeScript types `src/lib/api/schema.d.ts` from `backend/openapi/openapi.json` |
 | `npm run api:check` | fails when `src/lib/api/schema.d.ts` is out of date |

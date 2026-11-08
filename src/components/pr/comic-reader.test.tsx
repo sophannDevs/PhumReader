@@ -47,7 +47,7 @@ const content = (n: number, panels = [{ src: "/panels/a.svg", alt: "Page one", w
   viewer: { bookmarked: false, liked: false, signedIn: false, unlocked: false },
 })
 const episodes = (...items: ReturnType<typeof summary>[]) => http.get(`${API}/series/${SLUG}/episodes`, () => HttpResponse.json({ items, nextCursor: null }))
-const episodeAt = (n: number, body: unknown = content(n)) => http.get(`${API}/series/${SLUG}/episodes/${n}`, () => HttpResponse.json(body))
+const episodeAt = (n: number, body: object = content(n)) => http.get(`${API}/series/${SLUG}/episodes/${n}`, () => HttpResponse.json(body))
 
 describe("ComicReader: states", () => {
   it("shows a skeleton while it loads", () => {

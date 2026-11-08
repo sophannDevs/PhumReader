@@ -878,10 +878,28 @@ wiring them are fixed in P5-07.
   - Depends on: Phase 3
   - Done when: 80%+ line coverage on auth, coin and payment; all tests green in CI.
 
-- [ ] **P6-02 Frontend tests**
+- [x] **P6-02 Frontend tests**
   - Build: Vitest + Testing Library for patterns and forms, MSW for API mocks.
   - Depends on: Phase 4
   - Done when: every form's validation and every dialog's open / close is covered.
+  - Done 2026-11-08: `npm test` (Vitest 5, jsdom, Testing Library, MSW 3): 377 tests in 31 files next to the code
+    (`*.test.ts(x)`), about 5 s. They run in real-API mode: MSW answers `/api/v1/...`; `src/test/` holds the harness
+    (setup, MSW server, router and toast stand-ins, `renderUi` with the real English messages, Query client and a clean
+    store). Runs in CI inside the existing Website job (job names unchanged, the ruleset needs them).
+    **Forms** (validation, API errors, rate limits): login, sign up, forgot, reset, email code, account name / password /
+    email / delete, become creator, series, episode, search, 404 search, comment composer, checkout card (never has a card
+    field). **Dialogs and popovers** (open, close with Escape / X / Cancel, focus return, focus kept inside): unlock,
+    become creator, admin reason, episode preview, change password / email / delete account, demo reset, search (⌘K),
+    episode list, reading settings. Also: auth schemas, the unlock flow (idempotency key reused on retry), creator gate,
+    settings, admin lists, comments (post, like, delete, report), readers and their bars, messages (same keys in en and km).
+    Spot check: breaking the idempotency-key reuse made its test fail.
+    **Found and fixed while writing them:** the admin reason dialog, the become-creator dialog and the episode preview did
+    not return focus to the button that opened them (now use `useRestoreFocus`); the creator dashboard's empty-state button
+    used a message key that does not exist (`creator.startPublishing`, now `creator.start`).
+    **Note for P6-04:** the novel reader shows the chapter title as a level-1 heading twice (bar and page).
+    Not covered (no form or dialog): ImageUploadField / PanelUploader (upload progress), ChapterEditor on its own, the
+    Home, Series, Coins and Library pages, the end-of-episode cards (stubbed in the reader tests). No coverage figure was
+    measured. `npm run test:e2e` needs port 3000 free: a dev server in real mode there is reused and fails the demo tests.
 
 - [ ] **P6-03 End-to-end tests**
   - Build: Playwright for the six key flows on desktop Chrome, emulated Android (Pixel 7) and iPhone, against

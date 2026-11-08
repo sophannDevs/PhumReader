@@ -129,7 +129,7 @@ export function CreatorPage() {
                 DEMO_MODE ? undefined : (
                   <Button asChild variant="brand">
                     <Link href="/creator/series/new">
-                      {t("startPublishing")}
+                      {t("start")}
                     </Link>
                   </Button>
                 )
