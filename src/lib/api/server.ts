@@ -97,3 +97,11 @@ export async function fetchGenreServer(genre: Genre): Promise<{ genre: Genre; se
   return { genre, series: (list?.items ?? []).map(toSeries) }
 }
 
+
+/** Every genre name in display order: the API's list, or the demo's fixed eight. */
+export async function fetchGenreNamesServer(): Promise<Genre[]> {
+  if (DEMO_MODE) return (await import("@/data")).genres()
+  const list = await serverGet<Schemas["GenreItem"][]>("/genres", ["genres", "catalog"], 60)
+  if (list?.length) return list.map((g) => g.name as Genre)
+  return (await import("@/data")).genres()
+}

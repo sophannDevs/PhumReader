@@ -5,6 +5,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server"
 import { GenresFallback, GenresPage } from "@/components/pr/genres-page"
 import { genres } from "@/data"
 import { routing } from "@/i18n/routing"
+import { fetchGenreNamesServer } from "@/lib/api/server"
 import { genreFromSlug, genreSlug } from "@/lib/routes"
 
 export function generateStaticParams() {
@@ -13,7 +14,7 @@ export function generateStaticParams() {
 
 export async function generateMetadata({ params }: PageProps<"/[locale]/genres/[genre]">): Promise<Metadata> {
   const { locale, genre } = await params
-  const name = genreFromSlug(genre, genres())
+  const name = genreFromSlug(genre, await fetchGenreNamesServer())
   if (!name) return {}
   const t = await getTranslations({ locale, namespace: "genresPage" })
   return { title: `${t("title")} · ${name}` }
@@ -22,9 +23,10 @@ export async function generateMetadata({ params }: PageProps<"/[locale]/genres/[
 async function GenreContent({ params }: { params: PageProps<"/[locale]/genres/[genre]">["params"] }) {
   const { locale, genre } = await params
   setRequestLocale(locale)
-  const name = genreFromSlug(genre, genres())
+  const all = await fetchGenreNamesServer()
+  const name = genreFromSlug(genre, all)
   if (!name) notFound()
-  return <GenresPage genre={name} />
+  return <GenresPage genre={name} all={all} />
 }
 
 export default function Page({ params }: PageProps<"/[locale]/genres/[genre]">) {

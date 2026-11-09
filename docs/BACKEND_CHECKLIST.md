@@ -1180,7 +1180,9 @@ All 74 plan tasks, and where each one lives.
     series that exists only in the API would 404 until P5-07 moves these to `BACKEND_URL`. The API's own 404
     answers are handled in the browser (`notFound()`); `?demo=` flags do nothing with the real API.
 49. **Locked episodes with the real API:** the reader asks the API; 402 `episode_locked` sends it to the series
-    page with the unlock dialog. Until Step 5 part 4 the unlock itself is still the demo (the local store), so
-    with the real API a Fast Pass episode stays locked after the demo "unlock" and the reader comes back to the
-    dialog; lock icons in the lists also still follow the local store.
-50. **Continue reading on Home** is empty with the real API until Step 5 part 3 (`/me/history`).
+    page with the unlock dialog. The unlock calls `POST /series/{slug}/episodes/{n}/unlock` and updates the wallet
+    and the viewer's unlocked list (done in P5-07).
+50. **Continue reading on Home** reads `/me/history` for a signed-in reader (done in P5-07).
+51. **Genre pages (after P5-07):** the genre chips, the 404 check and the page title use `GET /genres`
+    (`fetchGenreNamesServer`); a name the Khmer messages do not know is shown as the API sends it.
+    `generateStaticParams` still lists the seeded genres and series so the build needs no API.

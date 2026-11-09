@@ -6,7 +6,7 @@ import { ErrorState } from "@/components/pr/error-state"
 import { SeriesCard } from "@/components/pr/series-card"
 import { SkeletonCard } from "@/components/pr/skeletons"
 import { toggleVariants } from "@/components/ui/toggle"
-import { genres, type Genre } from "@/data"
+import type { Genre } from "@/data"
 import { Link } from "@/i18n/navigation"
 import { useGenre } from "@/lib/queries"
 import { genreHref } from "@/lib/routes"
@@ -27,7 +27,7 @@ export function GenresFallback() {
 }
 
 /** Genres: 8 chips (links, so the URL reflects the genre), "N series in <genre>" and the card grid. */
-export function GenresPage({ genre }: { genre: Genre }) {
+export function GenresPage({ genre, all }: { genre: Genre; all: Genre[] }) {
   const t = useTranslations("genresPage")
   const loc = useLocalize()
   const th = useTranslations("home")
@@ -41,7 +41,7 @@ export function GenresPage({ genre }: { genre: Genre }) {
       </div>
 
       <nav aria-label={th("genres")} className="flex flex-wrap gap-2">
-        {genres().map((g) => (
+        {all.map((g) => (
           <Link
             key={g}
             href={genreHref(g)}
