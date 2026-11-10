@@ -252,6 +252,15 @@ export const fetchComments = (kind: "series" | "episode", slug: string) => {
   return withDemo<Comment[]>(() => commentsData(kind), { empty: () => [] })
 }
 
+/**
+ * V2.1 Comments page (spec §23): threads with the creator's pinned comment, spoilers and replies. `slug` is the
+ * series or "slug:n" for one episode (the demo thread is shared). Comments marked `creator` are by the series' creator.
+ */
+export const fetchCommentThreads = (slug: string) => {
+  void slug
+  return withDemo(() => demoData.commentThreads, { empty: () => [] })
+}
+
 export const fetchRankings = (kind: "comics" | "novels") =>
   withDemo<RankingEntry[]>(() => rankings(kind), { empty: () => [] })
 
