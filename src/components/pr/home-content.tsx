@@ -28,7 +28,7 @@ export function HomeContent() {
   const all = Object.values(byGenre).flat()
 
   return (
-    <div className="container flex flex-col gap-12 pt-6 pb-4">
+    <div className="container flex flex-col gap-12 pt-6 pb-[72px]">
       <h1 className="sr-only">{t("h1")}</h1>
       {home.isPending ? <SpotlightSkeleton /> : data && data.hero.length > 0 ? <Spotlight slides={data.hero} /> : null}
       {home.isPending ? <ContinueReadingSkeleton /> : <ContinueReadingSection entries={data?.continueReading ?? []} />}

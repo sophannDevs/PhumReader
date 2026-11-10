@@ -54,7 +54,7 @@ export function SiteFooter() {
   const label = (key: string) => (["rankings", "genres", "novels"].includes(key) ? tn(key) : t(key))
 
   return (
-    <footer className="mt-14 border-t bg-[#fafafa] dark:bg-muted/40">
+    <footer className="border-t bg-[#fafafa]">
       <div className="container">
         <div className="grid grid-cols-2 gap-6 pt-8 pb-5 md:grid-cols-[1.6fr_repeat(3,1fr)] md:gap-8 md:pt-12 md:pb-8">
           <div className="col-span-2 flex flex-col gap-3 md:col-span-1">
@@ -77,7 +77,7 @@ export function SiteFooter() {
           {columns.map((col) => (
             <nav key={col.title} aria-label={t(col.title)} className="flex flex-col gap-2.5">
               <h2 className="text-[13px] font-semibold">{t(col.title)}</h2>
-              <ul className="flex flex-col gap-2.5">
+              <ul className="flex flex-col gap-3 leading-[18px]">
                 {col.links.map((l) => (
                   <li key={l.key}>
                     <Link href={l.href} className={linkClass}>

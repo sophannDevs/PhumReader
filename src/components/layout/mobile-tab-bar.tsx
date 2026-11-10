@@ -6,7 +6,7 @@ import { Link, usePathname } from "@/i18n/navigation"
 import { cn } from "@/lib/utils"
 
 const itemClass =
-  "flex min-w-16 flex-col items-center gap-0.5 rounded-control px-1 py-1.5 text-[11px] leading-[14px] font-medium transition-colors outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+  "flex w-full min-w-0 flex-col items-center gap-0.5 rounded-control px-1 py-1.5 text-center text-[11px] leading-[14px] font-medium transition-colors outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
 
 /**
  * Phone bottom tab bar (< 768 px, spec §0 "Phone tab bar"): Home, Search, Library, Coins, Me (or Log in).
@@ -41,7 +41,7 @@ export function MobileTabBar({
     >
       <ul className="flex items-stretch justify-around">
         {tabs.map(({ key, href, icon: Icon, label, current }) => (
-          <li key={key} className="flex">
+          <li key={key} className="flex min-w-0 flex-1 justify-center">
             <Link
               href={href}
               aria-current={current ? "page" : undefined}

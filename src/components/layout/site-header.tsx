@@ -83,7 +83,7 @@ export function SiteHeader({
               href={item.href}
               aria-current={item.current ? "page" : undefined}
               className={cn(
-                "inline-flex h-9 items-center rounded-control px-3 text-sm transition-colors outline-none hover:bg-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+                "inline-flex h-9 items-center rounded-control px-2 text-sm whitespace-nowrap transition-colors outline-none hover:bg-accent hover:text-foreground lg:px-3 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
                 item.current ? "font-semibold text-foreground" : "font-medium text-muted-foreground"
               )}
             >

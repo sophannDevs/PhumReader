@@ -21,7 +21,7 @@ export function LogoMark({ className }: { className?: string }) {
 
 const sizes = {
   header: { mark: "size-7", text: "text-[17px] max-[420px]:text-[15px]" },
-  footer: { mark: "size-7", text: "text-[17px]" },
+  footer: { mark: "size-7", text: "text-[13px]" },
   auth: { mark: "size-9", text: "text-2xl" },
 } as const
 
