@@ -3,6 +3,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { ThemeProvider } from "@/lib/theme"
 import { useState } from "react"
+import { ReportProvider } from "@/components/pr/report-dialog"
 import { Toaster } from "@/components/ui/sonner"
 import { SessionSync } from "@/lib/session-sync"
 import { SettingsSync } from "@/lib/settings-sync"
@@ -25,7 +26,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
         <StoreHydrator />
         <SessionSync />
         <SettingsSync />
-        {children}
+        <ReportProvider>{children}</ReportProvider>
         <Toaster />
       </QueryClientProvider>
     </ThemeProvider>
