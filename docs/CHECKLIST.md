@@ -38,10 +38,10 @@ T32 → T33 → T34 → F24–F27 → T39–T42. A V2.1 task marked "→ Fnn" is
   page, phone sticky bar, unavailable series state. Spec §2 · Screens 02. → T08
 - [x] F07 Unlock dialog: single (5) or all Fast Pass episodes (15), balance and "after unlocking", log-in hand-off,
   "You need N more coins" → Coins (`shopReturn`, `pendingUnlock`) → reopen. Spec §2, §6. → T09
-- [ ] F08 Comic reader: bars with progress, episode list, settings panel (scroll/page, dark/light, full/narrow,
+- [x] F08 Comic reader: bars with progress, episode list, settings panel (scroll/page, dark/light, full/narrow,
   auto-next, data saver → `settings`), page-by-page taps and ← →, resume chip from `pos`, end of episode (like,
   subscribe, share, report, 5 s auto-next, next card, top comments), Fast Pass lock screen. Spec §3 · Screens 03. → T10, T11
-- [ ] F09 Novel reader: settings popover (size, theme, font, spacing; first visit from Settings), progress, resume
+- [x] F09 Novel reader: settings popover (size, theme, font, spacing; first visit from Settings), progress, resume
   chip, locked chapter teaser + unlock card, chapter end with creator's note and Report. Spec §4 · Screens 04. → T11, T12
 - [x] F10 Log in / Sign up / Forgot on `/login` (`?mode=signup`, `?mode=forgot`; the V1 routes redirect): context
   line, language toggle, Caps Lock warning, Remember me, Google / Facebook / Apple, sign-up name / email (taken
@@ -55,18 +55,18 @@ T32 → T33 → T34 → F24–F27 → T39–T42. A V2.1 task marked "→ Fnn" is
 - [x] F13 Settings: side menu and section cards (Account, Reading, Language and region, Notifications, Privacy and
   safety, Coins and payments, Account actions), inline password change, story languages, blocked accounts, your
   reports, DELETE dialog, save bar. Spec §12 · Screens 12. → T20
-- [ ] F14 Search page: landing (recent + trending), tabs with counts, filters (genre, day, sort), highlight, Subscribe
+- [x] F14 Search page: landing (recent + trending), tabs with counts, filters (genre, day, sort), highlight, Subscribe
   / Follow, "Did you mean", show more (6), states. Spec §7 · Screens 07. → T22
-- [ ] F15 Rankings: lists Trending / Popular / New / Rising, filters (format, genre, period), top 3 cards, movement,
+- [x] F15 Rankings: lists Trending / Popular / New / Rising, filters (format, genre, period), top 3 cards, movement,
   "How rankings work", show more, empty. Spec §10 · Screens 10. → T23
-- [ ] F16 Genres / Web novels on `/genres?g=&format=` (the V1 `/genres/[genre]` redirects): chips with counts, coloured
+- [x] F16 Genres / Web novels on `/genres?g=&format=` (the V1 `/genres/[genre]` redirects): chips with counts, coloured
   banner, filters (format, status, day, sort), "Clear filters (N)", 6/4/3 grid, show more, empty. Spec §11 · Screens 11. → T24
-- [ ] F17 Help center: search + popular searches, 6 topic cards, 17 articles with links and "Was this helpful?",
+- [x] F17 Help center: search + popular searches, 6 topic cards, 17 articles with links and "Was this helpful?",
   contact form (topic, email, order number for payments, message 20+, screenshot, ticket T-xxxxx), pre-fill from a
   receipt. Spec §19 · Screens 19. → T25
-- [ ] F18 Policies on `/legal/[doc]` (terms, privacy, refund, community, creator; `/terms` and `/privacy` redirect): side
+- [x] F18 Policies on `/legal/[doc]` (terms, privacy, refund, community, creator; `/terms` and `/privacy` redirect): side
   menu, short version, on this page, numbered sections, template warning, Khmer "coming before launch". Spec §20 · Screens 20. → T26
-- [ ] F19 Error pages: 404 (address, did you mean, search, popular), 500 (retry fails once, reference with copy),
+- [x] F19 Error pages: 404 (address, did you mean, search, popular), 500 (retry fails once, reference with copy),
   offline (tips, auto return), `/maintenance`, series unavailable; illustration, code badge, en/km toggle. Spec §9 · Screens 09. → T27
 - [ ] F20 Creator layout (CreatorNav) + dashboard: stat cards, 14-day chart, My series filters with status-based
   actions, to-do, new comments with reply and like, new-creator 3-step guide. Spec §14 · Screens 14. → T28
@@ -94,9 +94,9 @@ T32 → T33 → T34 → F24–F27 → T39–T42. A V2.1 task marked "→ Fnn" is
 - [x] T07 Home (all rows, genre picker, daily updates, states). Spec §1 · Screens 01 → F05
 - [x] T08 Series page: hero, progress, episodes tab (Fast Pass card, toolbar, grouped list), About, comments preview, phone sticky bar. Spec §2 · Screens 02 → F06
 - [x] T09 Unlock flow: single or bundle dialog, log in hand-off, short of coins → Coins → return and reopen (`shopReturn`, `pendingUnlock`). Spec §2, §6 → F07
-- [ ] T10 Comic reader: bars, episode list, settings panel, scroll and page modes, resume chip, auto-next, end-of-episode, arrow keys. Spec §3 · Screens 03 → F08
-- [ ] T11 Fast Pass lock screen in the comic and novel readers. Screens 03-viewer-locked, 04-novel-locked → F08, F09
-- [ ] T12 Novel reader: settings (size, theme, font, spacing; defaults from Settings), resume, chapter end. Spec §4 · Screens 04 → F09
+- [x] T10 Comic reader: bars, episode list, settings panel, scroll and page modes, resume chip, auto-next, end-of-episode, arrow keys. Spec §3 · Screens 03 → F08
+- [x] T11 Fast Pass lock screen in the comic and novel readers. Screens 03-viewer-locked, 04-novel-locked → F08, F09
+- [x] T12 Novel reader: settings (size, theme, font, spacing; defaults from Settings), resume, chapter end. Spec §4 · Screens 04 → F09
 - [x] T13 Comments page + CommentThread (pinned, spoilers, replies, edit/delete, sort, creator filter). Spec §23 · Screens 23
 - [x] T14 Report and Block dialogs (global), hiding blocked comments. Spec §0 · Screens 02-series-report-comment, 17-creator-profile-report-sent
 
@@ -110,12 +110,12 @@ T32 → T33 → T34 → F24–F27 → T39–T42. A V2.1 task marked "→ Fnn" is
 - [x] T21 Notifications (inbox, groups, read/unread, remove + undo, alert settings) and the header bell count. Spec §13 · Screens 13
 
 ## Phase D – Discovery and help
-- [ ] T22 Search page (landing, tabs, filters, highlight, did-you-mean, show more). Spec §7 · Screens 07 → F14
-- [ ] T23 Rankings. Spec §10 · Screens 10 → F15
-- [ ] T24 Genres / Web novels. Spec §11 · Screens 11 → F16
-- [ ] T25 Help center (search, topics, articles, feedback, contact form with validation and pre-fill). Spec §19 · Screens 19 → F17
-- [ ] T26 Policies /legal/[doc] (5 documents from demo-data `policies`, template warning). Spec §20 · Screens 20 → F18
-- [ ] T27 Error pages: not-found, error boundary (retry), offline (online event), maintenance, series unavailable; en/km. Spec §9 · Screens 09 → F19
+- [x] T22 Search page (landing, tabs, filters, highlight, did-you-mean, show more). Spec §7 · Screens 07 → F14
+- [x] T23 Rankings. Spec §10 · Screens 10 → F15
+- [x] T24 Genres / Web novels. Spec §11 · Screens 11 → F16
+- [x] T25 Help center (search, topics, articles, feedback, contact form with validation and pre-fill). Spec §19 · Screens 19 → F17
+- [x] T26 Policies /legal/[doc] (5 documents from demo-data `policies`, template warning). Spec §20 · Screens 20 → F18
+- [x] T27 Error pages: not-found, error boundary (retry), offline (online event), maintenance, series unavailable; en/km. Spec §9 · Screens 09 → F19
 
 ## Phase E – Creators
 - [ ] T28 Creator layout (CreatorNav) + dashboard (stats, chart, My series with status-based actions, to-do, comments, new-creator state). Spec §14 · Screens 14 → F20
@@ -234,3 +234,32 @@ T32 → T33 → T34 → F24–F27 → T39–T42. A V2.1 task marked "→ Fnn" is
 - V2-36 (T16) **/welcome** has its own top bar (no site header, footer or tab bar), is not gated, and uses the screens'
   3-segment bar with "Step N of 3". Picks come from the demo catalogue in both modes; in real mode "+ Add" subscribes
   through the API. A granted notification permission also turns on push for new episodes.
+- V2-37 (F08) **Reader unlocks**: the lock screen's "Unlock for 5 coins" / "Unlock all N" open the shared unlock
+  dialog to confirm (the prototype spends at once); "Get coins" and "Log in" go straight to Coins / Log in and the dialog
+  reopens on return. Buying coins from a reader returns to that reader page. A locked episode opened by URL shows the lock
+  screen (V1 redirected); in real mode a 402 has no panels, so the blurred art is the episode thumbnail.
+- V2-38 (F08) **Reader details**: auto-next starts once per episode at 97 % (or the last page) and never opens a locked
+  episode; data saver asks for half-width images; top comments are the reader's own new comments then the 3 most liked;
+  the episode list and settings popovers stay dark on the light background.
+- V2-39 (F09) **Novel reader**: until its Aa popover is used (`novelCustom`), size and theme follow Settings; the lock
+  card also offers "Unlock all" when 2 or more chapters are locked; there is no comments block (spec §4 and the
+  prototype end a chapter without it). Reading time comes from the text.
+- V2-40 (F14) **Search**: the demo searches the whole catalogue; the real API returns at most 20 results, which the page
+  tabs, filters and sorts. Creators come from the results; Follow uses the store's `follows` in both modes. Only Enter,
+  a recent / trending / genre click or arriving with `?q=` saves a recent search. "Did you mean" = closest title by edit
+  distance. Subscribe asks logged-out readers to log in.
+- V2-41 (F15) **Rankings**: series come from the rankings query; all four lists are ordered on the page with the
+  prototype's fixed demo numbers (reads per period, views, growth %, movement) until the API supports lists, periods and
+  genres. "Last update 9:00 AM" is static.
+- V2-42 (F16) **Genres**: `/genres?g=<Genre>&format=comic|novel` (`g` also accepts a slug); status, day and sort are page
+  state; `/genres` opens on All genres. The banner count ignores filters (prototype). Series pages link genres here.
+- V2-43 (F17) **Help**: articles are translated in the `help` namespace (topics and links from demo data); the contact
+  form is simulated in both modes (no support API), ticket T-xxxxx is random, screenshots stay in the browser, "Was this
+  helpful?" votes are not saved. Prototype page names map to routes (Shop → /coins, Settings → /settings#…, …).
+- V2-44 (F18) **Policies**: policy text stays English (`lang="en"`) on Khmer pages; the ខ្មែរ chip says the Khmer version
+  comes before launch. Unknown documents show the 404 (HTTP 200 when streamed, as for series).
+- V2-45 (F19) **Error pages**: the language toggle switches the site language on the same address; "Did you mean" is
+  the closest series to the address; 500 retry re-renders (demo: the first retry fails, the second works); the reference
+  is TW-500-<digest>; `/demo/crash` (demo only) shows the 500 page. /offline now uses the site layout with a small inline
+  script for when the service worker serves it without JS. /maintenance is a normal page (nothing switches the site into
+  maintenance); "Notify me" is local.
