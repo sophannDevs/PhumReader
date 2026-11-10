@@ -1,10 +1,12 @@
-# PhumReader
+# PhumiReader
 
-PhumReader (ភូមិ "village" + Reader) is a webtoon-style site for comics and web novels for readers in
+PhumiReader (ភូមិReader; ភូមិ means "village") is a webtoon-style site for comics and web novels for readers in
 Cambodia, in English and Khmer. The website (Next.js) is in the repo root; the Spring Boot API lives in
-[`backend/`](backend/README.md) (plan: [docs/BACKEND.md](docs/BACKEND.md), progress:
-[docs/BACKEND_CHECKLIST.md](docs/BACKEND_CHECKLIST.md)). The website can run on its own in **demo mode**
-(`NEXT_PUBLIC_DEMO=1`: fake data kept in your browser, no backend needed) or against the API.
+[`backend/`](backend/README.md) (plan: [docs/BACKEND.md](docs/BACKEND.md), progress: [docs/BACKEND_CHECKLIST.md](docs/BACKEND_CHECKLIST.md)).
+**The website is moving onto it page by page (Stage 1 Step 5)**: sign-in and the catalog (Home, Rankings,
+Genres, Search, series pages, both readers) already use the API; the library, coins, comments, settings and
+creator pages still use the demo data until their part is done. Set `NEXT_PUBLIC_DEMO=1` in `.env.local` to run the whole
+Phase 1 demo without a backend.
 
 ## Run it
 
@@ -59,14 +61,15 @@ free Supabase database + the API on your computer behind a tunnel): [docs/STAGIN
 
 ## Demo account
 
-- Log in with **reader@toonwave.app** / **Toonwave1!** (the address keeps the project's old working name). The
-  seeded API database has the same account.
+- Log in with **reader@phumireader.app** / **PhumiReader1!**. The seeded API database has the same account. In demo
+  mode there are also **creator@phumireader.app** / **Creator1!** and **admin@phumireader.app** / **Admin1!** (opens
+  `/admin`); the API's seeded creator is `creator@toonwave.app` / `PhumiReader1!` (backend/README.md).
 - Sign up works with any new email; the email code is **123456** (in demo mode and with the dev API, which prints
   emails, such as reset links, in its console).
 - "Continue with Google / Facebook": in demo mode it does no OAuth and logs in as Sokha Chan; with the API it says
   "coming soon".
 - Coins, unlocks, subscriptions, reading history, purchases and reader settings are kept per browser in
-  `localStorage` under `phumreader.app`. Reset everything in **Settings > Reset demo data**, or clear that key.
+  `localStorage` under `phumireader.app` (V1 `phumreader.*` keys are moved there once). Reset everything in **Settings > Reset demo data**, or clear that key.
 - Payments are placeholders only (`[PAYMENT PROVIDER FORM]`, `[KHQR PLACEHOLDER]`): use "I've paid (simulate)"
   or "Simulate failed payment" on the payment step. There are no real card fields and prices stay `[PRICE USD]` / `[PRICE KHR]`.
 
@@ -94,7 +97,7 @@ src/app/[locale]/(site)/     home, series/[slug], coins, library, settings, crea
 src/app/[locale]/(reader)/   read/[slug]/[episode], novel/[slug]/[chapter]
 src/app/[locale]/(auth)/     login
 src/components/ui/           shadcn/ui components
-src/components/pr/           PhumReader patterns (SeriesCard, EpisodeRow, UnlockDialog, ...) and page bodies
+src/components/pr/           PhumiReader patterns (SeriesCard, EpisodeRow, UnlockDialog, ...) and page bodies
 src/components/layout/       header, footer, tab bar, reader bars, auth layout, search palette
 src/components/auth/         login / sign up / verify / forgot views
 src/data/                    demo-data.json (the only content source) and typed selectors
@@ -103,9 +106,13 @@ src/lib/api/                 schema.d.ts generated from the backend's OpenAPI fi
 backend/                     Spring Boot API (Java 21, Gradle), see backend/README.md
 src/messages/                en.json, km.json
 e2e/                         Playwright tests (spec flows 1-6, demo flags, 404)
-design/                      design source of truth (screens, foundations, spec): do not edit
-docs/CHECKLIST.md            task checklist, progress and numbered assumptions
+design/                      V2.1 design pack (screens, prototype-src, foundations, spec, i18n): do not edit
+docs/CHECKLIST.md            V2.1 task checklist, progress and assumptions (docs/CHECKLIST-v1.md: finished V1 list)
+scripts/                     data:sync (design → src/data), i18n:km (Khmer dictionary → km.json), services
 ```
 
 Demo content (titles, synopses, comments, chapter text) is English in both languages; the interface text is
-translated. The Khmer UI strings were written for this demo and have not been reviewed by a native speaker.
+translated. Khmer UI strings come from `design/i18n/km-dictionary.json` (`npm run i18n:km`) where it has them;
+none of it has been reviewed by a native speaker yet.
+
+After changing `design/demo-data.json` or `src/messages/en.json`, run `npm run data:sync` and `npm run i18n:km`.

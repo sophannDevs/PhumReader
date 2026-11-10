@@ -12,7 +12,7 @@ export const catalogKeys = {
   chapter: (slug: string, n: number, flag?: string | null) => ["chapter", slug, n, flag ?? null] as const,
   rankings: (kind: "comics" | "novels", flag?: string | null) => ["rankings", kind, flag ?? null] as const,
   genre: (genre: string, flag?: string | null) => ["genre", genre, flag ?? null] as const,
-  search: (query: string, flag?: string | null) => ["search", query.trim().toLowerCase(), flag ?? null] as const,
+  search: (query: string, flag?: string | null, limit = 8) => ["search", query.trim().toLowerCase(), limit, flag ?? null] as const,
 }
 
 export const meKeys = {

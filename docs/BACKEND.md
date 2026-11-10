@@ -91,7 +91,7 @@ creator_follows, genres, featured_slides, rankings, episode_bookmarks, coin_wall
 
 Demo content: `./gradlew bootRun --args='--spring.profiles.active=dev,seed'` loads `src/data/demo-data.json`
 (copied onto the classpath at build time) with stable ids, so it can run again safely. Accounts that can log in:
-`reader@toonwave.app` (3 coins, Continue reading) and `creator@toonwave.app` (Chan Sreyleak, the demo's stand-in
+`reader@phumireader.app` (3 coins, Continue reading) and `creator@toonwave.app` (Chan Sreyleak, the demo's stand-in
 creator); both use the demo password. The demo's two purchase-history rows are not seeded, because they have no
 matching ledger entries.
 

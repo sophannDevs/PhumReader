@@ -1,0 +1,19 @@
+{
+  "title": "{topic} នឹងមកដល់ឆាប់ៗនេះ",
+  "body": "យើងកំពុងធ្វើការលើទំព័រនេះ។ សូមត្រឡប់មកវិញពេលក្រោយ។",
+  "home": "ទៅទំព័រដើម",
+  "topics": {
+    "help-center": "មជ្ឈមណ្ឌលជំនួយ",
+    "terms": "លក្ខខណ្ឌ",
+    "privacy": "ឯកជនភាព",
+    "contact": "ទាក់ទង",
+    "facebook": "Facebook",
+    "telegram": "Telegram",
+    "twitter": "X (Twitter)",
+    "youtube": "YouTube",
+    "earnings": "ប្រាក់ចំណូល",
+    "guidelines": "គោលការណ៍សម្រាប់អ្នកនិពន្ធ",
+    "status": "ស្ថានភាពសេវាកម្ម"
+  },
+  "fallback": "ទំព័រនេះ"
+}

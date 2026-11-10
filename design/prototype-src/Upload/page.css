@@ -1,0 +1,32 @@
+.up-grid{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:24px;align-items:start}
+.up-epno{display:flex;align-items:center;gap:10px;height:36px;padding:0 12px;border:1px solid var(--border);border-radius:8px;background:#fafafa}
+.drop.bad{border-color:var(--destructive)}
+.up-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.up-img{display:flex;align-items:center;gap:12px;padding:8px 8px 8px 12px;background:var(--background)}
+.up-img+.up-img{border-top:1px solid var(--border)}
+.up-img.bad{background:#fef2f2}
+.up-n{width:20px;font-size:12px;font-weight:600;color:var(--muted-foreground);text-align:right;flex:0 0 auto}
+.up-th{width:36px;height:52px;border-radius:4px;object-fit:cover;flex:0 0 36px;background:var(--muted)}
+.up-acts{display:flex;gap:2px;flex:0 0 auto}
+.up-text{font-family:'Noto Serif',Georgia,serif;font-size:16px;line-height:1.7;min-height:280px}
+.up-when{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.up-bar{position:sticky;bottom:16px;z-index:20;display:flex;align-items:center;justify-content:flex-end;gap:8px;padding:10px;border:1px solid var(--border);border-radius:12px;background:rgba(255,255,255,.96);box-shadow:var(--shadow-md)}
+.up-side{position:sticky;top:80px}
+.up-phone{width:220px;align-self:center;border:8px solid #09090b;border-radius:28px;overflow:hidden;background:#fff;box-shadow:var(--shadow-md)}
+.up-ptop{display:flex;flex-direction:column;padding:8px 10px;border-bottom:1px solid var(--border)}
+.up-pbody{height:300px;overflow:hidden;display:flex;flex-direction:column;background:#fafafa}
+.up-pbody img{width:100%;height:150px;object-fit:cover;flex:0 0 auto}
+.up-ptext{margin:0;padding:12px;font-family:'Noto Serif',Georgia,serif;font-size:11px;line-height:1.7;color:#27272a;white-space:pre-wrap}
+@container page (max-width: 1024px){
+  .up-grid{grid-template-columns:minmax(0,1fr) 240px}
+  .up-phone{width:200px}
+}
+@container page (max-width: 760px){
+  .up-grid{grid-template-columns:minmax(0,1fr)}
+  .up-side{position:static}
+  .up-side>section:last-child{display:none}
+  .up-when{grid-template-columns:minmax(0,1fr)}
+  .up-bar{bottom:72px}
+  .up-bar .btn{flex:1 1 0}
+}
+.up-ck{padding:12px 20px 20px !important}

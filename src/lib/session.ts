@@ -1,5 +1,6 @@
 "use client"
 
+import { demoData } from "@/data"
 import { DEMO_MODE } from "@/lib/api/config"
 import { ApiError, api, type Schemas } from "@/lib/api/client"
 import { useAppStore, type StoredUser } from "@/lib/store"
@@ -44,16 +45,19 @@ export async function logIn(email: string, password: string, remember: boolean):
   return toUser(await api.post<Me>("/auth/login", { email: email.trim(), password, remember }))
 }
 
+export type SocialProvider = "google" | "facebook" | "apple"
+
+/** The API has no Apple sign-in yet: real mode shows "coming soon" for it. The demo simulates all three. */
+export const socialReady = (provider: SocialProvider) => DEMO_MODE || provider !== "apple"
+
 /**
- * Google / Facebook: simulated in the demo. With the real API the whole page goes to the provider
+ * Google / Facebook / Apple: simulated in the demo. With the real API the whole page goes to the provider
  * (through the API's `start` endpoint) and comes back to `/login?social=<result>`, so this promise
- * never settles: the page is being left.
+ * never settles: the page is being left. Check `socialReady` first (Apple rejects in real mode).
  */
-export async function socialLogIn(provider: "google" | "facebook", locale: string): Promise<StoredUser> {
-  if (DEMO_MODE) {
-    const demo = await import("@/lib/demo-api")
-    return demo.socialLogin(provider)
-  }
+export function socialLogIn(provider: SocialProvider, locale: string): Promise<StoredUser> {
+  if (DEMO_MODE) return import("@/lib/demo-api").then((demo) => demo.socialLogin(provider))
+  if (provider === "apple") return Promise.reject(new Error("Apple sign-in is not available yet"))
   // A full page navigation to the API (not a Next.js page), so the lint rule for internal pages does not apply.
   // eslint-disable-next-line @next/next/no-location-assign-relative-destination
   window.location.href = `/api/v1/auth/oauth/${provider}/start?locale=${locale === "km" ? "km" : "en"}`
@@ -96,6 +100,41 @@ export async function requestPasswordReset(email: string): Promise<string> {
   }
   await api.post("/auth/forgot-password", { email: email.trim() })
   return email.trim()
+}
+
+/**
+ * How "Forgot password" works: the demo emails a 6-digit code and sets the new password on the same page
+ * (V2.1 design, spec §5); the real API emails a link to `/reset?token=…` (plan P4-09).
+ */
+export const RESET_WITH_CODE = DEMO_MODE
+
+/** Demo only: checks the 6-digit reset code (demoData.emailCode). */
+export async function checkResetCode(code: string): Promise<void> {
+  await (await import("@/lib/demo-api")).verifyCode(code)
+}
+
+const DEMO_ROLES: Record<string, string[]> = {
+  reader: ["READER"],
+  creator: ["READER", "CREATOR"],
+  moderator: ["READER", "CREATOR", "ADMIN"],
+}
+
+/**
+ * Demo only: the new password from the code flow, saved with this device's demo accounts (name and roles kept).
+ * The demo accounts' original passwords keep working too (demoData is read-only).
+ */
+export async function setPasswordWithCode(email: string, password: string): Promise<void> {
+  await (await import("@/lib/demo-api")).withDemo(() => undefined)
+  const e = email.trim().toLowerCase()
+  const store = useAppStore.getState()
+  const own = store.accounts.find((a) => a.email.toLowerCase() === e)
+  const preset = demoData.demoAccounts.find((a) => a.email.toLowerCase() === e)
+  store.addAccount({
+    name: own?.name ?? preset?.name ?? e.split("@")[0],
+    email: own?.email ?? e,
+    password,
+    roles: own?.roles ?? (preset ? DEMO_ROLES[preset.role] : ["READER"]),
+  })
 }
 
 /** Sets a new password from a reset link (and signs out every device). */

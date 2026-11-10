@@ -391,6 +391,28 @@
   }
 }
 
+/* ------------------------------------------------------------------ */
+/* 5. Khmer typography (foundations.md §8): Kantumruy Pro first, a     */
+/*    little more line height, no negative tracking, no uppercase.     */
+/* ------------------------------------------------------------------ */
+@utility font-khmer {
+  font-family: var(--font-khmer), var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+}
+html:lang(km) {
+  --font-sans: var(--font-khmer), var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+}
+html:lang(km) :is(h1, h2, h3, .type-hero, .type-h1, .type-h2, .type-h3, .type-h4, .type-series-title) {
+  letter-spacing: 0;
+  line-height: 1.45;
+}
+html:lang(km) :is(p, .type-small, .type-caption) {
+  line-height: 1.6;
+}
+html:lang(km) .type-eyebrow {
+  letter-spacing: 0;
+  text-transform: none;
+}
+
 /* Applied for one frame while the theme changes, so colours switch without animating. */
 .no-theme-transition,
 .no-theme-transition * {

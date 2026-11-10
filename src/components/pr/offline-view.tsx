@@ -1,28 +1,106 @@
-"use client";
+"use client"
 
-import { WifiOffIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
-import { Button } from "@/components/ui/button";
+import { CheckIcon, HomeIcon, RefreshCwIcon } from "lucide-react"
+import { useTranslations } from "next-intl"
+import { useCallback, useEffect, useRef, useState } from "react"
+import { ErrorHelp, ErrorHero, ErrorStatus, errorActions } from "@/components/pr/error-page"
+import { Button } from "@/components/ui/button"
+import { Link, usePathname, useRouter } from "@/i18n/navigation"
+import { DEMO_MODE } from "@/lib/api/config"
 
-/** What the installed app shows when a page cannot be loaded without a connection. */
+declare global {
+  interface Window {
+    /** Set once React runs the offline page; the inline fallback script (offline/page.tsx) then stands down. */
+    __prOfflineReady?: boolean
+  }
+}
+
+/**
+ * Offline (spec §9, screens 09-error-offline-*): Try again, Go to Home, tips, Help center. It goes back by itself on
+ * the browser's `online` event. The service worker (public/sw.js) shows this page in place of any page that can't
+ * load, so "back" reloads that address; on /offline itself it goes Home.
+ */
 export function OfflineView() {
-  const t = useTranslations("legal.offline");
+  const t = useTranslations("errors")
+  const pathname = usePathname()
+  const router = useRouter()
+  const [busy, setBusy] = useState(false)
+  const [status, setStatus] = useState<"" | "still" | "ok">("")
+  const timers = useRef<ReturnType<typeof setTimeout>[]>([])
+  const tips = t.raw("offline.tips") as string[]
+
+  const later = useCallback((ms: number, fn: () => void) => {
+    timers.current.push(setTimeout(fn, ms))
+  }, [])
+
+  const backOnline = useCallback(() => {
+    setBusy(false)
+    setStatus("ok")
+    later(1500, () => {
+      if (pathname === "/offline") router.replace("/")
+      else window.location.reload()
+    })
+  }, [later, pathname, router])
+
+  useEffect(() => {
+    window.__prOfflineReady = true
+    const list = timers.current
+    return () => list.forEach(clearTimeout)
+  }, [])
+
+  useEffect(() => {
+    window.addEventListener("online", backOnline)
+    return () => window.removeEventListener("online", backOnline)
+  }, [backOnline])
+
+  function retry() {
+    if (busy || status === "ok") return
+    setBusy(true)
+    setStatus("")
+    later(1200, () => {
+      if (navigator.onLine) backOnline()
+      else {
+        setBusy(false)
+        setStatus("still")
+      }
+    })
+  }
+
   return (
-    <main className="container flex min-h-svh flex-1 flex-col items-center justify-center gap-4 py-24 text-center">
-      <span className="flex size-14 items-center justify-center rounded-card bg-muted text-muted-foreground">
-        <WifiOffIcon className="size-7" aria-hidden />
-      </span>
-      <div className="flex max-w-md flex-col gap-1.5">
-        <h1 className="type-h1">{t("title")}</h1>
-        <p className="type-lead">{t("body")}</p>
+    <ErrorHero kind="offline" title={t("offline.title")} body={t("offline.body")}>
+      <ErrorStatus status={status} message={status === "ok" ? t("offline.ok") : t("offline.still")} />
+      <div className={errorActions}>
+        <Button variant="brand" size="lg" onClick={retry} loading={busy} disabled={status === "ok"} data-offline-retry="">
+          {busy ? null : <RefreshCwIcon />}
+          {busy ? t("trying") : t("retry")}
+        </Button>
+        <Button asChild variant="outline" size="lg">
+          <Link href="/">
+            <HomeIcon />
+            {t("home")}
+          </Link>
+        </Button>
       </div>
-      <Button
-        variant="brand"
-        size="lg"
-        onClick={() => window.location.reload()}
-      >
-        {t("retry")}
-      </Button>
-    </main>
-  );
+      <ul className="flex flex-col gap-2">
+        {tips.map((tip) => (
+          <li key={tip} className="flex items-start gap-2 text-sm leading-5 text-[#3f3f46]">
+            <span aria-hidden className="mt-px inline-flex size-[18px] shrink-0 items-center justify-center rounded-full bg-brand-soft text-brand-ink">
+              <CheckIcon className="size-3" />
+            </span>
+            {tip}
+          </li>
+        ))}
+      </ul>
+      {DEMO_MODE ? (
+        <button
+          type="button"
+          onClick={backOnline}
+          className="self-start rounded-sm text-xs text-muted-foreground underline underline-offset-[3px] outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+        >
+          {t("offline.simulate")}
+        </button>
+      ) : null}
+      <ErrorHelp />
+    </ErrorHero>
+  )
 }

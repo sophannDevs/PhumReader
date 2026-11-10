@@ -13,7 +13,7 @@ import { useAppStore } from "@/lib/store"
 import { applyBalance } from "@/lib/wallet"
 
 /** The open order, kept so a reload resumes it (real API only). */
-const PENDING_KEY = "phumreader.pendingOrder"
+const PENDING_KEY = "phumireader.pendingOrder"
 const POLL_MS = 3000
 
 type Pending = { email: string; number: string; checkout?: coins.Checkout | null }
@@ -42,6 +42,18 @@ export type Flow =
 
 /** Coins the reader gets for a pack: coins + pack bonus + first-purchase bonus (same as the pack). */
 export const packTotal = (pack: CoinPack, offer: boolean) => pack.coins + pack.bonus + (offer ? pack.coins : 0)
+
+const ICT_MS = 7 * 3_600_000
+const DAY_MS = 86_400_000
+
+/**
+ * "Now" for demo orders: the pinned demo date (`today`, assumption 2) at the real clock's time of day in ICT, so a
+ * new order's history date and its receipt date and time agree.
+ */
+export function demoNow(): number {
+  const [y, m, d] = today.split("-").map(Number)
+  return Date.UTC(y, m - 1, d) + ((Date.now() + ICT_MS) % DAY_MS) - ICT_MS
+}
 
 /**
  * Checkout state machine: review -> pay -> confirming -> success | failed.
@@ -87,13 +99,18 @@ export function useCheckout({
       if (left <= 0) {
         order.current = null
         if (!DEMO_MODE) writePending(null)
+        // Demo: an expired code is a failed order in the history (prototype `finish('failed', 'expired')`).
+        else record("Failed", `TW-${String(Date.now()).slice(-8)}`)
         setFlow({ step: "failed", reason: "expired" })
       }
     }, 1000)
     return () => clearInterval(id)
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- the pack and method can't change while paying
   }, [flow])
 
-  const record = (status: "Paid" | "Failed" | "Cancelled", orderId: string) =>
+  /** Demo: saves the order in the store (the history row and its Receipt). */
+  function record(status: "Paid" | "Failed" | "Cancelled", orderId: string) {
+    const first = offer ? pack.coins : 0
     useAppStore.getState().addPurchase({
       date: today,
       pack: `${pack.coins} coin pack`,
@@ -101,7 +118,12 @@ export function useCheckout({
       method: method.id,
       status,
       orderId,
+      at: demoNow(),
+      base: pack.coins,
+      bonus: pack.bonus,
+      first,
     })
+  }
 
   /** Real API: an order reached its end state. */
   async function settle(state: coins.OrderState) {
@@ -201,7 +223,7 @@ export function useCheckout({
       }
       return
     }
-    record("Cancelled", `PR-CANCEL${Date.now() % 100000}`)
+    record("Cancelled", `TW-${String(Date.now()).slice(-8)}`)
     toast.error(tt("paymentCancelled"))
     setFlow({ step: "review" })
   }
@@ -249,7 +271,7 @@ export function useCheckout({
         method: method.id,
       })
     } catch (e) {
-      if (typeof e === "object" && e !== null && "name" in e && e.name === "DemoApiError") record("Failed", `PR-FAILED${Date.now() % 100000}`)
+      if (typeof e === "object" && e !== null && "name" in e && e.name === "DemoApiError") record("Failed", `TW-${String(Date.now()).slice(-8)}`)
       toast.error(tt("paymentFailed"))
       setFlow({ step: "failed", reason: "declined" })
     } finally {

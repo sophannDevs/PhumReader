@@ -1,0 +1,17 @@
+{
+  "novel": "Novel",
+  "up": "UP",
+  "new": "NEW",
+  "likes": "{count} likes",
+  "views": "{views} views",
+  "chapters": "{count, plural, one {# chapter} other {# chapters}}",
+  "episodeProgress": "Episode {n} · {percent}% read",
+  "chapterProgress": "Chapter {n} · {percent}% read",
+  "cover": "{title} cover",
+  "rank": "Rank {rank}",
+  "moveUp": "Up {n}",
+  "moveDown": "Down {n}",
+  "moveNew": "New entry",
+  "moveSame": "No change",
+  "progressOf": "{title} progress"
+}

@@ -82,3 +82,63 @@ export function LanguageSwitch({
     </div>
   )
 }
+
+/**
+ * Header language pill (foundations §8): 32 px, shows the *other* language ("ខ្មែរ" in English, "EN" in Khmer)
+ * and switches to it, keeping the page.
+ */
+export function LanguageButton({ className }: { className?: string }) {
+  const locale = useLocale() as Locale
+  const pathname = usePathname()
+  const router = useRouter()
+  const t = useTranslations("nav")
+  const other: Locale = locale === "en" ? "km" : "en"
+
+  return (
+    <button
+      type="button"
+      lang={other}
+      aria-label={t("switchLanguage", { language: labels[other] })}
+      onClick={() => {
+        useAppStore.getState().setLang(other)
+        router.replace(`${pathname}${window.location.search}`, { locale: other })
+      }}
+      className={cn(
+        "h-8 min-w-11 shrink-0 rounded-full border bg-background px-2.5 text-[13px] font-semibold text-foreground transition-colors outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background max-[420px]:h-[30px] max-[420px]:min-w-0 max-[420px]:px-2",
+        other === "km" && "font-khmer",
+        className
+      )}
+    >
+      {other === "en" ? "EN" : labels.km}
+    </button>
+  )
+}
+
+/** Footer: "English · ខ្មែរ" with a globe; switches to the other language. */
+export function LanguageToggleLink({ className }: { className?: string }) {
+  const locale = useLocale() as Locale
+  const pathname = usePathname()
+  const router = useRouter()
+  const t = useTranslations("nav")
+  const other: Locale = locale === "en" ? "km" : "en"
+
+  return (
+    <button
+      type="button"
+      aria-label={t("switchLanguage", { language: labels[other] })}
+      onClick={() => {
+        useAppStore.getState().setLang(other)
+        router.replace(`${pathname}${window.location.search}`, { locale: other })
+      }}
+      className={cn(
+        "inline-flex items-center gap-1.5 rounded-sm text-xs text-muted-foreground outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+        className
+      )}
+    >
+      <GlobeIcon className="size-3.5" aria-hidden />
+      <span>
+        English · <span lang="km">ខ្មែរ</span>
+      </span>
+    </button>
+  )
+}

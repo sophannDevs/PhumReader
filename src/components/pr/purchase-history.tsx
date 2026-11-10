@@ -1,68 +1,104 @@
 "use client"
 
-import { useTranslations } from "next-intl"
-import { useLocale } from "next-intl"
-import { EmptyState } from "@/components/pr/empty-state"
+import { useLocale, useTranslations } from "next-intl"
 import { Badge } from "@/components/ui/badge"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import type { PaymentMethod, Purchase, PurchaseStatus } from "@/data"
-import { formatDate } from "@/lib/format"
-import { useDemoFlag } from "@/lib/queries"
-import { ReceiptIcon } from "lucide-react"
+import { Link } from "@/i18n/navigation"
+import { formatDate, ictDate } from "@/lib/format"
 import { useLocalize } from "@/lib/localize"
+import { useDemoFlag } from "@/lib/queries"
+import { cn } from "@/lib/utils"
 
-const statusVariant = { Paid: "brand", Failed: "danger", Cancelled: "secondary" } as const
+const statusVariant = { Paid: "brand", Failed: "up", Cancelled: "secondary" } as const
 
-/** Purchase history (newest first): the store's in the demo, the API's orders otherwise; `?demo=empty` shows the empty state. */
-export function PurchaseHistory({ methods, purchases }: { methods: PaymentMethod[]; purchases: (Purchase & { orderId?: string })[] }) {
+/** Rows shown (prototype: the 6 newest). */
+const MAX_ROWS = 6
+
+export type HistoryRow = Purchase & { orderId?: string; at?: number }
+
+export const receiptHref = (orderId: string) => `/coins/orders/${encodeURIComponent(orderId)}`
+
+/**
+ * Purchase history (newest first, prototype Shop `.tbl`): the store's orders in the demo, the API's otherwise.
+ * Each item links to its Receipt; `?demo=empty` shows the empty state.
+ */
+export function PurchaseHistory({ methods, purchases }: { methods: PaymentMethod[]; purchases: HistoryRow[] }) {
   const t = useTranslations("coins")
   const loc = useLocalize()
   const locale = useLocale()
   const flag = useDemoFlag()
-  const rows = flag === "empty" ? [] : purchases
+  const rows = flag === "empty" ? [] : purchases.slice(0, MAX_ROWS)
   const label = (id: string) => {
     const m = methods.find((x) => x.id === id)
     return m ? loc.method(id, m).label : id
   }
   const statusLabel = (s: PurchaseStatus) => t(`status${s}`)
+  const cell = "h-12 px-3.5 py-2 align-middle max-md:px-2"
+  const head = "h-10 px-3.5 text-left align-middle text-[13px] font-medium text-muted-foreground max-md:px-2"
 
   return (
-    <section aria-labelledby="history-title" className="flex flex-col gap-3">
+    <section id="history" aria-labelledby="history-title" className="flex min-w-0 scroll-mt-24 flex-col gap-3">
       <h2 id="history-title" className="type-h3">
         {t("historyTitle")}
       </h2>
-      {rows.length === 0 ? (
-        <div className="rounded-card border bg-card">
-          <EmptyState icon={ReceiptIcon} title={t("noPurchases")} description={t("noPurchasesDesc")} />
-        </div>
-      ) : (
-        <div className="overflow-hidden rounded-card border bg-card shadow-xs">
-          <Table>
-            <TableHeader className="bg-muted/50">
-              <TableRow>
-                <TableHead>{t("colDate")}</TableHead>
-                <TableHead>{t("colItem")}</TableHead>
-                <TableHead className="hidden md:table-cell">{t("colMethod")}</TableHead>
-                <TableHead className="text-right">{t("colCoins")}</TableHead>
-                <TableHead>{t("colStatus")}</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {rows.map((p, i) => (
-                <TableRow key={`${p.date}-${p.orderId ?? i}`}>
-                  <TableCell className="text-muted-foreground">{formatDate(p.date, locale)}</TableCell>
-                  <TableCell>{loc.pack(p.pack)}</TableCell>
-                  <TableCell className="hidden text-muted-foreground md:table-cell">{label(p.method)}</TableCell>
-                  <TableCell className="text-right tabular-nums">+{p.coins}</TableCell>
-                  <TableCell>
-                    <Badge variant={statusVariant[p.status]}>{statusLabel(p.status)}</Badge>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      )}
+      <div className="overflow-hidden rounded-card border bg-card shadow-xs">
+        {rows.length === 0 ? (
+          <p className="p-6 text-center text-[13px] leading-[18px] text-muted-foreground">{t("noPurchases")}</p>
+        ) : (
+          <table className="w-full table-fixed border-collapse text-sm max-md:text-[13px]">
+            <thead className="bg-[#fafafa]">
+              <tr className="border-b">
+                <th scope="col" className={cn(head, "w-[124px] max-md:w-[100px]")}>
+                  {t("colDate")}
+                </th>
+                <th scope="col" className={head}>
+                  {t("colItem")}
+                </th>
+                <th scope="col" className={cn(head, "w-[170px] max-md:hidden")}>
+                  {t("colMethod")}
+                </th>
+                <th scope="col" className={cn(head, "w-[80px] text-right max-md:w-[56px]")}>
+                  {t("colCoins")}
+                </th>
+                <th scope="col" className={cn(head, "w-[110px] max-md:w-[84px]")}>
+                  {t("colStatus")}
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((p, i) => {
+                const date = formatDate(p.at ? ictDate(p.at) : p.date, locale)
+                const item = loc.pack(p.pack)
+                return (
+                  <tr key={p.orderId ?? `${p.date}-${i}`} className="border-b last:border-b-0">
+                    <td className={cn(cell, "whitespace-nowrap text-muted-foreground")}>{date}</td>
+                    <td className={cn(cell, "font-semibold")}>
+                      {p.orderId ? (
+                        <Link
+                          href={receiptHref(p.orderId)}
+                          aria-label={t("openReceipt", { item, date })}
+                          className="rounded-sm underline-offset-4 outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                        >
+                          {item}
+                        </Link>
+                      ) : (
+                        item
+                      )}
+                    </td>
+                    <td className={cn(cell, "text-muted-foreground max-md:hidden")}>{label(p.method)}</td>
+                    <td className={cn(cell, "text-right tabular-nums")}>+{p.coins}</td>
+                    <td className={cell}>
+                      <Badge variant={statusVariant[p.status]} className="max-w-full">
+                        {statusLabel(p.status)}
+                      </Badge>
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        )}
+      </div>
     </section>
   )
 }

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
-import en from "./en.json"
-import km from "./km.json"
+import en from "./en"
+import km from "./km"
 
 /** "creator.start" -> "Start publishing" for every leaf of a messages file (list items are "faq.items.0.q"). */
 function flatten(value: unknown, path = ""): Record<string, string> {

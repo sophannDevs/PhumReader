@@ -1,57 +1,50 @@
 "use client"
 
-import { ErrorState } from "@/components/pr/error-state"
-import { ContinueReadingSection, ContinueReadingSkeleton } from "@/components/pr/continue-reading-section"
-import { DailyUpdatesSection, DailyUpdatesSkeleton } from "@/components/pr/daily-updates-section"
-import { CreatorCta } from "@/components/pr/creator-cta"
-import { GenreSection, GenreSkeleton } from "@/components/pr/genre-section"
-import { HeroCarousel } from "@/components/pr/hero-carousel"
-import { NovelsSection, NovelsSkeleton } from "@/components/pr/novels-section"
-import { TrendingSection, TrendingSkeleton } from "@/components/pr/trending-section"
-import { Skeleton } from "@/components/ui/skeleton"
-import { useHome } from "@/lib/queries"
 import { useTranslations } from "next-intl"
+import { ContinueReadingSection, ContinueReadingSkeleton } from "@/components/pr/continue-reading-section"
+import { DailyUpdatesSection } from "@/components/pr/daily-updates-section"
+import { ForYouSection } from "@/components/pr/home/for-you"
+import { CreatorCta, NovelsSection } from "@/components/pr/home/novels-cta"
+import { Spotlight, SpotlightSkeleton } from "@/components/pr/home/spotlight"
+import { TrendingAndGenres } from "@/components/pr/home/trending-genres"
+import { demoData, type Genre, type Series, type Weekday } from "@/data"
+import { useHome } from "@/lib/queries"
 
-export function HomeSkeleton() {
-  return (
-    <div className="container flex flex-col gap-14 pt-6" aria-busy="true" aria-hidden>
-      <Skeleton className="h-[560px] rounded-[16px] md:h-[470px] md:rounded-hero" />
-      <ContinueReadingSkeleton />
-      <DailyUpdatesSkeleton />
-      <div className="grid grid-cols-[minmax(0,1fr)] gap-14 lg:grid-cols-2 lg:items-start lg:gap-8">
-        <TrendingSkeleton />
-        <GenreSkeleton />
-      </div>
-      <NovelsSkeleton />
-    </div>
-  )
-}
+const emptyDaily = { Mon: [], Tue: [], Wed: [], Thu: [], Fri: [], Sat: [], Sun: [] } as Record<Weekday, Series[]>
 
-/** Home page body. Sections are added one task at a time (T20-T23); T46 completes their states. */
+/**
+ * Home (spec §1, prototype Home): spotlight, Continue reading, genre picks / Recommended for you, Daily updates,
+ * Trending now + Browse by genre, Web novels, creator CTA. While the feed loads (or fails) the data sections show
+ * their own skeletons and Try again boxes, as in the prototype.
+ */
 export function HomeContent() {
   const home = useHome()
-  const tc = useTranslations("common")
+  const t = useTranslations("home")
+  const data = home.data
+  const state = home.isPending ? "loading" : home.isError ? "error" : data && isEmpty(data.daily) ? "empty" : "ready"
+  const retry = () => void home.refetch()
+  const genres: Genre[] = data?.genres ?? demoData.genres
+  const byGenre = data?.byGenre ?? ({} as Record<Genre, Series[]>)
+  const all = Object.values(byGenre).flat()
 
   return (
-    <div className="container flex flex-col gap-14 pt-6">
-      <h1 className="sr-only">{tc("siteName")} · {tc("tagline")}</h1>
-      {home.isPending ? (
-        <HomeSkeleton />
-      ) : home.isError ? (
-        <ErrorState onRetry={() => void home.refetch()} />
-      ) : (
-        <>
-          {home.data.hero.length > 0 ? <HeroCarousel slides={home.data.hero} /> : null}
-          <ContinueReadingSection entries={home.data.continueReading} />
-          <DailyUpdatesSection daily={home.data.daily} />
-          <div className="grid grid-cols-[minmax(0,1fr)] gap-14 lg:grid-cols-2 lg:items-start lg:gap-8">
-            <TrendingSection comics={home.data.rankings.comics} novels={home.data.rankings.novels} />
-            <GenreSection genres={home.data.genres} byGenre={home.data.byGenre} />
-          </div>
-          <NovelsSection novels={home.data.novels} />
-          <CreatorCta covers={home.data.creatorCovers} />
-        </>
-      )}
+    <div className="container flex flex-col gap-12 pt-6 pb-[72px]">
+      <h1 className="sr-only">{t("h1")}</h1>
+      {home.isPending ? <SpotlightSkeleton /> : data && data.hero.length > 0 ? <Spotlight slides={data.hero} /> : null}
+      {home.isPending ? <ContinueReadingSkeleton /> : <ContinueReadingSection entries={data?.continueReading ?? []} />}
+      {data && all.length > 0 ? <ForYouSection genres={genres} all={all} /> : null}
+      <DailyUpdatesSection daily={data?.daily ?? emptyDaily} state={state} onRetry={retry} />
+      <TrendingAndGenres
+        rankings={data?.rankings ?? { comics: [], novels: [] }}
+        genres={genres}
+        byGenre={byGenre}
+        state={state}
+        onRetry={retry}
+      />
+      {data ? <NovelsSection novels={data.novels} /> : null}
+      <CreatorCta covers={data?.creatorCovers ?? []} />
     </div>
   )
 }
+
+const isEmpty = (daily: Record<Weekday, Series[]>) => Object.values(daily).every((l) => l.length === 0)

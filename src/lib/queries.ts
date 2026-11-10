@@ -95,11 +95,12 @@ export const useGenre = (genre: Genre) => {
   })
 }
 
-export const useSearchSeries = (query: string) => {
+/** `limit` defaults to 8 (the API allows up to 20). */
+export const useSearchSeries = (query: string, limit = 8) => {
   const flag = useDemoFlag()
   return useQuery({
-    queryKey: catalogKeys.search(query, flag),
-    queryFn: () => (DEMO_MODE ? getDemo().then((m) => m.search(query)) : real.search(query)),
+    queryKey: catalogKeys.search(query, flag, limit),
+    queryFn: () => (DEMO_MODE ? getDemo().then((m) => m.search(query, limit)) : real.search(query, limit)),
   })
 }
 

@@ -4,8 +4,8 @@ import userEvent from "@testing-library/user-event"
 import { NextIntlClientProvider } from "next-intl"
 import type { ReactElement, ReactNode } from "react"
 import { ThemeProvider } from "@/lib/theme"
-import en from "@/messages/en.json"
-import km from "@/messages/km.json"
+import en from "@/messages/en"
+import km from "@/messages/km"
 
 const messages = { en, km } as const
 

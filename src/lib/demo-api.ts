@@ -5,7 +5,7 @@ import {
   comments as commentsData,
   continueReading,
   creatorSeriesCount,
-  dailyUpdates,
+  seriesByDay,
   demoData,
   derivedStats,
   episode as episodeBySlug,
@@ -93,7 +93,7 @@ export async function withDemo<T>(
 export type HomeData = {
   hero: HeroSlideView[]
   continueReading: ContinueView[]
-  /** Daily updates grid per weekday (6 each). */
+  /** Every series that updates on each weekday (the Home day tabs show the counts and "Show all N"). */
   daily: Record<Weekday, Series[]>
   rankings: { comics: RankingEntry[]; novels: RankingEntry[] }
   genres: Genre[]
@@ -113,7 +113,7 @@ export const fetchHome = () =>
     () => ({
       hero: heroSlides(),
       continueReading: continueReading(),
-      daily: Object.fromEntries(WEEKDAYS.map((d) => [d, dailyUpdates(d)])) as Record<Weekday, Series[]>,
+      daily: Object.fromEntries(WEEKDAYS.map((d) => [d, seriesByDay(d)])) as Record<Weekday, Series[]>,
       rankings: { comics: rankings("comics").slice(0, 8), novels: rankings("novels").slice(0, 8) },
       genres: genres(),
       byGenre: Object.fromEntries(genres().map((g) => [g, seriesByGenre(g)])) as Record<Genre, Series[]>,
@@ -252,6 +252,15 @@ export const fetchComments = (kind: "series" | "episode", slug: string) => {
   return withDemo<Comment[]>(() => commentsData(kind), { empty: () => [] })
 }
 
+/**
+ * V2.1 Comments page (spec §23): threads with the creator's pinned comment, spoilers and replies. `slug` is the
+ * series or "slug:n" for one episode (the demo thread is shared). Comments marked `creator` are by the series' creator.
+ */
+export const fetchCommentThreads = (slug: string) => {
+  void slug
+  return withDemo(() => demoData.commentThreads, { empty: () => [] })
+}
+
 export const fetchRankings = (kind: "comics" | "novels") =>
   withDemo<RankingEntry[]>(() => rankings(kind), { empty: () => [] })
 
@@ -260,15 +269,15 @@ export const fetchGenre = (genre: Genre) =>
     empty: () => ({ genre, series: [] }),
   })
 
-/** Title, creator or genre; max 8. An empty query returns the first 6 series. */
-export const search = (query: string) =>
+/** Title, creator or genre; at most `limit` (default 8). An empty query returns the first 6 series. */
+export const search = (query: string, limit = 8) =>
   withDemo<Series[]>(
     () => {
       const q = query.trim().toLowerCase()
       if (!q) return getSeries().slice(0, 6)
       return getSeries()
         .filter((s) => [s.title, s.creator, s.genre].some((f) => f.toLowerCase().includes(q)))
-        .slice(0, 8)
+        .slice(0, limit)
     },
     { empty: () => [] }
   )
@@ -313,28 +322,35 @@ export const fetchCoinsPage = () =>
   )
 
 // ----------------------------------------------------------------- writes
-export type DemoUser = { name: string; email: string }
-export type DemoAccount = DemoUser & { password: string }
+export type DemoUser = { name: string; email: string; roles: string[] }
+export type DemoAccount = { name: string; email: string; password: string; roles?: string[] }
 
-/** The demo account plus any account created by sign up (passed in from the store). */
+/** Roles of the V2.1 demo accounts: the creator can publish, the moderator opens /admin. */
+const ROLES = { reader: ["READER"], creator: ["READER", "CREATOR"], moderator: ["READER", "CREATOR", "ADMIN"] } as const
+
+/** Every email that already has an account in the demo (sign up says it's taken). */
+export const demoEmails = () => demoData.demoAccounts.map((a) => a.email.toLowerCase())
+
+/** The three demo accounts (reader, creator, admin) plus any account created by sign up (passed in from the store). */
 export const login = (email: string, password: string, accounts: DemoAccount[] = []) =>
   withDemo<DemoUser>(
     () => {
       const e = email.trim().toLowerCase()
-      const demo = demoData.demoAccount
-      if (e === demo.email.toLowerCase() && password === demo.password) {
-        return { name: demo.name, email: demo.email }
-      }
+      const demo = demoData.demoAccounts.find((a) => a.email.toLowerCase() === e && a.password === password)
+      if (demo) return { name: demo.name, email: demo.email, roles: [...ROLES[demo.role]] }
       const match = accounts.find((a) => a.email.toLowerCase() === e && a.password === password)
-      if (match) return { name: match.name, email: match.email }
+      if (match) return { name: match.name, email: match.email, roles: match.roles ?? ["READER"] }
       throw new DemoApiError("Email or password is incorrect", "invalid_credentials")
     },
     { delay: 900 }
   )
 
-/** Google / Facebook buttons: no OAuth, always signs in as Sokha Chan after 1 s. */
-export const socialLogin = (provider: "google" | "facebook") =>
-  withDemo<DemoUser>(() => ({ name: "Sokha Chan", email: `sokha.${provider}@example.com` }), { delay: 1000 })
+/** Google / Facebook / Apple buttons: no OAuth, always signs in as Sokha Chan after 1 s. */
+export const socialLogin = (provider: "google" | "facebook" | "apple") =>
+  withDemo<DemoUser>(
+    () => ({ name: "Sokha Chan", email: `sokha.${provider}@example.com`, roles: ["READER"] }),
+    { delay: 1000 }
+  )
 
 export const signUp = (
   data: { name: string; email: string; password: string },
@@ -342,7 +358,7 @@ export const signUp = (
 ) =>
   withDemo<{ ok: true }>(() => {
     const e = data.email.trim().toLowerCase()
-    if (e === demoData.demoAccount.email.toLowerCase() || existingEmails.some((x) => x.toLowerCase() === e)) {
+    if (demoEmails().includes(e) || existingEmails.some((x) => x.toLowerCase() === e)) {
       throw new DemoApiError("That email already has an account", "email_taken")
     }
     return { ok: true }
@@ -350,7 +366,7 @@ export const signUp = (
 
 export const verifyCode = (code: string) =>
   withDemo<{ ok: true }>(() => {
-    if (code !== demoData.demoAccount.verificationCode) {
+    if (code !== demoData.emailCode) {
       throw new DemoApiError("That code isn't right", "invalid_code")
     }
     return { ok: true }
@@ -373,7 +389,8 @@ export const pay = (order: PayOrder, outcome: "success" | "failed" = "success") 
   withDemo<PayResult>(
     () => {
       if (outcome === "failed") throw new DemoApiError("Payment didn't go through", "payment_declined")
-      const orderId = `PR-${Math.random().toString(36).slice(2, 10).toUpperCase().padEnd(8, "0")}`
+      // TW-######## (spec §19: order numbers look like TW-12345678)
+      const orderId = `TW-${String(Date.now()).slice(-8)}`
       return { orderId, coins: order.coins + order.bonus + order.firstBonus, method: order.method }
     },
     { delay: 1500 }

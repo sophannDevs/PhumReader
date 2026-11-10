@@ -1,0 +1,141 @@
+<div class="v2 vw {{ themeCls }}">
+  <a ref="{{ goRef }}" href="{{ goHref }}" tabindex="-1" aria-hidden="true" style="display: none">Go</a>
+  <header class="vw-bar" id="top">
+    <div class="vw-bar-in">
+      <a class="btn btn-icon vw-btn" href="{{ seriesHref }}" aria-label="Back to {{ s.title }}">[[i:arrow-left:18]]</a>
+      <div class="col grow" style="gap: 0">
+        <a class="xs trunc vw-sub" href="{{ seriesHref }}">{{ s.title }}</a>
+        <span class="small trunc" style="font-weight: 600">{{ ep.title }}</span>
+      </div>
+      <div style="position: relative">
+        <button type="button" class="btn btn-sm vw-btn" onClick="{{ toggleList }}" aria-expanded="{{ listOpen }}">[[i:list:14]]<span class="only-desk">Episodes</span></button>
+        <sc-if value="{{ listOpen }}" hint-placeholder-val="{{ false }}">
+          <div class="vw-list" role="menu">
+            <div class="row xs" style="justify-content: space-between; padding: 8px 10px; color: #a1a1aa"><span>{{ total }} episodes</span><span>{{ coinCount }} coins</span></div>
+            <sc-for list="{{ near }}" as="e" hint-placeholder-count="6">
+              <button type="button" class="vw-li {{ e.cls }}" role="menuitem" onClick="{{ e.open }}">
+                <img src="{{ e.thumb }}" alt=""><span class="col grow" style="text-align: left"><span class="small trunc">{{ e.title }}</span><span class="xs" style="color: #a1a1aa">{{ e.date }}</span></span>
+                <sc-if value="{{ e.locked }}" hint-placeholder-val="{{ false }}"><span style="color: #fbbf24">[[i:lock:14]]</span></sc-if>
+                <sc-if value="{{ e.current }}" hint-placeholder-val="{{ false }}"><span class="badge badge-new">Now</span></sc-if>
+              </button>
+            </sc-for>
+          </div>
+        </sc-if>
+      </div>
+      <div style="position: relative">
+        <button type="button" class="btn btn-icon btn-sm vw-btn" onClick="{{ toggleSet }}" aria-expanded="{{ setOpen }}" aria-label="Reading settings">[[i:settings:16]]</button>
+        <sc-if value="{{ setOpen }}" hint-placeholder-val="{{ false }}">
+          <div class="vw-set" role="dialog" aria-label="Reading settings">
+            <div class="col" style="gap: 6px"><span class="xs vw-dim" id="vs-mode">Reading mode</span><div class="vw-seg" role="radiogroup" aria-labelledby="vs-mode"><sc-for list="{{ modes }}" as="m" hint-placeholder-count="2"><button type="button" role="radio" aria-checked="{{ m.on }}" class="{{ m.cls }}" onClick="{{ m.pick }}">{{ m.label }}</button></sc-for></div></div>
+            <div class="col" style="gap: 6px"><span class="xs vw-dim" id="vs-bg">Background</span><div class="vw-seg" role="radiogroup" aria-labelledby="vs-bg"><sc-for list="{{ bgs }}" as="m" hint-placeholder-count="2"><button type="button" role="radio" aria-checked="{{ m.on }}" class="{{ m.cls }}" onClick="{{ m.pick }}">{{ m.label }}</button></sc-for></div></div>
+            <div class="col" style="gap: 6px"><span class="xs vw-dim" id="vs-w">Width</span><div class="vw-seg" role="radiogroup" aria-labelledby="vs-w"><sc-for list="{{ widths }}" as="m" hint-placeholder-count="2"><button type="button" role="radio" aria-checked="{{ m.on }}" class="{{ m.cls }}" onClick="{{ m.pick }}">{{ m.label }}</button></sc-for></div></div>
+            <div class="vw-sw"><span class="small" id="vs-next">Open next episode automatically</span><button type="button" role="switch" class="switch {{ autoCls }}" aria-checked="{{ autoNext }}" aria-labelledby="vs-next" onClick="{{ toggleAuto }}"></button></div>
+            <div class="vw-sw"><span class="small" id="vs-data">Data saver</span><button type="button" role="switch" class="switch {{ saverCls }}" aria-checked="{{ saver }}" aria-labelledby="vs-data" onClick="{{ toggleSaver }}"></button></div>
+            <span class="xs vw-dim">Saved to your account. Keys: ← → change episode.</span>
+          </div>
+        </sc-if>
+      </div>
+      <button type="button" class="btn btn-icon btn-sm vw-btn" onClick="{{ prev }}" disabled="{{ isFirst }}" aria-label="Previous episode">[[i:chevron-left]]</button>
+      <button type="button" class="btn btn-icon btn-sm vw-btn" onClick="{{ next }}" disabled="{{ isLast }}" aria-label="Next episode">[[i:chevron-right]]</button>
+    </div>
+    <div class="vw-prog" aria-hidden="true"><span style="width: {{ progress }}"></span></div>
+  </header>
+
+  <sc-if value="{{ showResume }}" hint-placeholder-val="{{ false }}">
+    <div class="vw-resume" role="status"><span class="small">You stopped at {{ resumePct }}</span><button type="button" class="btn btn-primary btn-sm" onClick="{{ resume }}">Continue</button><button type="button" class="btn btn-sm vw-btn" onClick="{{ dismissResume }}" aria-label="Start from the top">Start over</button></div>
+  </sc-if>
+
+  <sc-if value="{{ isLocked }}" hint-placeholder-val="{{ false }}">
+    <main class="vw-lock" aria-labelledby="lk-h">
+      <div class="vw-lock-art" aria-hidden="true"><img src="{{ lockPreview }}" alt=""></div>
+      <div class="vw-card col vw-lock-card" style="gap: 14px; align-items: center; text-align: center">
+        <span class="badge badge-warn">[[i:zap:12]]Fast Pass</span>
+        <h1 id="lk-h" class="h2">{{ ep.title }} is in Fast Pass</h1>
+        <p class="small vw-dim">Read it now for {{ price }} coins, or for free on {{ ep.date }} ({{ freeIn }}). You have {{ coinCount }} coins.</p>
+        <div class="col" style="gap: 8px; width: 100%; max-width: 360px">
+          <sc-if value="{{ lkLogin }}" hint-placeholder-val="{{ false }}"><a class="btn btn-primary btn-lg btn-block" href="{{ authHref }}" onClick="{{ lkToAuth }}">Log in to unlock</a></sc-if>
+          <sc-if value="{{ lkCanPay }}" hint-placeholder-val="{{ true }}"><button type="button" class="btn btn-primary btn-lg btn-block" onClick="{{ unlockHere }}" disabled="{{ busy }}"><sc-if value="{{ busy }}" hint-placeholder-val="{{ false }}"><span class="spin"></span></sc-if>Unlock for {{ price }} coins</button></sc-if>
+          <sc-if value="{{ lkShort }}" hint-placeholder-val="{{ false }}"><a class="btn btn-primary btn-lg btn-block" href="{{ shopHref }}" onClick="{{ lkToShop }}">[[i:coins]]Get coins · you need {{ lkNeed }} more</a></sc-if>
+          <sc-if value="{{ canBundle }}" hint-placeholder-val="{{ true }}"><a class="btn vw-pill btn-block" href="{{ seriesHref }}" onClick="{{ toBundle }}">Unlock all {{ fpLeft }} Fast Pass episodes · {{ bundlePrice }} coins</a></sc-if>
+          <button type="button" class="btn btn-block vw-btn" onClick="{{ prev }}" disabled="{{ isFirst }}">[[i:chevron-left:14]]Back to {{ prevLabel }}</button>
+        </div>
+      </div>
+    </main>
+  </sc-if>
+
+  <sc-if value="{{ isPage }}" hint-placeholder-val="{{ false }}">
+    <main class="vw-pages {{ widthCls }}" aria-label="{{ ep.title }}, page {{ pageNo }} of {{ pageTotal }}">
+      <button type="button" class="vw-tap left" onClick="{{ pagePrev }}" aria-label="Previous page" disabled="{{ pageFirst }}"></button>
+      <img src="{{ page.src }}" alt="{{ page.alt }}">
+      <button type="button" class="vw-tap right" onClick="{{ pageNext }}" aria-label="Next page"></button>
+    </main>
+    <div class="vw-pnav"><button type="button" class="btn btn-sm vw-btn" onClick="{{ pagePrev }}" disabled="{{ pageFirst }}">[[i:chevron-left:14]]Back</button><span class="small tnum" aria-live="polite">{{ pageNo }} / {{ pageTotal }}</span><button type="button" class="btn btn-sm vw-btn" onClick="{{ pageNext }}">{{ pageNextLabel }}[[i:chevron-right:14]]</button></div>
+  </sc-if>
+
+  <sc-if value="{{ isScroll }}" hint-placeholder-val="{{ true }}">
+    <main class="vw-strip {{ widthCls }}" aria-label="{{ ep.title }}">
+      <sc-for list="{{ panels }}" as="p" hint-placeholder-count="4"><img src="{{ p.src }}" alt="{{ p.alt }}" width="800" height="{{ p.h }}" loading="lazy"></sc-for>
+    </main>
+  </sc-if>
+
+  <sc-if value="{{ showEnd }}" hint-placeholder-val="{{ true }}">
+  <section class="vw-end" id="vw-end">
+    <div class="vw-card col" style="gap: 16px; align-items: center; text-align: center">
+      <span class="xs" style="color: #a1a1aa; letter-spacing: .06em; text-transform: uppercase; font-weight: 600">End of {{ ep.short }}</span>
+      <h2 class="h3">{{ ep.title }}</h2>
+      <div class="row" style="gap: 8px; flex-wrap: wrap; justify-content: center">
+        <button type="button" class="btn vw-pill {{ likeCls }}" onClick="{{ like }}" aria-pressed="{{ liked }}">[[i:heart]]{{ likeCount }}</button>
+        <button type="button" class="btn vw-pill" onClick="{{ toggleSub }}" aria-pressed="{{ subbed }}">[[i:bell]]{{ subLabel }}</button>
+        <button type="button" class="btn vw-pill" onClick="{{ share }}">[[i:share]]Share</button>
+      </div>
+      <button type="button" class="btn btn-link btn-sm vw-dim" style="padding: 0; height: auto; color: #a1a1aa" onClick="{{ reportEp }}">Report this episode</button>
+    </div>
+
+    <sc-if value="{{ hasNext }}" hint-placeholder-val="{{ true }}">
+      <sc-if value="{{ counting }}" hint-placeholder-val="{{ false }}"><div class="vw-auto" role="status">Next episode in {{ countdown }}s<button type="button" class="btn btn-sm vw-btn" onClick="{{ cancelAuto }}">Cancel</button></div></sc-if>
+      <button type="button" class="vw-next" onClick="{{ next }}">
+        <img src="{{ nextEp.thumb }}" alt="">
+        <span class="col grow" style="gap: 4px; text-align: left">
+          <span class="xs" style="color: #a1a1aa">Next episode</span>
+          <span class="h4">{{ nextEp.title }}</span>
+          <sc-if value="{{ nextLocked }}" hint-placeholder-val="{{ false }}"><span class="badge badge-warn" style="align-self: flex-start">[[i:zap:12]]Fast Pass · {{ price }} coins · free {{ nextEp.date }}</span></sc-if>
+        </span>
+        <span class="btn btn-primary">{{ nextCta }}[[i:arrow-right:14]]</span>
+      </button>
+    </sc-if>
+    <sc-if value="{{ isLast }}" hint-placeholder-val="{{ false }}">
+      <div class="vw-card small" style="text-align: center; color: #d4d4d8">You’re all caught up. New episodes {{ scheduleLower }}.</div>
+    </sc-if>
+
+    <div class="vw-card col" style="gap: 14px">
+      <div class="row" style="justify-content: space-between"><h2 class="h4">Comments <span style="color: #a1a1aa; font-weight: 500">{{ commentTotal }}</span></h2><a class="xs ink" href="{{ commentsHref }}" onClick="{{ toAllComments }}" style="font-weight: 600; text-decoration: underline">See all</a></div>
+      <div class="row" style="gap: 8px">
+        <input class="input vw-input" value="{{ draft }}" onChange="{{ onDraft }}" placeholder="{{ commentPh }}" aria-label="Add a comment" maxlength="300">
+        <button type="button" class="btn btn-primary" onClick="{{ post }}">Post</button>
+      </div>
+      <sc-for list="{{ comments }}" as="c" hint-placeholder-count="3">
+        <div class="row" style="align-items: flex-start; gap: 10px">
+          <span class="avatar" style="background: #27272a; color: #fafafa">{{ c.ini }}</span>
+          <div class="col grow" style="gap: 3px"><span class="small"><strong>{{ c.name }}</strong> <span style="color: #a1a1aa">· {{ c.when }}</span></span><p class="small vw-ctext">{{ c.text }}</p><span class="xs row" style="gap: 10px; color: #a1a1aa"><span class="row" style="gap: 4px">[[i:thumbs-up:12]]{{ c.likes }}</span><sc-if value="{{ c.notMine }}" hint-placeholder-val="{{ true }}"><button type="button" class="vw-mini" onClick="{{ c.report }}" aria-label="Report comment by {{ c.name }}">Report</button><button type="button" class="vw-mini" onClick="{{ c.block }}" aria-label="Block {{ c.name }}">Block</button></sc-if></span></div>
+        </div>
+      </sc-for>
+    </div>
+    <sc-if value="{{ hasHidden }}" hint-placeholder-val="{{ false }}"><span class="xs vw-dim" style="text-align: center">{{ hiddenLine }}</span></sc-if>
+    <a class="btn vw-pill" href="{{ seriesHref }}" style="align-self: center">[[i:list:14]]All episodes of {{ s.title }}</a>
+  </section>
+  </sc-if>
+
+  <!-- Unlock dialog -->
+  <sc-if value="{{ dlgOn }}" hint-placeholder-val="{{ false }}">
+    <div class="overlay" onClick="{{ closeDlg }}"></div>
+    <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="vu-h" style="top: {{ dlgTop }}">
+      <button type="button" class="btn btn-ghost btn-icon btn-sm dialog-x" onClick="{{ closeDlg }}" aria-label="Close">[[i:x]]</button>
+      <div class="col" style="gap: 6px"><span class="badge badge-warn" style="align-self: flex-start">[[i:zap:12]]Fast Pass</span><h2 id="vu-h" class="h3">Read {{ nextEp.short }} now?</h2><p class="small muted">Unlock it for {{ price }} coins, or read free on {{ nextEp.date }}. You have {{ coinCount }} coins.</p></div>
+      <sc-if value="{{ dlgLogin }}" hint-placeholder-val="{{ false }}"><a class="btn btn-primary btn-lg btn-block" href="{{ authHref }}" onClick="{{ toAuth }}">Log in to unlock</a></sc-if>
+      <sc-if value="{{ dlgCanPay }}" hint-placeholder-val="{{ true }}"><button type="button" class="btn btn-primary btn-lg btn-block" onClick="{{ unlock }}" disabled="{{ busy }}"><sc-if value="{{ busy }}" hint-placeholder-val="{{ false }}"><span class="spin"></span></sc-if>Unlock for {{ price }} coins</button></sc-if>
+      <sc-if value="{{ dlgShort }}" hint-placeholder-val="{{ false }}"><a class="btn btn-primary btn-lg btn-block" href="{{ shopHref }}" onClick="{{ toShop }}">[[i:coins]]Get coins</a></sc-if>
+      <button type="button" class="btn btn-ghost btn-block" onClick="{{ closeDlg }}">Wait for the free release</button>
+    </div>
+  </sc-if>
+<!--LAYERS-->
+</div>

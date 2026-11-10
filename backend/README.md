@@ -40,8 +40,8 @@ types are.
 
 | Email | Password | What it is |
 |---|---|---|
-| `reader@toonwave.app` | `Toonwave1!` | Demo reader Sokha Chan: 3 coins, four series in Continue reading |
-| `creator@toonwave.app` | `Toonwave1!` | Chan Sreyleak, the demo's stand-in creator, owner of their series |
+| `reader@phumireader.app` | `PhumiReader1!` | Demo reader Sokha Chan: 3 coins, four series in Continue reading |
+| `creator@toonwave.app` | `PhumiReader1!` | Chan Sreyleak, the demo's stand-in creator, owner of their series |
 
 The other demo creators and commenters exist as accounts without a password (they cannot log in).
 

@@ -1,5 +1,5 @@
-import { SkeletonPage } from "@/components/pr/skeletons"
+import { GenresFallback } from "@/components/pr/genres-page"
 
 export default function Loading() {
-  return <SkeletonPage />
+  return <GenresFallback />
 }

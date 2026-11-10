@@ -1,0 +1,105 @@
+<div class="v2">
+<!--HEADER-->
+<!--CNAV-->
+  <main class="wrap col" style="gap: 20px; padding-top: 24px; padding-bottom: 64px">
+    <sc-if value="{{ notDone }}" hint-placeholder-val="{{ true }}">
+    <div class="sec-head">
+      <div class="col" style="gap: 4px"><h1 class="h2">{{ heading }}</h1><p class="small muted row" style="gap: 6px">[[i:check:12]]{{ savedLine }}</p></div>
+      <ol class="cs-steps" aria-label="Steps">
+        <sc-for list="{{ steps }}" as="x" hint-placeholder-count="4"><li class="{{ x.cls }}"><button type="button" class="cs-step" onClick="{{ x.go }}" aria-current="{{ x.cur }}" disabled="{{ x.locked }}"><span class="cs-sn">{{ x.mark }}</span><span class="cs-sl">{{ x.label }}</span></button></li></sc-for>
+      </ol>
+    </div>
+
+    <div class="cs-grid">
+      <form class="card" onSubmit="{{ next }}" novalidate="true">
+        <div class="card-head"><h2 class="h3" id="cs-h" tabindex="-1">{{ stepTitle }}</h2><p class="small muted">{{ stepHint }}</p></div>
+        <div class="card-body col" style="gap: 20px">
+          <sc-if value="{{ hasErrors }}" hint-placeholder-val="{{ false }}">
+            <div class="alert bad" role="alert"><span>[[i:alert]]</span><div class="col"><span class="alert-title">Fix {{ errCount }} {{ errWord }} to continue</span><ul class="cs-errs"><sc-for list="{{ errList }}" as="e" hint-placeholder-count="2"><li>{{ e.t }}</li></sc-for></ul></div></div>
+          </sc-if>
+
+          <sc-if value="{{ isBasics }}" hint-placeholder-val="{{ true }}">
+            <div class="field"><span class="label" id="fmt-l">Format <span class="req">*</span></span>
+              <div class="cs-cards" role="radiogroup" aria-labelledby="fmt-l"><sc-for list="{{ formats }}" as="o" hint-placeholder-count="2"><button type="button" role="radio" aria-checked="{{ o.on }}" class="cs-opt {{ o.cls }}" onClick="{{ o.pick }}"><span class="cs-dot"></span><span class="col" style="gap: 2px; text-align: left"><span class="small" style="font-weight: 600">{{ o.label }}</span><span class="xs muted">{{ o.desc }}</span></span></button></sc-for></div>
+            </div>
+            <div class="field"><label class="label" for="cs-title">Title <span class="req">*</span></label><input id="cs-title" class="input {{ e.titleCls }}" value="{{ d.title }}" onChange="{{ onTitle }}" maxlength="60" aria-invalid="{{ e.titleBad }}" aria-describedby="cs-title-h"><span id="cs-title-h" class="{{ e.titleHintCls }}">{{ e.titleHint }}</span></div>
+            <div class="field-row">
+              <div class="field"><label class="label" for="cs-genre">Main genre <span class="req">*</span></label><select id="cs-genre" class="select {{ e.genreCls }}" value="{{ d.genre }}" onChange="{{ onGenre }}" aria-invalid="{{ e.genreBad }}"><option value="">Choose a genre</option><sc-for list="{{ genres }}" as="g" hint-placeholder-count="8"><option value="{{ g.v }}">{{ g.v }}</option></sc-for></select><sc-if value="{{ e.genreBad }}" hint-placeholder-val="{{ false }}"><span class="err">Choose a main genre.</span></sc-if></div>
+              <div class="field"><label class="label" for="cs-genre2">Second genre <span class="xs muted">(optional)</span></label><select id="cs-genre2" class="select" value="{{ d.genre2 }}" onChange="{{ onGenre2 }}"><option value="">None</option><sc-for list="{{ genres2 }}" as="g" hint-placeholder-count="7"><option value="{{ g.v }}">{{ g.v }}</option></sc-for></select></div>
+            </div>
+            <div class="field-row">
+              <div class="field"><span class="label" id="age-l">Age rating <span class="req">*</span></span><div class="tabs-list" role="radiogroup" aria-labelledby="age-l" style="width: 100%"><sc-for list="{{ ages }}" as="a" hint-placeholder-count="4"><button type="button" role="radio" aria-checked="{{ a.on }}" class="tabs-trigger {{ a.cls }}" style="flex: 1 1 0; justify-content: center" onClick="{{ a.pick }}">{{ a.label }}</button></sc-for></div><span class="hint">{{ ageHint }}</span></div>
+              <div class="field"><label class="label" for="cs-lang">Language <span class="req">*</span></label><select id="cs-lang" class="select" value="{{ d.lang }}" onChange="{{ onLang }}"><option value="km">ខ្មែរ (Khmer)</option><option value="en">English</option><option value="both">Both, as separate versions</option></select></div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ isStory }}" hint-placeholder-val="{{ false }}">
+            <div class="field"><label class="label" for="cs-sum">Summary <span class="req">*</span></label><textarea id="cs-sum" class="textarea {{ e.sumCls }}" rows="5" maxlength="500" onChange="{{ onSum }}" aria-invalid="{{ e.sumBad }}" aria-describedby="cs-sum-h" placeholder="Who is the story about, what do they want, and what stands in the way?" value="{{ d.summary }}"></textarea><div class="row" style="justify-content: space-between"><span id="cs-sum-h" class="{{ e.sumHintCls }}">{{ e.sumHint }}</span><span class="xs muted tnum">{{ sumCount }}/500</span></div></div>
+            <div class="field"><label class="label" for="cs-tag">Tags <span class="xs muted">(up to 5)</span></label>
+              <div class="cs-tags"><sc-for list="{{ tags }}" as="t" hint-placeholder-count="2"><span class="chip on cs-tag">#{{ t.t }}<button type="button" class="cs-tagx" onClick="{{ t.remove }}" aria-label="Remove tag {{ t.t }}">×</button></span></sc-for>
+                <sc-if value="{{ canTag }}" hint-placeholder-val="{{ true }}"><input id="cs-tag" class="input cs-tagin" placeholder="Type a tag, press Enter" value="{{ tagDraft }}" onChange="{{ onTag }}" onKeyDown="{{ tagKey }}"></sc-if></div>
+              <div class="row" style="gap: 6px; flex-wrap: wrap"><span class="xs muted">Popular:</span><sc-for list="{{ tagIdeas }}" as="t" hint-placeholder-count="5"><button type="button" class="chip cs-idea" onClick="{{ t.add }}">+ {{ t.t }}</button></sc-for></div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ isCover }}" hint-placeholder-val="{{ false }}">
+            <div class="cs-covers">
+              <div class="field"><span class="label">Cover <span class="req">*</span></span>
+                <sc-if value="{{ noCover }}" hint-placeholder-val="{{ true }}"><button type="button" class="drop cs-drop {{ e.coverCls }}" onClick="{{ pickCover }}">[[i:plus:22]]<span class="small" style="font-weight: 600">Choose a cover image</span><span class="xs muted">or drag it here</span></button></sc-if>
+                <sc-if value="{{ hasCover }}" hint-placeholder-val="{{ false }}"><div class="cs-coverbox"><img src="{{ d.cover }}" alt="Cover preview"><div class="row" style="gap: 6px"><button type="button" class="btn btn-outline btn-sm" onClick="{{ pickCover }}">Replace</button><button type="button" class="btn btn-ghost btn-sm" onClick="{{ removeCover }}">Remove</button></div></div></sc-if>
+                <sc-if value="{{ e.coverBad }}" hint-placeholder-val="{{ false }}"><span class="err">Add a cover image.</span></sc-if>
+              </div>
+              <div class="col" style="gap: 10px"><span class="label">Requirements</span>
+                <ul class="cs-req"><sc-for list="{{ reqs }}" as="r" hint-placeholder-count="4"><li class="{{ r.cls }}"><span class="cs-tick">{{ r.ic }}</span>{{ r.t }}</li></sc-for></ul>
+                <span class="label" style="padding-top: 6px">Square thumbnail</span>
+                <div class="row" style="gap: 12px"><div class="cs-thumb">{{ thumbFallback }}<sc-if value="{{ hasCover }}" hint-placeholder-val="{{ false }}"><img src="{{ d.cover }}" alt=""></sc-if></div><span class="xs muted">Made from the top of your cover. Used in lists and search.</span></div>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ isPublishing }}" hint-placeholder-val="{{ false }}">
+            <div class="field"><span class="label" id="day-l">Update days <span class="req">*</span></span><div class="row" style="gap: 6px; flex-wrap: wrap" role="group" aria-labelledby="day-l"><sc-for list="{{ days }}" as="x" hint-placeholder-count="7"><button type="button" class="chip {{ x.cls }}" aria-pressed="{{ x.on }}" onClick="{{ x.toggle }}">{{ x.label }}</button></sc-for></div><span class="{{ e.dayHintCls }}">{{ e.dayHint }}</span></div>
+            <div class="field-row">
+              <div class="field"><label class="label" for="cs-time">Release time</label><select id="cs-time" class="select" value="{{ d.time }}" onChange="{{ onTime }}"><option value="12">12:00 PM</option><option value="18">6:00 PM</option><option value="20">8:00 PM</option><option value="21">9:00 PM</option></select><span class="hint">Cambodia time (ICT). Most readers read 7–10 PM.</span></div>
+              <div class="field"><span class="label">Fast Pass</span><div class="st-rowc"><span class="small">Let readers pay coins to read up to 3 episodes early</span><button type="button" role="switch" class="switch {{ fpCls }}" aria-checked="{{ d.fastPass }}" aria-label="Fast Pass" onClick="{{ toggleFp }}"></button></div><span class="hint">You can turn this on later. Needs at least 4 episodes ready.</span></div>
+            </div>
+            <div class="sep"></div>
+            <label class="cs-check"><button type="button" role="checkbox" class="checkbox {{ agreeCls }}" aria-checked="{{ d.agree }}" onClick="{{ toggleAgree }}">[[i:check:12]]</button><span class="small">This is my original work, and I have the rights to publish it. I agree to the <a class="ink" href="{{ legalHref }}" onClick="{{ lgCreator }}" style="text-decoration: underline">creator guidelines</a>.</span></label>
+            <sc-if value="{{ e.agreeBad }}" hint-placeholder-val="{{ false }}"><span class="err">Confirm that this is your original work.</span></sc-if>
+          </sc-if>
+        </div>
+        <div class="card-foot cs-foot">
+          <sc-if value="{{ canBack }}" hint-placeholder-val="{{ false }}"><button type="button" class="btn btn-ghost" onClick="{{ back }}">[[i:chevron-left:16]]Back</button></sc-if>
+          <button type="button" class="btn btn-outline" onClick="{{ saveDraft }}" style="margin-left: auto">Save draft</button>
+          <button type="submit" class="btn btn-primary" disabled="{{ busy }}"><sc-if value="{{ busy }}" hint-placeholder-val="{{ false }}"><span class="spin"></span></sc-if>{{ nextLabel }}</button>
+        </div>
+      </form>
+
+      <aside class="col cs-side" style="gap: 12px" aria-label="Preview">
+        <span class="xs muted" style="font-weight: 600; letter-spacing: .06em; text-transform: uppercase">Reader preview</span>
+        <div class="card cs-prev">
+          <div class="cs-pcover">{{ coverFallback }}<sc-if value="{{ hasCover }}" hint-placeholder-val="{{ false }}"><img src="{{ d.cover }}" alt=""></sc-if></div>
+          <div class="col" style="gap: 6px; padding: 14px">
+            <div class="row" style="gap: 6px; flex-wrap: wrap"><span class="badge badge-outline">{{ pv.genre }}</span><span class="badge badge-outline">{{ pv.format }}</span><span class="badge badge-outline">{{ pv.age }}</span></div>
+            <span class="h4">{{ pv.title }}</span>
+            <span class="xs muted">by {{ userName }} · {{ pv.schedule }}</span>
+            <p class="xs" style="margin: 0; color: #3f3f46">{{ pv.summary }}</p>
+          </div>
+        </div>
+      </aside>
+    </div>
+    </sc-if>
+
+    <sc-if value="{{ isDone }}" hint-placeholder-val="{{ false }}">
+      <section class="card col cs-done" role="status">
+        <span class="ok-ic2">[[i:check:26]]</span>
+        <h1 class="h2">{{ d.title }} is in review</h1>
+        <p class="small muted" style="max-width: 52ch">We check new series within 1–2 days. We’ll send you a notification when it’s approved. Meanwhile, upload your first {{ unitLower }} so it’s ready to go.</p>
+        <div class="row" style="gap: 8px; flex-wrap: wrap; justify-content: center"><a class="btn btn-primary" href="{{ uploadHref }}">Upload {{ unitLower }} 1</a><a class="btn btn-outline" href="{{ creatorHref }}">Back to dashboard</a></div>
+      </section>
+    </sc-if>
+  </main>
+<!--FOOTER-->
+<!--MOBNAV-->
+<!--LAYERS-->
+</div>

@@ -49,7 +49,7 @@ V8) on the empty database, then the seed loads the demo (about 20 seconds). Chec
 
 Then stop and start it without `seed` (the seed is safe to repeat but not needed again).
 
-> The seed creates `reader@toonwave.app` / `Toonwave1!` and the dev profile sends every email code as `123456`.
+> The seed creates `reader@phumireader.app` / `PhumiReader1!` and the dev profile sends every email code as `123456`.
 > Fine for a private test; anyone who finds the address could sign up with any email. Never use this profile or the
 > seed for production.
 

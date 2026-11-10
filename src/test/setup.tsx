@@ -64,7 +64,9 @@ Element.prototype.setPointerCapture ??= () => {}
 Element.prototype.releasePointerCapture ??= () => {}
 
 // ---- the API client calls "/api/v1/..." (same origin in a browser); Node's fetch needs an absolute URL
+// eslint-disable-next-line no-restricted-properties -- test setup wraps fetch so relative API URLs work in Node
 const nativeFetch = globalThis.fetch
+// eslint-disable-next-line no-restricted-properties -- same wrapper
 globalThis.fetch = ((input: RequestInfo | URL, init?: RequestInit) =>
   nativeFetch(typeof input === "string" && input.startsWith("/") ? new URL(input, window.location.origin).href : input, init)) as typeof fetch
 

@@ -3,6 +3,7 @@
 import { MutationCache, QueryCache, QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { useState } from "react"
 import { OfflineBanner } from "@/components/pr/offline-banner"
+import { ReportProvider } from "@/components/pr/report-dialog"
 import { Toaster } from "@/components/ui/sonner"
 import { ApiError } from "@/lib/api/client"
 import { reportError } from "@/lib/error-report"
@@ -45,7 +46,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
         <StoreHydrator />
         <SessionSync />
         <SettingsSync />
-        {children}
+        <ReportProvider>{children}</ReportProvider>
         <Toaster />
       </QueryClientProvider>
     </ThemeProvider>

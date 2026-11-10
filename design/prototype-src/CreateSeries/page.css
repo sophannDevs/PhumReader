@@ -1,0 +1,45 @@
+.cs-steps{list-style:none;margin:0;padding:0;display:flex;gap:6px;flex-wrap:wrap}
+.cs-step{display:flex;align-items:center;gap:8px;height:36px;padding:0 12px 0 6px;border:1px solid var(--border);border-radius:9999px;background:var(--background);font:inherit;font-size:13px;font-weight:500;color:var(--muted-foreground);cursor:pointer}
+.cs-step[disabled]{cursor:default;opacity:.7}
+.cs-step:focus-visible{outline:none;box-shadow:0 0 0 2px var(--background),0 0 0 4px var(--ring)}
+.cs-sn{width:24px;height:24px;border-radius:9999px;background:var(--muted);display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700}
+.cur .cs-step{border-color:var(--foreground);color:var(--foreground)}
+.cur .cs-sn{background:var(--foreground);color:#fff}
+.done .cs-step{color:var(--brand-ink)}
+.done .cs-sn{background:var(--primary);color:var(--primary-foreground)}
+.cs-grid{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:24px;align-items:start}
+.cs-cards{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.cs-tags{display:flex;align-items:center;gap:6px;flex-wrap:wrap;min-height:44px;padding:6px;border:1px solid var(--input);border-radius:8px}
+.cs-tag{height:28px;padding:0 4px 0 10px;gap:4px}
+.cs-tagx{width:20px;height:20px;border:0;border-radius:9999px;background:rgba(255,255,255,.2);color:inherit;cursor:pointer;font-size:14px;line-height:1}
+.cs-tagin{border:0;box-shadow:none;flex:1 1 140px;height:28px;min-width:120px}
+.cs-tagin:focus{box-shadow:none}
+.cs-idea{height:28px;font-size:12px}
+.cs-covers{display:grid;grid-template-columns:220px minmax(0,1fr);gap:24px}
+.cs-drop{aspect-ratio:3/4;padding:12px}
+.cs-drop.bad{border-color:var(--destructive)}
+.cs-coverbox{display:flex;flex-direction:column;gap:8px}
+.cs-coverbox img{width:100%;aspect-ratio:3/4;object-fit:cover;border-radius:12px;border:1px solid var(--border)}
+.cs-thumb{position:relative;width:72px;height:72px;border-radius:12px;overflow:hidden;background:var(--muted);display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--muted-foreground);flex:0 0 auto}
+.cs-thumb img{position:absolute;inset:0;width:100%;height:133%;object-fit:cover}
+.cs-check{display:flex;align-items:flex-start;gap:10px;cursor:pointer}
+.cs-check .checkbox{margin-top:1px}
+.cs-foot{border-top:1px solid var(--border);padding-top:16px}
+.cs-side{position:sticky;top:80px}
+.cs-prev{overflow:hidden}
+.cs-pcover{position:relative;aspect-ratio:3/4;background:repeating-linear-gradient(135deg,#f4f4f5 0 12px,#fafafa 12px 24px);display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--muted-foreground)}
+.cs-pcover img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+@container page (max-width: 1024px){
+  .cs-grid{grid-template-columns:minmax(0,1fr) 240px}
+  .cs-sl{display:none}
+  .cur .cs-sl{display:inline}
+}
+@container page (max-width: 760px){
+  .cs-grid{grid-template-columns:minmax(0,1fr)}
+  .cs-side{position:static;order:-1;display:none}
+  .cs-cards,.cs-covers{grid-template-columns:minmax(0,1fr)}
+  .cs-drop{aspect-ratio:auto;min-height:180px}
+  .cs-coverbox img{max-width:200px}
+  .cs-foot{flex-wrap:wrap}
+  .cs-foot .btn-primary{flex:1 1 100%;order:3}
+}

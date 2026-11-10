@@ -68,3 +68,50 @@ export function initials(name: string): string {
 export function firstName(name: string): string {
   return name.trim().split(/\s+/)[0] ?? ""
 }
+
+// ---- V2.1: dates and times in ICT (UTC+7), Khmer month names and digits (spec §0, receipts, schedules)
+
+const ICT_OFFSET_MS = 7 * 3_600_000
+const EN_MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+
+export { khmerDigits }
+
+/** Digits in the reader's language: Khmer numerals for km, unchanged for en. */
+export const localDigits = (value: number | string, locale: string) =>
+  locale === "km" ? String(value).replace(/\d/g, (c) => "០១២៣៤៥៦៧៨៩"[Number(c)]) : String(value)
+
+/** Parts of an epoch time in ICT. */
+function ictParts(epochMs: number) {
+  const d = new Date(epochMs + ICT_OFFSET_MS)
+  return { y: d.getUTCFullYear(), m: d.getUTCMonth(), d: d.getUTCDate(), h: d.getUTCHours(), min: d.getUTCMinutes() }
+}
+
+/** Epoch ms -> ISO date in ICT. */
+export const ictDate = (epochMs: number) => {
+  const p = ictParts(epochMs)
+  return `${p.y}-${String(p.m + 1).padStart(2, "0")}-${String(p.d).padStart(2, "0")}`
+}
+
+/** "7:05 AM" (en) or "៧:០៥ ព្រឹក" (km), in ICT. */
+export function formatTime(epochMs: number, locale: string = "en"): string {
+  const { h, min } = ictParts(epochMs)
+  const h12 = h % 12 === 0 ? 12 : h % 12
+  const mm = String(min).padStart(2, "0")
+  if (locale === "km") return `${localDigits(h12, "km")}:${localDigits(mm, "km")} ${h < 12 ? "ព្រឹក" : "ល្ងាច"}`
+  return `${h12}:${mm} ${h < 12 ? "AM" : "PM"}`
+}
+
+/** "Oct 28, 2026, 7:05 AM" (en) or the Khmer equivalent, in ICT. */
+export function formatDateTime(epochMs: number, locale: string = "en"): string {
+  return `${formatDate(ictDate(epochMs), locale)}${locale === "km" ? " " : ", "}${formatTime(epochMs, locale)}`
+}
+
+/** "Nov 26" (en) or "២៦ វិច្ឆិកា" (km): an ISO date without the year. */
+export function formatShortDate(iso: string, locale: string = "en"): string {
+  const [, m, d] = iso.split("-").map(Number)
+  if (locale === "km") return `${khmerDigits(d)} ${KHMER_MONTHS[m - 1]}`
+  return `${EN_MONTHS[m - 1]} ${d}`
+}
+
+/** Whole days from the pinned demo "today" to an ISO date (negative = past). */
+export const daysFromToday = (iso: string) => Math.round((toUtc(iso) - toUtc(today)) / MS_PER_DAY)

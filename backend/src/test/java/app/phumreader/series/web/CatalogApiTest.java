@@ -116,7 +116,9 @@ class CatalogApiTest {
             assertThat(card.get("updateDay").asString())
                     .as(slug)
                     .isEqualTo(s.get("updateDay").asString());
-            assertThat(card.get("status").asString()).as(slug).isEqualTo("ongoing");
+            assertThat(card.get("status").asString())
+                    .as(slug)
+                    .isEqualTo(s.get("status").asString());
             assertThat(card.get("ageRating").asString()).as(slug).isEqualTo("all");
             assertThat(strings(card.get("language"))).as(slug).containsExactly("en", "km");
             assertThat(card.get("badges").get("isNew").asBoolean())

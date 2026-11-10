@@ -1,7 +1,8 @@
 "use client"
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
-import { uploadImage, UploadError } from "@/lib/api/uploads"
+import { MAX_IMAGE_BYTES, uploadImage, UploadError } from "@/lib/api/uploads"
+import { PANEL_MAX_WIDTH, PANEL_MIN_WIDTH } from "@/lib/creator-studio"
 
 /** A19: at most 100 images and 200 MB per episode; a few files travel at once. */
 export const MAX_PANELS = 100
@@ -18,26 +19,52 @@ export type PanelItem = {
   progress: number
   /** Set once the API has checked the image. */
   uploadId: string | null
+  /** Pixel size, once the file has been read (or from the saved panel). */
+  width?: number
+  height?: number
   error?: UploadError
 }
 
+/** Sends one checked file and resolves with its upload id (the real API, or the demo's simulated upload). */
+export type PanelUploader = (file: File, options: { onProgress: (percent: number) => void; signal: AbortSignal }) => Promise<{ id: string }>
+
 /** These failures need another file, not another try. */
-const NOT_RETRYABLE = new Set(["unsupported_type", "file_too_large", "image_too_small", "corrupt_image", "too_many_pixels", "not_square"])
+const NOT_RETRYABLE = new Set(["unsupported_type", "file_too_large", "image_too_small", "image_too_wide", "corrupt_image", "too_many_pixels", "not_square"])
 export const canRetry = (item: PanelItem) => item.status === "error" && !!item.error && !NOT_RETRYABLE.has(item.error.code)
 
 let counter = 0
 
+function readSize(file: File): Promise<{ width: number; height: number }> {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file)
+    const img = new Image()
+    img.onload = () => {
+      URL.revokeObjectURL(url)
+      resolve({ width: img.naturalWidth, height: img.naturalHeight })
+    }
+    img.onerror = () => {
+      URL.revokeObjectURL(url)
+      reject(new UploadError("corrupt_image"))
+    }
+    img.src = url
+  })
+}
+
+const realUpload: PanelUploader = async (file, { onProgress, signal }) => uploadImage(file, "PANEL", { onProgress, signal })
+
 /**
- * The comic panels of one episode: files are added by picking or dropping them, sent three at a
- * time with their own progress, kept in reading order (move, remove) and a failed file can be
- * tried again without touching the others.
+ * The comic images of one episode: files are added by picking or dropping them, checked here first (JPG or PNG, up to
+ * 20 MB, 690–1600 px wide: spec §16), sent three at a time with their own progress, kept in reading order (move,
+ * remove), and a failed file can be tried again without touching the others. `upload` replaces the real API upload
+ * (demo mode simulates it).
  */
-export function usePanelUploads(initial: PanelItem[] = []) {
+export function usePanelUploads(initial: PanelItem[] = [], options: { upload?: PanelUploader } = {}) {
   const [items, setItems] = useState<PanelItem[]>(initial)
   const files = useRef(new Map<string, File>())
   const aborts = useRef(new Map<string, AbortController>())
   const started = useRef(new Set<string>())
   const previews = useRef(new Set<string>())
+  const uploader = useRef<PanelUploader>(options.upload ?? realUpload)
   const [tooMany, setTooMany] = useState(false)
 
   const patch = useCallback((key: string, change: Partial<PanelItem>) => setItems((all) => all.map((i) => (i.key === key ? { ...i, ...change } : i))), [])
@@ -50,7 +77,13 @@ export function usePanelUploads(initial: PanelItem[] = []) {
       aborts.current.set(key, controller)
       patch(key, { status: "uploading", progress: 0, error: undefined })
       try {
-        const image = await uploadImage(file, "PANEL", { signal: controller.signal, onProgress: (progress) => patch(key, { progress }) })
+        if (file.type !== "image/jpeg" && file.type !== "image/png") throw new UploadError("unsupported_type")
+        if (file.size > MAX_IMAGE_BYTES) throw new UploadError("file_too_large")
+        const { width, height } = await readSize(file)
+        patch(key, { width, height })
+        if (width > PANEL_MAX_WIDTH) throw new UploadError("image_too_wide", { width, min: PANEL_MIN_WIDTH })
+        if (width < PANEL_MIN_WIDTH) throw new UploadError("image_too_small", { width, min: PANEL_MIN_WIDTH })
+        const image = await uploader.current(file, { signal: controller.signal, onProgress: (progress) => patch(key, { progress }) })
         patch(key, { status: "done", progress: 100, uploadId: image.id })
       } catch (error) {
         if (error instanceof UploadError && error.code === "upload_cancelled") return
@@ -156,3 +189,25 @@ export function usePanelUploads(initial: PanelItem[] = []) {
 }
 
 export type PanelUploads = ReturnType<typeof usePanelUploads>
+
+/** Demo mode: a simulated upload (the prototype's progress ticks: +22% every 400 ms). */
+export const demoPanelUpload: PanelUploader = (_file, { onProgress, signal }) =>
+  new Promise((resolve, reject) => {
+    let percent = 0
+    const timer = setInterval(() => {
+      percent = Math.min(100, percent + 22)
+      onProgress(percent)
+      if (percent >= 100) {
+        clearInterval(timer)
+        resolve({ id: `demo-${++counter}` })
+      }
+    }, 400)
+    signal.addEventListener(
+      "abort",
+      () => {
+        clearInterval(timer)
+        reject(new UploadError("upload_cancelled"))
+      },
+      { once: true }
+    )
+  })

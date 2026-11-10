@@ -1,41 +1,49 @@
 "use client"
 
+import { ChevronRightIcon, MessageSquareIcon, RotateCcwIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useRef, useState } from "react"
 import { CommentComposer } from "@/components/pr/comment-composer"
 import { CommentList } from "@/components/pr/comment-list"
-import { EmptyState } from "@/components/pr/empty-state"
 import { ErrorState } from "@/components/pr/error-state"
-import { Skeleton } from "@/components/ui/skeleton"
-import { useCommentThread } from "@/lib/comments"
-import { useUser } from "@/lib/store"
-import { MessageSquareIcon } from "lucide-react"
+import { BlockedHiddenLine, useBlockedFilter } from "@/components/pr/report-dialog"
+import { StateBox } from "@/components/pr/v2-primitives"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Skeleton } from "@/components/ui/skeleton"
+import { Link } from "@/i18n/navigation"
+import { useCommentThread } from "@/lib/comments"
+import { useUser } from "@/lib/store"
 import { cn } from "@/lib/utils"
 
 /**
  * Composer + comment list for a series (or episode). Likes live in the store (persisted);
- * new comments live in component state (prepended with the reader's initials and "now").
+ * new comments live in component state (prepended with the reader's name and "now").
+ * Other people's comments have Report / Block; blocked people's comments are hidden behind a "Show" line.
+ * On the series page the list is a preview with "See all 2.4K comments" → the Comments page (`seeAllHref`).
  */
 export function CommentsSection({
   kind,
   slug,
   variant = "page",
   count,
+  seeAllHref,
 }: {
   kind: "series" | "episode"
   slug: string
   /** "reader" = the dark card at the end of a comic episode (one-line composer); "novel" = the same card in the novel reader theme colours. */
   variant?: "page" | "reader" | "novel"
-  /** Total shown in the reader card header, e.g. "1.2K". */
+  /** Total shown in the reader card header and the "See all" button, e.g. "1.2K". */
   count?: string
+  /** Comments page link ("See all N comments"). */
+  seeAllHref?: string
 }) {
   const t = useTranslations("comments")
   const tr = useTranslations("reader")
   const user = useUser()
   const thread = useCommentThread(kind, slug, t("now"))
   const { comments, query } = thread
+  const { visible, hidden, reveal } = useBlockedFilter(comments, (c) => c.name)
   const [draft, setDraft] = useState("")
   const composerRef = useRef<HTMLTextAreaElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -43,6 +51,21 @@ export function CommentsSection({
   async function submit() {
     if (await thread.post(draft)) setDraft("")
   }
+
+  const list = (tone: "light" | "dark" | "themed", className?: string) => (
+    <CommentList
+      tone={tone}
+      className={className}
+      comments={visible}
+      onToggleLike={(id) => void thread.toggleLike(id)}
+      onDelete={thread.remove && ((id) => void thread.remove?.(id))}
+      onReportSend={thread.reportSend}
+      onReply={(name) => {
+        setDraft(`@${name} `)
+        ;(tone === "light" ? composerRef.current : inputRef.current)?.focus()
+      }}
+    />
+  )
 
   if (variant === "reader" || variant === "novel") {
     const themed = variant === "novel"
@@ -93,29 +116,21 @@ export function CommentsSection({
             {t("empty")}
           </p>
         ) : (
-          <CommentList
-            tone={themed ? "themed" : "dark"}
-            className="gap-4"
-            comments={comments}
-            onToggleLike={(id) => void thread.toggleLike(id)}
-            onDelete={thread.remove && ((id) => void thread.remove?.(id))}
-            onReport={thread.report && ((id) => void thread.report?.(id))}
-            onReply={(name) => {
-              setDraft(`@${name} `)
-              inputRef.current?.focus()
-            }}
-          />
+          <>
+            {list(themed ? "themed" : "dark", "gap-4")}
+            <BlockedHiddenLine count={hidden} onShow={reveal} className={themed ? "text-reader-quiet" : "text-surface-quiet"} />
+          </>
         )}
       </section>
     )
   }
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-4">
       <CommentComposer value={draft} onChange={setDraft} onSubmit={() => void submit()} textareaRef={composerRef} />
 
       {query.isPending ? (
-        <div className="flex flex-col gap-6" aria-hidden>
+        <div className="flex flex-col gap-5" aria-hidden>
           {Array.from({ length: 3 }, (_, i) => (
             <div key={i} className="flex gap-3">
               <Skeleton className="size-8 rounded-full" />
@@ -127,20 +142,32 @@ export function CommentsSection({
           ))}
         </div>
       ) : query.isError ? (
-        <ErrorState onRetry={() => void query.refetch()} />
-      ) : comments.length === 0 ? (
-        <EmptyState icon={MessageSquareIcon} title={t("empty")} description={t("emptyDesc")} />
-      ) : (
-        <CommentList
-          comments={comments}
-          onToggleLike={(id) => void thread.toggleLike(id)}
-            onDelete={thread.remove && ((id) => void thread.remove?.(id))}
-            onReport={thread.report && ((id) => void thread.report?.(id))}
-          onReply={(name) => {
-            setDraft(`@${name} `)
-            composerRef.current?.focus()
-          }}
+        <StateBox
+          icon={RotateCcwIcon}
+          tone="bad"
+          title={t("errorTitle")}
+          text={t("errorText")}
+          action={
+            <Button variant="outline" size="sm" className="mt-1" onClick={() => void query.refetch()}>
+              {t("tryAgain")}
+            </Button>
+          }
         />
+      ) : comments.length === 0 ? (
+        <StateBox icon={MessageSquareIcon} title={t("empty")} text={t("emptyDesc")} />
+      ) : (
+        <>
+          {list("light")}
+          {seeAllHref ? (
+            <Button asChild variant="outline" className="self-center">
+              <Link href={seeAllHref}>
+                {t("seeAll", { count: count ?? "" })}
+                <ChevronRightIcon className="size-3.5" />
+              </Link>
+            </Button>
+          ) : null}
+          <BlockedHiddenLine count={hidden} onShow={reveal} className="rounded-control bg-muted px-3 py-2.5 text-xs" />
+        </>
       )}
     </div>
   )

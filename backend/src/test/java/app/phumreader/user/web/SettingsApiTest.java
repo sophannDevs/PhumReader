@@ -45,7 +45,7 @@ class SettingsApiTest {
 
     @Test
     void theDemoReaderStartsWithTheWebsiteDefaults() throws Exception {
-        UUID demoReader = sessions.userId("reader@toonwave.app");
+        UUID demoReader = sessions.userId("reader@phumireader.app");
         mvc.perform(get("/api/v1/me/settings").with(sessions.as(demoReader)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.language").value("en"))

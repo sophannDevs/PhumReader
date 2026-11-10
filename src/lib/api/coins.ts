@@ -42,11 +42,22 @@ const STATUS: Record<Order["status"], PurchaseStatus | null> = {
   pending: null,
 }
 
-/** Finished orders as purchase rows (an order still open is not history yet). */
-export const toPurchase = (o: Order): Purchase | null => {
+/**
+ * Finished orders as purchase rows (an order still open is not history yet). `orderId` and `at` (order time, epoch
+ * ms) let the Coins page open each row's Receipt (/coins/orders/[id]).
+ */
+export const toPurchase = (o: Order): (Purchase & { orderId: string; at: number }) | null => {
   const status = STATUS[o.status]
   return status
-    ? { date: (o.paidAt ?? o.createdAt).slice(0, 10), pack: `${o.coins} coin pack`, coins: o.totalCoins, method: o.method, status }
+    ? {
+        date: (o.paidAt ?? o.createdAt).slice(0, 10),
+        pack: `${o.coins} coin pack`,
+        coins: o.totalCoins,
+        method: o.method,
+        status,
+        orderId: o.orderNumber,
+        at: Date.parse(o.createdAt),
+      }
     : null
 }
 

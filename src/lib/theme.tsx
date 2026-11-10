@@ -5,8 +5,8 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 
 /**
  * Light / dark / system theme. Replaces next-themes, whose inline <script> inside a client component
- * makes React 19 log a console error. The first-paint script (theme-script.ts) is rendered
- * by the server layout, so there is no flash of the wrong theme.
+ * makes React 19 log a console error. V2.1 keeps the site light (the stored choice is the reader theme), so
+ * there is no first-paint script.
  */
 export type Theme = "light" | "dark" | "system"
 
@@ -32,18 +32,14 @@ function readStored(): Theme {
   }
 }
 
-function systemPrefersDark() {
-  return window.matchMedia("(prefers-color-scheme: dark)").matches
-}
-
-function apply(dark: boolean) {
+/**
+ * V2.1 is light only (foundations.md: "Light theme only"); the stored choice is the *reader* theme
+ * (Settings > Reading), used by the novel reader. So the site itself always stays light.
+ */
+function apply() {
   const root = document.documentElement
-  root.classList.add("no-theme-transition")
-  root.classList.toggle("dark", dark)
-  root.style.colorScheme = dark ? "dark" : "light"
-  // Let the new colours land without animating every element, then restore transitions.
-  void window.getComputedStyle(root).opacity
-  requestAnimationFrame(() => requestAnimationFrame(() => root.classList.remove("no-theme-transition")))
+  root.classList.remove("dark")
+  root.style.colorScheme = "light"
 }
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
@@ -71,7 +67,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const resolvedTheme = theme === undefined ? undefined : theme === "system" ? (systemDark ? "dark" : "light") : theme
 
   useEffect(() => {
-    if (resolvedTheme) apply(resolvedTheme === "dark")
+    if (resolvedTheme) apply()
   }, [resolvedTheme])
 
   const setTheme = useCallback((next: Theme) => {
@@ -81,7 +77,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     } catch {
       /* storage blocked: the choice lasts for this visit only */
     }
-    apply(next === "dark" || (next === "system" && systemPrefersDark()))
+    apply()
   }, [])
 
   const value = useMemo(() => ({ theme, resolvedTheme, setTheme }), [theme, resolvedTheme, setTheme])
