@@ -188,7 +188,7 @@ export function SiteHeader({
             </>
           ) : (
             <>
-              <Button asChild variant="ghost" size="sm" className="hidden md:inline-flex">
+              <Button asChild variant="ghost" size="sm" className="hidden lg:inline-flex">
                 <Link href="/login" onClick={onLogin}>
                   {t("logIn")}
                 </Link>
