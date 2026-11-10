@@ -26,7 +26,7 @@ describe("EpisodeRow", () => {
     setup("free")
     expect(screen.getByText("The Door")).toBeInTheDocument()
     expect(screen.getByText("Nov 5, 2026")).toBeInTheDocument()
-    expect(screen.getByLabelText("1.2K likes")).toBeInTheDocument()
+    expect(screen.getByText("1.2K likes")).toHaveClass("sr-only")
   })
 
   it.each([
@@ -40,12 +40,24 @@ describe("EpisodeRow", () => {
     expect(screen.queryByRole("button")).not.toBeInTheDocument()
   })
 
-  it("marks a free row that is new with UP, and only a free one", () => {
-    const { unmount } = setup("free", { episode: { isUp: true } })
+  it("marks an episode that is new with UP, whatever its state", () => {
+    const first = setup("free", { episode: { isUp: true } })
     expect(screen.getByText("UP")).toBeInTheDocument()
-    unmount()
-    setup("read", { episode: { isUp: true } })
+    first.unmount()
+    const second = setup("read", { episode: { isUp: true } })
+    expect(screen.getByText("UP")).toBeInTheDocument()
+    second.unmount()
+    setup("free")
     expect(screen.queryByText("UP")).not.toBeInTheDocument()
+  })
+
+  it("highlights the episode to read next with an Up next badge", () => {
+    renderUi(
+      <EpisodeList>
+        <EpisodeRow series={{ slug: "ink-witch", type: "comic" }} episode={episode} state="free" upNext />
+      </EpisodeList>,
+    )
+    expect(screen.getByText("Up next")).toBeInTheDocument()
   })
 
   it("shows Read for a read row and Unlocked for an unlocked one", () => {
@@ -59,7 +71,7 @@ describe("EpisodeRow", () => {
   it("a locked row is a button with the price, not a link, and tells screen readers the price", async () => {
     const { user, onLockedClick } = setup("locked", { price: 8 })
     expect(screen.queryByRole("link")).not.toBeInTheDocument()
-    const button = screen.getByRole("button", { name: /Locked. Unlock for 8 coins/ })
+    const button = screen.getByRole("button", { name: /The Door, Fast Pass, 8 coins, free on/ })
     expect(button).toHaveTextContent("8 coins")
     await user.click(button)
     expect(onLockedClick).toHaveBeenCalledWith(expect.objectContaining({ n: 4 }))
@@ -75,6 +87,6 @@ describe("EpisodeRow", () => {
 
   it("uses the default price of 5 coins", () => {
     setup("locked")
-    expect(screen.getByRole("button", { name: /Unlock for 5 coins/ })).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: /Fast Pass, 5 coins/ })).toBeInTheDocument()
   })
 })

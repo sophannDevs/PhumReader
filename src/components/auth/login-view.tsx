@@ -70,7 +70,7 @@ export function LoginView({
 
   const emailLogin = useMutation({
     mutationFn: (v: LoginValues) => logIn(v.email, v.password, v.remember),
-    onSuccess: onDone,
+    onSuccess: (user) => onDone(user),
     onError: (e, v) => {
       const code = errorCode(e)
       const wait = retryAfterSeconds(e)
@@ -96,7 +96,7 @@ export function LoginView({
 
   const social = useMutation({
     mutationFn: (provider: SocialProvider) => socialLogIn(provider, locale),
-    onSuccess: onDone,
+    onSuccess: (user) => onDone(user),
     onError: () => setAlert({ title: ts("errorTitle"), text: t("socialFailed") }),
   })
 

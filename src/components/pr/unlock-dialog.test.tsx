@@ -28,13 +28,13 @@ async function open(props: Props = {}) {
 describe("UnlockDialog: open and close", () => {
   it("opens as a labelled dialog with the episode title and the free date", async () => {
     await open()
-    const dialog = await screen.findByRole("dialog", { name: "Unlock Episode 7" })
+    const dialog = await screen.findByRole("dialog", { name: "Unlock episode 7" })
     expect(dialog).toHaveAccessibleDescription(/Free for everyone on/)
   })
 
   it("says Chapter for a web novel", async () => {
     await open({ kind: "chapter" })
-    expect(await screen.findByRole("dialog", { name: "Unlock Chapter 7" })).toBeInTheDocument()
+    expect(await screen.findByRole("dialog", { name: "Unlock chapter 7" })).toBeInTheDocument()
   })
 
   it("closes with Wait for the free release and puts the focus back on the opener", async () => {
@@ -71,7 +71,7 @@ describe("UnlockDialog: the three states", () => {
   it("logged out: asks to log in and shows no balance", async () => {
     const onLogin = vi.fn()
     const { user } = await open({ loggedIn: false, onLogin })
-    expect(await screen.findByText("Log in to unlock with your coins.")).toBeInTheDocument()
+    expect(await screen.findByText("Log in to unlock episodes and keep them on all your devices.")).toBeInTheDocument()
     expect(screen.queryByText("Your balance")).not.toBeInTheDocument()
     expect(screen.queryByRole("button", { name: /Unlock for/ })).not.toBeInTheDocument()
     await user.click(screen.getByRole("button", { name: "Log in to unlock" }))
@@ -95,7 +95,7 @@ describe("UnlockDialog: the three states", () => {
   it("not enough coins: says how many more and offers Get coins", async () => {
     const onGetCoins = vi.fn()
     const { user } = await open({ balance: 2, price: 5, onGetCoins })
-    expect(await screen.findByText("You need 3 more coins.")).toBeInTheDocument()
+    expect(await screen.findByText(/You need 3 more coins\./)).toBeInTheDocument()
     expect(screen.queryByRole("button", { name: /Unlock for/ })).not.toBeInTheDocument()
     await user.click(screen.getByRole("button", { name: "Get coins" }))
     expect(onGetCoins).toHaveBeenCalledOnce()
@@ -103,7 +103,7 @@ describe("UnlockDialog: the three states", () => {
 
   it("uses the singular for one coin", async () => {
     await open({ balance: 0, price: 1 })
-    expect(await screen.findByText("You need 1 more coin.")).toBeInTheDocument()
+    expect(await screen.findByText(/You need 1 more coin\./)).toBeInTheDocument()
   })
 
   it("shows a loading button while the unlock runs", async () => {

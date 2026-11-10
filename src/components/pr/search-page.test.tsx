@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest"
+import { useAppStore } from "@/lib/store"
 import { SearchPage } from "@/components/pr/search-page"
-import { router, setSearch } from "@/test/navigation"
+import { setSearch } from "@/test/navigation"
 import { renderUi, screen } from "@/test/render"
 import { API, apiError, http, HttpResponse, server } from "@/test/server"
 
@@ -25,6 +26,8 @@ const card = (id: string, title: string) => ({
 })
 const results = (...titles: string[]) => http.get(`${API}/search`, () => HttpResponse.json({ items: titles.map((t, i) => card(`s${i}`, t)) }))
 
+const BOX = "Search series, creators and genres"
+
 describe("SearchPage", () => {
   it("fills the box from the address, asks the API for that text and shows the matches", async () => {
     setSearch("q=ink")
@@ -36,52 +39,86 @@ describe("SearchPage", () => {
       }),
     )
     renderUi(<SearchPage />)
-    expect(screen.getByRole("searchbox", { name: "Search" })).toHaveValue("ink")
-    expect(await screen.findByText("Ink Witch")).toBeInTheDocument()
+    expect(screen.getByRole("searchbox", { name: BOX })).toHaveValue("ink")
+    expect(await screen.findByText("1 result")).toBeInTheDocument()
+    expect(screen.getByText("for “ink”")).toBeInTheDocument()
     expect(asked).toBe("ink")
-    expect(screen.getByRole("heading", { level: 2, name: "1 result for “ink”" })).toBeInTheDocument()
+    expect(screen.getAllByText(/Witch/).length).toBeGreaterThan(0)
   })
 
-  it("shows Popular now when there is no query", async () => {
-    server.use(results("Ink Witch", "Glass Compass"))
+  it("saves a search that arrives in the address as a recent search", async () => {
+    setSearch("q=ink")
+    server.use(results("Ink Witch"))
     renderUi(<SearchPage />)
-    expect(await screen.findByRole("heading", { level: 2, name: "Popular now" })).toBeInTheDocument()
-    expect(screen.getByText("Glass Compass")).toBeInTheDocument()
+    await screen.findByText("1 result")
+    expect(useAppStore.getState().recentSearches).toContain("ink")
   })
 
-  it("shows skeleton cards while it loads", () => {
+  it("without a query shows trending searches and genres, and does not ask the API", () => {
+    let called = false
+    server.use(
+      http.get(`${API}/search`, () => {
+        called = true
+        return HttpResponse.json({ items: [] })
+      }),
+    )
+    renderUi(<SearchPage />)
+    expect(screen.getByRole("heading", { name: "Trending searches" })).toBeInTheDocument()
+    expect(screen.getByRole("heading", { name: "Browse by genre" })).toBeInTheDocument()
+    expect(called).toBe(false)
+  })
+
+  it("lists recent searches and clears them", async () => {
+    useAppStore.setState({ recentSearches: ["glass compass"] })
+    const { user } = renderUi(<SearchPage />)
+    expect(await screen.findByRole("heading", { name: "Recent searches" })).toBeInTheDocument()
+    await user.click(screen.getByRole("button", { name: "Clear all" }))
+    expect(useAppStore.getState().recentSearches).toEqual([])
+  })
+
+  it("shows skeleton rows while it loads", () => {
+    setSearch("q=ink")
     server.use(http.get(`${API}/search`, () => new Promise(() => undefined)))
-    const { container } = renderUi(<SearchPage />)
-    expect(container.querySelector("[aria-hidden=true]")).not.toBeNull()
+    renderUi(<SearchPage />)
+    expect(screen.getByRole("status", { name: "Loading results" })).toBeInTheDocument()
+    expect(screen.getByText("Searching…")).toBeInTheDocument()
   })
 
-  it("shows the empty state with a link to the genres when nothing matches", async () => {
-    setSearch("q=zzz")
+  it("shows the no-results state with a hint when nothing matches", async () => {
+    setSearch("q=zzzzzzzzzzzz")
     server.use(results())
     renderUi(<SearchPage />)
-    expect(await screen.findByText("No results found")).toBeInTheDocument()
-    expect(screen.getByRole("link", { name: "Browse genres" })).toHaveAttribute("href", "/genres")
+    expect(await screen.findByText("No results for “zzzzzzzzzzzz”")).toBeInTheDocument()
+    expect(screen.getByText("Check the spelling, try a shorter word, or search by creator or genre.")).toBeInTheDocument()
   })
 
-  it("shows the error state and Retry loads the results", async () => {
+  it("shows the error state and Try again loads the results", async () => {
     setSearch("q=ink")
     server.use(http.get(`${API}/search`, () => apiError(500, "internal_error")))
     const { user } = renderUi(<SearchPage />)
-    expect(await screen.findByText("Something went wrong")).toBeInTheDocument()
+    expect(await screen.findByText("Search isn’t working right now")).toBeInTheDocument()
     server.use(results("Ink Witch"))
-    await user.click(screen.getByRole("button", { name: "Retry" }))
-    expect(await screen.findByText("Ink Witch")).toBeInTheDocument()
+    await user.click(screen.getByRole("button", { name: "Try again" }))
+    expect(await screen.findByText("1 result")).toBeInTheDocument()
   })
 
-  it("searching updates the address with the trimmed, encoded text, and an empty box goes back to /search", async () => {
+  it("searching with Enter writes the trimmed text to the address and an empty box removes it", async () => {
     server.use(results("Ink Witch"))
     const { user } = renderUi(<SearchPage />)
-    await screen.findByText("Ink Witch")
-    await user.type(screen.getByRole("searchbox"), "  sea light ")
-    await user.click(screen.getByRole("button", { name: "Search" }))
-    expect(router.push).toHaveBeenLastCalledWith("/search?q=sea%20light")
-    await user.clear(screen.getByRole("searchbox"))
+    await user.type(screen.getByRole("searchbox", { name: BOX }), "  sea light {Enter}")
+    expect(window.location.search).toBe("?q=sea+light")
+    expect(useAppStore.getState().recentSearches).toContain("sea light")
+    await user.clear(screen.getByRole("searchbox", { name: BOX }))
     await user.keyboard("{Enter}")
-    expect(router.push).toHaveBeenLastCalledWith("/search")
+    expect(window.location.search).toBe("")
+  })
+
+  it("filters the matches into tabs with counts", async () => {
+    setSearch("q=a")
+    server.use(http.get(`${API}/search`, () => HttpResponse.json({ items: [card("a", "Alpha"), { ...card("b", "Beta"), type: "novel" }] })))
+    const { user } = renderUi(<SearchPage />)
+    await screen.findByText(/results?$/)
+    await user.click(screen.getByRole("tab", { name: /Web novels/ }))
+    expect(await screen.findByText("1 web novel")).toBeInTheDocument()
   })
 })

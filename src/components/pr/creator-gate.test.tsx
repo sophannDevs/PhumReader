@@ -18,7 +18,7 @@ describe("CreatorGate", () => {
     nav.pathname = "/creator/series"
     const { user } = renderUi(gate())
     expect(screen.getByRole("heading", { name: "My series" })).toBeInTheDocument()
-    expect(screen.getByText("Log in to see your series")).toBeInTheDocument()
+    expect(screen.getByText("Log in to open Creator studio")).toBeInTheDocument()
     expect(screen.queryByText("Creator content")).not.toBeInTheDocument()
     const link = screen.getByRole("link", { name: "Log in" })
     expect(link).toHaveAttribute("href", "/login")

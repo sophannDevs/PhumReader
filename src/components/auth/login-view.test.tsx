@@ -12,7 +12,7 @@ function setup() {
   const onForgot = vi.fn()
   const onDone = vi.fn()
   const onNeedsCode = vi.fn()
-  const view = renderUi(<LoginView onForgot={onForgot} onDone={onDone} onNeedsCode={onNeedsCode} />)
+  const view = renderUi(<LoginView onForgot={onForgot} onSignup={vi.fn()} onDone={onDone} onNeedsCode={onNeedsCode} />)
   return { ...view, onForgot, onDone, onNeedsCode }
 }
 
@@ -60,7 +60,8 @@ describe("LoginView: signing in", () => {
     await fill(user, "  reader@example.com ", "Secret123!")
     await waitFor(() => expect(onDone).toHaveBeenCalledOnce())
     expect(body).toEqual({ email: "reader@example.com", password: "Secret123!", remember: true })
-    expect(useAppStore.getState().user).toMatchObject({ name: "Sokha", email: "reader@example.com", roles: ["READER"] })
+    // The view hands the user to the flow (AuthFlow stores it and shows "Welcome back").
+    expect(onDone).toHaveBeenCalledWith(expect.objectContaining({ name: "Sokha", email: "reader@example.com", roles: ["READER"] }))
   })
 
   it("sends remember: false when the box is unticked", async () => {
@@ -72,7 +73,7 @@ describe("LoginView: signing in", () => {
       }),
     )
     const { user, onDone } = setup()
-    await user.click(screen.getByRole("checkbox", { name: "Keep me logged in" }))
+    await user.click(screen.getByRole("checkbox", { name: "Remember me" }))
     await fill(user, "reader@example.com", "Secret123!")
     await waitFor(() => expect(onDone).toHaveBeenCalled())
     expect(body.remember).toBe(false)
@@ -82,7 +83,10 @@ describe("LoginView: signing in", () => {
     server.use(http.post(`${API}/auth/login`, () => apiError(401, "invalid_credentials")))
     const { user, onDone } = setup()
     await fill(user, "reader@example.com", "wrong")
-    await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Email or password is incorrect", expect.objectContaining({ description: expect.stringContaining("reset your password") })))
+    expect(await screen.findByText("Email or password is incorrect.")).toBeInTheDocument()
+    // Like the prototype: the password is cleared and asked for again.
+    expect(screen.getByLabelText("Password")).toHaveValue("")
+    expect(screen.getByText("Enter your password.")).toBeInTheDocument()
     expect(onDone).not.toHaveBeenCalled()
     expect(useAppStore.getState().user).toBeNull()
   })
@@ -91,7 +95,7 @@ describe("LoginView: signing in", () => {
     server.use(http.post(`${API}/auth/login`, () => apiError(403, "email_not_verified")))
     const { user, onNeedsCode } = setup()
     await fill(user, "New@Example.com", "Secret123!")
-    await waitFor(() => expect(onNeedsCode).toHaveBeenCalledWith({ email: "new@example.com", resendAfterSeconds: 30 }))
+    await waitFor(() => expect(onNeedsCode).toHaveBeenCalledWith("new@example.com"))
     expect(toast.info).toHaveBeenCalled()
   })
 
@@ -99,21 +103,22 @@ describe("LoginView: signing in", () => {
     server.use(http.post(`${API}/auth/login`, () => apiError(429, "too_many_requests", { retryAfterSeconds: 42 })))
     const { user } = setup()
     await fill(user, "reader@example.com", "Secret123!")
-    await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Too many tries", expect.objectContaining({ description: "Try again in 42 seconds." })))
+    expect(await screen.findByText("Too many tries")).toBeInTheDocument()
+    expect(screen.getByText("Try again in 42 seconds.")).toBeInTheDocument()
   })
 
   it("says the account is suspended", async () => {
     server.use(http.post(`${API}/auth/login`, () => apiError(403, "account_banned")))
     const { user } = setup()
     await fill(user, "reader@example.com", "Secret123!")
-    await waitFor(() => expect(toast.error).toHaveBeenCalledWith(expect.stringContaining("suspended"), expect.anything()))
+    expect(await screen.findByText(/suspended/)).toBeInTheDocument()
   })
 
   it("falls back to the generic error for anything else", async () => {
     server.use(http.post(`${API}/auth/login`, () => apiError(500, "internal_error")))
     const { user } = setup()
     await fill(user, "reader@example.com", "Secret123!")
-    await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Something went wrong", expect.anything()))
+    expect(await screen.findByText("Something went wrong")).toBeInTheDocument()
   })
 
   it("disables the button while the request is running", async () => {
@@ -154,7 +159,7 @@ describe("LoginView: coming back from Google", () => {
     server.use(http.get(`${API}/me`, () => HttpResponse.json(me)))
     const { onDone } = setup()
     await waitFor(() => expect(onDone).toHaveBeenCalledOnce())
-    expect(useAppStore.getState().user?.email).toBe("reader@example.com")
+    expect(onDone).toHaveBeenCalledWith(expect.objectContaining({ email: "reader@example.com" }))
   })
 
   it.each([

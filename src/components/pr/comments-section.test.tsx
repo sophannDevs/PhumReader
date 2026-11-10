@@ -32,7 +32,7 @@ describe("CommentsSection (page)", () => {
     expect(screen.getAllByText("Dara Vann")).toHaveLength(2)
     expect(screen.getByText("Top")).toBeInTheDocument()
     expect(screen.getAllByText("· now")).toHaveLength(2)
-    expect(screen.getAllByRole("button", { name: "Like, 3 likes" })).toHaveLength(2)
+    expect(screen.getAllByRole("button", { name: "Like comment by Dara Vann, 3 likes" })).toHaveLength(2)
   })
 
   it("shows the empty state when nobody has commented", async () => {
@@ -44,9 +44,9 @@ describe("CommentsSection (page)", () => {
   it("shows the error state and Retry loads the comments", async () => {
     server.use(http.get(`${API}/series/ink-witch/comments`, () => apiError(500, "internal_error")))
     const { user } = renderUi(<CommentsSection kind="series" slug="ink-witch" />)
-    expect(await screen.findByText("Something went wrong")).toBeInTheDocument()
+    expect(await screen.findByText("Couldn’t load the comments")).toBeInTheDocument()
     server.use(thread(comment("1")))
-    await user.click(screen.getByRole("button", { name: "Retry" }))
+    await user.click(screen.getByRole("button", { name: "Try again" }))
     expect(await screen.findByText("Comment 1")).toBeInTheDocument()
   })
 
@@ -90,7 +90,7 @@ describe("CommentsSection (page)", () => {
     await screen.findByText("Comment 1")
     await user.type(screen.getByLabelText("Add a comment"), "Hello")
     await user.click(screen.getByRole("button", { name: "Post" }))
-    expect(toast.success).toHaveBeenCalledWith("Log in to comment")
+    expect(toast.message).toHaveBeenCalledWith("Log in to comment")
     expect(screen.getByLabelText("Add a comment")).toHaveValue("Hello")
   })
 
@@ -127,9 +127,9 @@ describe("CommentsSection: likes, delete and report", () => {
       }),
     )
     const { user } = renderUi(<CommentsSection kind="series" slug="ink-witch" />)
-    const like = await screen.findByRole("button", { name: "Like, 3 likes" })
+    const like = await screen.findByRole("button", { name: "Like comment by Dara Vann, 3 likes" })
     await user.click(like)
-    await waitFor(() => expect(screen.getByRole("button", { name: "Like, 4 likes" })).toHaveAttribute("aria-pressed", "true"))
+    await waitFor(() => expect(screen.getByRole("button", { name: "Unlike comment by Dara Vann, 4 likes" })).toHaveAttribute("aria-pressed", "true"))
     expect(put).toBe(true)
   })
 
@@ -144,8 +144,8 @@ describe("CommentsSection: likes, delete and report", () => {
       }),
     )
     const { user } = renderUi(<CommentsSection kind="series" slug="ink-witch" />)
-    await user.click(await screen.findByRole("button", { name: "Like, 4 likes" }))
-    await waitFor(() => expect(screen.getByRole("button", { name: "Like, 3 likes" })).toHaveAttribute("aria-pressed", "false"))
+    await user.click(await screen.findByRole("button", { name: "Unlike comment by Dara Vann, 4 likes" }))
+    await waitFor(() => expect(screen.getByRole("button", { name: "Like comment by Dara Vann, 3 likes" })).toHaveAttribute("aria-pressed", "false"))
     expect(deleted).toBe(true)
   })
 
@@ -153,16 +153,16 @@ describe("CommentsSection: likes, delete and report", () => {
     signIn()
     server.use(thread(comment("1", { likes: 3 })), http.put(`${API}/comments/1/like`, () => apiError(500, "internal_error")))
     const { user } = renderUi(<CommentsSection kind="series" slug="ink-witch" />)
-    await user.click(await screen.findByRole("button", { name: "Like, 3 likes" }))
+    await user.click(await screen.findByRole("button", { name: "Like comment by Dara Vann, 3 likes" }))
     await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Something went wrong. Please try again."))
-    expect(screen.getByRole("button", { name: "Like, 3 likes" })).toHaveAttribute("aria-pressed", "false")
+    expect(screen.getByRole("button", { name: "Like comment by Dara Vann, 3 likes" })).toHaveAttribute("aria-pressed", "false")
   })
 
   it("logged out: liking asks to log in and remembers the page", async () => {
     nav.pathname = "/series/ink-witch"
     server.use(thread(comment("1")))
     const { user } = renderUi(<CommentsSection kind="series" slug="ink-witch" />)
-    await user.click(await screen.findByRole("button", { name: "Like, 3 likes" }))
+    await user.click(await screen.findByRole("button", { name: "Like comment by Dara Vann, 3 likes" }))
     expect(toast.success).toHaveBeenCalledWith("Log in to do this")
     expect(useAppStore.getState().returnTo).toBe("/series/ink-witch")
   })
@@ -174,8 +174,8 @@ describe("CommentsSection: likes, delete and report", () => {
     const mine = (await screen.findByText("Comment mine")).closest("li") as HTMLElement
     const other = screen.getByText("Comment other").closest("li") as HTMLElement
     expect(within(mine).getByRole("button", { name: "Delete" })).toBeInTheDocument()
-    expect(within(mine).queryByRole("button", { name: "Report" })).not.toBeInTheDocument()
-    expect(within(other).getByRole("button", { name: "Report" })).toBeInTheDocument()
+    expect(within(mine).queryByRole("button", { name: "Report comment by Dara Vann" })).not.toBeInTheDocument()
+    expect(within(other).getByRole("button", { name: "Report comment by Dara Vann" })).toBeInTheDocument()
     expect(within(other).queryByRole("button", { name: "Delete" })).not.toBeInTheDocument()
   })
 
@@ -197,7 +197,7 @@ describe("CommentsSection: likes, delete and report", () => {
     expect(await screen.findByText("Comment mine")).toBeInTheDocument()
   })
 
-  it("reporting sends the report and thanks the reader; logged out it asks to log in", async () => {
+  it("reporting asks for a reason, sends the report and thanks the reader", async () => {
     signIn()
     let body: unknown
     server.use(
@@ -208,9 +208,24 @@ describe("CommentsSection: likes, delete and report", () => {
       }),
     )
     const { user } = renderUi(<CommentsSection kind="series" slug="ink-witch" />)
-    await user.click(await screen.findByRole("button", { name: "Report" }))
-    await waitFor(() => expect(toast.success).toHaveBeenCalledWith("Reported. Thank you."))
-    expect(body).toEqual({ reason: "inappropriate" })
+    await user.click(await screen.findByRole("button", { name: "Report comment by Dara Vann" }))
+    const dialog = await screen.findByRole("dialog")
+    await user.click(within(dialog).getByRole("button", { name: /Send report/ }))
+    expect(await within(dialog).findByText("Choose a reason.")).toBeInTheDocument()
+    await user.click(within(dialog).getByRole("radio", { name: /Spam or scam/ }))
+    await user.click(within(dialog).getByRole("button", { name: /Send report/ }))
+    expect(await within(dialog).findByText("Thanks. We’ll review it.")).toBeInTheDocument()
+    expect(body).toEqual({ reason: "spam" })
+    expect(useAppStore.getState().reports).toContainEqual(expect.objectContaining({ kind: "comment", reason: "spam", who: "Dara Vann" }))
+  })
+
+  it("logged out: reporting asks to log in instead of opening the dialog", async () => {
+    nav.pathname = "/series/ink-witch"
+    server.use(thread(comment("other")))
+    const { user } = renderUi(<CommentsSection kind="series" slug="ink-witch" />)
+    await user.click(await screen.findByRole("button", { name: "Report comment by Dara Vann" }))
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
+    expect(toast.success).toHaveBeenCalledWith("Log in to do this")
   })
 })
 

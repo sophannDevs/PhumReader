@@ -1,15 +1,14 @@
 import { describe, expect, it, vi } from "vitest"
 import { ComicReader } from "@/components/pr/comic-reader"
-import { useAppStore } from "@/lib/store"
 import { router } from "@/test/navigation"
-import { renderUi, screen, waitFor } from "@/test/render"
+import { renderUi, screen } from "@/test/render"
 import { API, apiError, http, HttpResponse, server } from "@/test/server"
 
 // The end card holds comments and discovery lists (their own features); the reader only hands it the next episode.
 vi.mock("@/components/pr/comic-end-section", () => ({
-  ComicEndSection: ({ next, nextLocked, onUnlockNext }: { next?: { n: number }; nextLocked: boolean; onUnlockNext: () => void }) => (
+  ComicEndSection: ({ next, nextLocked, onNext }: { next?: { n: number }; nextLocked: boolean; onNext: () => void }) => (
     <section aria-label="End of episode">
-      {next ? <button onClick={onUnlockNext}>{nextLocked ? `Unlock next ${next.n}` : `Next ${next.n}`}</button> : <span>Last episode</span>}
+      {next ? <button onClick={onNext}>{nextLocked ? `Unlock next ${next.n}` : `Next ${next.n}`}</button> : <span>Last episode</span>}
     </section>
   ),
 }))
@@ -67,14 +66,17 @@ describe("ComicReader: states", () => {
     expect(await screen.findByRole("heading", { level: 1, name: "Episode 2" })).toBeInTheDocument()
   })
 
-  it("a locked episode (402) sends the reader to the series page with the unlock dialog waiting", async () => {
+  it("a locked episode (402) shows the Fast Pass lock screen instead of the pages", async () => {
     server.use(
       http.get(`${API}/series/${SLUG}/episodes/3`, () => apiError(402, "episode_locked", { price: 5 })),
       http.get(`${API}/series/${SLUG}`, () => HttpResponse.json({ series: seriesCard, synopsis: "A witch.", stats: { subscribers: 1, comments: 0 }, related: [], creatorSeriesCount: 1, creatorId: "c1" })),
+      episodes(summary(1), summary(2), summary(3, "fastpass")),
     )
     renderUi(<ComicReader slug={SLUG} n={3} />)
-    await waitFor(() => expect(router.replace).toHaveBeenCalledWith(`/series/${SLUG}`))
-    expect(useAppStore.getState().pendingUnlock).toEqual({ seriesId: "s1", episode: 3, direct: true })
+    expect(await screen.findByText(/is in Fast Pass/)).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Log in to unlock" })).toBeInTheDocument()
+    expect(screen.queryByRole("img", { name: "Page one" })).not.toBeInTheDocument()
+    expect(router.replace).not.toHaveBeenCalled()
   })
 })
 
@@ -90,7 +92,8 @@ describe("ComicReader: reading", () => {
     await open(2)
     expect(screen.getByText("Ink Witch")).toBeInTheDocument()
     expect(screen.getByRole("img", { name: "Page one" })).toBeInTheDocument()
-    expect(screen.getByRole("progressbar")).toHaveAttribute("aria-valuenow", "67")
+    // the bar follows how far the reader has scrolled (nothing has scrolled in the test)
+    expect(screen.getByRole("progressbar")).toHaveAttribute("aria-valuenow", "0")
   })
 
   it("says so when an episode has no pages", async () => {
@@ -105,7 +108,7 @@ describe("ComicReader: reading", () => {
     await user.click(screen.getByRole("button", { name: "Next episode" }))
     // episode 3 is Fast Pass and not unlocked: it opens the dialog instead
     expect(router.push).toHaveBeenCalledTimes(1)
-    expect(await screen.findByRole("dialog", { name: "Unlock Episode 3" })).toBeInTheDocument()
+    expect(await screen.findByRole("dialog", { name: "Unlock episode 3" })).toBeInTheDocument()
   })
 
   it("disables Previous on the first episode and Next on the last", async () => {
@@ -119,7 +122,7 @@ describe("ComicReader: reading", () => {
   it("the locked-episode dialog closes with Wait for the free release, leaving the reader where it was", async () => {
     const { user } = await open(2)
     await user.click(screen.getByRole("button", { name: "Next episode" }))
-    await screen.findByRole("dialog", { name: "Unlock Episode 3" })
+    await screen.findByRole("dialog", { name: "Unlock episode 3" })
     await user.click(screen.getByRole("button", { name: "Wait for the free release" }))
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
     expect(router.push).not.toHaveBeenCalled()
@@ -132,7 +135,7 @@ describe("ComicReader: reading", () => {
     router.push.mockClear()
     await user.keyboard("{ArrowRight}")
     // the next episode is locked: the dialog opens, and a further arrow does nothing
-    await screen.findByRole("dialog", { name: "Unlock Episode 3" })
+    await screen.findByRole("dialog", { name: "Unlock episode 3" })
     await user.keyboard("{ArrowLeft}")
     expect(router.push).not.toHaveBeenCalled()
   })
@@ -140,13 +143,13 @@ describe("ComicReader: reading", () => {
   it("the Episodes popover lists the episodes and a free one opens in the reader", async () => {
     const { user } = await open(2)
     await user.click(screen.getByRole("button", { name: "Episodes" }))
-    await user.click(await screen.findByRole("button", { name: /Episode 1\b/ }))
+    await user.click(await screen.findByRole("button", { name: /Episode 1/ }))
     expect(router.push).toHaveBeenCalledWith(`/read/${SLUG}/1`)
   })
 
   it("the end card's next button also goes through the lock check", async () => {
     const { user } = await open(2)
     await user.click(screen.getByRole("button", { name: "Unlock next 3" }))
-    expect(await screen.findByRole("dialog", { name: "Unlock Episode 3" })).toBeInTheDocument()
+    expect(await screen.findByRole("dialog", { name: "Unlock episode 3" })).toBeInTheDocument()
   })
 })

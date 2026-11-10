@@ -6,15 +6,21 @@ import { API, apiError, http, HttpResponse, server } from "@/test/server"
 
 function setup(locale: "en" | "km" = "en") {
   const onSubmitted = vi.fn()
-  const view = renderUi(<SignupView onSubmitted={onSubmitted} />, { locale })
+  const view = renderUi(<SignupView onLogin={vi.fn()} onSubmitted={onSubmitted} />, { locale })
   return { ...view, onSubmitted }
 }
 type User = ReturnType<typeof setup>["user"]
 
-async function fillAll(user: User, over: Partial<Record<"name" | "email" | "password", string>> = {}, terms = true) {
+const NAME_ERROR = "Enter a display name (2 to 20 characters)."
+const RULES = /doesn’t meet all the rules/
+
+async function fillAll(user: User, over: Partial<Record<"name" | "email" | "password" | "confirm", string>> = {}, terms = true) {
+  const password = over.password ?? "Abcdef1!"
   await user.type(screen.getByLabelText("Display name"), over.name ?? "Sokha")
   await user.type(screen.getByLabelText("Email"), over.email ?? "sokha@example.com")
-  await user.type(screen.getByLabelText("Password"), over.password ?? "Abcdef1!")
+  await user.type(screen.getByLabelText("Password"), password)
+  await user.type(screen.getByLabelText("Confirm password"), over.confirm ?? password)
+  await user.selectOptions(screen.getByLabelText("Birth year"), "1998")
   if (terms) await user.click(screen.getByRole("checkbox"))
 }
 const submit = (user: User) => user.click(screen.getByRole("button", { name: "Create account" }))
@@ -23,9 +29,10 @@ describe("SignupView: validation", () => {
   it("shows every required message on an empty form and sends nothing", async () => {
     const { user, onSubmitted } = setup()
     await submit(user)
-    expect(await screen.findByText("Enter at least 2 characters.")).toBeInTheDocument()
+    expect(await screen.findByText(NAME_ERROR)).toBeInTheDocument()
     expect(screen.getByText("Enter your email.")).toBeInTheDocument()
-    expect(screen.getByText(/Choose a stronger password/)).toBeInTheDocument()
+    expect(screen.getByText(RULES)).toBeInTheDocument()
+    expect(screen.getByText("Choose your birth year.")).toBeInTheDocument()
     expect(screen.getByText("Accept the terms to continue.")).toBeInTheDocument()
     expect(onSubmitted).not.toHaveBeenCalled()
   })
@@ -34,15 +41,23 @@ describe("SignupView: validation", () => {
     const { user } = setup()
     await fillAll(user, { name: "A", email: "sokha@" })
     await submit(user)
-    expect(await screen.findByText("Enter at least 2 characters.")).toBeInTheDocument()
+    expect(await screen.findByText(NAME_ERROR)).toBeInTheDocument()
     expect(screen.getByText("Enter a valid email, like you@example.com.")).toBeInTheDocument()
   })
 
-  it("rejects a password that meets fewer than 3 rules", async () => {
+  it("rejects a password that does not meet all four rules", async () => {
     const { user } = setup()
     await fillAll(user, { password: "abcdefgh" })
     await submit(user)
-    expect(await screen.findByText(/Choose a stronger password/)).toBeInTheDocument()
+    expect(await screen.findByText(RULES)).toBeInTheDocument()
+  })
+
+  it("shows the mismatch when the two passwords differ", async () => {
+    const { user, onSubmitted } = setup()
+    await fillAll(user, { confirm: "Abcdef1?" })
+    await submit(user)
+    expect(await screen.findByText("Passwords don’t match.")).toBeInTheDocument()
+    expect(onSubmitted).not.toHaveBeenCalled()
   })
 
   it("blocks the submit when only the terms box is unticked", async () => {
@@ -61,9 +76,9 @@ describe("SignupView: validation", () => {
   it("links the errors to their fields", async () => {
     const { user } = setup()
     await submit(user)
-    await screen.findByText("Enter at least 2 characters.")
-    expect(screen.getByLabelText("Display name")).toHaveAttribute("aria-describedby", "signup-name-error")
-    expect(screen.getByLabelText("Email")).toHaveAttribute("aria-describedby", "signup-email-error")
+    await screen.findByText(NAME_ERROR)
+    expect(screen.getByLabelText("Display name")).toHaveAttribute("aria-describedby", expect.stringContaining("signup-name-note"))
+    expect(screen.getByLabelText("Email")).toHaveAttribute("aria-describedby", expect.stringContaining("signup-email-error"))
   })
 })
 
@@ -82,6 +97,7 @@ describe("SignupView: creating the account", () => {
     await waitFor(() => expect(onSubmitted).toHaveBeenCalledOnce())
     expect(body).toEqual({ name: "Sokha", email: "sokha@example.com", password: "Abcdef1!", language: "en" })
     expect(onSubmitted.mock.calls[0][0]).toMatchObject({ email: "sokha@example.com", resendAfterSeconds: 45 })
+    expect(onSubmitted.mock.calls[0][1]).toBe("en")
   })
 
   it("sends language km from the Khmer site", async () => {
@@ -97,6 +113,8 @@ describe("SignupView: creating the account", () => {
     await user.type(document.getElementById("signup-name") as HTMLElement, "Sokha")
     await user.type(document.getElementById("signup-email") as HTMLElement, "sokha@example.com")
     await user.type(document.getElementById("signup-password") as HTMLElement, "Abcdef1!")
+    await user.type(document.getElementById("signup-confirm") as HTMLElement, "Abcdef1!")
+    await user.selectOptions(document.getElementById("signup-year") as HTMLElement, "1998")
     await user.click(screen.getByRole("checkbox"))
     await user.click(document.querySelector("button[type=submit]") as HTMLElement)
     await waitFor(() => expect(onSubmitted).toHaveBeenCalled())
@@ -108,7 +126,7 @@ describe("SignupView: creating the account", () => {
     const { user, onSubmitted } = setup()
     await fillAll(user)
     await submit(user)
-    expect(await screen.findByText("That email already has an account. Log in instead.")).toBeInTheDocument()
+    expect(await screen.findByText("This email already has an account.")).toBeInTheDocument()
     expect(screen.getByLabelText("Email")).toHaveFocus()
     expect(onSubmitted).not.toHaveBeenCalled()
   })
@@ -118,7 +136,7 @@ describe("SignupView: creating the account", () => {
     const { user } = setup()
     await fillAll(user)
     await submit(user)
-    expect(await screen.findByText(/Choose a stronger password/)).toBeInTheDocument()
+    expect(await screen.findByText(RULES)).toBeInTheDocument()
   })
 
   it("maps API field errors for the email and the name", async () => {

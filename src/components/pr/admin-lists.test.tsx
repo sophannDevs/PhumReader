@@ -1,6 +1,6 @@
 import { toast } from "sonner"
 import { describe, expect, it } from "vitest"
-import { AuditTab, ContentTab, OrdersTab, ReportsTab, UsersTab } from "@/components/pr/admin-lists"
+import { AuditTab, ContentTab, OrdersTab, UsersTab } from "@/components/pr/admin-lists"
 import { useAppStore } from "@/lib/store"
 import { renderUi, screen, waitFor, within } from "@/test/render"
 import { API, apiError, http, HttpResponse, server } from "@/test/server"
@@ -202,90 +202,6 @@ describe("ContentTab", () => {
     await u.click(await screen.findByRole("button", { name: "Restore" }))
     await waitFor(() => expect(toast.success).toHaveBeenCalledWith("Restored."))
     expect(screen.queryByRole("button", { name: "Hide" })).not.toBeInTheDocument()
-  })
-})
-
-describe("ReportsTab", () => {
-  const report = (id: string, over: Record<string, unknown> = {}) => ({
-    id,
-    reason: "Spam",
-    details: null,
-    reporter: "Dara",
-    createdAt: NOW,
-    status: "open",
-    resolvedBy: null,
-    note: null,
-    target: { type: "comment", title: "Buy now!", status: "visible", seriesSlug: "slug-a" },
-    ...over,
-  })
-
-  it("shows open reports first, with who reported them", async () => {
-    signIn()
-    const statuses: (string | null)[] = []
-    server.use(
-      http.get(`${API}/admin/reports`, ({ request }) => {
-        statuses.push(new URL(request.url).searchParams.get("status"))
-        return page([report("r1")])
-      }),
-    )
-    renderUi(<ReportsTab />)
-    expect(await screen.findByText("Buy now!")).toBeInTheDocument()
-    expect(screen.getByText(/Reported by Dara/)).toBeInTheDocument()
-    expect(statuses[0]).toBe("open")
-  })
-
-  it("a deleted target says it no longer exists and cannot be hidden", async () => {
-    signIn()
-    server.use(http.get(`${API}/admin/reports`, () => page([report("r1", { target: { type: "comment", title: null, status: "deleted", seriesSlug: null } })])))
-    renderUi(<ReportsTab />)
-    expect(await screen.findByText("This item no longer exists")).toBeInTheDocument()
-    expect(screen.queryByRole("button", { name: "Hide content" })).not.toBeInTheDocument()
-  })
-
-  it("Dismiss asks for an optional note, and sends it empty when left blank", async () => {
-    signIn()
-    let body: Record<string, unknown> = {}
-    server.use(
-      http.get(`${API}/admin/reports`, () => page([report("r1")])),
-      http.post(`${API}/admin/reports/r1/settle`, async ({ request }) => {
-        body = (await request.json()) as typeof body
-        return HttpResponse.json(report("r1", { status: "dismissed" }))
-      }),
-    )
-    const { user: u } = renderUi(<ReportsTab />)
-    await u.click(await screen.findByRole("button", { name: "Dismiss" }))
-    const dialog = await screen.findByRole("dialog", { name: "Dismiss this report?" })
-    expect(within(dialog).getByLabelText("Note (optional)")).toBeInTheDocument()
-    await u.click(within(dialog).getByRole("button", { name: "Dismiss" }))
-    await waitFor(() => expect(toast.success).toHaveBeenCalledWith("Report dismissed."))
-    expect(body).toMatchObject({ action: "dismiss" })
-  })
-
-  it("Hide content is the destructive choice and settles with the note", async () => {
-    signIn()
-    let body: Record<string, unknown> = {}
-    server.use(
-      http.get(`${API}/admin/reports`, () => page([report("r1")])),
-      http.post(`${API}/admin/reports/r1/settle`, async ({ request }) => {
-        body = (await request.json()) as typeof body
-        return HttpResponse.json(report("r1", { status: "resolved" }))
-      }),
-    )
-    const { user: u } = renderUi(<ReportsTab />)
-    await u.click(await screen.findByRole("button", { name: "Hide content" }))
-    const dialog = await screen.findByRole("dialog", { name: "Hide the reported content?" })
-    await u.type(within(dialog).getByLabelText("Note (optional)"), "clear spam")
-    await u.click(within(dialog).getByRole("button", { name: "Hide content" }))
-    await waitFor(() => expect(toast.success).toHaveBeenCalledWith("Content hidden."))
-    expect(body).toMatchObject({ action: "hide" })
-  })
-
-  it("a settled report shows who settled it and has no buttons", async () => {
-    signIn()
-    server.use(http.get(`${API}/admin/reports`, () => page([report("r1", { status: "resolved", resolvedBy: "Admin Sok", note: "done" })])))
-    renderUi(<ReportsTab />)
-    expect(await screen.findByText(/Admin Sok/)).toBeInTheDocument()
-    expect(screen.queryByRole("button", { name: "Dismiss" })).not.toBeInTheDocument()
   })
 })
 

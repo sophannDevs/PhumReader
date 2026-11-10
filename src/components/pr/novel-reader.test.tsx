@@ -47,7 +47,7 @@ describe("NovelBody", () => {
     renderUi(<NovelBody blocks={blocks} />)
     expect(screen.getByRole("heading", { level: 2, name: "The Tide" })).toBeInTheDocument()
     expect(screen.getByText("Stay low.").closest("blockquote")).not.toBeNull()
-    expect(screen.getByText("* * *")).toHaveAttribute("aria-hidden", "true")
+    expect(screen.getByRole("separator")).toHaveTextContent("* * *")
     expect(screen.getByText("Morning.")).toBeInTheDocument()
   })
 
@@ -97,8 +97,7 @@ const chapterAt = (n: number, body: object = chapterBody(n)) => http.get(`${API}
 async function open(n = 2, blocks?: unknown[]) {
   server.use(list(), chapterAt(n, chapterBody(n, blocks)))
   const view = renderUi(<NovelReader slug={SLUG} n={n} />)
-  // the title is both in the bar and above the text, each a level-1 heading (a P6-04 point)
-  expect(await screen.findAllByRole("heading", { level: 1, name: `Name ${n}` })).toHaveLength(2)
+  expect(await screen.findByRole("heading", { level: 1, name: `Name ${n}` })).toBeInTheDocument()
   return view
 }
 
@@ -111,7 +110,8 @@ describe("NovelReader", () => {
   })
 
   it("follows the stored reading settings", async () => {
-    useAppStore.getState().setNovelSettings({ size: 22, theme: "sepia", font: "serif", wide: false })
+    // the reader's own choice (before that it follows Settings)
+    useAppStore.getState().chooseNovelSettings({ size: 22, theme: "sepia", font: "serif", wide: false })
     const { container } = await open(2)
     const root = container.querySelector("[data-reader-theme]") as HTMLElement
     expect(root).toHaveAttribute("data-reader-theme", "sepia")
@@ -122,7 +122,7 @@ describe("NovelReader", () => {
   it("changing the theme in the Aa popover updates the page at once", async () => {
     const { user, container } = await open(2)
     await user.click(screen.getByRole("button", { name: "Reading settings" }))
-    await user.click(await screen.findByRole("tab", { name: "Dark" }))
+    await user.click(await screen.findByRole("radio", { name: "Dark" }))
     expect(container.querySelector("[data-reader-theme]")).toHaveAttribute("data-reader-theme", "dark")
   })
 
@@ -135,18 +135,18 @@ describe("NovelReader", () => {
     const { user } = await open(2)
     expect(screen.queryByRole("button", { name: "Previous chapter" })).not.toBeInTheDocument()
     await user.click(screen.getByRole("button", { name: "Chapters" }))
-    await user.click(await screen.findByRole("button", { name: /Name 1\b/ }))
+    await user.click(await screen.findByRole("button", { name: /Name 1/ }))
     expect(router.push).toHaveBeenCalledWith(`/novel/${SLUG}/1`)
   })
 
   it("a locked next chapter opens the unlock dialog from the end button and from →", async () => {
     const { user } = await open(2)
     await user.click(screen.getByRole("button", { name: "Unlock next chapter" }))
-    expect(await screen.findByRole("dialog", { name: "Unlock Chapter 3" })).toBeInTheDocument()
+    expect(await screen.findByRole("dialog", { name: "Unlock chapter 3" })).toBeInTheDocument()
     await user.click(screen.getByRole("button", { name: "Wait for the free release" }))
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
     await user.keyboard("{ArrowRight}")
-    expect(await screen.findByRole("dialog", { name: "Unlock Chapter 3" })).toBeInTheDocument()
+    expect(await screen.findByRole("dialog", { name: "Unlock chapter 3" })).toBeInTheDocument()
     expect(router.push).not.toHaveBeenCalled()
   })
 

@@ -60,7 +60,7 @@ describe("BecomeCreatorDialog: open and close", () => {
 
   it("links to the creator guidelines", async () => {
     await open()
-    expect(screen.getByRole("link", { name: "Read the creator guidelines" })).toHaveAttribute("href", "/creator#guidelines")
+    expect(screen.getByRole("link", { name: "Read the creator guidelines" })).toHaveAttribute("href", "/legal/creator")
   })
 })
 
@@ -108,7 +108,7 @@ describe("BecomeCreatorDialog: submitting", () => {
     await accept(user)
     await waitFor(() => expect(onDone).toHaveBeenCalledOnce())
     expect(body).toEqual({ penName: "Sokha", acceptTerms: true })
-    expect(toast.success).toHaveBeenCalledWith("You're a creator now.")
+    expect(toast.success).toHaveBeenCalledWith("You’re a creator now")
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
   })
 

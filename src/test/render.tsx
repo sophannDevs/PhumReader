@@ -3,6 +3,7 @@ import { render, type RenderOptions } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { NextIntlClientProvider } from "next-intl"
 import type { ReactElement, ReactNode } from "react"
+import { ReportProvider } from "@/components/pr/report-dialog"
 import { ThemeProvider } from "@/lib/theme"
 import en from "@/messages/en"
 import km from "@/messages/km"
@@ -18,7 +19,9 @@ export function renderUi(ui: ReactElement, { locale = "en", ...options }: { loca
   const Wrapper = ({ children }: { children: ReactNode }) => (
     <NextIntlClientProvider locale={locale} messages={messages[locale]} timeZone="Asia/Phnom_Penh">
       <QueryClientProvider client={client}>
-        <ThemeProvider>{children}</ThemeProvider>
+        <ThemeProvider>
+          <ReportProvider>{children}</ReportProvider>
+        </ThemeProvider>
       </QueryClientProvider>
     </NextIntlClientProvider>
   )

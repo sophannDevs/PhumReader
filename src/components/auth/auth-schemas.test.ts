@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { forgotSchema, loginSchema, passwordChecks, resetSchema, signupSchema } from "./auth-schemas"
+import { forgotSchema, loginSchema, newPasswordSchema, passwordChecks, signupSchema } from "./auth-schemas"
 
 const messages = (result: { success: boolean; error?: { issues: { message: string }[] } }) =>
   result.success ? [] : (result.error?.issues.map((i) => i.message) ?? [])
@@ -44,27 +44,43 @@ describe("loginSchema", () => {
 })
 
 describe("signupSchema", () => {
-  const ok = { name: "Sokha", email: "sokha@example.com", password: "Abcdef1!", terms: true }
+  const ok = {
+    name: "Sokha",
+    email: "sokha@example.com",
+    password: "Abcdef1!",
+    confirm: "Abcdef1!",
+    ui: "en" as const,
+    year: "1998",
+    terms: true,
+  }
 
   it("accepts a complete form", () => {
     expect(signupSchema.safeParse(ok).success).toBe(true)
   })
 
-  it("needs a name of at least 2 characters after trimming", () => {
+  it("needs a name of 2 to 20 characters after trimming", () => {
     expect(messages(signupSchema.safeParse({ ...ok, name: "A" }))).toContain("nameRequired")
     expect(messages(signupSchema.safeParse({ ...ok, name: "  A " }))).toContain("nameRequired")
+    expect(messages(signupSchema.safeParse({ ...ok, name: "A".repeat(21) }))).toContain("nameRequired")
     expect(signupSchema.safeParse({ ...ok, name: "សុខា" }).success).toBe(true)
   })
 
-  it("needs at least 3 of the 4 password rules", () => {
-    expect(messages(signupSchema.safeParse({ ...ok, password: "abcdefgh" }))).toContain("passwordWeak")
-    expect(messages(signupSchema.safeParse({ ...ok, password: "Abcdefgh" }))).toContain("passwordWeak")
-    expect(signupSchema.safeParse({ ...ok, password: "Abcdefg1" }).success).toBe(true)
-    // 3 rules are enough in any combination: length + digit + symbol, without capitals
-    expect(signupSchema.safeParse({ ...ok, password: "abcdefg1!" }).success).toBe(true)
-    // only 2 rules: length + digit, or digit + symbol on a short password
-    expect(messages(signupSchema.safeParse({ ...ok, password: "abcdefg1" }))).toContain("passwordWeak")
-    expect(messages(signupSchema.safeParse({ ...ok, password: "abc1!" }))).toContain("passwordWeak")
+  it("needs all 4 password rules", () => {
+    for (const password of ["abcdefgh", "Abcdefgh", "Abcdefg1", "abcdefg1!"]) {
+      expect(messages(signupSchema.safeParse({ ...ok, password, confirm: password }))).toContain("passwordRules")
+    }
+    expect(signupSchema.safeParse({ ...ok, password: "Abcdef1!", confirm: "Abcdef1!" }).success).toBe(true)
+  })
+
+  it("shows the mismatch together with the other errors", () => {
+    const found = messages(signupSchema.safeParse({ ...ok, password: "weak", confirm: "other" }))
+    expect(found).toContain("passwordRules")
+    expect(found).toContain("mismatch")
+  })
+
+  it("needs a birth year and an age of at least 13", () => {
+    expect(messages(signupSchema.safeParse({ ...ok, year: "" }))).toContain("yearRequired")
+    expect(messages(signupSchema.safeParse({ ...ok, year: String(new Date().getFullYear()) }))).toContain("tooYoung")
   })
 
   it("needs the terms accepted", () => {
@@ -72,15 +88,16 @@ describe("signupSchema", () => {
   })
 })
 
-describe("forgotSchema and resetSchema", () => {
+describe("forgotSchema and newPasswordSchema", () => {
   it("forgot needs a valid email", () => {
     expect(forgotSchema.safeParse({ email: "a@b.co" }).success).toBe(true)
     expect(messages(forgotSchema.safeParse({ email: "" }))).toContain("emailRequired")
     expect(messages(forgotSchema.safeParse({ email: "nope" }))).toContain("emailInvalid")
   })
 
-  it("reset needs a password that passes 3 of the 4 rules", () => {
-    expect(resetSchema.safeParse({ password: "Abcdef1!" }).success).toBe(true)
-    expect(messages(resetSchema.safeParse({ password: "short" }))).toContain("passwordWeak")
+  it("a new password meets all 4 rules and is typed twice", () => {
+    expect(newPasswordSchema.safeParse({ password: "Abcdef1!", confirm: "Abcdef1!" }).success).toBe(true)
+    expect(messages(newPasswordSchema.safeParse({ password: "short", confirm: "short" }))).toContain("passwordRules")
+    expect(messages(newPasswordSchema.safeParse({ password: "Abcdef1!", confirm: "Abcdef1?" }))).toContain("mismatch")
   })
 })

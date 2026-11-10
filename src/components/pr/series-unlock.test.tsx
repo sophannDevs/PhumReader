@@ -52,7 +52,7 @@ describe("useSeriesUnlock: logged out", () => {
     server.use(listFor(comic.slug))
     nav.pathname = `/series/${comic.slug}`
     const { user } = await openRow(comic, 2)
-    expect(await screen.findByRole("dialog", { name: "Unlock Episode 2" })).toBeInTheDocument()
+    expect(await screen.findByRole("dialog", { name: "Unlock episode 2" })).toBeInTheDocument()
     await user.click(screen.getByRole("button", { name: "Log in to unlock" }))
     expect(useAppStore.getState().returnTo).toBe(`/series/${comic.slug}`)
     expect(useAppStore.getState().pendingUnlock).toEqual({ seriesId: comic.id, episode: 2 })
@@ -75,7 +75,7 @@ describe("useSeriesUnlock: not enough coins", () => {
     signIn(3)
     server.use(listFor(comic.slug))
     const { user } = await openRow(comic, 3)
-    expect(await screen.findByText("You need 2 more coins.")).toBeInTheDocument()
+    expect(await screen.findByText(/You need 2 more coins\./)).toBeInTheDocument()
     await user.click(screen.getByRole("button", { name: "Get coins" }))
     expect(useAppStore.getState().shopReturn).toEqual({ page: `/series/${comic.slug}`, episode: 3, title: comic.title })
     expect(useAppStore.getState().pendingUnlock).toEqual({ seriesId: comic.id, episode: 3 })
@@ -112,7 +112,7 @@ describe("useSeriesUnlock: unlocking", () => {
       http.get(`${API}/me/coins`, () => HttpResponse.json({ balance: 7, firstPurchaseBonus: false })),
     )
     const { user } = await openRow(novel, 2)
-    expect(await screen.findByRole("dialog", { name: "Unlock Chapter 2" })).toBeInTheDocument()
+    expect(await screen.findByRole("dialog", { name: "Unlock chapter 2" })).toBeInTheDocument()
     await user.click(screen.getByRole("button", { name: "Unlock for 5 coins" }))
     await waitFor(() => expect(router.push).toHaveBeenCalledWith(`/novel/${novel.slug}/2`))
     expect(toast.success).toHaveBeenCalledWith("Chapter 2 unlocked")
@@ -186,7 +186,7 @@ describe("useSeriesUnlock: coming back from /login or /coins", () => {
     nav.pathname = `/series/${comic.slug}`
     server.use(listFor(comic.slug))
     renderUi(<Page series={comic} />)
-    expect(await screen.findByRole("dialog", { name: "Unlock Episode 3" })).toBeInTheDocument()
+    expect(await screen.findByRole("dialog", { name: "Unlock episode 3" })).toBeInTheDocument()
     expect(useAppStore.getState().pendingUnlock).toBeNull()
   })
 

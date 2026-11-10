@@ -29,7 +29,7 @@ describe("CheckoutCard: review", () => {
     expect(screen.getByText("+3")).toBeInTheDocument()
     expect(screen.getByText("33 coins")).toBeInTheDocument()
     expect(screen.getByText("[PRICE USD]")).toBeInTheDocument()
-    expect(screen.getByText("KHQR", { selector: "dd" })).toBeInTheDocument()
+    expect(screen.getByText("Paying with").nextElementSibling).toHaveTextContent("KHQR")
     expect(screen.getByText(/Balance after: 40 coins/)).toBeInTheDocument()
   })
 
@@ -68,8 +68,8 @@ describe("CheckoutCard: pay", () => {
   it("shows the KHQR placeholder and a countdown for the demo", () => {
     setup(pay)
     expect(screen.getByRole("heading", { name: "Scan to pay" })).toBeInTheDocument()
-    expect(screen.getByText("[KHQR PLACEHOLDER] · PhumReader")).toBeInTheDocument()
-    expect(screen.getByRole("timer", { name: "Code expires in 2:05" })).toHaveTextContent("2:05")
+    expect(screen.getByText("[KHQR PLACEHOLDER] · PhumiReader")).toBeInTheDocument()
+    expect(screen.getByRole("timer")).toHaveTextContent("Code expires in 2:05")
     expect(screen.getByText("[PRICE KHR]")).toBeInTheDocument()
   })
 
@@ -132,13 +132,13 @@ describe("CheckoutCard: pay", () => {
 describe("CheckoutCard: confirming, success and failed", () => {
   it("confirming says so, politely", () => {
     setup({ step: "confirming" })
-    expect(screen.getByText("Confirming your payment…").closest("[aria-live=polite]")).not.toBeNull()
+    expect(screen.getByText("Confirming payment…").closest("[aria-live=polite]")).not.toBeNull()
   })
 
   it("success shows the coins, the new balance and the order, and Buy more resets", async () => {
     const { user, onReset } = setup({ step: "success", orderId: "PR-100", added: 33, balance: 40, method: "khqr" })
     expect(screen.getByRole("heading", { name: "+33 coins" })).toBeInTheDocument()
-    expect(screen.getByText("Payment received. Your balance is now 40 coins.")).toBeInTheDocument()
+    expect(screen.getByText(/Payment received\. Your balance is now/)).toBeInTheDocument()
     expect(screen.getByText(/Order PR-100 · KHQR/)).toBeInTheDocument()
     expect(screen.queryByRole("button", { name: /Back to/ })).not.toBeInTheDocument()
     await user.click(screen.getByRole("button", { name: "Buy more coins" }))
@@ -163,8 +163,8 @@ describe("CheckoutCard: confirming, success and failed", () => {
 
   it("a declined payment says so, with Try again and Choose another method", async () => {
     const { user, onContinue, onReset } = setup({ step: "failed", reason: "declined" })
-    expect(screen.getByRole("alert")).toHaveTextContent("Payment didn't go through")
-    expect(screen.getByText("Your payment was declined. No coins were added.")).toBeInTheDocument()
+    expect(screen.getByRole("alert")).toHaveTextContent("Payment didn’t go through")
+    expect(screen.getByText("Your bank declined the payment. No coins were charged.")).toBeInTheDocument()
     await user.click(screen.getByRole("button", { name: "Try again" }))
     expect(onContinue).toHaveBeenCalledOnce()
     await user.click(screen.getByRole("button", { name: "Choose another method" }))

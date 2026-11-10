@@ -5,11 +5,11 @@ import { renderUi, screen } from "@/test/render"
 const base = { backHref: "/series/ink-witch", seriesTitle: "Ink Witch", itemTitle: "Episode 3", progress: 0.5 }
 
 describe("ReaderBar", () => {
-  it("shows the series, the episode title as the page heading, and a back link", () => {
+  it("shows the series and the episode title, with a back link to the series", () => {
     renderUi(<ComicReaderBar {...base} />)
-    expect(screen.getByText("Ink Witch")).toBeInTheDocument()
-    expect(screen.getByRole("heading", { level: 1, name: "Episode 3" })).toBeInTheDocument()
-    expect(screen.getByRole("link", { name: "Back to series" })).toHaveAttribute("href", "/series/ink-witch")
+    expect(screen.getByRole("link", { name: "Ink Witch" })).toHaveAttribute("href", "/series/ink-witch")
+    expect(screen.getByText("Episode 3")).toBeInTheDocument()
+    expect(screen.getByRole("link", { name: "Back to Ink Witch" })).toHaveAttribute("href", "/series/ink-witch")
   })
 
   it("reports the progress as a progress bar, clamped to 0 to 100", () => {
@@ -41,9 +41,9 @@ describe("ReaderBar", () => {
   })
 
   it("shows the slots it is given before the arrows", () => {
-    renderUi(<ComicReaderBar {...base} listSlot={<button>List slot</button>} trailingSlot={<button>Trailing slot</button>} />)
+    renderUi(<ComicReaderBar {...base} listSlot={<button>List slot</button>} settingsSlot={<button>Settings slot</button>} />)
     expect(screen.getByRole("button", { name: "List slot" })).toBeInTheDocument()
-    expect(screen.getByRole("button", { name: "Trailing slot" })).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Settings slot" })).toBeInTheDocument()
   })
 })
 
@@ -51,6 +51,6 @@ describe("NovelReaderBar", () => {
   it("has no arrows and says chapter", () => {
     renderUi(<NovelReaderBar {...base} itemTitle="Chapter 3" />)
     expect(screen.queryByRole("button", { name: /Previous|Next/ })).not.toBeInTheDocument()
-    expect(screen.getByRole("heading", { name: "Chapter 3" })).toBeInTheDocument()
+    expect(screen.getByText("Chapter 3")).toBeInTheDocument()
   })
 })

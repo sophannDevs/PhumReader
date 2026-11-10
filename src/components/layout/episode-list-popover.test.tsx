@@ -3,11 +3,11 @@ import { EpisodeListPopover, type ListEpisode } from "@/components/layout/episod
 import { renderUi, screen, within } from "@/test/render"
 
 const make = (count: number, lockedFrom = 1000): ListEpisode[] =>
-  Array.from({ length: count }, (_, i) => ({ n: i + 1, title: `Episode ${i + 1}`, thumb: "/covers/x.svg", locked: i + 1 >= lockedFrom }))
+  Array.from({ length: count }, (_, i) => ({ n: i + 1, title: `Episode ${i + 1}`, date: "2026-10-01", thumb: "/covers/x.svg", locked: i + 1 >= lockedFrom }))
 
 function setup(props: Partial<React.ComponentProps<typeof EpisodeListPopover>> = {}) {
   const onSelect = vi.fn()
-  const view = renderUi(<EpisodeListPopover episodes={make(20)} current={10} coins={30} onSelect={onSelect} {...props} />)
+  const view = renderUi(<EpisodeListPopover episodes={make(20)} current={10} coins={30} price={5} onSelect={onSelect} {...props} />)
   return { ...view, onSelect }
 }
 const rows = () => within(screen.getByRole("list")).getAllByRole("button")
@@ -25,7 +25,7 @@ describe("EpisodeListPopover", () => {
   })
 
   it("says Chapters for a web novel", async () => {
-    const { user } = setup({ kind: "chapter" })
+    const { user } = setup({ readerTheme: "light" })
     await user.click(screen.getByRole("button", { name: "Chapters" }))
     expect(await screen.findByText(/20 chapters/)).toBeInTheDocument()
   })
@@ -40,7 +40,7 @@ describe("EpisodeListPopover", () => {
     const { user } = setup()
     await user.click(screen.getByRole("button", { name: "Episodes" }))
     await screen.findByRole("list")
-    expect(rows().map((r) => r.textContent?.match(/Episode (\d+)/)?.[1])).toEqual(["14", "13", "12", "11", "10", "9", "8", "7", "6"])
+    expect(rows().map((r) => within(r).getByText(/^Episode \d+$/).textContent?.replace("Episode ", ""))).toEqual(["14", "13", "12", "11", "10", "9", "8", "7", "6"])
   })
 
   it("starts at the newest when the current is the latest, and ends at the oldest for the first", async () => {
@@ -87,9 +87,10 @@ describe("EpisodeListPopover", () => {
     await user.click(screen.getByRole("button", { name: "Episodes" }))
     await user.click(await screen.findByRole("button", { name: /Episode 12/ }))
     expect(onSelect).toHaveBeenCalledWith(12)
-    // the page decides what happens next, so the popover stays open
-    expect(screen.getByRole("list")).toBeInTheDocument()
-    screen.getByRole("button", { name: /Episode 8/ }).focus()
+    // picking a row closes the popover; the page then navigates or opens the unlock dialog
+    expect(screen.queryByRole("list")).not.toBeInTheDocument()
+    await user.click(screen.getByRole("button", { name: "Episodes" }))
+    ;(await screen.findByRole("button", { name: /Episode 8/ })).focus()
     await user.keyboard("{Enter}")
     expect(onSelect).toHaveBeenLastCalledWith(8)
   })

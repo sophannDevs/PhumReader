@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest"
 import { CreatorPage } from "@/components/pr/creator-page"
 import { useAppStore } from "@/lib/store"
-import { nav, router } from "@/test/navigation"
-import { renderUi, screen, waitFor } from "@/test/render"
+import { nav } from "@/test/navigation"
+import { renderUi, screen } from "@/test/render"
 import { API, apiError, http, HttpResponse, server } from "@/test/server"
 
 const card = (id: string, title: string) => ({
@@ -31,46 +31,46 @@ const dashboard = (over: Record<string, unknown> = {}) => ({
   totals: { views: 1200, likes: 340, earnedCoins: 90 },
   ...over,
 })
-const signIn = () => useAppStore.getState().login({ name: "Sokha", email: "sokha@example.com" })
-const serve = (body: object) => server.use(http.get(`${API}/creator/dashboard`, () => HttpResponse.json(body)))
+const signIn = () => useAppStore.getState().login({ name: "Sokha", email: "sokha@example.com", roles: ["READER", "CREATOR"] })
+const serve = (body: object, series: object[] = [{ series: card("a", "Sea Light"), visibility: "published", subscribers: 12, comments: 3 }]) =>
+  server.use(
+    http.get(`${API}/creator/dashboard`, () => HttpResponse.json(body)),
+    http.get(`${API}/creator/series`, () => HttpResponse.json(series)),
+  )
 
 describe("CreatorPage: signed out", () => {
   it("asks to log in and remembers this page", async () => {
     nav.pathname = "/creator"
     const { user } = renderUi(<CreatorPage />)
-    expect(screen.getByRole("heading", { level: 1 })).toBeInTheDocument()
-    expect(screen.getByText("Log in to open your dashboard")).toBeInTheDocument()
+    expect(screen.getByRole("heading", { level: 1, name: "Creator dashboard" })).toBeInTheDocument()
+    expect(screen.getByText("Log in to open Creator studio")).toBeInTheDocument()
     await user.click(screen.getByRole("link", { name: "Log in" }))
     expect(useAppStore.getState().returnTo).toBe("/creator")
   })
 })
 
 describe("CreatorPage: a creator", () => {
-  it("shows the stats, the series and a Start publishing link to the new series form", async () => {
+  it("shows the series from the API with links to start a new series and upload an episode", async () => {
     signIn()
     serve(dashboard())
     renderUi(<CreatorPage />)
     expect(await screen.findByText("Sea Light")).toBeInTheDocument()
-    expect(screen.getByText("90 coins")).toBeInTheDocument()
-    expect(screen.getByRole("link", { name: "Start publishing" })).toHaveAttribute("href", "/creator/series/new")
-    expect(screen.getAllByRole("link", { name: "My series" })[0]).toHaveAttribute("href", "/creator/series")
-    expect(screen.getByRole("link", { name: "Creator guidelines" })).toHaveAttribute("href", "#guidelines")
+    expect(screen.getAllByRole("link", { name: "New series" }).some((l) => l.getAttribute("href") === "/creator/new")).toBe(true)
+    expect(screen.getAllByRole("link", { name: "Upload episode" }).some((l) => l.getAttribute("href") === "/creator/upload?series=a")).toBe(true)
   })
 
-  it("shows the empty state with a way to start when there are no series", async () => {
+  it("shows the start guide with a way to create the first series when there are no series", async () => {
     signIn()
-    serve(dashboard({ series: [] }))
+    serve(dashboard({ series: [] }), [])
     renderUi(<CreatorPage />)
-    expect(await screen.findByText("No series yet")).toBeInTheDocument()
-    // the header button and the empty state both lead to the new-series form
-    const starts = screen.getAllByRole("link", { name: "Start publishing" })
-    expect(starts).toHaveLength(2)
-    starts.forEach((link) => expect(link).toHaveAttribute("href", "/creator/series/new"))
+    expect(await screen.findByText("Publish your first story in 3 steps")).toBeInTheDocument()
+    expect(screen.getByRole("link", { name: "Create your first series" })).toHaveAttribute("href", "/creator/new")
+    expect(screen.queryByText("Sea Light")).not.toBeInTheDocument()
   })
 
   it("shows the error state and Retry loads the dashboard", async () => {
     signIn()
-    server.use(http.get(`${API}/creator/dashboard`, () => apiError(500, "internal_error")))
+    server.use(http.get(`${API}/creator/dashboard`, () => apiError(500, "internal_error")), http.get(`${API}/creator/series`, () => apiError(500, "internal_error")))
     const { user } = renderUi(<CreatorPage />)
     expect(await screen.findByText("Something went wrong")).toBeInTheDocument()
     serve(dashboard())
@@ -78,43 +78,31 @@ describe("CreatorPage: a creator", () => {
     expect(await screen.findByText("Sea Light")).toBeInTheDocument()
   })
 
-  it("shows a loading skeleton and placeholders for the numbers while it loads", () => {
+  it("shows a loading skeleton while it loads", () => {
     signIn()
-    server.use(http.get(`${API}/creator/dashboard`, () => new Promise(() => undefined)))
+    server.use(http.get(`${API}/creator/dashboard`, () => new Promise(() => undefined)), http.get(`${API}/creator/series`, () => new Promise(() => undefined)))
     const { container } = renderUi(<CreatorPage />)
     expect(container.querySelector("[aria-hidden=true]")).not.toBeNull()
-    expect(screen.getAllByText("…").length).toBeGreaterThan(0)
+    expect(screen.queryByText("Sea Light")).not.toBeInTheDocument()
+  })
+
+  it("greets the creator by name", async () => {
+    signIn()
+    serve(dashboard())
+    renderUi(<CreatorPage />)
+    expect(await screen.findByRole("heading", { level: 1, name: /Good (morning|afternoon|evening), Sokha/ })).toBeInTheDocument()
   })
 })
 
 describe("CreatorPage: a reader who is not a creator", () => {
-  it("opens the Become a creator dialog from the main button, and goes to My series once done", async () => {
-    signIn()
-    serve(dashboard({ creator: false, series: [], name: null }))
-    server.use(
-      http.post(`${API}/creator`, () => HttpResponse.json({ penName: "Sokha" }, { status: 201 })),
-      http.get(`${API}/me`, () => HttpResponse.json({ id: "u1", displayName: "Sokha", email: "sokha@example.com", emailVerified: true, roles: ["READER", "CREATOR"], avatarUrl: null })),
-    )
+  it("invites them to become a creator, and opens the dialog; Escape gives the focus back", async () => {
+    useAppStore.getState().login({ name: "Sokha", email: "sokha@example.com" })
+    serve(dashboard({ creator: false, series: [], name: null }), [])
     const { user } = renderUi(<CreatorPage />)
-    const start = await screen.findByRole("button", { name: /Start/ })
-    await waitFor(() => expect(start).toBeEnabled())
-    expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
+    const start = await screen.findByRole("button", { name: "Become a creator" })
+    expect(screen.getByText("Become a creator to publish")).toBeInTheDocument()
     await user.click(start)
-    const dialog = await screen.findByRole("dialog", { name: "Become a creator" })
-    expect(dialog).toBeInTheDocument()
-    await user.click(screen.getByRole("checkbox"))
-    await user.click(screen.getByRole("button", { name: "Accept and continue" }))
-    await waitFor(() => expect(router.push).toHaveBeenCalledWith("/creator/series"))
-  })
-
-  it("the dialog closes with Escape and gives the focus back to the button", async () => {
-    signIn()
-    serve(dashboard({ creator: false, series: [], name: null }))
-    const { user } = renderUi(<CreatorPage />)
-    const start = await screen.findByRole("button", { name: /Start/ })
-    await waitFor(() => expect(start).toBeEnabled())
-    await user.click(start)
-    await screen.findByRole("dialog")
+    expect(await screen.findByRole("dialog", { name: "Become a creator" })).toBeInTheDocument()
     await user.keyboard("{Escape}")
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
     expect(start).toHaveFocus()
