@@ -24,7 +24,7 @@ T32 → T33 → T34 → F24–F27 → T39–T42. A V2.1 task marked "→ Fnn" is
 - [ ] F02 Foundations: `/dev/foundations` page matching screen 00; shadcn components from foundations.md §4 that are
   missing (hand-written on `radix-ui`, no downloads); status badge variants (§8); Khmer dates and times in ICT with
   Khmer month names. → T02, T04
-- [ ] F03 Site chrome: logo (done in the upgrade), language pill (shows the other language), coin chip, bell with the
+- [x] F03 Site chrome: logo (done in the upgrade), language pill (shows the other language), coin chip, bell with the
   red unread count, avatar menu (My library, Notifications, Get coins, Creator dashboard, Settings, Log out); header
   nav Home / Rankings / Genres / Web novels (Genres with format=novel); footer columns Read / Create / Help and the
   language switch; tab bar Home / Search / Library / Coins / Me; ≤420 px gaps. Screens 01-home-*. → T05
@@ -87,7 +87,7 @@ T32 → T33 → T34 → F24–F27 → T39–T42. A V2.1 task marked "→ Fnn" is
 - [ ] T02 Design tokens + shadcn theme in globals.css; Khmer type rules; add the shadcn components listed in foundations.md §4. Build a `/dev/foundations` page that matches screen 00. Screens 00 → F02
 - [x] T03 Data layer: typed demo-data helpers, `demo-api.ts` (delay + ?demo flags), zustand store with every key in Spec §0 "Simulated state" (prefix `phumireader.`) → F01
 - [ ] T04 i18n: generate messages/km.json from design/i18n/km-dictionary.json (`npm run i18n:km`, done in the upgrade), plus a language switch that saves to the store; Khmer date and time formatters (ICT) → F02
-- [ ] T05 Layout: SiteHeader (search trigger, language button, coin chip, bell, avatar menu, logo), SiteFooter, MobileTabBar, ⌘K search dialog, toasts. Check the header at 390 px logged in. Screens 01-home-search-open, 01-home-account-menu → F03
+- [x] T05 Layout: SiteHeader (search trigger, language button, coin chip, bell, avatar menu, logo), SiteFooter, MobileTabBar, ⌘K search dialog, toasts. Check the header at 390 px logged in. Screens 01-home-search-open, 01-home-account-menu → F03
 - [ ] T06 Shared patterns: SeriesCard, ContinueCard, RankRow, EpisodeRow, OptionCard, StepsBar, StatCard, Timeline, EmptyState, ErrorState, UndoBar, SaveBar → F04
 
 ## Phase B – Reading
@@ -169,3 +169,9 @@ T32 → T33 → T34 → F24–F27 → T39–T42. A V2.1 task marked "→ Fnn" is
   ADMIN, so the moderator can also open creator pages. Accounts made by sign up are readers.
 - V2-11 (F01) **Order numbers** are `TW-` + 8 digits (V1 Assumption 10 used `PR-`). The two demo rows stay
   display-only and don't end the first-purchase offer.
+- V2-12 (F03) **Light only**: the site no longer follows the OS dark mode (foundations.md "Light theme only"). The
+  stored theme (light / dark / system, synced with the API) is the *reader* theme from Settings > Reading.
+- V2-13 (F03) **Header**: an "Admin" item is added to the avatar menu for admin accounts (not in the design, which
+  only shows the reader menu). The phone Search tab opens the Search page (V1 opened the ⌘K palette).
+- V2-14 (F03) **Footer social buttons** (Facebook, Telegram, YouTube) go to `/coming-soon?topic=…` until the real
+  pages exist.

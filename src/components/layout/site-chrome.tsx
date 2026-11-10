@@ -7,7 +7,7 @@ import { useSearch } from "@/components/layout/search-provider"
 import { SiteHeader } from "@/components/layout/site-header"
 import { usePathname } from "@/i18n/navigation"
 import { logOut } from "@/lib/session"
-import { useAppStore, useCoins, useUser } from "@/lib/store"
+import { useAppStore, useCoins, useUnreadCount, useUser } from "@/lib/store"
 
 /** Remember the current page so Log in / Sign up can send the reader back (not from the login page itself). */
 function useSaveReturnTo() {
@@ -24,6 +24,7 @@ export function ConnectedHeader() {
   const { open } = useSearch()
   const user = useUser()
   const coins = useCoins()
+  const unread = useUnreadCount()
   const t = useTranslations("toasts")
   const saveReturnTo = useSaveReturnTo()
 
@@ -31,6 +32,7 @@ export function ConnectedHeader() {
     <SiteHeader
       user={user}
       coins={coins}
+      unread={unread}
       onSearchOpen={open}
       onLogin={saveReturnTo}
       onLogout={() => {
@@ -41,8 +43,7 @@ export function ConnectedHeader() {
 }
 
 export function ConnectedTabBar() {
-  const { open } = useSearch()
   const user = useUser()
   const saveReturnTo = useSaveReturnTo()
-  return <MobileTabBar loggedIn={!!user} onSearchOpen={open} onLogin={saveReturnTo} />
+  return <MobileTabBar loggedIn={!!user} onLogin={saveReturnTo} />
 }

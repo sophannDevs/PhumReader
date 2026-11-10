@@ -19,7 +19,7 @@ export function CoinIcon({
     <span
       aria-hidden
       className={cn(
-        "inline-flex shrink-0 items-center justify-center rounded-full bg-coin leading-none font-bold text-coin-foreground select-none",
+        "inline-flex shrink-0 items-center justify-center rounded-full bg-coin leading-none font-extrabold text-coin-foreground shadow-[inset_0_-2px_0_rgba(120,53,15,0.25)] select-none",
         sizes[size],
         className
       )}

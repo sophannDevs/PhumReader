@@ -201,15 +201,16 @@
     "getCoins": "ទិញកាក់",
     "creatorDashboard": "ផ្ទាំងអ្នកនិពន្ធ",
     "settings": "ការកំណត់",
-    "themeToDark": "ប្តូរទៅរចនាប័ទ្មងងឹត",
-    "themeToLight": "ប្តូរទៅរចនាប័ទ្មភ្លឺ",
     "logOut": "ចាកចេញ",
     "skip": "រំលងទៅមាតិកា",
     "tabs": "ថេបចម្បង",
     "tabLibrary": "បណ្ណាល័យ",
     "tabCoins": "កាក់",
     "tabMe": "ខ្ញុំ",
-    "admin": "អ្នកគ្រប់គ្រង"
+    "admin": "អ្នកគ្រប់គ្រង",
+    "notifications": "ការជូនដំណឹង",
+    "bellUnread": "ការជូនដំណឹង មិនទាន់អាន {count}",
+    "switchLanguage": "ប្ដូរទៅ {language}"
   },
   "footer": {
     "description": "រឿងគំនូរ និងប្រលោមលោកអនឡាញពីកម្ពុជា និងជុំវិញពិភពលោក ជាភាសាខ្មែរ និងអង់គ្លេស។",
@@ -223,12 +224,15 @@
     "helpCenter": "មជ្ឈមណ្ឌលជំនួយ",
     "terms": "លក្ខខណ្ឌ",
     "privacy": "ឯកជនភាព",
-    "contact": "ទាក់ទង",
+    "contact": "ទាក់ទងយើង",
     "copyright": "© 2026 ភូមិReader · [ឈ្មោះក្រុមហ៊ុនរបស់អ្នក]។ រឿងទាំងអស់ដែលបង្ហាញគឺជាគំរូ។",
     "social": "តំណភ្ជាប់បណ្តាញសង្គម",
     "facebook": "Facebook",
-    "twitter": "X (Twitter)",
     "youtube": "YouTube",
+    "becomeCreator": "ក្លាយជាអ្នកនិពន្ធ",
+    "community": "គោលការណ៍សហគមន៍",
+    "refunds": "កាក់ និងការសងប្រាក់វិញ",
+    "telegram": "Telegram",
     "language": "ភាសា"
   },
   "search": {
