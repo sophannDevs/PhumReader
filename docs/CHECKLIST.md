@@ -68,7 +68,7 @@ T32 → T33 → T34 → F24–F27 → T39–T42. A V2.1 task marked "→ Fnn" is
   menu, short version, on this page, numbered sections, template warning, Khmer "coming before launch". Spec §20 · Screens 20. → T26
 - [x] F19 Error pages: 404 (address, did you mean, search, popular), 500 (retry fails once, reference with copy),
   offline (tips, auto return), `/maintenance`, series unavailable; illustration, code badge, en/km toggle. Spec §9 · Screens 09. → T27
-- [ ] F20 Creator layout (CreatorNav) + dashboard: stat cards, 14-day chart, My series filters with status-based
+- [x] F20 Creator layout (CreatorNav) + dashboard: stat cards, 14-day chart, My series filters with status-based
   actions, to-do, new comments with reply and like, new-creator 3-step guide. Spec §14 · Screens 14. → T28
 - [ ] F21 Create series on `/creator/new`: 4 steps, error summary, autosave draft, tags, cover checklist, publishing,
   submit → in review (`myWorks`, admin queue). Spec §15 · Screens 15. → T29
@@ -118,13 +118,13 @@ T32 → T33 → T34 → F24–F27 → T39–T42. A V2.1 task marked "→ Fnn" is
 - [x] T27 Error pages: not-found, error boundary (retry), offline (online event), maintenance, series unavailable; en/km. Spec §9 · Screens 09 → F19
 
 ## Phase E – Creators
-- [ ] T28 Creator layout (CreatorNav) + dashboard (stats, chart, My series with status-based actions, to-do, comments, new-creator state). Spec §14 · Screens 14 → F20
+- [x] T28 Creator layout (CreatorNav) + dashboard (stats, chart, My series with status-based actions, to-do, comments, new-creator state). Spec §14 · Screens 14 → F20
 - [ ] T29 Create series wizard (4 steps, validation, tags, cover, autosave draft, submit → review). Spec §15 · Screens 15 → F21
 - [ ] T30 Upload episode (image list with progress, reorder, size errors; novel text; schedule; Fast Pass; checklist; preview). Spec §16 · Screens 16 → F22
 - [ ] T31 Manage series (episodes, details, Fast Pass, settings, changes requested + resubmit). Spec §21 · Screens 21 → F23
-- [ ] T32 Creator public profile (reader and owner views, edit, follow, report/block). Spec §17 · Screens 17
-- [ ] T33 Earnings (period, stats, chart/table, by series, payouts, add method dialog). Spec §18 · Screens 18
-- [ ] T34 Become a creator landing + calculator. Spec §26 · Screens 26
+- [x] T32 Creator public profile (reader and owner views, edit, follow, report/block). Spec §17 · Screens 17
+- [x] T33 Earnings (period, stats, chart/table, by series, payouts, add method dialog). Spec §18 · Screens 18
+- [x] T34 Become a creator landing + calculator. Spec §26 · Screens 26
 
 ## Phase F – Admin
 - [ ] T35 AdminShell + overview (counts, waiting longest, recent decisions); admin demo login only. Spec §22 · Screens 22-admin-overview → F24
@@ -263,3 +263,17 @@ T32 → T33 → T34 → F24–F27 → T39–T42. A V2.1 task marked "→ Fnn" is
   is TW-500-<digest>; `/demo/crash` (demo only) shows the 500 page. /offline now uses the site layout with a small inline
   script for when the service worker serves it without JS. /maintenance is a normal page (nothing switches the site into
   maintenance); "Notify me" is local.
+- V2-46 (F20) **Creator studio**: CreatorNav (`src/components/layout/creator-nav.tsx`) picks the tab from the address
+  (Manage counts as Dashboard). Demo readers see "Become a creator"; accepting adds the CREATOR role on this device. Real
+  mode is unchanged (POST /creator). /creator/series redirects to /creator and keeps `?notice=`.
+- V2-47 (F20) **Dashboard data**: demo rows are store `myWorks`; stats, the 14-day chart and comments use the
+  prototype's values. Real mode: rows from /creator/series and totals from /creator/dashboard ("All time", no change
+  %); chart and comments stay demo data. Draft rows list what the work is actually missing; the greeting follows the ICT
+  time of day.
+- V2-48 (T32) **Creator profiles**: every creator name in the demo series has `/creators/<slug>`; unknown handles are a
+  404 (except the signed-in creator's own `?view=owner`). Followers = the series' subscribers summed; Follow uses store
+  `follows`; owner edits are saved with the handle. Profiles run on demo data in both modes.
+- V2-49 (T33) **Earnings**: demo numbers in both modes (default period 6 months); published works share 94 % of coins;
+  `payoutSet` starts false (warning + "On hold"); the chosen payout method is not stored.
+- V2-50 (T34) **Become a creator**: logged out, "Sign up and start creating" goes to sign up with returnTo /creator/new;
+  the calculator uses range inputs (readers 10–2000, episodes 1–12) × the Fast Pass price.
