@@ -5,7 +5,7 @@ import {
   comments as commentsData,
   continueReading,
   creatorSeriesCount,
-  dailyUpdates,
+  seriesByDay,
   demoData,
   derivedStats,
   episode as episodeBySlug,
@@ -93,7 +93,7 @@ export async function withDemo<T>(
 export type HomeData = {
   hero: HeroSlideView[]
   continueReading: ContinueView[]
-  /** Daily updates grid per weekday (6 each). */
+  /** Every series that updates on each weekday (the Home day tabs show the counts and "Show all N"). */
   daily: Record<Weekday, Series[]>
   rankings: { comics: RankingEntry[]; novels: RankingEntry[] }
   genres: Genre[]
@@ -113,7 +113,7 @@ export const fetchHome = () =>
     () => ({
       hero: heroSlides(),
       continueReading: continueReading(),
-      daily: Object.fromEntries(WEEKDAYS.map((d) => [d, dailyUpdates(d)])) as Record<Weekday, Series[]>,
+      daily: Object.fromEntries(WEEKDAYS.map((d) => [d, seriesByDay(d)])) as Record<Weekday, Series[]>,
       rankings: { comics: rankings("comics").slice(0, 8), novels: rankings("novels").slice(0, 8) },
       genres: genres(),
       byGenre: Object.fromEntries(genres().map((g) => [g, seriesByGenre(g)])) as Record<Genre, Series[]>,

@@ -1,7 +1,8 @@
 "use client"
 
 import { useLocale, useTranslations } from "next-intl"
-import type { Genre } from "@/data"
+import type { Genre, Series } from "@/data"
+import { seriesHooks } from "@/data/hooks"
 import { formatDate } from "@/lib/format"
 
 /**
@@ -46,5 +47,12 @@ export function useLocalize() {
         : fallback,
     faq: (i: number, fallback: { q: string; a: string }) =>
       has(`faq.${i}.q`) ? { q: t(`faq.${i}.q` as never), a: t(`faq.${i}.a` as never) } : fallback,
+    /** One-line hook (src/data/hooks.ts), or "An ongoing drama story, new every Monday." */
+    hook: (s: Pick<Series, "title" | "genre" | "updateDay">) =>
+      seriesHooks[s.title] ??
+      t("hookFallback", {
+        genre: (has(`genres.${s.genre}`) ? t(`genres.${s.genre}` as never) : s.genre).toLowerCase(),
+        day: s.updateDay && has(`dayFull.${s.updateDay}`) ? t(`dayFull.${s.updateDay}` as never) : "",
+      }),
   }
 }

@@ -30,7 +30,7 @@ T32 → T33 → T34 → F24–F27 → T39–T42. A V2.1 task marked "→ Fnn" is
   language switch; tab bar Home / Search / Library / Coins / Me; ≤420 px gaps. Screens 01-home-*. → T05
 - [ ] F04 Shared patterns: restyle SeriesCard, ContinueCard, RankRow, EpisodeRow, EmptyState, ErrorState to V2.1; add
   OptionCard, StepsBar, StatCard, Timeline, UndoBar, SaveBar, ListRowActions, ResumeChip, FastPassLockCard. → T06
-- [ ] F05 Home: spotlight (main hero + "Featured this week", no autoplay), genre picker → "Recommended for you",
+- [x] F05 Home: spotlight (main hero + "Featured this week", no autoplay), genre picker → "Recommended for you",
   Daily updates (day tabs with counts, type filter, "New today", 6 cards + "Show all N"), Trending (top 3 larger),
   Browse by genre with counts + "Surprise me", Web novels, creator CTA; states. Spec §1 · Screens 01. → T07
 - [ ] F06 Series page: hero with progress line, Episodes tab (Fast Pass card with countdown, toolbar with Go to #,
@@ -91,7 +91,7 @@ T32 → T33 → T34 → F24–F27 → T39–T42. A V2.1 task marked "→ Fnn" is
 - [ ] T06 Shared patterns: SeriesCard, ContinueCard, RankRow, EpisodeRow, OptionCard, StepsBar, StatCard, Timeline, EmptyState, ErrorState, UndoBar, SaveBar → F04
 
 ## Phase B – Reading
-- [ ] T07 Home (all rows, genre picker, daily updates, states). Spec §1 · Screens 01 → F05
+- [x] T07 Home (all rows, genre picker, daily updates, states). Spec §1 · Screens 01 → F05
 - [ ] T08 Series page: hero, progress, episodes tab (Fast Pass card, toolbar, grouped list), About, comments preview, phone sticky bar. Spec §2 · Screens 02 → F06
 - [ ] T09 Unlock flow: single or bundle dialog, log in hand-off, short of coins → Coins → return and reopen (`shopReturn`, `pendingUnlock`). Spec §2, §6 → F07
 - [ ] T10 Comic reader: bars, episode list, settings panel, scroll and page modes, resume chip, auto-next, end-of-episode, arrow keys. Spec §3 · Screens 03 → F08
@@ -175,3 +175,14 @@ T32 → T33 → T34 → F24–F27 → T39–T42. A V2.1 task marked "→ Fnn" is
   only shows the reader menu). The phone Search tab opens the Search page (V1 opened the ⌘K palette).
 - V2-14 (F03) **Footer social buttons** (Facebook, Telegram, YouTube) go to `/coming-soon?topic=…` until the real
   pages exist.
+- V2-15 (F05) **Series hooks**: the one-line hooks under titles ("Recommended for you", Web novels) are not in
+  demo-data.json; `src/data/hooks.ts` holds the prototype's 26 hooks, other series use "An ongoing {genre} story, new
+  every {day}." (demo content, English in both languages).
+- V2-16 (F05) **Spotlight tags** come from `homeHero` in the demo data ("Season 2", "New episode", "Web novel"), not
+  the prototype's longer wording ("Season 2 is here", …). The spotlight is hidden while the feed fails or is empty.
+- V2-17 (F05) **Daily updates** now get every series per weekday from the feed (V1 filled short days with UP series,
+  Assumption 59). In real mode the counts are whatever the API's home feed returns per day.
+- V2-18 (F04/F05) **Shared V2.1 primitives** live in `src/components/pr/v2-primitives.tsx` (StateBox, Chip,
+  Segmented, Eyebrow, SectionHead, `phoneSwipeRow`). SeriesCard, ContinueCard and RankRow follow the V2.1 classes;
+  OptionCard, StepsBar, StatCard, Timeline, UndoBar, SaveBar, ListRowActions, ResumeChip and FastPassLockCard are
+  built with the first page that uses them. Buttons: `lg` is 44 px / 22 px padding / 15 px text / 10 px radius.
