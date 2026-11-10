@@ -98,7 +98,7 @@ test.describe("key flows (spec §7)", () => {
     await page.reload()
     await expect(root()).toHaveAttribute("data-reader-theme", "sepia")
     await expect(visible(page.locator(".font-novel"))).toBeVisible()
-    const saved = await page.evaluate(() => JSON.parse(localStorage.getItem("phumreader.app")!).state.novelSettings)
+    const saved = await page.evaluate(() => JSON.parse(localStorage.getItem("phumireader.app")!).state.novelSettings)
     expect(saved).toMatchObject({ theme: "sepia", font: "serif" })
   })
 

@@ -7,7 +7,7 @@ export default function GlobalError({ reset }: { error: Error & { digest?: strin
       <body style={{ fontFamily: "system-ui, sans-serif", display: "grid", placeItems: "center", minHeight: "100vh", margin: 0 }}>
         <div style={{ textAlign: "center", maxWidth: 360, padding: 16 }}>
           <h1 style={{ fontSize: 24, margin: "0 0 8px" }}>Something went wrong</h1>
-          <p style={{ color: "#71717a", margin: "0 0 16px" }}>PhumReader hit an unexpected error. Please try again.</p>
+          <p style={{ color: "#71717a", margin: "0 0 16px" }}>PhumiReader hit an unexpected error. Please try again.</p>
           <button
             onClick={reset}
             style={{ height: 40, padding: "0 20px", borderRadius: 8, border: 0, background: "#00dc64", color: "#04210f", fontWeight: 600, cursor: "pointer" }}

@@ -177,7 +177,155 @@ export const authStringsSchema = z.strictObject({
   quote: z.string(),
 });
 
+// ---- V2.1 additions (design/demo-data.json)
+
+export const demoAccountRoleSchema = z.enum(["reader", "creator", "moderator"]);
+export const demoAccountV2Schema = z.strictObject({
+  email: z.email(),
+  password: z.string().min(1),
+  name: z.string().min(1),
+  role: demoAccountRoleSchema,
+});
+
+export const brandSchema = z.strictObject({
+  name: z.string(),
+  nameKm: z.string(),
+  domain: z.string(),
+  storagePrefix: z.string(),
+});
+
+export const notificationKindSchema = z.enum(["update", "comment", "coins", "system"]);
+export const notificationGroupSchema = z.enum(["Today", "This week", "Earlier"]);
+export const notificationSchema = z.strictObject({
+  id: z.string(),
+  kind: notificationKindSchema,
+  /** Inbox group */
+  when: notificationGroupSchema,
+  time: z.string(),
+  title: z.string(),
+  body: z.string(),
+  /** Series title, or "" */
+  series: z.string(),
+});
+
+export const workStatusSchema = z.enum(["published", "review", "changes", "draft"]);
+export const myWorkSchema = z.strictObject({
+  id: z.string(),
+  title: z.string(),
+  format: seriesTypeSchema,
+  genre: genreSchema,
+  status: workStatusSchema,
+  eps: nonNegativeInt,
+  day: weekdaySchema,
+  cover: z.string(),
+  views: z.string(),
+  subs: z.string(),
+  likes: z.string(),
+  summary: z.string(),
+});
+
+/** [id, label, hint] */
+export const reportReasonSchema = z.tuple([z.string(), z.string(), z.string()]);
+export const reportReasonsSchema = z.strictObject({
+  comment: z.array(reportReasonSchema),
+  series: z.array(reportReasonSchema),
+  user: z.array(reportReasonSchema),
+});
+
+export const threadReplySchema = z.strictObject({
+  name: z.string(),
+  creator: z.boolean().optional(),
+  when: z.string(),
+  likes: nonNegativeInt,
+  text: z.string(),
+});
+export const commentThreadSchema = z.strictObject({
+  id: z.string(),
+  name: z.string(),
+  creator: z.boolean().optional(),
+  pinned: z.boolean().optional(),
+  when: z.string(),
+  /** Hours ago (for sorting by newest) */
+  ago: z.number().nonnegative(),
+  likes: nonNegativeInt,
+  text: z.string(),
+  replies: z.array(threadReplySchema),
+  spoiler: z.boolean().optional(),
+});
+
+export const helpTopicSchema = z.enum(["coins", "account", "reading", "creators", "safety", "tech"]);
+export const helpArticleSchema = z.strictObject({
+  topic: helpTopicSchema,
+  q: z.string(),
+  a: z.string(),
+  /** Prototype page name (Shop, Legal, Auth, Settings, …) or "" */
+  link: z.string(),
+  linkLabel: z.string(),
+});
+
+export const policyIdSchema = z.enum(["terms", "privacy", "refund", "community", "creator"]);
+export const policySchema = z.strictObject({
+  label: z.string(),
+  kind: z.string(),
+  title: z.string(),
+  /** Draft template that needs a lawyer's review */
+  tpl: z.boolean(),
+  summary: z.array(z.string()),
+  /** [heading, paragraphs] */
+  sections: z.array(z.tuple([z.string(), z.array(z.string())])),
+});
+
+export const adminSeriesItemSchema = z.strictObject({
+  id: z.string(),
+  title: z.string(),
+  creator: z.string(),
+  format: z.string(),
+  genre: z.string(),
+  age: z.string(),
+  lang: z.string(),
+  eps: z.string(),
+  when: z.string(),
+  hours: z.number().nonnegative(),
+  cover: z.string(),
+  summary: z.string(),
+  flags: z.array(z.string()),
+});
+
+export const adminReportItemSchema = z.strictObject({
+  id: z.string(),
+  kind: z.enum(["comment", "series", "user"]),
+  reason: z.string(),
+  target: z.string(),
+  who: z.string(),
+  where: z.string(),
+  text: z.string(),
+  count: positiveInt,
+  hours: z.number().nonnegative(),
+  details: z.string(),
+  history: z.string(),
+});
+
+/** [description, banner background, banner text colour] */
+export const genreInfoSchema = z.record(genreSchema, z.tuple([z.string(), z.string(), z.string()]));
+
+const v21Keys = {
+  brand: brandSchema,
+  demoAccounts: z.array(demoAccountV2Schema).min(1),
+  emailCode: z.string().regex(/^\d{6}$/),
+  notifications: z.array(notificationSchema),
+  notificationsReadByDefault: z.array(z.string()),
+  myWorks: z.array(myWorkSchema),
+  reportReasons: reportReasonsSchema,
+  commentThreads: z.array(commentThreadSchema),
+  helpArticles: z.array(helpArticleSchema),
+  policies: z.record(policyIdSchema, policySchema),
+  adminSeriesQueue: z.array(adminSeriesItemSchema),
+  adminReportQueue: z.array(adminReportItemSchema),
+  genreInfo: genreInfoSchema,
+};
+
 export const demoDataSchema = z.strictObject({
+  ...v21Keys,
   _note: z.string(),
   /** The app's pinned "today" (YYYY-MM-DD) */
   today: isoDate,
@@ -241,3 +389,21 @@ export type FaqItem = z.infer<typeof faqItemSchema>;
 export type AuthQuote = z.infer<typeof authQuoteSchema>;
 export type AuthStrings = z.infer<typeof authStringsSchema>;
 export type DemoData = z.infer<typeof demoDataSchema>;
+export type DemoAccountV2 = z.infer<typeof demoAccountV2Schema>;
+export type DemoAccountRole = z.infer<typeof demoAccountRoleSchema>;
+export type Brand = z.infer<typeof brandSchema>;
+export type NotificationKind = z.infer<typeof notificationKindSchema>;
+export type NotificationGroup = z.infer<typeof notificationGroupSchema>;
+export type DemoNotification = z.infer<typeof notificationSchema>;
+export type WorkStatus = z.infer<typeof workStatusSchema>;
+export type MyWork = z.infer<typeof myWorkSchema>;
+export type ReportReason = z.infer<typeof reportReasonSchema>;
+export type ReportTarget = keyof z.infer<typeof reportReasonsSchema>;
+export type ThreadReply = z.infer<typeof threadReplySchema>;
+export type CommentThread = z.infer<typeof commentThreadSchema>;
+export type HelpTopic = z.infer<typeof helpTopicSchema>;
+export type HelpArticle = z.infer<typeof helpArticleSchema>;
+export type PolicyId = z.infer<typeof policyIdSchema>;
+export type Policy = z.infer<typeof policySchema>;
+export type AdminSeriesItem = z.infer<typeof adminSeriesItemSchema>;
+export type AdminReportItem = z.infer<typeof adminReportItemSchema>;

@@ -18,7 +18,7 @@ function splitByline(by: string) {
 
 /**
  * Login / sign-up shell. Desktop: left 46% dark panel (rotated cover collage,
- * white logo, creator quote) and a right column with "Back to PhumReader", the
+ * white logo, creator quote) and a right column with "Back to PhumiReader", the
  * EN / ខ្មែរ switch and the centred 380 px form. Phone: logo + language switch,
  * then the form only.
  */
@@ -28,7 +28,7 @@ export function AuthSplitLayout({
   className,
 }: {
   children: React.ReactNode
-  /** Where "Back to PhumReader" goes: `returnTo` or `/` (T19 / T35 pass it). */
+  /** Where "Back to PhumiReader" goes: `returnTo` or `/` (T19 / T35 pass it). */
   backHref?: string
   className?: string
 }) {

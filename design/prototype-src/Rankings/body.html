@@ -1,0 +1,71 @@
+<div class="v2">
+<!--HEADER-->
+  <main class="wrap col rk" style="gap: 20px; padding-top: 28px; padding-bottom: 64px">
+    <div class="sec-head">
+      <div class="col" style="gap: 4px"><h1 class="h1">Rankings</h1><p class="lead" style="font-size: 15px">The most-read series on PhumiReader. {{ updatedLine }}</p></div>
+      <button type="button" class="btn btn-ghost btn-sm" onClick="{{ toggleHow }}" aria-expanded="{{ howOpen }}">[[i:info:14]]How rankings work</button>
+    </div>
+    <sc-if value="{{ howOpen }}" hint-placeholder-val="{{ false }}">
+      <div class="alert"><span class="muted">[[i:info]]</span><div class="col"><span class="alert-title">How rankings work</span><span class="alert-desc">Trending counts reads, likes and new subscribers over the selected period. Popular counts all-time reads. New only includes series that started in the last 60 days. Arrows show the change since the last update.</span></div></div>
+    </sc-if>
+
+    <div class="rk-tools">
+      <div class="line-tabs rk-tabs" role="tablist" aria-label="Ranking type">
+        <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="4"><button type="button" role="tab" class="line-tab {{ t.cls }}" aria-selected="{{ t.on }}" onClick="{{ t.pick }}">{{ t.label }}</button></sc-for>
+      </div>
+      <div class="rk-filters">
+        <div class="tabs-list" role="group" aria-label="Format"><sc-for list="{{ formats }}" as="f" hint-placeholder-count="3"><button type="button" class="tabs-trigger {{ f.cls }}" aria-pressed="{{ f.on }}" onClick="{{ f.pick }}">{{ f.label }}</button></sc-for></div>
+        <label class="sr-only" for="rk-genre">Genre</label>
+        <select id="rk-genre" class="select rk-sel" value="{{ genre }}" onChange="{{ onGenre }}"><sc-for list="{{ genreOpts }}" as="g" hint-placeholder-count="9"><option value="{{ g.v }}">{{ g.label }}</option></sc-for></select>
+        <sc-if value="{{ hasPeriod }}" hint-placeholder-val="{{ true }}">
+          <div class="tabs-list" role="group" aria-label="Period"><sc-for list="{{ periods }}" as="p" hint-placeholder-count="3"><button type="button" class="tabs-trigger {{ p.cls }}" aria-pressed="{{ p.on }}" onClick="{{ p.pick }}">{{ p.label }}</button></sc-for></div>
+        </sc-if>
+      </div>
+    </div>
+
+    <sc-if value="{{ hasTop }}" hint-placeholder-val="{{ true }}">
+      <ol class="rk-top" aria-label="Top 3">
+        <sc-for list="{{ top }}" as="s" hint-placeholder-count="3">
+          <li class="rk-podium {{ s.podCls }}">
+            <a class="rk-pcover" href="{{ s.href }}" onClick="{{ s.open }}"><img src="{{ s.cover }}" alt=""><span class="rk-medal">{{ s.rank }}</span></a>
+            <div class="col" style="gap: 4px; min-width: 0">
+              <div class="row" style="gap: 6px"><span class="rk-move {{ s.moveCls }}" aria-label="{{ s.moveAria }}">{{ s.move }}</span><sc-if value="{{ s.isNovelCard }}" hint-placeholder-val="{{ false }}"><span class="badge badge-secondary">Novel</span></sc-if><span class="badge badge-outline">{{ s.genre }}</span></div>
+              <a class="h3 trunc" href="{{ s.href }}" onClick="{{ s.open }}">{{ s.title }}</a>
+              <span class="small muted trunc">{{ s.creator }}</span>
+              <span class="xs muted row" style="gap: 10px"><span><strong class="tnum" style="color: var(--foreground)">{{ s.stat }}</strong> {{ s.statLbl }}</span><span class="row" style="gap: 3px">[[i:heart:12]]{{ s.likes }}</span></span>
+            </div>
+            <button type="button" class="btn btn-sm {{ s.subCls }}" onClick="{{ s.toggleSub }}" aria-pressed="{{ s.subbed }}" aria-label="{{ s.subAria }}">{{ s.subLabel }}</button>
+          </li>
+        </sc-for>
+      </ol>
+    </sc-if>
+
+    <sc-if value="{{ hasRows }}" hint-placeholder-val="{{ true }}">
+      <ol class="rk-list" start="{{ listStart }}">
+        <sc-for list="{{ rows }}" as="s" hint-placeholder-count="8">
+          <li class="rk-row">
+            <span class="rk-n tnum">{{ s.rank }}</span>
+            <span class="rk-move {{ s.moveCls }}" aria-label="{{ s.moveAria }}">{{ s.move }}</span>
+            <a class="rk-cover" href="{{ s.href }}" onClick="{{ s.open }}" tabindex="-1" aria-hidden="true"><img src="{{ s.cover }}" alt="" loading="lazy"></a>
+            <div class="col grow" style="gap: 3px; min-width: 0">
+              <a class="h4 trunc" href="{{ s.href }}" onClick="{{ s.open }}">{{ s.title }}</a>
+              <span class="xs muted trunc">{{ s.creator }} · {{ s.genre }}<sc-if value="{{ s.isNovelCard }}" hint-placeholder-val="{{ false }}"> · Web novel</sc-if></span>
+            </div>
+            <span class="rk-stat only-desk"><strong class="tnum">{{ s.stat }}</strong><span class="xs muted">{{ s.statLbl }}</span></span>
+            <span class="rk-stat only-desk"><strong class="tnum">{{ s.likes }}</strong><span class="xs muted">likes</span></span>
+            <button type="button" class="btn btn-sm {{ s.subCls }} rk-sub" onClick="{{ s.toggleSub }}" aria-pressed="{{ s.subbed }}" aria-label="{{ s.subAria }}">{{ s.subShort }}</button>
+          </li>
+        </sc-for>
+      </ol>
+    </sc-if>
+    <sc-if value="{{ isEmpty }}" hint-placeholder-val="{{ false }}">
+      <div class="card col" style="align-items: center; text-align: center; gap: 10px; padding: 48px 20px"><span class="muted">[[i:trending:28]]</span><h2 class="h3">Nothing ranked here yet</h2><p class="small muted">No {{ emptyWhat }} in {{ genre }} match this ranking. Try another genre or format.</p><button type="button" class="btn btn-outline" onClick="{{ resetFilters }}">Show all genres</button></div>
+    </sc-if>
+    <sc-if value="{{ hasMore }}" hint-placeholder-val="{{ true }}">
+      <div class="row" style="justify-content: center; gap: 12px"><span class="small muted">Showing {{ shownCount }} of {{ totalCount }}</span><button type="button" class="btn btn-outline" onClick="{{ more }}">Show more</button></div>
+    </sc-if>
+  </main>
+<!--FOOTER-->
+<!--MOBNAV-->
+<!--LAYERS-->
+</div>

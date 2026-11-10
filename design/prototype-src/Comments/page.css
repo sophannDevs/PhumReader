@@ -1,0 +1,26 @@
+.cm-wrap{max-width:820px}
+.cm-head{display:flex;align-items:center;gap:14px}
+.cm-head>img{width:52px;height:68px;border-radius:8px;object-fit:cover;flex:0 0 52px}
+.cm-compose{padding:16px}
+.cm-tools{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.cm-check{display:inline-flex;align-items:center;gap:8px;cursor:pointer}
+.cm-bar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.cm-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px}
+.cm-item{display:flex;flex-direction:column;gap:8px;padding:16px 0;border-bottom:1px solid var(--border)}
+.cm-item.pinned{padding:16px;border:1px solid #c9f1da;border-radius:12px;background:#f6fef9;margin-bottom:8px}
+.cm-pin{display:inline-flex;align-items:center;gap:6px;color:var(--brand-ink);font-weight:600}
+.cm-row{display:flex;gap:12px;align-items:flex-start}
+.cm-text{margin:0;font-size:14px;line-height:21px;color:#27272a;white-space:pre-wrap;overflow-wrap:anywhere}
+.cm-spoiler{align-self:flex-start;padding:8px 12px;border:1px dashed #a1a1aa;border-radius:8px;background:repeating-linear-gradient(135deg,#f4f4f5 0 8px,#fafafa 8px 16px);font:inherit;font-size:13px;font-weight:600;color:#3f3f46;cursor:pointer}
+.cm-spoiler:focus-visible,.cm-more:focus-visible{outline:none;box-shadow:0 0 0 2px var(--ring)}
+.cm-acts{display:flex;gap:2px;flex-wrap:wrap;margin-left:-8px}
+.cm-more{align-self:flex-start;margin-left:44px;border:0;background:none;padding:0;font:inherit;font-size:13px;font-weight:600;color:var(--brand-ink);cursor:pointer}
+.cm-replies{list-style:none;margin:0 0 0 44px;padding:0 0 0 14px;border-left:2px solid var(--border);display:flex;flex-direction:column;gap:12px}
+.cm-replyform{display:flex;gap:6px;margin-left:44px}
+.avatar.creator{background:var(--primary);color:var(--primary-foreground)}
+@container page (max-width: 760px){
+  .cm-more,.cm-replyform{margin-left:0}
+  .cm-replies{margin-left:12px}
+  .cm-replyform{flex-wrap:wrap}
+  .cm-replyform .input{flex:1 1 100%}
+}

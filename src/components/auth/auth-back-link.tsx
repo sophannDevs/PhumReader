@@ -4,7 +4,7 @@ import { ArrowLeftIcon } from "lucide-react"
 import { Link } from "@/i18n/navigation"
 import { useAppStore } from "@/lib/store"
 
-/** "← Back to PhumReader": goes to `returnTo` (the page the reader came from) or `/`. */
+/** "← Back to PhumiReader": goes to `returnTo` (the page the reader came from) or `/`. */
 export function AuthBackLink({ fallbackHref, label, lang }: { fallbackHref: string; label: string; lang: string }) {
   const returnTo = useAppStore((s) => s.returnTo)
   return (

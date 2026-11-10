@@ -1,0 +1,70 @@
+<div class="v2">
+<!--HEADER-->
+  <section class="hp-hero">
+    <div class="wrap col" style="gap: 14px; align-items: center; text-align: center; padding-top: 40px; padding-bottom: 36px">
+      <h1 class="h1">How can we help?</h1>
+      <form class="hp-search" role="search" onSubmit="{{ noSubmit }}"><label class="sr-only" for="hp-q">Search help articles</label><span class="hp-sic">[[i:search:18]]</span><input id="hp-q" class="input" type="search" placeholder="Search: coins, password, Fast Pass, refund…" value="{{ q }}" onChange="{{ onQ }}"><sc-if value="{{ hasQ }}" hint-placeholder-val="{{ false }}"><button type="button" class="btn btn-ghost btn-sm hp-clear" onClick="{{ clearQ }}" aria-label="Clear search">[[i:x:14]]</button></sc-if></form>
+      <div class="row" style="gap: 6px; flex-wrap: wrap; justify-content: center"><span class="xs muted">Popular:</span><sc-for list="{{ popular }}" as="p" hint-placeholder-count="4"><button type="button" class="chip hp-pop" onClick="{{ p.go }}">{{ p.t }}</button></sc-for></div>
+    </div>
+  </section>
+  <main class="wrap col" style="gap: 28px; padding-top: 28px; padding-bottom: 64px">
+    <div class="hp-topics" role="group" aria-label="Topics">
+      <sc-for list="{{ topics }}" as="t" hint-placeholder-count="6"><button type="button" class="hp-topic {{ t.cls }}" aria-pressed="{{ t.on }}" onClick="{{ t.pick }}"><span class="hp-tic">{{ t.ic }}</span><span class="col" style="gap: 2px; text-align: left; min-width: 0"><span class="small" style="font-weight: 600">{{ t.label }}</span><span class="xs muted">{{ t.n }} articles</span></span></button></sc-for>
+    </div>
+    <div class="hp-grid">
+      <section class="col" style="gap: 12px; min-width: 0" aria-labelledby="faq-h">
+        <div class="row" style="justify-content: space-between; gap: 12px"><h2 id="faq-h" class="h3">{{ faqTitle }}</h2><sc-if value="{{ filtered }}" hint-placeholder-val="{{ false }}"><button type="button" class="btn btn-ghost btn-sm" onClick="{{ showAll }}">Show all topics</button></sc-if></div>
+        <span class="small muted" role="status" aria-live="polite">{{ resultLine }}</span>
+        <sc-if value="{{ hasFaq }}" hint-placeholder-val="{{ true }}">
+          <div class="card acc">
+            <sc-for list="{{ faq }}" as="f" hint-placeholder-count="6">
+              <div class="acc-item">
+                <button type="button" class="acc-trigger" onClick="{{ f.toggle }}" aria-expanded="{{ f.open }}"><span class="col" style="gap: 2px; text-align: left"><span>{{ f.q }}</span><span class="xs muted" style="font-weight: 400">{{ f.topic }}</span></span><span class="acc-chev {{ f.cls }}">[[i:chevron-down]]</span></button>
+                <sc-if value="{{ f.open }}" hint-placeholder-val="{{ false }}">
+                  <div class="acc-body col" style="gap: 10px"><p style="margin: 0">{{ f.a }}</p>
+                    <sc-if value="{{ f.hasLink }}" hint-placeholder-val="{{ false }}"><a class="ink small" href="{{ f.href }}" onClick="{{ f.linkGo }}" style="text-decoration: underline; font-weight: 600">{{ f.linkLabel }}</a></sc-if>
+                    <div class="row xs muted" style="gap: 8px">Was this helpful?<button type="button" class="btn btn-outline btn-sm" onClick="{{ f.yes }}" aria-pressed="{{ f.saidYes }}">Yes</button><button type="button" class="btn btn-outline btn-sm" onClick="{{ f.no }}" aria-pressed="{{ f.saidNo }}">No</button><span>{{ f.thanks }}</span></div>
+                  </div>
+                </sc-if>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
+        <sc-if value="{{ noFaq }}" hint-placeholder-val="{{ false }}">
+          <div class="card col" style="align-items: center; text-align: center; gap: 8px; padding: 32px 20px"><span class="muted">[[i:search:24]]</span><h3 class="h4">No articles match “{{ q }}”</h3><p class="small muted">Try other words, or send us a message below.</p></div>
+        </sc-if>
+      </section>
+
+      <aside class="col" style="gap: 16px; min-width: 0">
+        <section id="contact" class="card" aria-labelledby="ct-h">
+          <sc-if value="{{ notSent }}" hint-placeholder-val="{{ true }}">
+          <form class="card-body col" style="gap: 14px" onSubmit="{{ send }}" novalidate="true">
+            <div class="col" style="gap: 4px"><h2 id="ct-h" class="h3">Contact us</h2><p class="small muted">We’ll reply by email. Reply time: [SUPPORT RESPONSE TIME].</p></div>
+            <div class="field"><label class="label" for="ct-topic">Topic <span class="req">*</span></label><select id="ct-topic" class="select {{ e.topicCls }}" value="{{ c.topic }}" onChange="{{ onTopic }}"><option value="">Choose a topic</option><option value="payment">Coins or payment</option><option value="account">Account or log in</option><option value="reading">Reading problem</option><option value="creator">Creator support</option><option value="report">Safety or a report</option><option value="other">Something else</option></select><sc-if value="{{ e.topicBad }}" hint-placeholder-val="{{ false }}"><span class="err">Choose a topic.</span></sc-if></div>
+            <div class="field"><label class="label" for="ct-email">Email <span class="req">*</span></label><input id="ct-email" class="input {{ e.emailCls }}" type="email" value="{{ c.email }}" onChange="{{ onEmail }}" autocomplete="email"><sc-if value="{{ e.emailBad }}" hint-placeholder-val="{{ false }}"><span class="err">Enter a valid email, like name@example.com.</span></sc-if></div>
+            <sc-if value="{{ isPayment }}" hint-placeholder-val="{{ false }}"><div class="field"><label class="label" for="ct-order">Order number</label><input id="ct-order" class="input {{ e.orderCls }}" value="{{ c.order }}" onChange="{{ onOrder }}" placeholder="TW-12345678"><span class="{{ e.orderHintCls }}">{{ e.orderHint }}</span></div></sc-if>
+            <div class="field"><label class="label" for="ct-msg">Message <span class="req">*</span></label><textarea id="ct-msg" class="textarea {{ e.msgCls }}" rows="5" maxlength="1000" value="{{ c.msg }}" onChange="{{ onMsg }}" placeholder="What happened, and what did you expect?"></textarea><div class="row" style="justify-content: space-between"><span class="{{ e.msgHintCls }}">{{ e.msgHint }}</span><span class="xs muted tnum">{{ msgCount }}/1000</span></div></div>
+            <div class="row" style="gap: 8px; flex-wrap: wrap"><button type="button" class="btn btn-outline btn-sm" onClick="{{ attach }}">[[i:plus:14]]{{ attachLabel }}</button><span class="xs muted">PNG or JPG, up to 5 MB</span></div>
+            <button type="submit" class="btn btn-primary" disabled="{{ busy }}"><sc-if value="{{ busy }}" hint-placeholder-val="{{ false }}"><span class="spin"></span></sc-if>Send message</button>
+          </form>
+          </sc-if>
+          <sc-if value="{{ sent }}" hint-placeholder-val="{{ false }}">
+            <div class="card-body col" style="gap: 10px; align-items: flex-start" role="status"><span class="ok-ic2" style="width: 44px; height: 44px">[[i:check:20]]</span><h2 class="h3">Message sent</h2><p class="small muted">We’ll reply to {{ c.email }}. Your ticket number is <strong style="color: var(--foreground)">{{ ticket }}</strong>.</p><button type="button" class="btn btn-outline btn-sm" onClick="{{ again }}">Send another message</button></div>
+          </sc-if>
+        </section>
+        <section class="card card-body col" style="gap: 10px" aria-label="Other ways to reach us">
+          <span class="h4">Other ways to reach us</span>
+          <span class="row small" style="gap: 8px">[[i:mail:16]][SUPPORT EMAIL]</span>
+          <span class="row small" style="gap: 8px">[[i:message:16]]Telegram: [SUPPORT TELEGRAM]</span>
+          <span class="row small" style="gap: 8px">[[i:clock:16]][SUPPORT HOURS] (Cambodia time)</span>
+          <div class="sep"></div>
+          <a class="row small ink" href="{{ legalHref }}" onClick="{{ rpLegal }}" style="gap: 8px; font-weight: 600">[[i:shield:16]]Community guidelines</a>
+          <a class="row small ink" href="{{ legalHref }}" onClick="{{ lgRefund }}" style="gap: 8px; font-weight: 600">[[i:coins:16]]Coins and refunds policy</a>
+        </section>
+      </aside>
+    </div>
+  </main>
+<!--FOOTER-->
+<!--MOBNAV-->
+<!--LAYERS-->
+</div>

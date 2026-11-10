@@ -1,0 +1,121 @@
+<div class="v2 nr {{ themeCls }}">
+  <a ref="{{ goRef }}" href="{{ seriesHref }}" tabindex="-1" aria-hidden="true" style="display: none">Go</a>
+  <header class="nr-bar" id="top">
+    <div class="nr-bar-in">
+      <a class="btn btn-ghost btn-icon nr-ib" href="{{ seriesHref }}" aria-label="Back to {{ s.title }}">[[i:arrow-left:18]]</a>
+      <div class="col grow" style="gap: 0">
+        <a class="xs trunc nr-dim" href="{{ seriesHref }}">{{ s.title }}</a>
+        <span class="small trunc" style="font-weight: 600">{{ ch.title }}</span>
+      </div>
+      <div style="position: relative">
+        <button type="button" class="btn btn-ghost btn-sm nr-ib" onClick="{{ toggleToc }}" aria-expanded="{{ tocOpen }}">[[i:list:14]]<span class="only-desk">Chapters</span></button>
+        <sc-if value="{{ tocOpen }}" hint-placeholder-val="{{ false }}">
+          <div class="menu nr-pop" role="menu" style="width: 300px; max-height: 380px; overflow-y: auto">
+            <div class="menu-label">{{ total }} chapters</div>
+            <sc-for list="{{ near }}" as="c" hint-placeholder-count="6">
+              <button type="button" class="menu-item {{ c.cls }}" role="menuitem" onClick="{{ c.open }}" style="height: auto; padding: 8px"><span class="col grow" style="text-align: left"><span class="small trunc">{{ c.title }}</span><span class="xs nr-dim">{{ c.date }}</span></span><sc-if value="{{ c.locked }}" hint-placeholder-val="{{ false }}"><span class="badge badge-warn">[[i:lock:12]]{{ price }}</span></sc-if></button>
+            </sc-for>
+          </div>
+        </sc-if>
+      </div>
+      <div style="position: relative">
+        <button type="button" class="btn btn-ghost btn-sm nr-ib" onClick="{{ toggleSet }}" aria-expanded="{{ setOpen }}" aria-label="Reading settings">[[i:type:14]]<span class="only-desk">Aa</span></button>
+        <sc-if value="{{ setOpen }}" hint-placeholder-val="{{ false }}">
+          <div class="menu nr-pop" role="dialog" aria-label="Reading settings" style="width: 300px; padding: 16px; gap: 16px">
+            <div class="col" style="gap: 8px">
+              <div class="row" style="justify-content: space-between"><span class="label">Text size</span><span class="xs nr-dim tnum">{{ sizeLabel }}</span></div>
+              <div class="row" style="gap: 8px">
+                <button type="button" class="btn btn-outline btn-icon btn-sm" onClick="{{ smaller }}" aria-label="Smaller text" disabled="{{ minSize }}">[[i:minus:14]]</button>
+                <div class="progress grow" aria-hidden="true"><span style="width: {{ sizePct }}"></span></div>
+                <button type="button" class="btn btn-outline btn-icon btn-sm" onClick="{{ bigger }}" aria-label="Bigger text" disabled="{{ maxSize }}">[[i:plus:14]]</button>
+              </div>
+            </div>
+            <div class="col" style="gap: 8px">
+              <span class="label">Theme</span>
+              <div class="tabs-list" role="radiogroup" aria-label="Theme" style="width: 100%">
+                <sc-for list="{{ themes }}" as="t" hint-placeholder-count="3"><button type="button" role="radio" aria-checked="{{ t.on }}" class="tabs-trigger {{ t.cls }}" style="flex: 1 1 0; justify-content: center" onClick="{{ t.pick }}">{{ t.label }}</button></sc-for>
+              </div>
+            </div>
+            <div class="col" style="gap: 8px">
+              <span class="label">Font</span>
+              <div class="tabs-list" role="radiogroup" aria-label="Font" style="width: 100%">
+                <sc-for list="{{ fonts }}" as="t" hint-placeholder-count="2"><button type="button" role="radio" aria-checked="{{ t.on }}" class="tabs-trigger {{ t.cls }}" style="flex: 1 1 0; justify-content: center" onClick="{{ t.pick }}">{{ t.label }}</button></sc-for>
+              </div>
+            </div>
+            <div class="row" style="justify-content: space-between"><span class="label">Wide line spacing</span><button type="button" role="switch" class="switch {{ wideCls }}" aria-checked="{{ wide }}" aria-label="Wide line spacing" onClick="{{ toggleWide }}"></button></div>
+          </div>
+        </sc-if>
+      </div>
+    </div>
+    <div class="vw-prog nr-prog" aria-hidden="true"><span style="width: {{ progress }}"></span></div>
+  </header>
+
+  <sc-if value="{{ showResume }}" hint-placeholder-val="{{ false }}">
+    <div class="nr-resume" role="status"><span class="small">You stopped at {{ resumePct }}</span><button type="button" class="btn btn-primary btn-sm" onClick="{{ resume }}">Continue</button><button type="button" class="btn btn-ghost btn-sm nr-ib" onClick="{{ dismissResume }}">Start over</button></div>
+  </sc-if>
+  <main class="nr-col">
+    <sc-if value="{{ isLocked }}" hint-placeholder-val="{{ false }}">
+      <article class="nr-text nr-teaser {{ fontCls }}" style="font-size: {{ sizePx }}; line-height: {{ lh }}" aria-label="Preview of {{ ch.title }}">
+        <span class="eyebrow">{{ ch.kicker }}</span><h1 class="nr-h1">{{ ch.title }}</h1>
+        <sc-for list="{{ teaser }}" as="b" hint-placeholder-count="2"><p>{{ b.text }}</p></sc-for>
+      </article>
+      <div class="card nr-card col nr-lock" style="gap: 12px; align-items: center; text-align: center">
+        <span class="badge badge-warn">[[i:zap:12]]Fast Pass</span>
+        <h2 class="h3">Keep reading chapter {{ ch.n }}</h2>
+        <p class="small nr-dim">Unlock it for {{ price }} coins, or read free on {{ ch.date }} ({{ freeIn }}). You have {{ coinCount }} coins.</p>
+        <div class="col" style="gap: 8px; width: 100%; max-width: 340px">
+          <sc-if value="{{ lkLogin }}" hint-placeholder-val="{{ false }}"><a class="btn btn-primary btn-lg btn-block" href="{{ authHref }}" onClick="{{ toAuth }}">Log in to unlock</a></sc-if>
+          <sc-if value="{{ lkCanPay }}" hint-placeholder-val="{{ true }}"><button type="button" class="btn btn-primary btn-lg btn-block" onClick="{{ unlockHere }}" disabled="{{ busy }}"><sc-if value="{{ busy }}" hint-placeholder-val="{{ false }}"><span class="spin"></span></sc-if>Unlock for {{ price }} coins</button></sc-if>
+          <sc-if value="{{ lkShort }}" hint-placeholder-val="{{ false }}"><a class="btn btn-primary btn-lg btn-block" href="{{ shopHref }}" onClick="{{ lkToShop }}">[[i:coins]]Get coins · you need {{ lkNeed }} more</a></sc-if>
+          <button type="button" class="btn btn-ghost btn-block" onClick="{{ prev }}" disabled="{{ isFirst }}">[[i:chevron-left:14]]Previous chapter</button>
+        </div>
+      </div>
+    </sc-if>
+    <sc-if value="{{ isOpen }}" hint-placeholder-val="{{ true }}">
+    <article class="nr-text {{ fontCls }}" style="font-size: {{ sizePx }}; line-height: {{ lh }}">
+      <span class="eyebrow">{{ ch.kicker }}</span>
+      <h1 class="nr-h1">{{ ch.title }}</h1>
+      <p class="xs nr-dim" style="margin-bottom: 28px">{{ s.creator }} · {{ ch.date }} · {{ readTime }}</p>
+      <sc-for list="{{ blocks }}" as="b" hint-placeholder-count="6">
+        <sc-if value="{{ b.isP }}" hint-placeholder-val="{{ true }}"><p>{{ b.text }}</p></sc-if>
+        <sc-if value="{{ b.isS }}" hint-placeholder-val="{{ false }}"><div class="nr-break" role="separator">* * *</div></sc-if>
+        <sc-if value="{{ b.isQ }}" hint-placeholder-val="{{ false }}"><blockquote>{{ b.text }}</blockquote></sc-if>
+      </sc-for>
+    </article>
+
+    <section class="col" style="gap: 14px; padding-top: 16px">
+      <div class="card nr-card col" style="gap: 14px; align-items: center; text-align: center; padding: 24px">
+        <span class="xs nr-dim" style="letter-spacing: .06em; text-transform: uppercase; font-weight: 600">End of chapter {{ ch.n }}</span>
+        <div class="row" style="gap: 8px; flex-wrap: wrap; justify-content: center">
+          <button type="button" class="btn btn-outline {{ likeCls }}" onClick="{{ like }}" aria-pressed="{{ liked }}">[[i:heart]]{{ likeLabel }}</button>
+          <button type="button" class="btn btn-outline" onClick="{{ bookmark }}">[[i:bookmark]]{{ markLabel }}</button>
+          <button type="button" class="btn btn-outline" onClick="{{ share }}">[[i:share]]Share</button>
+        </div>
+      </div>
+      <div class="card nr-card row" style="gap: 12px; align-items: flex-start; padding: 16px">
+        <span class="avatar brand">{{ creatorInitials }}</span>
+        <div class="col" style="gap: 4px"><span class="xs nr-dim" style="font-weight: 600">Creator’s note</span><p class="small">Thank you for reading! The café in this story is based on a real one near Wat Phnom. See you next Tuesday.</p></div>
+      </div>
+      <div class="row" style="gap: 10px">
+        <button type="button" class="btn btn-outline btn-lg" style="flex: 1 1 0" onClick="{{ prev }}" disabled="{{ isFirst }}">[[i:chevron-left]]Previous</button>
+        <button type="button" class="btn btn-primary btn-lg" style="flex: 1 1 0" onClick="{{ next }}" disabled="{{ isLast }}">{{ nextLabel }}[[i:chevron-right]]</button>
+      </div>
+      <a class="btn btn-ghost" href="{{ seriesHref }}" style="align-self: center">All chapters of {{ s.title }}</a>
+      <button type="button" class="btn btn-link btn-sm nr-dim" style="align-self: center; padding: 0; height: auto; color: var(--dim)" onClick="{{ reportCh }}">Report this chapter</button>
+    </section>
+    </sc-if>
+  </main>
+
+  <sc-if value="{{ dlgOn }}" hint-placeholder-val="{{ false }}">
+    <div class="overlay" onClick="{{ closeDlg }}"></div>
+    <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="nu-h" style="top: {{ dlgTop }}">
+      <button type="button" class="btn btn-ghost btn-icon btn-sm dialog-x" onClick="{{ closeDlg }}" aria-label="Close">[[i:x]]</button>
+      <div class="col" style="gap: 6px"><span class="badge badge-warn" style="align-self: flex-start">[[i:zap:12]]Fast Pass</span><h2 id="nu-h" class="h3">Read chapter {{ nextN }} now?</h2><p class="small muted">Unlock it for {{ price }} coins, or read free on {{ nextDate }}. You have {{ coinCount }} coins.</p></div>
+      <sc-if value="{{ dlgLogin }}" hint-placeholder-val="{{ false }}"><a class="btn btn-primary btn-lg btn-block" href="{{ authHref }}" onClick="{{ toAuth }}">Log in to unlock</a></sc-if>
+      <sc-if value="{{ dlgCanPay }}" hint-placeholder-val="{{ true }}"><button type="button" class="btn btn-primary btn-lg btn-block" onClick="{{ unlock }}" disabled="{{ busy }}"><sc-if value="{{ busy }}" hint-placeholder-val="{{ false }}"><span class="spin"></span></sc-if>Unlock for {{ price }} coins</button></sc-if>
+      <sc-if value="{{ dlgShort }}" hint-placeholder-val="{{ false }}"><a class="btn btn-primary btn-lg btn-block" href="{{ shopHref }}" onClick="{{ toShop }}">[[i:coins]]Get coins</a></sc-if>
+      <button type="button" class="btn btn-ghost btn-block" onClick="{{ closeDlg }}">Wait for the free release</button>
+    </div>
+  </sc-if>
+<!--LAYERS-->
+</div>

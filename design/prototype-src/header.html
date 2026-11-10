@@ -1,0 +1,40 @@
+  <header class="v2-header" id="top">
+    <div class="wrap hdr">
+      <a class="logo" href="{{ homeHref }}" aria-label="PhumiReader home">
+        <span class="logo-mark" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M3 4.5h10M3 8h10M3 11.5h6"></path></svg></span>
+        <span class="logo-t">Phumi<span class="logo-r">Reader</span></span>
+      </a>
+      <nav class="nav only-desk" aria-label="Main">
+        <sc-for list="{{ navItems }}" as="n" hint-placeholder-count="4"><a class="{{ n.cls }}" href="{{ n.href }}" aria-current="{{ n.cur }}" onClick="{{ n.go }}">{{ n.label }}</a></sc-for>
+      </nav>
+      <div class="row" style="margin-left: auto; gap: 8px">
+        <button type="button" class="search-trigger only-desk" onClick="{{ openSearch }}">[[i:search]]<span class="grow">Search series, creators…</span><span class="kbd">⌘K</span></button>
+        <button type="button" class="btn btn-ghost btn-icon only-phone" onClick="{{ openSearch }}" aria-label="Search">[[i:search:18]]</button>
+        <button type="button" class="lang-btn" onClick="{{ toggleLang }}" aria-label="{{ langAria }}" lang="{{ langOtherCode }}" data-no-tr="1">{{ langOther }}</button>
+        <a class="coin-chip" href="{{ shopHref }}" aria-label="{{ coinCount }} coins. Get coins"><span class="coin" aria-hidden="true">C</span><span class="tnum">{{ coinCount }}</span></a>
+        <sc-if value="{{ loggedOut }}" hint-placeholder-val="{{ true }}">
+          <a class="btn btn-ghost btn-sm only-desk" href="{{ authHref }}" onClick="{{ toAuth }}">Log in</a>
+          <a class="btn btn-primary btn-sm" href="{{ authHref }}" onClick="{{ toAuth }}"><span class="only-desk">Sign up</span><span class="only-phone">Log in</span></a>
+        </sc-if>
+        <sc-if value="{{ loggedIn }}" hint-placeholder-val="{{ false }}">
+          <a class="btn btn-ghost btn-icon bell" href="{{ notifHref }}" aria-label="{{ bellLabel }}">[[i:bell:18]]<sc-if value="{{ hasUnread }}" hint-placeholder-val="{{ false }}"><span class="bell-dot" aria-hidden="true">{{ unread }}</span></sc-if></a>
+          <div style="position: relative">
+            <button type="button" class="btn btn-ghost btn-icon focus" style="border-radius: 9999px" onClick="{{ toggleUserMenu }}" aria-label="Account menu" aria-expanded="{{ userMenu }}"><span class="avatar brand">{{ userInitials }}</span></button>
+            <sc-if value="{{ userMenu }}" hint-placeholder-val="{{ false }}">
+              <div class="menu" role="menu">
+                <div class="menu-label">{{ userName }}<div class="xs muted" style="font-weight: 400">{{ coinCount }} coins</div></div>
+                <div class="sep"></div>
+                <a class="menu-item" role="menuitem" href="{{ libraryHref }}">[[i:library]]My library</a>
+                <a class="menu-item" role="menuitem" href="{{ notifHref }}">[[i:bell]]Notifications</a>
+                <a class="menu-item" role="menuitem" href="{{ shopHref }}">[[i:coins]]Get coins</a>
+                <a class="menu-item" role="menuitem" href="{{ creatorHref }}">[[i:pen]]Creator dashboard</a>
+                <a class="menu-item" role="menuitem" href="{{ settingsHref }}">[[i:settings]]Settings</a>
+                <div class="sep"></div>
+                <button type="button" class="menu-item" role="menuitem" onClick="{{ logout }}">[[i:log-out]]Log out</button>
+              </div>
+            </sc-if>
+          </div>
+        </sc-if>
+      </div>
+    </div>
+  </header>

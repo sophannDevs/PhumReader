@@ -1,0 +1,134 @@
+<div class="v2">
+<!--HEADER-->
+  <a ref="{{ goRef }}" href="{{ goHref }}" tabindex="-1" aria-hidden="true" style="display: none">Go</a>
+  <main class="er">
+    <section class="er-hero">
+      <div class="wrap er-grid">
+        <div class="er-art" aria-hidden="true">
+          <sc-if value="{{ isNotFound }}" hint-placeholder-val="{{ true }}">
+            <svg viewBox="0 0 240 200" width="240" height="200" fill="none">
+              <rect x="20" y="20" width="96" height="74" rx="10" fill="#E8FBF0" stroke="#09090B" stroke-width="3"/>
+              <circle cx="52" cy="50" r="10" fill="#00DC64"/><path d="M34 84l26-22 18 14 14-10 18 18" stroke="#09090B" stroke-width="3" stroke-linejoin="round"/>
+              <rect x="124" y="20" width="96" height="74" rx="10" fill="#FFFFFF" stroke="#09090B" stroke-width="3"/>
+              <path d="M140 46h52M140 60h36" stroke="#D4D4D8" stroke-width="6" stroke-linecap="round"/>
+              <rect x="20" y="104" width="96" height="74" rx="10" fill="#FFFFFF" stroke="#09090B" stroke-width="3"/>
+              <path d="M38 152c14-20 44-20 60 0" stroke="#09090B" stroke-width="3" stroke-linecap="round"/><circle cx="50" cy="128" r="4" fill="#09090B"/><circle cx="86" cy="128" r="4" fill="#09090B"/>
+              <rect x="124" y="104" width="96" height="74" rx="10" fill="#FAFAFA" stroke="#A1A1AA" stroke-width="3" stroke-dasharray="8 7"/>
+              <text x="172" y="156" text-anchor="middle" font-family="Inter,sans-serif" font-size="44" font-weight="800" fill="#047A3A">?</text>
+            </svg>
+          </sc-if>
+          <sc-if value="{{ isServer }}" hint-placeholder-val="{{ false }}">
+            <svg viewBox="0 0 240 200" width="240" height="200" fill="none">
+              <rect x="30" y="24" width="180" height="128" rx="14" fill="#FFFFFF" stroke="#09090B" stroke-width="3"/>
+              <path d="M30 52h180" stroke="#09090B" stroke-width="3"/><circle cx="48" cy="38" r="5" fill="#FCA5A5"/><circle cx="64" cy="38" r="5" fill="#FCD34D"/><circle cx="80" cy="38" r="5" fill="#86EFAC"/>
+              <path d="M128 66l-22 38h22l-12 34 36-46h-22l14-26z" fill="#FDE68A" stroke="#09090B" stroke-width="3" stroke-linejoin="round"/>
+              <path d="M58 168h124" stroke="#E4E4E7" stroke-width="8" stroke-linecap="round"/>
+            </svg>
+          </sc-if>
+          <sc-if value="{{ isOffline }}" hint-placeholder-val="{{ false }}">
+            <svg viewBox="0 0 240 200" width="240" height="200" fill="none">
+              <path d="M36 40h168a14 14 0 0 1 14 14v76a14 14 0 0 1-14 14h-96l-34 28v-28H36a14 14 0 0 1-14-14V54a14 14 0 0 1 14-14z" fill="#FFFFFF" stroke="#09090B" stroke-width="3" stroke-linejoin="round"/>
+              <path d="M78 88a60 60 0 0 1 84 0M92 102a40 40 0 0 1 56 0M106 116a20 20 0 0 1 28 0" stroke="#A1A1AA" stroke-width="6" stroke-linecap="round"/>
+              <circle cx="120" cy="128" r="5" fill="#09090B"/><path d="M80 62l80 76" stroke="#EF4444" stroke-width="6" stroke-linecap="round"/>
+            </svg>
+          </sc-if>
+          <sc-if value="{{ isMaint }}" hint-placeholder-val="{{ false }}">
+            <svg viewBox="0 0 240 200" width="240" height="200" fill="none">
+              <rect x="26" y="30" width="150" height="130" rx="12" fill="#FFFFFF" stroke="#09090B" stroke-width="3"/>
+              <path d="M26 70h150M100 70v90" stroke="#09090B" stroke-width="3"/>
+              <rect x="40" y="84" width="46" height="62" rx="6" fill="#E8FBF0"/><rect x="114" y="84" width="48" height="28" rx="6" fill="#FEF3C7"/>
+              <path d="M180 40l26 26-58 58-30 6 6-30z" fill="#00DC64" stroke="#09090B" stroke-width="3" stroke-linejoin="round"/>
+              <path d="M168 52l26 26" stroke="#09090B" stroke-width="3"/>
+            </svg>
+          </sc-if>
+          <sc-if value="{{ isUnavail }}" hint-placeholder-val="{{ false }}">
+            <svg viewBox="0 0 240 200" width="240" height="200" fill="none">
+              <path d="M120 46c-22-14-56-16-84-8v118c28-8 62-6 84 8 22-14 56-16 84-8V38c-28-8-62-6-84 8z" fill="#FFFFFF" stroke="#09090B" stroke-width="3" stroke-linejoin="round"/>
+              <path d="M120 46v118" stroke="#09090B" stroke-width="3"/>
+              <rect x="96" y="96" width="48" height="40" rx="8" fill="#FDE68A" stroke="#09090B" stroke-width="3"/><path d="M106 96V84a14 14 0 0 1 28 0v12" stroke="#09090B" stroke-width="3"/><circle cx="120" cy="114" r="4" fill="#09090B"/>
+            </svg>
+          </sc-if>
+        </div>
+
+        <div class="er-copy">
+          <div class="er-top">
+            <span class="badge {{ codeCls }}">{{ code }}</span>
+            <div class="er-langs" role="group" aria-label="Language">
+              <button type="button" class="er-lang {{ enCls }}" aria-pressed="{{ isEn }}" onClick="{{ setEn }}">English</button>
+              <button type="button" class="er-lang {{ kmCls }}" lang="km" aria-pressed="{{ isKm }}" onClick="{{ setKm }}">ខ្មែរ</button>
+            </div>
+          </div>
+          <h1 class="er-h1" lang="{{ lang }}" tabindex="-1">{{ t.title }}</h1>
+          <p class="er-sub" lang="{{ lang }}">{{ t.body }}</p>
+
+          <sc-if value="{{ isNotFound }}" hint-placeholder-val="{{ true }}">
+            <div class="er-url"><span class="xs muted">{{ t.youAsked }}</span><code>{{ badPath }}</code></div>
+            <div class="er-suggest"><span class="small" lang="{{ lang }}">{{ t.didYouMean }}</span><a class="er-sug" href="{{ suggestHref }}" onClick="{{ openSuggest }}"><img src="{{ suggest.cover }}" alt=""><span class="col" style="min-width: 0"><span class="small" style="font-weight: 600">{{ suggest.title }}</span><span class="xs muted">{{ suggest.creator }} · {{ suggest.genre }}</span></span>[[i:chevron-right:16]]</a></div>
+            <form class="er-search" role="search" onSubmit="{{ doSearch }}">
+              <label class="sr-only" for="er-q">{{ t.searchLabel }}</label>
+              <span class="er-search-ic">[[i:search:18]]</span>
+              <input id="er-q" class="input" type="search" placeholder="{{ t.searchPh }}" value="{{ q }}" onChange="{{ onQ }}" lang="{{ lang }}">
+              <button type="submit" class="btn btn-primary">{{ t.search }}</button>
+            </form>
+          </sc-if>
+
+          <sc-if value="{{ isUnavail }}" hint-placeholder-val="{{ false }}">
+            <div class="er-gone">
+              <img src="{{ gone.cover }}" alt="">
+              <div class="col grow" style="gap: 2px; min-width: 0"><span class="small" style="font-weight: 600">{{ gone.title }}</span><span class="xs muted">{{ gone.creator }} · {{ gone.genre }}</span><span class="xs muted" lang="{{ lang }}">{{ goneNote }}</span></div>
+              <sc-if value="{{ goneSubbed }}" hint-placeholder-val="{{ true }}"><button type="button" class="btn btn-outline btn-sm" onClick="{{ removeGone }}" lang="{{ lang }}">{{ t.remove }}</button></sc-if>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ isMaint }}" hint-placeholder-val="{{ false }}">
+            <dl class="er-window">
+              <div><dt lang="{{ lang }}">{{ t.started }}</dt><dd>[MAINTENANCE START]</dd></div>
+              <div><dt lang="{{ lang }}">{{ t.backBy }}</dt><dd>[MAINTENANCE END] (ICT)</dd></div>
+            </dl>
+          </sc-if>
+
+          <sc-if value="{{ hasStatus }}" hint-placeholder-val="{{ false }}">
+            <div class="alert {{ statusCls }}" role="status" aria-live="polite"><span>{{ statusIc }}</span><span class="alert-desc" lang="{{ lang }}">{{ statusMsg }}</span></div>
+          </sc-if>
+
+          <div class="er-actions">
+            <sc-if value="{{ hasRetry }}" hint-placeholder-val="{{ false }}">
+              <button type="button" class="btn btn-primary btn-lg" onClick="{{ retry }}" disabled="{{ busy }}" lang="{{ lang }}"><sc-if value="{{ busy }}" hint-placeholder-val="{{ false }}"><span class="spin"></span></sc-if><sc-if value="{{ notBusy }}" hint-placeholder-val="{{ true }}">[[i:refresh:16]]</sc-if>{{ retryLabel }}</button>
+            </sc-if>
+            <sc-if value="{{ isMaint }}" hint-placeholder-val="{{ false }}">
+              <button type="button" class="btn btn-primary btn-lg" onClick="{{ notify }}" aria-pressed="{{ notifyOn }}" lang="{{ lang }}">[[i:bell:16]]{{ notifyLabel }}</button>
+            </sc-if>
+            <a class="btn {{ homeCls }} btn-lg" href="{{ homeHref }}" lang="{{ lang }}">[[i:home:16]]{{ t.home }}</a>
+            <sc-if value="{{ hasLibrary }}" hint-placeholder-val="{{ false }}"><a class="btn btn-ghost btn-lg" href="{{ libraryHref }}" lang="{{ lang }}">[[i:library:16]]{{ t.library }}</a></sc-if>
+          </div>
+
+          <sc-if value="{{ isOffline }}" hint-placeholder-val="{{ false }}">
+            <ul class="er-tips" lang="{{ lang }}">
+              <sc-for list="{{ tips }}" as="x" hint-placeholder-count="3"><li><span class="er-tick">[[i:check:12]]</span>{{ x.t }}</li></sc-for>
+            </ul>
+            <button type="button" class="er-sim" onClick="{{ simOnline }}">Simulate back online (prototype)</button>
+          </sc-if>
+
+          <div class="er-help">
+            <sc-if value="{{ hasRef }}" hint-placeholder-val="{{ false }}"><span class="row xs muted" style="gap: 6px"><span lang="{{ lang }}">{{ t.ref }}</span><code class="er-ref">{{ refId }}</code><button type="button" class="btn btn-ghost btn-sm er-copybtn" onClick="{{ copyRef }}" aria-label="Copy reference">[[i:copy:14]]</button></span></sc-if>
+            <span class="xs muted" lang="{{ lang }}">{{ t.needHelp }} <a href="{{ helpHref }}" class="er-link">{{ t.helpCenter }}</a><sc-if value="{{ showReport }}" hint-placeholder-val="{{ true }}"> · <button type="button" class="er-link" onClick="{{ report }}">{{ t.report }}</button></sc-if><sc-if value="{{ showStatus }}" hint-placeholder-val="{{ false }}"> · <a href="{{ homeHref }}" class="er-link">{{ t.statusPage }}</a></sc-if></span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <sc-if value="{{ hasCards }}" hint-placeholder-val="{{ true }}">
+      <section class="wrap er-more" aria-labelledby="er-more-h">
+        <div class="sec-head"><h2 id="er-more-h" class="h3" lang="{{ lang }}">{{ cardsTitle }}</h2><a class="btn btn-ghost btn-sm" href="{{ searchPageHref }}" lang="{{ lang }}">{{ t.browseAll }}[[i:chevron-right:14]]</a></div>
+        <ul class="er-cards">
+          <sc-for list="{{ cards }}" as="s" hint-placeholder-count="6">
+            <li><a class="er-card" href="{{ s.href }}" onClick="{{ s.open }}"><div class="cover"><img src="{{ s.cover }}" alt="" loading="lazy"><div class="tl"><sc-if value="{{ s.isNovelCard }}" hint-placeholder-val="{{ false }}"><span class="badge badge-dark">Novel</span></sc-if></div></div><span class="small trunc" style="font-weight: 600">{{ s.title }}</span><span class="xs muted trunc">{{ s.meta }}</span></a></li>
+          </sc-for>
+        </ul>
+      </section>
+    </sc-if>
+  </main>
+<!--FOOTER-->
+<!--MOBNAV-->
+<!--LAYERS-->
+</div>

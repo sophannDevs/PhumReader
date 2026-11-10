@@ -14,7 +14,7 @@ import { useAppStore } from "@/lib/store"
 import { applyBalance } from "@/lib/wallet"
 
 /** The open order, kept so a reload resumes it (real API only). */
-const PENDING_KEY = "phumreader.pendingOrder"
+const PENDING_KEY = "phumireader.pendingOrder"
 const POLL_MS = 3000
 
 type Pending = { email: string; number: string }

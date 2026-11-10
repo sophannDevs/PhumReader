@@ -1,8 +1,9 @@
 {
   "common": {
-    "siteName": "PhumReader",
+    "siteName": "PhumiReader",
     "tagline": "Read and share stories in Khmer and English.",
-    "logoKhmer": "ភូមិ"
+    "logoFirst": "Phumi",
+    "homeAria": "PhumiReader home"
   },
   "coins": {
     "balanceLabel": "{count, plural, one {# coin} other {# coins}}",
@@ -47,7 +48,7 @@
     "paySub": "{coins} coins · {method}",
     "expiresIn": "Code expires in {time}",
     "khqrBadge": "KHQR",
-    "khqrPlaceholder": "[KHQR PLACEHOLDER] · PhumReader",
+    "khqrPlaceholder": "[KHQR PLACEHOLDER] · PhumiReader",
     "khqrStep1": "Open any Bakong-member banking app",
     "khqrStep2": "Scan the code and confirm",
     "khqrStep3": "Keep this page open — it updates on its own",
@@ -223,7 +224,7 @@
     "terms": "Terms",
     "privacy": "Privacy",
     "contact": "Contact",
-    "copyright": "© 2026 PhumReader · [YOUR COMPANY NAME]. All series shown are placeholders.",
+    "copyright": "© 2026 PhumiReader · [YOUR COMPANY NAME]. All series shown are placeholders.",
     "social": "Social links",
     "facebook": "Facebook",
     "twitter": "X (Twitter)",
@@ -307,7 +308,7 @@
     "wide": "Wide line spacing"
   },
   "auth": {
-    "back": "Back to PhumReader",
+    "back": "Back to PhumiReader",
     "login": "Log in",
     "signup": "Sign up",
     "orEmail": "or with email",
@@ -335,7 +336,7 @@
     "sentSub": "We sent a reset link to",
     "sentSub2": "It expires in 30 minutes.",
     "taking": "Taking you back…",
-    "legal": "By continuing you agree to PhumReader’s Terms and Privacy Policy.",
+    "legal": "By continuing you agree to PhumiReader’s Terms and Privacy Policy.",
     "quote": "I posted my first episode on a Tuesday night. By Friday, readers in Battambang and Seoul were asking for the next one.",
     "modes": "Log in or sign up",
     "google": "Google",
@@ -508,7 +509,7 @@
     "khmer": "ខ្មែរ",
     "tags": "Tags",
     "creatorTitle": "About the creator",
-    "seriesCount": "{count, plural, one {# series} other {# series}} on PhumReader",
+    "seriesCount": "{count, plural, one {# series} other {# series}} on PhumiReader",
     "follow": "Follow creator",
     "following": "Following",
     "related": "You may also like",
@@ -556,7 +557,7 @@
     "language": "Language",
     "languageDesc": "Choose the language of menus and buttons.",
     "appearance": "Appearance",
-    "appearanceDesc": "Choose how PhumReader looks.",
+    "appearanceDesc": "Choose how PhumiReader looks.",
     "themeSystem": "System",
     "themeLight": "Light",
     "themeDark": "Dark",
@@ -717,7 +718,7 @@
     "loginDesc": "Creators manage their series and episodes here.",
     "login": "Log in",
     "notCreatorTitle": "Become a creator to publish",
-    "notCreatorDesc": "Accept the Creator terms to publish comics and web novels on PhumReader.",
+    "notCreatorDesc": "Accept the Creator terms to publish comics and web novels on PhumiReader.",
     "becomeStart": "Become a creator",
     "becomeTitle": "Become a creator",
     "becomeDesc": "Choose the name readers see on your series.",
@@ -776,7 +777,7 @@
     "status_hidden": "Hidden",
     "viewPublic": "View public page",
     "hiddenTitle": "This series is hidden",
-    "hiddenByAdmin": "PhumReader hid this series. Contact support to publish it again.",
+    "hiddenByAdmin": "PhumiReader hid this series. Contact support to publish it again.",
     "sectionBasics": "About the series",
     "type": "Type",
     "typeComic": "Comic",
@@ -1008,12 +1009,12 @@
     "eyebrow": "Admin",
     "title": "Admin",
     "loginTitle": "Log in to open the admin area",
-    "loginDesc": "Only PhumReader admins can use this page.",
+    "loginDesc": "Only PhumiReader admins can use this page.",
     "login": "Log in",
     "demoTitle": "The admin area needs the real API",
     "demoDesc": "The demo has no admin accounts. Start the backend and turn demo mode off to use this page.",
     "noAccessTitle": "You do not have access",
-    "noAccessDesc": "This area is only for PhumReader admins.",
+    "noAccessDesc": "This area is only for PhumiReader admins.",
     "home": "Back to Home",
     "tab_overview": "Overview",
     "tab_reports": "Reports",
@@ -1124,10 +1125,10 @@
     "toc": "On this page",
     "terms": {
       "title": "Terms of use",
-      "intro": "These terms explain how you may use PhumReader, a place to read comics and web novels in Khmer and English.",
+      "intro": "These terms explain how you may use PhumiReader, a place to read comics and web novels in Khmer and English.",
       "sections": [
         {
-          "h": "Using PhumReader",
+          "h": "Using PhumiReader",
           "p": "You may read, subscribe, like and comment for personal use. Do not copy, resell or scrape stories, and do not misuse the site."
         },
         {
@@ -1154,7 +1155,7 @@
     },
     "privacy": {
       "title": "Privacy policy",
-      "intro": "This page explains what PhumReader collects about you, why, and the choices you have.",
+      "intro": "This page explains what PhumiReader collects about you, why, and the choices you have.",
       "sections": [
         {
           "h": "What we collect",
@@ -1217,7 +1218,7 @@
     },
     "offline": {
       "title": "You are offline",
-      "body": "PhumReader needs a connection to load stories. Check your network and try again.",
+      "body": "PhumiReader needs a connection to load stories. Check your network and try again.",
       "retry": "Try again"
     }
   }

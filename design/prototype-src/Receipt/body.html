@@ -1,0 +1,29 @@
+<div class="v2">
+<!--HEADER-->
+  <main class="wrap col rc-wrap" style="gap: 18px; padding-top: 24px; padding-bottom: 64px">
+    <nav class="row xs muted" aria-label="Breadcrumb" style="gap: 6px"><a href="{{ shopHref }}">Coins</a>[[i:chevron-right:12]]<a href="{{ shopHref }}">Purchase history</a>[[i:chevron-right:12]]<span aria-current="page" style="color: var(--foreground)">{{ o.id }}</span></nav>
+    <section class="card rc-card" aria-labelledby="rc-h">
+      <div class="rc-top">
+        <span class="rc-ic {{ statusIcCls }}" aria-hidden="true">{{ statusIc }}</span>
+        <div class="col" style="gap: 4px; align-items: center; text-align: center"><span class="badge {{ statusCls }}">{{ statusLabel }}</span><h1 id="rc-h" class="h2">{{ headline }}</h1><p class="small muted" style="max-width: 46ch; margin: 0">{{ subline }}</p></div>
+      </div>
+      <dl class="rc-dl">
+        <sc-for list="{{ rows }}" as="r" hint-placeholder-count="6"><div class="{{ r.cls }}"><dt>{{ r.k }}</dt><dd>{{ r.v }}<sc-if value="{{ r.copy }}" hint-placeholder-val="{{ false }}"><button type="button" class="btn btn-ghost btn-icon btn-sm" onClick="{{ copyId }}" aria-label="Copy order number">[[i:copy:14]]</button></sc-if></dd></div></sc-for>
+      </dl>
+      <div class="col" style="gap: 8px"><span class="label">What happened</span>
+        <ol class="rc-tl"><sc-for list="{{ timeline }}" as="t" hint-placeholder-count="3"><li class="{{ t.cls }}"><span class="rc-dot" aria-hidden="true"></span><span class="col" style="gap: 1px"><span class="small" style="font-weight: 600">{{ t.t }}</span><span class="xs muted">{{ t.d }}</span></span></li></sc-for></ol>
+      </div>
+      <div class="rc-acts">
+        <sc-if value="{{ isFailed }}" hint-placeholder-val="{{ false }}"><a class="btn btn-primary" href="{{ shopHref }}">Try again</a></sc-if>
+        <sc-if value="{{ isPaid }}" hint-placeholder-val="{{ true }}"><button type="button" class="btn btn-outline" onClick="{{ download }}">[[i:external:14]]Download receipt (PDF)</button></sc-if>
+        <a class="btn btn-outline" href="{{ helpHref }}" onClick="{{ getHelp }}">[[i:message:14]]Get help with this order</a>
+        <sc-if value="{{ canRefund }}" hint-placeholder-val="{{ true }}"><a class="btn btn-ghost" href="{{ helpHref }}" onClick="{{ askRefund }}">Ask for a refund</a></sc-if>
+      </div>
+      <sc-if value="{{ refundNote }}" hint-placeholder-val="{{ true }}"><p class="xs muted" style="margin: 0; text-align: center">{{ refundLine }} <a class="ink" href="{{ legalHref }}" onClick="{{ lgRefund }}" style="text-decoration: underline">Coins and refunds policy</a></p></sc-if>
+    </section>
+    <p class="xs muted" style="text-align: center">Prototype: prices, the provider transaction ID and the PDF are placeholders.</p>
+  </main>
+<!--FOOTER-->
+<!--MOBNAV-->
+<!--LAYERS-->
+</div>

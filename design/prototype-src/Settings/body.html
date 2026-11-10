@@ -1,0 +1,156 @@
+<div class="v2">
+<!--HEADER-->
+  <a ref="{{ goRef }}" href="{{ homeHref }}" tabindex="-1" aria-hidden="true" style="display: none">Home</a>
+  <main class="wrap col" style="gap: 20px; padding-top: 28px; padding-bottom: 64px">
+    <div class="col" style="gap: 4px"><h1 class="h1">Settings</h1><p class="lead" style="font-size: 15px">Manage your account, reading and privacy.</p></div>
+
+    <sc-if value="{{ loggedOut }}" hint-placeholder-val="{{ false }}">
+      <div class="card col" style="align-items: center; text-align: center; gap: 10px; padding: 48px 20px"><span class="muted">[[i:settings:28]]</span><h2 class="h3">Log in to change your settings</h2><p class="small muted">Your reading, language and notification choices are saved to your account.</p><a class="btn btn-primary" href="{{ authHref }}" onClick="{{ toAuth }}">Log in</a></div>
+    </sc-if>
+
+    <sc-if value="{{ loggedIn }}" hint-placeholder-val="{{ true }}">
+    <div class="st-grid">
+      <nav class="st-nav" aria-label="Settings sections">
+        <sc-for list="{{ sections }}" as="x" hint-placeholder-count="6"><a class="st-nav-a {{ x.cls }}" href="{{ x.href }}" onClick="{{ x.pick }}" aria-current="{{ x.cur }}">{{ x.label }}</a></sc-for>
+      </nav>
+
+      <div class="col" style="gap: 20px; min-width: 0">
+        <!-- Account -->
+        <section id="set-account" class="card" aria-labelledby="h-account">
+          <div class="card-head"><h2 id="h-account" class="h3">Account</h2><p class="small muted">This is how you appear in comments.</p></div>
+          <div class="card-body col" style="gap: 18px">
+            <div class="row" style="gap: 14px"><span class="avatar brand" style="width: 56px; height: 56px; font-size: 18px">{{ initials }}</span><div class="col" style="gap: 6px"><button type="button" class="btn btn-outline btn-sm" onClick="{{ changePhoto }}">Change photo</button><span class="xs muted">JPG or PNG, up to 2 MB</span></div></div>
+            <div class="field-row">
+              <div class="field"><label class="label" for="st-name">Display name</label><input id="st-name" class="input {{ nameBad }}" value="{{ f.name }}" onChange="{{ onName }}" maxlength="30" aria-describedby="st-name-h" aria-invalid="{{ nameInvalid }}"><span id="st-name-h" class="{{ nameHintCls }}">{{ nameHint }}</span></div>
+              <div class="field"><span class="label">Email</span><div class="row st-email"><span class="trunc">{{ email }}</span><span class="badge badge-brand">[[i:check:12]]Verified</span></div><span class="hint">To change your email, contact Help.</span></div>
+            </div>
+            <div class="sep"></div>
+            <div class="st-row"><div class="col" style="gap: 2px"><span class="label">Password</span><span class="hint">Last changed 3 months ago</span></div><button type="button" class="btn btn-outline btn-sm" onClick="{{ togglePw }}" aria-expanded="{{ pwOpen }}">{{ pwBtn }}</button></div>
+            <sc-if value="{{ pwOpen }}" hint-placeholder-val="{{ false }}">
+              <form class="st-pw" onSubmit="{{ savePw }}">
+                <div class="field"><label class="label" for="pw-cur">Current password</label><input id="pw-cur" class="input" type="password" value="{{ pw.cur }}" onChange="{{ onPwCur }}" autocomplete="current-password"></div>
+                <div class="field-row">
+                  <div class="field"><label class="label" for="pw-new">New password</label><input id="pw-new" class="input" type="password" value="{{ pw.nw }}" onChange="{{ onPwNew }}" autocomplete="new-password" aria-describedby="pw-h"><span id="pw-h" class="hint">At least 8 characters, with a letter and a number.</span></div>
+                  <div class="field"><label class="label" for="pw-again">Confirm new password</label><input id="pw-again" class="input" type="password" value="{{ pw.again }}" onChange="{{ onPwAgain }}" autocomplete="new-password"></div>
+                </div>
+                <sc-if value="{{ pwErr }}" hint-placeholder-val="{{ false }}"><span class="err" role="alert">{{ pwErrMsg }}</span></sc-if>
+                <div class="row" style="gap: 8px"><button type="submit" class="btn btn-primary btn-sm">Update password</button><button type="button" class="btn btn-ghost btn-sm" onClick="{{ togglePw }}">Cancel</button></div>
+              </form>
+            </sc-if>
+            <div class="sep"></div>
+            <span class="label">Connected accounts</span>
+            <sc-for list="{{ socials }}" as="x" hint-placeholder-count="2">
+              <div class="st-row"><div class="row" style="gap: 10px"><span class="st-soc">{{ x.ic }}</span><div class="col"><span class="small" style="font-weight: 600">{{ x.name }}</span><span class="xs muted">{{ x.note }}</span></div></div><button type="button" class="btn btn-sm {{ x.btnCls }}" onClick="{{ x.toggle }}">{{ x.btn }}</button></div>
+            </sc-for>
+          </div>
+        </section>
+
+        <!-- Reading -->
+        <section id="set-reading" class="card" aria-labelledby="h-reading">
+          <div class="card-head"><h2 id="h-reading" class="h3">Reading</h2><p class="small muted">Applies to every series you read.</p></div>
+          <div class="card-body col" style="gap: 18px">
+            <div class="field"><span class="label" id="lbl-mode">Comic reading mode</span>
+              <div class="st-cards" role="radiogroup" aria-labelledby="lbl-mode">
+                <sc-for list="{{ modes }}" as="m" hint-placeholder-count="2"><button type="button" role="radio" aria-checked="{{ m.on }}" class="st-opt {{ m.cls }}" onClick="{{ m.pick }}"><span class="st-dot"></span><span class="col" style="gap: 2px; text-align: left"><span class="small" style="font-weight: 600">{{ m.label }}</span><span class="xs muted">{{ m.desc }}</span></span></button></sc-for>
+              </div>
+            </div>
+            <div class="field-row">
+              <div class="field"><label class="label" for="st-q">Image quality</label><select id="st-q" class="select" value="{{ f.quality }}" onChange="{{ onQuality }}"><option value="auto">Automatic</option><option value="high">High</option><option value="saver">Data saver</option></select><span class="hint">{{ qualityHint }}</span></div>
+              <div class="field"><span class="label" id="lbl-theme">Reader theme</span><div class="tabs-list" role="radiogroup" aria-labelledby="lbl-theme" style="width: 100%"><sc-for list="{{ themes }}" as="t" hint-placeholder-count="3"><button type="button" role="radio" aria-checked="{{ t.on }}" class="tabs-trigger {{ t.cls }}" style="flex: 1 1 0; justify-content: center" onClick="{{ t.pick }}">{{ t.label }}</button></sc-for></div></div>
+            </div>
+            <div class="field"><span class="label" id="lbl-size">Web novel text size</span>
+              <div class="row" style="gap: 12px; flex-wrap: wrap"><div class="tabs-list" role="radiogroup" aria-labelledby="lbl-size"><sc-for list="{{ sizes }}" as="z" hint-placeholder-count="4"><button type="button" role="radio" aria-checked="{{ z.on }}" class="tabs-trigger {{ z.cls }}" onClick="{{ z.pick }}" aria-label="{{ z.aria }}">{{ z.label }}</button></sc-for></div><p class="st-preview" style="font-size: {{ sizePx }}">The rain started just as the shop lights went out.</p></div>
+            </div>
+            <div class="sep"></div>
+            <sc-for list="{{ readToggles }}" as="x" hint-placeholder-count="2">
+              <div class="st-row"><div class="col" style="gap: 2px"><span class="label" id="{{ x.id }}">{{ x.label }}</span><span class="hint">{{ x.desc }}</span></div><button type="button" role="switch" class="switch {{ x.cls }}" aria-checked="{{ x.on }}" aria-labelledby="{{ x.id }}" onClick="{{ x.toggle }}"></button></div>
+            </sc-for>
+          </div>
+        </section>
+
+        <!-- Language -->
+        <section id="set-language" class="card" aria-labelledby="h-lang">
+          <div class="card-head"><h2 id="h-lang" class="h3">Language and region</h2></div>
+          <div class="card-body col" style="gap: 18px">
+            <div class="field-row">
+              <div class="field"><span class="label" id="lbl-app">App language</span><div class="tabs-list" role="radiogroup" aria-labelledby="lbl-app" style="width: 100%"><button type="button" role="radio" aria-checked="{{ isEn }}" class="tabs-trigger {{ enCls }}" style="flex: 1 1 0; justify-content: center" onClick="{{ setEn }}">English</button><button type="button" role="radio" aria-checked="{{ isKm }}" class="tabs-trigger {{ kmCls }}" style="flex: 1 1 0; justify-content: center; font-family: 'Kantumruy Pro', sans-serif" lang="km" onClick="{{ setKm }}">ខ្មែរ</button></div></div>
+              <div class="field"><label class="label" for="st-region">Region</label><select id="st-region" class="select" value="{{ f.region }}" onChange="{{ onRegion }}"><option value="KH">Cambodia</option><option value="TH">Thailand</option><option value="VN">Vietnam</option><option value="OTHER">Other</option></select><span class="hint">Some series are only available in some regions.</span></div>
+            </div>
+            <div class="field"><span class="label" id="lbl-cl">Show stories in</span>
+              <div class="row" style="gap: 8px; flex-wrap: wrap" role="group" aria-labelledby="lbl-cl"><sc-for list="{{ contentLangs }}" as="c" hint-placeholder-count="2"><button type="button" class="chip {{ c.cls }}" aria-pressed="{{ c.on }}" onClick="{{ c.toggle }}">{{ c.tick }}{{ c.label }}</button></sc-for></div>
+              <sc-if value="{{ langErr }}" hint-placeholder-val="{{ false }}"><span class="err" role="alert">Choose at least one language.</span></sc-if>
+            </div>
+          </div>
+        </section>
+
+        <!-- Notifications -->
+        <section id="set-notifs" class="card" aria-labelledby="h-notifs">
+          <div class="card-body st-row">
+            <div class="col" style="gap: 2px"><h2 id="h-notifs" class="h3">Notifications</h2><span class="hint">{{ notifSummary }}</span></div>
+            <a class="btn btn-outline btn-sm" href="{{ notifHref }}" onClick="{{ toNotifSettings }}">Manage[[i:chevron-right:14]]</a>
+          </div>
+        </section>
+
+        <!-- Privacy -->
+        <section id="set-privacy" class="card" aria-labelledby="h-privacy">
+          <div class="card-head"><h2 id="h-privacy" class="h3">Privacy and safety</h2></div>
+          <div class="card-body col" style="gap: 18px">
+            <sc-for list="{{ privToggles }}" as="x" hint-placeholder-count="2">
+              <div class="st-row"><div class="col" style="gap: 2px"><span class="label" id="{{ x.id }}">{{ x.label }}</span><span class="hint">{{ x.desc }}</span></div><button type="button" role="switch" class="switch {{ x.cls }}" aria-checked="{{ x.on }}" aria-labelledby="{{ x.id }}" onClick="{{ x.toggle }}"></button></div>
+            </sc-for>
+            <div class="sep"></div>
+            <div class="col" style="gap: 8px"><span class="label">Blocked accounts</span>
+              <sc-if value="{{ hasBlocked }}" hint-placeholder-val="{{ true }}"><ul class="st-mini"><sc-for list="{{ blockedList }}" as="b" hint-placeholder-count="2"><li><span class="row small" style="gap: 8px"><span class="avatar" style="width: 26px; height: 26px; font-size: 10px">{{ b.ini }}</span>{{ b.name }}</span><button type="button" class="btn btn-outline btn-sm" onClick="{{ b.unblock }}">Unblock</button></li></sc-for></ul></sc-if>
+              <sc-if value="{{ noBlocked }}" hint-placeholder-val="{{ false }}"><span class="hint">You haven’t blocked anyone. Blocked people can’t reply to you, and you won’t see their comments.</span></sc-if>
+            </div>
+            <div class="col" style="gap: 8px"><span class="label">Your reports</span>
+              <sc-if value="{{ hasReports }}" hint-placeholder-val="{{ true }}"><ul class="st-mini"><sc-for list="{{ reports }}" as="r" hint-placeholder-count="2"><li><span class="col" style="gap: 1px; min-width: 0"><span class="small trunc">{{ r.what }}</span><span class="xs muted">{{ r.meta }}</span></span><span class="badge {{ r.cls }}">{{ r.status }}</span></li></sc-for></ul></sc-if>
+              <sc-if value="{{ noReports }}" hint-placeholder-val="{{ false }}"><span class="hint">Reports you send appear here with their status.</span></sc-if>
+            </div>
+            <div class="sep"></div>
+            <div class="st-row"><div class="col" style="gap: 2px"><span class="label">Download your data</span><span class="hint">Get a copy of your library, comments and purchases.</span></div><button type="button" class="btn btn-outline btn-sm" onClick="{{ download }}" disabled="{{ dlBusy }}">{{ dlLabel }}</button></div>
+          </div>
+        </section>
+
+        <!-- Coins -->
+        <section id="set-coins" class="card" aria-labelledby="h-coins">
+          <div class="card-body st-row">
+            <div class="row" style="gap: 12px"><span class="coin" style="width: 32px; height: 32px; font-size: 13px">C</span><div class="col" style="gap: 2px"><h2 id="h-coins" class="h3">Coins and payments</h2><span class="hint">{{ coinCount }} coins · Payment details are kept by the payment provider, not PhumiReader.</span></div></div>
+            <a class="btn btn-outline btn-sm" href="{{ shopHref }}">Purchase history[[i:chevron-right:14]]</a>
+          </div>
+        </section>
+
+        <!-- Danger -->
+        <section id="set-danger" class="card st-danger" aria-labelledby="h-danger">
+          <div class="card-head"><h2 id="h-danger" class="h3">Account actions</h2></div>
+          <div class="card-body col" style="gap: 14px">
+            <div class="st-row"><div class="col" style="gap: 2px"><span class="label">Log out everywhere</span><span class="hint">Logs you out on all phones and computers, including this one.</span></div><button type="button" class="btn btn-outline btn-sm" onClick="{{ logoutAll }}">Log out everywhere</button></div>
+            <div class="sep"></div>
+            <div class="st-row"><div class="col" style="gap: 2px"><span class="label">Delete account</span><span class="hint">Deletes your library, comments and unused coins. This can’t be undone.</span></div><button type="button" class="btn btn-destructive btn-sm" onClick="{{ openDelete }}">Delete account</button></div>
+          </div>
+        </section>
+      </div>
+    </div>
+    </sc-if>
+  </main>
+
+  <sc-if value="{{ dirty }}" hint-placeholder-val="{{ false }}">
+    <div class="st-save" role="region" aria-label="Unsaved changes">
+      <span class="small" style="font-weight: 600">You have unsaved changes</span>
+      <div class="row" style="gap: 8px"><button type="button" class="btn btn-ghost btn-sm" onClick="{{ discard }}">Discard</button><button type="button" class="btn btn-primary btn-sm" onClick="{{ save }}" disabled="{{ saveBlocked }}">Save changes</button></div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ delOpen }}" hint-placeholder-val="{{ false }}">
+    <div class="overlay" onClick="{{ closeDelete }}"></div>
+    <div class="dialog" role="alertdialog" aria-modal="true" aria-labelledby="del-h" style="top: {{ dlgTop }}">
+      <h2 id="del-h" class="h3">Delete your account?</h2>
+      <p class="small muted">You’ll lose your library, reading history, comments and {{ coinCount }} unused coins. Unlocked episodes can’t be restored.</p>
+      <div class="field"><label class="label" for="del-in">Type DELETE to confirm</label><input id="del-in" class="input" value="{{ delText }}" onChange="{{ onDelText }}" autocomplete="off"></div>
+      <div class="row" style="gap: 8px; justify-content: flex-end"><button type="button" class="btn btn-ghost" onClick="{{ closeDelete }}">Cancel</button><button type="button" class="btn btn-destructive" onClick="{{ doDelete }}" disabled="{{ delBlocked }}">Delete account</button></div>
+    </div>
+  </sc-if>
+<!--FOOTER-->
+<!--MOBNAV-->
+<!--LAYERS-->
+</div>

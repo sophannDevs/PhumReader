@@ -1,0 +1,51 @@
+<div class="v2">
+<!--HEADER-->
+  <main class="wrap col" style="gap: 20px; padding-top: 28px; padding-bottom: 64px">
+    <div class="col" style="gap: 4px"><h1 class="h1">{{ pageTitle }}</h1><p class="lead" style="font-size: 15px">{{ pageLead }}</p></div>
+
+    <div class="gn-chips" role="tablist" aria-label="Genres">
+      <sc-for list="{{ genreChips }}" as="g" hint-placeholder-count="9"><button type="button" role="tab" class="chip {{ g.cls }}" aria-selected="{{ g.on }}" onClick="{{ g.pick }}">{{ g.label }}<span class="gn-count">{{ g.count }}</span></button></sc-for>
+    </div>
+
+    <sc-if value="{{ hasBanner }}" hint-placeholder-val="{{ true }}">
+      <section class="gn-banner" style="background: {{ banner.bg }}">
+        <div class="col" style="gap: 6px; min-width: 0"><span class="eyebrow" style="color: {{ banner.ink }}">{{ banner.count }} series</span><h2 class="h2">{{ banner.name }}</h2><p class="small" style="color: #3f3f46; max-width: 60ch">{{ banner.desc }}</p></div>
+        <div class="gn-stack" aria-hidden="true"><sc-for list="{{ banner.covers }}" as="c" hint-placeholder-count="3"><img src="{{ c.cover }}" alt=""></sc-for></div>
+      </section>
+    </sc-if>
+
+    <div class="gn-filters">
+      <div class="tabs-list" role="group" aria-label="Format"><sc-for list="{{ formats }}" as="f" hint-placeholder-count="3"><button type="button" class="tabs-trigger {{ f.cls }}" aria-pressed="{{ f.on }}" onClick="{{ f.pick }}">{{ f.label }}</button></sc-for></div>
+      <label class="sr-only" for="gn-status">Status</label>
+      <select id="gn-status" class="select gn-sel" value="{{ status }}" onChange="{{ onStatus }}"><option value="any">Any status</option><option value="ongoing">Ongoing</option><option value="completed">Completed</option></select>
+      <label class="sr-only" for="gn-day">Update day</label>
+      <select id="gn-day" class="select gn-sel" value="{{ day }}" onChange="{{ onDay }}"><sc-for list="{{ dayOpts }}" as="d" hint-placeholder-count="8"><option value="{{ d.v }}">{{ d.label }}</option></sc-for></select>
+      <div class="row gn-sort" style="gap: 8px; margin-left: auto"><label class="small muted" for="gn-sort">Sort</label><select id="gn-sort" class="select gn-sel" value="{{ sort }}" onChange="{{ onSort }}"><option value="popular">Most popular</option><option value="liked">Most liked</option><option value="updated">Recently updated</option><option value="az">A to Z</option></select></div>
+    </div>
+
+    <div class="row" style="justify-content: space-between; gap: 12px; min-height: 32px">
+      <span class="small muted" role="status" aria-live="polite">{{ countLine }}</span>
+      <sc-if value="{{ hasFilters }}" hint-placeholder-val="{{ false }}"><button type="button" class="btn btn-ghost btn-sm" onClick="{{ clearFilters }}">[[i:x:14]]Clear filters ({{ filterCount }})</button></sc-if>
+    </div>
+
+    <sc-if value="{{ hasResults }}" hint-placeholder-val="{{ true }}">
+      <ul class="grid6 gn-grid">
+        <sc-for list="{{ results }}" as="s" hint-placeholder-count="12">
+          <li><a class="s-card" href="{{ s.href }}" onClick="{{ s.open }}">
+            <div class="cover"><img src="{{ s.cover }}" alt="" loading="lazy"><div class="tl"><sc-if value="{{ s.up }}" hint-placeholder-val="{{ false }}"><span class="badge badge-up">UP</span></sc-if><sc-if value="{{ s.isNovelCard }}" hint-placeholder-val="{{ false }}"><span class="badge badge-dark">Novel</span></sc-if><sc-if value="{{ s.done }}" hint-placeholder-val="{{ false }}"><span class="badge badge-secondary">Completed</span></sc-if></div></div>
+            <div class="col" style="gap: 3px"><span class="t">{{ s.title }}</span><span class="m">{{ s.creator }}</span><span class="m">{{ s.sub }}</span></div>
+          </a></li>
+        </sc-for>
+      </ul>
+    </sc-if>
+    <sc-if value="{{ isEmpty }}" hint-placeholder-val="{{ false }}">
+      <div class="card col" style="align-items: center; text-align: center; gap: 10px; padding: 48px 20px"><span class="muted">[[i:search:28]]</span><h2 class="h3">No series match these filters</h2><p class="small muted">Try a different day or status, or clear the filters.</p><button type="button" class="btn btn-outline" onClick="{{ clearFilters }}">Clear filters</button></div>
+    </sc-if>
+    <sc-if value="{{ hasMore }}" hint-placeholder-val="{{ true }}">
+      <div class="row" style="justify-content: center; gap: 12px"><span class="small muted">Showing {{ shownCount }} of {{ totalCount }}</span><button type="button" class="btn btn-outline" onClick="{{ more }}">Show more</button></div>
+    </sc-if>
+  </main>
+<!--FOOTER-->
+<!--MOBNAV-->
+<!--LAYERS-->
+</div>

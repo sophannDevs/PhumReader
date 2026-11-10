@@ -196,7 +196,7 @@ class LibraryApiTest {
 
     @Test
     void theDemoReadersHistoryCanBeRemovedAndRestored() throws Exception {
-        UUID demoReader = sessions.userId("reader@toonwave.app");
+        UUID demoReader = sessions.userId("reader@phumireader.app");
         JsonNode history = getJson("/api/v1/me/history", demoReader);
         List<JsonNode> items = new ArrayList<>(history.get("items").values());
         assertThat(items.stream().map(i -> i.get("series").asString()))

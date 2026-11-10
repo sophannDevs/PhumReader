@@ -55,7 +55,7 @@ export function SiteFooter() {
       <div className="container py-10">
         <div className="grid gap-8 md:grid-cols-[1.4fr_repeat(3,1fr)]">
           <div className="flex max-w-xs flex-col gap-4">
-            <Logo size="footer" khmer />
+            <Logo size="footer" />
             <p className="text-sm text-muted-foreground">{t("description")}</p>
             <ul aria-label={t("social")} className="flex gap-2">
               {socials.map((s) => (

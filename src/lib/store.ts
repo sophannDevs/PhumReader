@@ -11,7 +11,7 @@ import type { Locale } from "@/i18n/routing"
  * purchases, reader settings), persisted in localStorage under one key.
  * Per design/spec.md "Simulated state". Per device, not per account (Assumption 14).
  */
-export const STORE_KEY = "phumreader.app"
+export const STORE_KEY = "phumireader.app"
 
 export type StoredUser = { name: string; email: string; /** From the real API: READER, CREATOR, ADMIN. */ roles?: string[]; /** From the real API: the profile picture, or null for initials. */ avatarUrl?: string | null }
 export type StoredAccount = StoredUser & { password: string }

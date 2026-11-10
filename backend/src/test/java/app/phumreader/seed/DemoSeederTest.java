@@ -53,10 +53,11 @@ class DemoSeederTest {
         Map<String, Object> reader =
                 jdbc.queryForMap(
                         "select id, password_hash, display_name, email_verified_at from users"
-                                + " where email = 'reader@toonwave.app'");
+                                + " where email = 'reader@phumireader.app'");
         assertThat(reader.get("display_name")).isEqualTo("Sokha Chan");
         assertThat(reader.get("email_verified_at")).isNotNull();
-        assertThat(passwords.matches("Toonwave1!", (String) reader.get("password_hash"))).isTrue();
+        assertThat(passwords.matches("PhumiReader1!", (String) reader.get("password_hash")))
+                .isTrue();
 
         Object id = reader.get("id");
         assertThat(count("select balance from coin_wallets where user_id = ?", id)).isEqualTo(3);
@@ -81,7 +82,7 @@ class DemoSeederTest {
                 jdbc.queryForObject(
                         "select password_hash from users where email = 'creator@toonwave.app'",
                         String.class);
-        assertThat(passwords.matches("Toonwave1!", hash)).isTrue();
+        assertThat(passwords.matches("PhumiReader1!", hash)).isTrue();
         assertThat(
                         count(
                                 "select count(*) from series s join users u on u.id = s.creator_id"
@@ -91,7 +92,7 @@ class DemoSeederTest {
         assertThat(
                         count(
                                 "select count(*) from users where password_hash is not null"
-                                        + " and email not in ('reader@toonwave.app', 'creator@toonwave.app')"))
+                                        + " and email not in ('reader@phumireader.app', 'creator@toonwave.app')"))
                 .isZero();
     }
 

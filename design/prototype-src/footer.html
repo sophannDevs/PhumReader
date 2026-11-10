@@ -1,0 +1,22 @@
+  <footer class="v2-footer">
+    <div class="wrap">
+      <div class="foot-grid">
+        <div class="foot-col foot-brand" style="gap: 12px">
+          <a class="logo" href="{{ homeHref }}"><span class="logo-mark" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M3 4.5h10M3 8h10M3 11.5h6"></path></svg></span><span class="logo-t">Phumi<span class="logo-r">Reader</span></span></a>
+          <p class="small muted" style="max-width: 36ch">Comics and web novels from Cambodia and beyond, in Khmer and English.</p>
+          <div class="row" style="gap: 6px">
+            <a class="btn btn-outline btn-icon btn-sm" href="#top" aria-label="Facebook">f</a>
+            <a class="btn btn-outline btn-icon btn-sm" href="#top" aria-label="Telegram">t</a>
+            <a class="btn btn-outline btn-icon btn-sm" href="#top" aria-label="YouTube">▶</a>
+          </div>
+        </div>
+        <div class="foot-col"><h4>Read</h4><a href="{{ homeHref }}">Originals</a><a href="{{ rankHref }}">Rankings</a><a href="{{ genresHref }}">Genres</a><a href="{{ genresHref }}">Web novels</a></div>
+        <div class="foot-col"><h4>Create</h4><a href="{{ joinHref }}">Become a creator</a><a href="{{ creatorHref }}">Creator dashboard</a><a href="{{ legalHref }}" onClick="{{ lgCreator }}">Creator guidelines</a><a href="{{ earnHref }}">Earnings</a></div>
+        <div class="foot-col"><h4>Help</h4><a href="{{ helpHref }}">Help center</a><a href="{{ legalHref }}" onClick="{{ rpLegal }}">Community guidelines</a><a href="{{ legalHref }}" onClick="{{ lgTerms }}">Terms</a><a href="{{ legalHref }}" onClick="{{ lgPrivacy }}">Privacy</a><a href="{{ legalHref }}" onClick="{{ lgRefund }}">Coins and refunds</a><a href="{{ helpHref }}" onClick="{{ hpContact }}">Contact us</a></div>
+      </div>
+      <div class="foot-bottom">
+        <span>© {{ year }} PhumiReader · [YOUR COMPANY NAME]. All series shown are placeholders.</span>
+        <button type="button" class="row foot-lang" style="gap: 6px" onClick="{{ toggleLang }}" data-no-tr="1">[[i:globe:14]]English · ខ្មែរ</button>
+      </div>
+    </div>
+  </footer>

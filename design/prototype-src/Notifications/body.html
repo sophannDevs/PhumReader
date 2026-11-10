@@ -1,0 +1,74 @@
+<div class="v2">
+<!--HEADER-->
+  <a ref="{{ goRef }}" href="{{ goHref }}" tabindex="-1" aria-hidden="true" style="display: none">Open</a>
+  <main class="wrap col" style="gap: 20px; padding-top: 28px; padding-bottom: 64px">
+    <div class="sec-head">
+      <div class="col" style="gap: 4px"><h1 class="h1">Notifications</h1><p class="lead" style="font-size: 15px">{{ headLine }}</p></div>
+      <sc-if value="{{ hasUnreadHere }}" hint-placeholder-val="{{ true }}"><button type="button" class="btn btn-outline btn-sm" onClick="{{ markAll }}">[[i:check:14]]Mark all as read</button></sc-if>
+    </div>
+    <sc-if value="{{ loggedOut }}" hint-placeholder-val="{{ false }}">
+      <div class="card col" style="align-items: center; text-align: center; gap: 10px; padding: 48px 20px"><span class="muted">[[i:bell:28]]</span><h2 class="h3">Log in to see your notifications</h2><p class="small muted">Get alerts when series you subscribe to have new episodes.</p><a class="btn btn-primary" href="{{ authHref }}" onClick="{{ toAuth }}">Log in</a></div>
+    </sc-if>
+    <sc-if value="{{ loggedIn }}" hint-placeholder-val="{{ true }}">
+    <div class="nt-grid">
+      <section class="col" style="gap: 14px; min-width: 0" aria-label="Inbox">
+        <div class="line-tabs" role="tablist" aria-label="Filter notifications">
+          <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="5"><button type="button" role="tab" class="line-tab {{ t.cls }}" aria-selected="{{ t.on }}" onClick="{{ t.pick }}">{{ t.label }}<sc-if value="{{ t.hasCount }}" hint-placeholder-val="{{ false }}"><span class="badge badge-secondary">{{ t.count }}</span></sc-if></button></sc-for>
+        </div>
+        <sc-for list="{{ groups }}" as="g" hint-placeholder-count="2">
+          <div class="col" style="gap: 8px">
+            <h2 class="xs muted nt-gh">{{ g.label }}</h2>
+            <ul class="nt-list">
+              <sc-for list="{{ g.items }}" as="n" hint-placeholder-count="3">
+                <li class="nt-item {{ n.cls }}">
+                  <span class="nt-ic {{ n.icCls }}" aria-hidden="true">{{ n.ic }}</span>
+                  <button type="button" class="nt-main" onClick="{{ n.open }}" aria-label="{{ n.aria }}">
+                    <span class="row" style="gap: 8px; min-width: 0"><span class="small nt-title">{{ n.title }}</span><sc-if value="{{ n.unread }}" hint-placeholder-val="{{ false }}"><span class="nt-dot" aria-hidden="true"></span></sc-if></span>
+                    <span class="xs muted nt-body">{{ n.body }}</span>
+                    <span class="xs muted">{{ n.time }}</span>
+                  </button>
+                  <div class="nt-acts">
+                    <button type="button" class="btn btn-ghost btn-icon btn-sm" onClick="{{ n.toggleRead }}" aria-label="{{ n.readAria }}" title="{{ n.readAria }}">[[i:check:16]]</button>
+                    <button type="button" class="btn btn-ghost btn-icon btn-sm" onClick="{{ n.remove }}" aria-label="Remove notification" title="Remove">[[i:x:16]]</button>
+                  </div>
+                </li>
+              </sc-for>
+            </ul>
+          </div>
+        </sc-for>
+        <sc-if value="{{ isEmpty }}" hint-placeholder-val="{{ false }}">
+          <div class="card col" style="align-items: center; text-align: center; gap: 10px; padding: 40px 20px"><span class="muted">[[i:bell:28]]</span><h2 class="h3">{{ emptyTitle }}</h2><p class="small muted">{{ emptyBody }}</p><sc-if value="{{ emptyCta }}" hint-placeholder-val="{{ false }}"><a class="btn btn-outline" href="{{ rankHref }}">Find series to subscribe to</a></sc-if></div>
+        </sc-if>
+        <sc-if value="{{ hasUndo }}" hint-placeholder-val="{{ false }}">
+          <div class="nt-undo" role="status"><span class="small">Notification removed</span><button type="button" class="btn btn-sm nt-undo-btn" onClick="{{ undo }}">Undo</button></div>
+        </sc-if>
+      </section>
+
+      <aside id="ns" class="card nt-set" aria-labelledby="ns-h">
+        <div class="card-head"><h2 id="ns-h" class="h3">Alert settings</h2><p class="small muted">Choose what you hear about, and where.</p></div>
+        <div class="card-body col" style="gap: 4px">
+          <div class="nt-srow nt-shead" aria-hidden="true"><span></span><span>Push</span><span>Email</span></div>
+          <sc-for list="{{ prefRows }}" as="r" hint-placeholder-count="5">
+            <div class="nt-srow"><span class="col" style="gap: 2px; min-width: 0"><span class="small" style="font-weight: 600" id="{{ r.id }}">{{ r.label }}</span><span class="xs muted">{{ r.desc }}</span></span>
+              <button type="button" role="switch" class="switch {{ r.pushCls }}" aria-checked="{{ r.push }}" aria-label="{{ r.pushAria }}" onClick="{{ r.togglePush }}"></button>
+              <button type="button" role="switch" class="switch {{ r.mailCls }}" aria-checked="{{ r.mail }}" aria-label="{{ r.mailAria }}" onClick="{{ r.toggleMail }}"></button>
+            </div>
+          </sc-for>
+          <div class="sep" style="margin: 10px 0"></div>
+          <div class="st-row2"><span class="col" style="gap: 2px"><span class="small" style="font-weight: 600" id="qh-l">Quiet hours</span><span class="xs muted">No push alerts during these hours</span></span><button type="button" role="switch" class="switch {{ quietCls }}" aria-checked="{{ quiet }}" aria-labelledby="qh-l" onClick="{{ toggleQuiet }}"></button></div>
+          <sc-if value="{{ quiet }}" hint-placeholder-val="{{ true }}">
+            <div class="row" style="gap: 8px; padding-top: 8px"><label class="sr-only" for="qh-from">From</label><select id="qh-from" class="select" value="{{ qFrom }}" onChange="{{ onFrom }}"><sc-for list="{{ hours }}" as="h" hint-placeholder-count="24"><option value="{{ h.v }}">{{ h.label }}</option></sc-for></select><span class="small muted">to</span><label class="sr-only" for="qh-to">To</label><select id="qh-to" class="select" value="{{ qTo }}" onChange="{{ onTo }}"><sc-for list="{{ hours }}" as="h" hint-placeholder-count="24"><option value="{{ h.v }}">{{ h.label }}</option></sc-for></select></div>
+            <span class="xs muted" style="padding-top: 4px">Cambodia time (ICT)</span>
+          </sc-if>
+          <div class="sep" style="margin: 10px 0"></div>
+          <div class="st-row2"><span class="col" style="gap: 2px"><span class="small" style="font-weight: 600" id="dg-l">Daily digest</span><span class="xs muted">One email a day instead of one per episode</span></span><button type="button" role="switch" class="switch {{ digestCls }}" aria-checked="{{ digest }}" aria-labelledby="dg-l" onClick="{{ toggleDigest }}"></button></div>
+          <span class="xs muted" style="padding-top: 10px" role="status" aria-live="polite">{{ savedNote }}</span>
+        </div>
+      </aside>
+    </div>
+    </sc-if>
+  </main>
+<!--FOOTER-->
+<!--MOBNAV-->
+<!--LAYERS-->
+</div>

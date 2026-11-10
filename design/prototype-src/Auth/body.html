@@ -1,0 +1,204 @@
+<div class="v2">
+<!--HEADER-->
+  <a ref="{{ goRef }}" href="{{ returnHref }}" tabindex="-1" aria-hidden="true" style="display: none">Continue</a>
+  <main class="au-bg" id="main">
+    <div class="au-grid">
+
+      <!-- ============ Brand panel (desktop) ============ -->
+      <section class="au-panel only-desk" aria-label="{{ t.panelEyebrow }}">
+        <div class="col" style="gap: 14px">
+          <span class="eyebrow">{{ t.panelEyebrow }}</span>
+          <h2 class="au-ptitle">{{ t.panelTitle }}</h2>
+          <p class="au-psub">{{ t.panelSub }}</p>
+          <ul class="au-perks">
+            <li><span class="au-perk-ic">[[i:bookmark:14]]</span>{{ t.b1 }}</li>
+            <li><span class="au-perk-ic">[[i:bell:14]]</span>{{ t.b2 }}</li>
+            <li><span class="au-perk-ic">[[i:zap:14]]</span>{{ t.b3 }}</li>
+          </ul>
+        </div>
+        <div class="au-art" aria-hidden="true">
+          <sc-for list="{{ art }}" as="a" hint-placeholder-count="3"><img src="{{ a.cover }}" alt=""></sc-for>
+        </div>
+      </section>
+
+      <!-- ============ Card ============ -->
+      <section class="au-card" lang="{{ lang }}" aria-labelledby="au-title">
+        <div class="au-top">
+          <span class="au-ctx">{{ ctxLine }}</span>
+          <div class="au-langs" role="group" aria-label="Language">
+            <button type="button" class="au-lang {{ enCls }}" onClick="{{ setEn }}" aria-pressed="{{ isEn }}" lang="en">English</button>
+            <button type="button" class="au-lang {{ kmCls }}" onClick="{{ setKm }}" aria-pressed="{{ isKm }}" lang="km">ខ្មែរ</button>
+          </div>
+        </div>
+
+        <sc-if value="{{ showTabs }}" hint-placeholder-val="{{ true }}">
+          <div class="au-tabs" role="tablist" aria-label="{{ t.login }} / {{ t.signup }}">
+            <button type="button" role="tab" class="au-tab {{ loginCls }}" aria-selected="{{ isLogin }}" onClick="{{ toLogin }}">{{ t.login }}</button>
+            <button type="button" role="tab" class="au-tab {{ signupCls }}" aria-selected="{{ isSignup }}" onClick="{{ toSignup }}">{{ t.signup }}</button>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ hasFlash }}" hint-placeholder-val="{{ false }}">
+          <div class="alert brand" role="status"><span class="ink">[[i:check:16]]</span><span class="alert-desc" style="color: var(--brand-ink); font-weight: 500">{{ flash }}</span></div>
+        </sc-if>
+
+        <!-- ================= LOG IN ================= -->
+        <sc-if value="{{ isLogin }}" hint-placeholder-val="{{ true }}">
+          <div class="au-sec">
+            <div class="au-head"><h1 id="au-title" class="au-h1">{{ t.welcome }}</h1><p class="au-sub">{{ t.loginSub }}</p></div>
+            <sc-if value="{{ hasFormErr }}" hint-placeholder-val="{{ false }}">
+              <div class="alert bad" role="alert"><span>[[i:alert:16]]</span><div class="col" style="gap: 2px"><span class="alert-title">{{ formErr }}</span><sc-if value="{{ locked }}" hint-placeholder-val="{{ false }}"><button type="button" class="au-link" onClick="{{ toForgot }}" style="align-self: flex-start">{{ t.resetNow }}</button></sc-if></div></div>
+            </sc-if>
+            <form class="au-form" onSubmit="{{ submitLogin }}" novalidate="novalidate">
+              <div class="field">
+                <label class="label" for="li-email">{{ t.email }}</label>
+                <input id="li-email" class="input au-in {{ e.liEmail.cls }}" type="email" autocomplete="email" placeholder="you@example.com" value="{{ liEmail }}" onChange="{{ onLiEmail }}" aria-invalid="{{ e.liEmail.on }}" aria-describedby="li-email-err">
+                <sc-if value="{{ e.liEmail.on }}" hint-placeholder-val="{{ false }}"><span id="li-email-err" class="err">{{ e.liEmail.msg }}</span></sc-if>
+              </div>
+              <div class="field">
+                <label class="label" for="li-pass">{{ t.password }}</label>
+                <div class="au-pw"><input id="li-pass" class="input au-in {{ e.liPass.cls }}" type="{{ liType }}" autocomplete="current-password" placeholder="{{ t.passPh }}" value="{{ liPass }}" onChange="{{ onLiPass }}" onKeyUp="{{ capsCheck }}" aria-invalid="{{ e.liPass.on }}" aria-describedby="li-pass-err"><button type="button" class="au-eye" onClick="{{ toggleLi }}" aria-pressed="{{ liShow }}" aria-controls="li-pass">{{ liEye }}</button></div>
+                <sc-if value="{{ caps }}" hint-placeholder-val="{{ false }}"><span class="hint" style="color: var(--warning); font-weight: 500">{{ t.caps }}</span></sc-if>
+                <sc-if value="{{ e.liPass.on }}" hint-placeholder-val="{{ false }}"><span id="li-pass-err" class="err">{{ e.liPass.msg }}</span></sc-if>
+              </div>
+              <div class="au-row">
+                <label class="row small" style="gap: 8px; cursor: pointer"><button type="button" role="checkbox" aria-checked="{{ remember }}" class="checkbox {{ rememberCls }}" onClick="{{ toggleRemember }}">[[i:check:12]]</button>{{ t.remember }}</label>
+                <button type="button" class="au-link" onClick="{{ toForgot }}">{{ t.forgot }}</button>
+              </div>
+              <button type="submit" class="au-btn" disabled="{{ busyLogin }}"><sc-if value="{{ busyLogin }}" hint-placeholder-val="{{ false }}"><span class="spin"></span></sc-if>{{ t.login }}</button>
+            </form>
+            <div class="au-or"><span>{{ t.or }}</span></div>
+            <div class="au-socs">
+              <sc-for list="{{ socials }}" as="so" hint-placeholder-count="3">
+                <button type="button" class="au-soc" onClick="{{ so.go }}" disabled="{{ anyBusy }}"><sc-if value="{{ so.busy }}" hint-placeholder-val="{{ false }}"><span class="spin"></span></sc-if><sc-if value="{{ so.g }}" hint-placeholder-val="{{ true }}"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M22.6 12.2c0-.8-.1-1.5-.2-2.2H12v4.2h5.9a5 5 0 0 1-2.2 3.3v2.7h3.6c2.1-1.9 3.3-4.8 3.3-8z"></path><path fill="#34A853" d="M12 23c3 0 5.5-1 7.3-2.7l-3.6-2.7c-1 .7-2.2 1-3.7 1-2.9 0-5.3-1.9-6.2-4.5H2.1v2.8A11 11 0 0 0 12 23z"></path><path fill="#FBBC05" d="M5.8 14.1a6.6 6.6 0 0 1 0-4.2V7.1H2.1a11 11 0 0 0 0 9.8z"></path><path fill="#EA4335" d="M12 5.4c1.6 0 3.1.6 4.2 1.7l3.2-3.2A11 11 0 0 0 2.1 7.1l3.7 2.8C6.7 7.3 9.1 5.4 12 5.4z"></path></svg></sc-if><sc-if value="{{ so.f }}" hint-placeholder-val="{{ false }}"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path fill="#1877F2" d="M24 12a12 12 0 1 0-13.9 11.9v-8.4h-3V12h3V9.4c0-3 1.8-4.7 4.5-4.7 1.3 0 2.7.2 2.7.2v3h-1.5c-1.5 0-2 .9-2 1.9V12h3.4l-.5 3.5h-2.9v8.4A12 12 0 0 0 24 12z"></path></svg></sc-if><sc-if value="{{ so.a }}" hint-placeholder-val="{{ false }}"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M16.4 12.6c0-2.6 2.1-3.8 2.2-3.9-1.2-1.8-3.1-2-3.7-2-1.6-.2-3.1.9-3.9.9-.8 0-2-.9-3.3-.9-1.7 0-3.3 1-4.2 2.5-1.8 3.1-.5 7.7 1.3 10.2.9 1.2 1.9 2.6 3.2 2.6 1.3-.1 1.8-.8 3.3-.8 1.6 0 2 .8 3.4.8 1.4 0 2.3-1.3 3.1-2.5 1-1.4 1.4-2.8 1.4-2.9 0 0-2.8-1.1-2.8-4zM13.9 5c.7-.9 1.2-2 1.1-3.2-1 0-2.3.7-3 1.6-.7.8-1.3 2-1.1 3.1 1.2.1 2.3-.6 3-1.5z"></path></svg></sc-if>{{ so.label }}</button>
+              </sc-for>
+            </div>
+            <p class="au-sub" style="text-align: center">{{ t.noAccount }} <button type="button" class="au-link" onClick="{{ toSignup }}">{{ t.createFree }}</button></p>
+            <p class="au-note">Prototype: log in with reader@phumireader.app and PhumiReader1! Any other password shows the wrong-password error.</p>
+          </div>
+        </sc-if>
+
+        <!-- ================= SIGN UP ================= -->
+        <sc-if value="{{ isSignup }}" hint-placeholder-val="{{ false }}">
+          <div class="au-sec">
+            <div class="au-head"><h1 class="au-h1">{{ t.signupTitle }}</h1><p class="au-sub">{{ t.signupSub }}</p></div>
+            <form class="au-form" onSubmit="{{ submitSignup }}" novalidate="novalidate">
+              <div class="field">
+                <label class="label" for="su-name">{{ t.name }}</label>
+                <input id="su-name" class="input au-in {{ e.suName.cls }}" autocomplete="nickname" maxlength="20" placeholder="{{ t.namePh }}" value="{{ suName }}" onChange="{{ onSuName }}" aria-invalid="{{ e.suName.on }}">
+                <sc-if value="{{ e.suName.on }}" hint-placeholder-val="{{ false }}"><span class="err">{{ e.suName.msg }}</span></sc-if>
+                <sc-if value="{{ e.suName.off }}" hint-placeholder-val="{{ true }}"><span class="hint">{{ t.nameHint }}</span></sc-if>
+              </div>
+              <div class="field">
+                <label class="label" for="su-email">{{ t.email }}</label>
+                <input id="su-email" class="input au-in {{ e.suEmail.cls }}" type="email" autocomplete="email" placeholder="you@example.com" value="{{ suEmail }}" onChange="{{ onSuEmail }}" aria-invalid="{{ e.suEmail.on }}">
+                <sc-if value="{{ e.suEmail.on }}" hint-placeholder-val="{{ false }}"><span class="err">{{ e.suEmail.msg }} <sc-if value="{{ emailTaken }}" hint-placeholder-val="{{ false }}"><button type="button" class="au-link" onClick="{{ takenToLogin }}">{{ t.loginInstead }}</button></sc-if></span></sc-if>
+              </div>
+              <div class="field">
+                <label class="label" for="su-pass">{{ t.password }}</label>
+                <div class="au-pw"><input id="su-pass" class="input au-in {{ e.suPass.cls }}" type="{{ suType }}" autocomplete="new-password" placeholder="{{ t.passPh }}" value="{{ suPass }}" onChange="{{ onSuPass }}" aria-invalid="{{ e.suPass.on }}" aria-describedby="su-rules"><button type="button" class="au-eye" onClick="{{ toggleSu }}" aria-pressed="{{ suShow }}" aria-controls="su-pass">{{ suEye }}</button></div>
+                <div class="au-meter" aria-live="polite"><div class="au-bar"><span class="{{ str.cls }}" style="width: {{ str.w }}"></span></div><span class="au-str {{ str.cls }}">{{ str.label }}</span></div>
+                <ul id="su-rules" class="au-rules"><sc-for list="{{ rules }}" as="r" hint-placeholder-count="4"><li class="{{ r.cls }}"><span class="au-tick">[[i:check:10]]</span>{{ r.label }}</li></sc-for></ul>
+                <sc-if value="{{ e.suPass.on }}" hint-placeholder-val="{{ false }}"><span class="err">{{ e.suPass.msg }}</span></sc-if>
+              </div>
+              <div class="field">
+                <label class="label" for="su-pass2">{{ t.confirm }}</label>
+                <input id="su-pass2" class="input au-in {{ e.suPass2.cls }}" type="{{ suType }}" autocomplete="new-password" value="{{ suPass2 }}" onChange="{{ onSuPass2 }}" aria-invalid="{{ e.suPass2.on }}">
+                <sc-if value="{{ e.suPass2.on }}" hint-placeholder-val="{{ false }}"><span class="err">{{ e.suPass2.msg }}</span></sc-if>
+                <sc-if value="{{ pass2Match }}" hint-placeholder-val="{{ false }}"><span class="hint ink" style="font-weight: 600">{{ t.match }}</span></sc-if>
+              </div>
+              <div class="au-two">
+                <div class="field">
+                  <span class="label" id="su-ui">{{ t.uiLang }}</span>
+                  <div class="au-seg" role="group" aria-labelledby="su-ui"><button type="button" class="{{ uiEnCls }}" onClick="{{ uiEn }}" aria-pressed="{{ uiIsEn }}">English</button><button type="button" class="{{ uiKmCls }}" onClick="{{ uiKm }}" aria-pressed="{{ uiIsKm }}" lang="km">ខ្មែរ</button></div>
+                </div>
+                <div class="field">
+                  <label class="label" for="su-year">{{ t.birthYear }}</label>
+                  <select id="su-year" class="select au-sel {{ e.suYear.cls }}" value="{{ suYear }}" onChange="{{ onSuYear }}" aria-invalid="{{ e.suYear.on }}"><sc-for list="{{ years }}" as="y" hint-placeholder-count="3"><option value="{{ y.v }}">{{ y.label }}</option></sc-for></select>
+                </div>
+              </div>
+              <sc-if value="{{ e.suYear.on }}" hint-placeholder-val="{{ false }}"><span class="err" style="margin-top: -6px">{{ e.suYear.msg }}</span></sc-if>
+              <sc-if value="{{ e.suYear.off }}" hint-placeholder-val="{{ true }}"><span class="hint" style="margin-top: -6px">{{ ageNote }}</span></sc-if>
+              <div class="field">
+                <label class="row small" style="gap: 8px; align-items: flex-start; cursor: pointer"><button type="button" role="checkbox" aria-checked="{{ agree }}" class="checkbox {{ agreeCls }}" onClick="{{ toggleAgree }}" style="margin-top: 2px" aria-invalid="{{ e.agree.on }}">[[i:check:12]]</button><span>{{ t.agree1 }} <button type="button" class="au-link" onClick="{{ openTerms }}">{{ t.terms }}</button> {{ t.and }} <button type="button" class="au-link" onClick="{{ openPrivacy }}">{{ t.privacy }}</button>.</span></label>
+                <sc-if value="{{ e.agree.on }}" hint-placeholder-val="{{ false }}"><span class="err">{{ e.agree.msg }}</span></sc-if>
+              </div>
+              <button type="submit" class="au-btn" disabled="{{ busySignup }}"><sc-if value="{{ busySignup }}" hint-placeholder-val="{{ false }}"><span class="spin"></span></sc-if>{{ t.create }}</button>
+            </form>
+            <p class="au-sub" style="text-align: center">{{ t.haveAccount }} <button type="button" class="au-link" onClick="{{ toLogin }}">{{ t.login }}</button></p>
+            <p class="au-note">Prototype: reader@phumireader.app and creator@phumireader.app are already taken, to show the “email already used” error. The email code is 123456.</p>
+          </div>
+        </sc-if>
+
+        <!-- ================= FORGOT ================= -->
+        <sc-if value="{{ isForgot }}" hint-placeholder-val="{{ false }}">
+          <div class="au-sec">
+            <button type="button" class="au-back" onClick="{{ toLogin }}">[[i:arrow-left:14]]{{ t.backLogin }}</button>
+            <div class="au-head"><h1 class="au-h1">{{ t.forgotTitle }}</h1><p class="au-sub">{{ t.forgotSub }}</p></div>
+            <form class="au-form" onSubmit="{{ submitForgot }}" novalidate="novalidate">
+              <div class="field">
+                <label class="label" for="fg-email">{{ t.email }}</label>
+                <input id="fg-email" class="input au-in {{ e.fgEmail.cls }}" type="email" autocomplete="email" placeholder="you@example.com" value="{{ fgEmail }}" onChange="{{ onFgEmail }}" aria-invalid="{{ e.fgEmail.on }}">
+                <sc-if value="{{ e.fgEmail.on }}" hint-placeholder-val="{{ false }}"><span class="err">{{ e.fgEmail.msg }}</span></sc-if>
+              </div>
+              <button type="submit" class="au-btn" disabled="{{ busyForgot }}"><sc-if value="{{ busyForgot }}" hint-placeholder-val="{{ false }}"><span class="spin"></span></sc-if>{{ t.sendCode }}</button>
+            </form>
+          </div>
+        </sc-if>
+
+        <!-- ================= CODE (verify email / reset) ================= -->
+        <sc-if value="{{ isCode }}" hint-placeholder-val="{{ false }}">
+          <div class="au-sec">
+            <button type="button" class="au-back" onClick="{{ codeBack }}">[[i:arrow-left:14]]{{ t.changeEmail }}</button>
+            <div class="au-head" style="align-items: flex-start"><span class="au-icon">[[i:mail:20]]</span><h1 class="au-h1">{{ codeTitle }}</h1><p class="au-sub">{{ t.sentTo }} <strong style="color: var(--foreground); word-break: break-all">{{ codeEmail }}</strong></p></div>
+            <form class="au-form" onSubmit="{{ submitCode }}" novalidate="novalidate">
+              <span class="label" id="code-l">{{ t.codeLabel }}</span>
+              <div class="au-otp">
+                <sc-for list="{{ slots }}" as="o" hint-placeholder-count="6"><span class="au-slot {{ o.cls }}">{{ o.ch }}</span></sc-for>
+                <input class="au-otp-in" inputmode="numeric" autocomplete="one-time-code" maxlength="6" value="{{ code }}" onChange="{{ onCode }}" aria-labelledby="code-l" aria-invalid="{{ codeErr }}">
+              </div>
+              <sc-if value="{{ codeErr }}" hint-placeholder-val="{{ false }}"><span class="err" role="alert">{{ codeErrMsg }}</span></sc-if>
+              <button type="submit" class="au-btn" disabled="{{ busyCode }}"><sc-if value="{{ busyCode }}" hint-placeholder-val="{{ false }}"><span class="spin"></span></sc-if>{{ codeBtn }}</button>
+            </form>
+            <div class="row small" style="justify-content: center; gap: 6px; flex-wrap: wrap"><span class="muted">{{ t.noCode }}</span><button type="button" class="au-link" onClick="{{ resend }}" disabled="{{ resendWait }}">{{ resendLabel }}</button></div>
+            <p class="au-note">{{ t.spam }} · Prototype code: 123456</p>
+          </div>
+        </sc-if>
+
+        <!-- ================= NEW PASSWORD ================= -->
+        <sc-if value="{{ isNewPass }}" hint-placeholder-val="{{ false }}">
+          <div class="au-sec">
+            <div class="au-head"><h1 class="au-h1">{{ t.newPassTitle }}</h1><p class="au-sub">{{ t.newPassSub }} <strong style="color: var(--foreground)">{{ fgEmail }}</strong></p></div>
+            <form class="au-form" onSubmit="{{ submitNewPass }}" novalidate="novalidate">
+              <div class="field">
+                <label class="label" for="np-pass">{{ t.newPassword }}</label>
+                <div class="au-pw"><input id="np-pass" class="input au-in {{ e.npPass.cls }}" type="{{ suType }}" autocomplete="new-password" value="{{ npPass }}" onChange="{{ onNpPass }}" aria-invalid="{{ e.npPass.on }}" aria-describedby="np-rules"><button type="button" class="au-eye" onClick="{{ toggleSu }}" aria-pressed="{{ suShow }}" aria-controls="np-pass">{{ suEye }}</button></div>
+                <div class="au-meter"><div class="au-bar"><span class="{{ npStr.cls }}" style="width: {{ npStr.w }}"></span></div><span class="au-str {{ npStr.cls }}">{{ npStr.label }}</span></div>
+                <ul id="np-rules" class="au-rules"><sc-for list="{{ npRules }}" as="r" hint-placeholder-count="4"><li class="{{ r.cls }}"><span class="au-tick">[[i:check:10]]</span>{{ r.label }}</li></sc-for></ul>
+                <sc-if value="{{ e.npPass.on }}" hint-placeholder-val="{{ false }}"><span class="err">{{ e.npPass.msg }}</span></sc-if>
+              </div>
+              <div class="field">
+                <label class="label" for="np-pass2">{{ t.confirm }}</label>
+                <input id="np-pass2" class="input au-in {{ e.npPass2.cls }}" type="{{ suType }}" autocomplete="new-password" value="{{ npPass2 }}" onChange="{{ onNpPass2 }}" aria-invalid="{{ e.npPass2.on }}">
+                <sc-if value="{{ e.npPass2.on }}" hint-placeholder-val="{{ false }}"><span class="err">{{ e.npPass2.msg }}</span></sc-if>
+              </div>
+              <button type="submit" class="au-btn" disabled="{{ busyNew }}"><sc-if value="{{ busyNew }}" hint-placeholder-val="{{ false }}"><span class="spin"></span></sc-if>{{ t.savePass }}</button>
+            </form>
+          </div>
+        </sc-if>
+
+        <!-- ================= DONE ================= -->
+        <sc-if value="{{ isDone }}" hint-placeholder-val="{{ false }}">
+          <div class="au-sec" style="align-items: center; text-align: center; padding: 24px 0" role="status">
+            <span class="au-icon brand">[[i:check:22]]</span>
+            <h1 class="au-h1">{{ doneTitle }}</h1>
+            <p class="au-sub">{{ doneSub }}</p>
+            <span class="spin" style="color: var(--muted-foreground); margin-top: 6px"></span>
+          </div>
+        </sc-if>
+      </section>
+    </div>
+  </main>
+<!--FOOTER-->
+<!--LAYERS-->
+</div>
