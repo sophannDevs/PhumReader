@@ -1,0 +1,14 @@
+{
+  "fastPass": "Fast Pass",
+  "titleEpisode": "Unlock Episode {n}",
+  "titleChapter": "Unlock Chapter {n}",
+  "freeOn": "Free for everyone on {date}.",
+  "price": "Price",
+  "balance": "Your balance",
+  "loginAlert": "Log in to unlock with your coins.",
+  "login": "Log in to unlock",
+  "unlockFor": "Unlock for {count, plural, one {# coin} other {# coins}}",
+  "needMore": "You need {count, plural, one {# more coin} other {# more coins}}.",
+  "getCoins": "Get coins",
+  "wait": "Wait for the free release"
+}

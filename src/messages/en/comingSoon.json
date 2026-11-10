@@ -1,0 +1,17 @@
+{
+  "title": "{topic} is coming soon",
+  "body": "We're still working on this page. Check back later.",
+  "home": "Back to Home",
+  "topics": {
+    "help-center": "Help center",
+    "terms": "Terms",
+    "privacy": "Privacy",
+    "contact": "Contact",
+    "facebook": "Facebook",
+    "twitter": "X (Twitter)",
+    "youtube": "YouTube",
+    "earnings": "Earnings",
+    "guidelines": "Creator guidelines"
+  },
+  "fallback": "This page"
+}

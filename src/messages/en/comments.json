@@ -1,0 +1,16 @@
+{
+  "add": "Add a comment",
+  "placeholder": "What did you think?",
+  "hint": "Be kind. Spoilers go in a spoiler tag.",
+  "post": "Post",
+  "top": "Top",
+  "reply": "Reply",
+  "like": "Like",
+  "likeCount": "Like, {count} likes",
+  "avatarOf": "{name}",
+  "empty": "Be the first to comment",
+  "emptyDesc": "Share what you thought about this story.",
+  "now": "now",
+  "delete": "Delete",
+  "report": "Report"
+}

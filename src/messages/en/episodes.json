@@ -1,0 +1,6 @@
+{
+  "read": "Read",
+  "unlocked": "Unlocked",
+  "locked": "Locked. Unlock for {count, plural, one {# coin} other {# coins}}",
+  "likes": "{count} likes"
+}

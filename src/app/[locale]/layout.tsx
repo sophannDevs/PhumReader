@@ -5,6 +5,7 @@ import Script from "next/script";
 import { hasLocale, NextIntlClientProvider } from "next-intl";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import "../globals.css";
+import { loadMessages } from "@/i18n/messages";
 import { routing } from "@/i18n/routing";
 import { ServiceWorker } from "@/components/pr/service-worker";
 import { Providers } from "@/lib/query";
@@ -68,7 +69,7 @@ export default async function LocaleLayout({
   setRequestLocale(locale);
   // Explicit locale + messages: the provider then needs no request-time lookup,
   // which keeps the route prerenderable under Cache Components.
-  const messages = (await import(`@/messages/${locale}.json`)).default;
+  const messages = await loadMessages(locale);
 
   return (
     <html

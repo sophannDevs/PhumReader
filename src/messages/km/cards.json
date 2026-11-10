@@ -1,0 +1,17 @@
+{
+  "novel": "ប្រលោមលោក",
+  "up": "UP",
+  "new": "ថ្មី",
+  "likes": "ចូលចិត្ត {count}",
+  "views": "{views} ដងមើល",
+  "chapters": "{count} ជំពូក",
+  "episodeProgress": "ភាគ {n} · បានអាន {percent}%",
+  "chapterProgress": "ជំពូក {n} · បានអាន {percent}%",
+  "cover": "គម្របរឿង {title}",
+  "rank": "លេខ {rank}",
+  "moveUp": "ឡើង {n}",
+  "moveDown": "ចុះ {n}",
+  "moveNew": "ថ្មី",
+  "moveSame": "មិនប្រែប្រួល",
+  "progressOf": "វឌ្ឍនភាព {title}"
+}

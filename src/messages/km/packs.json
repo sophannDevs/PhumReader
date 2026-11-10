@@ -1,0 +1,11 @@
+{
+  "bonus": "+{count} ប្រាក់រង្វាន់",
+  "noBonus": "គ្មានកាក់ថែម",
+  "first": "+{count} ទិញលើកដំបូង",
+  "popular": "ពេញនិយម",
+  "bestValue": "តម្លៃល្អបំផុត",
+  "coinsLabel": "{count} កាក់",
+  "method": {
+    "recommended": "ណែនាំ"
+  }
+}

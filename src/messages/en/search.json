@@ -1,0 +1,16 @@
+{
+  "title": "Search",
+  "description": "Search series by title, creator or genre.",
+  "placeholder": "Search series, creators…",
+  "popular": "Popular now",
+  "series": "Series",
+  "empty": "No results. Try a title, creator or genre.",
+  "esc": "Esc",
+  "escLabel": "Press Escape to close",
+  "pageTitle": "Search",
+  "pageSubtitle": "Find a series by title, creator or genre.",
+  "submit": "Search",
+  "resultsFor": "{count, plural, one {# result} other {# results}} for “{q}”",
+  "popularHeading": "Popular now",
+  "seeAll": "See all results for “{q}”"
+}

@@ -16,7 +16,8 @@
     "services:check": "node scripts/check-services.mjs",
     "api:check": "openapi-typescript backend/openapi/openapi.json -o src/lib/api/schema.d.ts --check",
     "i18n:km": "node scripts/i18n-km.mjs",
-    "data:sync": "node scripts/sync-demo-data.mjs"
+    "data:sync": "node scripts/sync-demo-data.mjs",
+    "i18n:index": "node scripts/i18n-index.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^7.0.3",

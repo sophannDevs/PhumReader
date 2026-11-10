@@ -1,0 +1,11 @@
+{
+  "bonus": "+{count} bonus",
+  "noBonus": "No bonus",
+  "first": "+{count} first",
+  "popular": "Popular",
+  "bestValue": "Best value",
+  "coinsLabel": "{count} coins",
+  "method": {
+    "recommended": "Recommended"
+  }
+}
