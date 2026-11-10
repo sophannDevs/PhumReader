@@ -43,7 +43,7 @@ T32 → T33 → T34 → F24–F27 → T39–T42. A V2.1 task marked "→ Fnn" is
   subscribe, share, report, 5 s auto-next, next card, top comments), Fast Pass lock screen. Spec §3 · Screens 03. → T10, T11
 - [ ] F09 Novel reader: settings popover (size, theme, font, spacing; first visit from Settings), progress, resume
   chip, locked chapter teaser + unlock card, chapter end with creator's note and Report. Spec §4 · Screens 04. → T11, T12
-- [ ] F10 Log in / Sign up / Forgot on `/login` (`?mode=signup`, `?mode=forgot`; the V1 routes redirect): context
+- [x] F10 Log in / Sign up / Forgot on `/login` (`?mode=signup`, `?mode=forgot`; the V1 routes redirect): context
   line, language toggle, Caps Lock warning, Remember me, Google / Facebook / Apple, sign-up name / email (taken
   check) / strength meter / confirm / app language / birth year (under 13 blocked, 13–17 note) / terms, code with
   resend after 30 s, forgot → code → new password; new accounts → `/welcome`. Spec §5 · Screens 05. → T15
@@ -101,8 +101,8 @@ T32 → T33 → T34 → F24–F27 → T39–T42. A V2.1 task marked "→ Fnn" is
 - [x] T14 Report and Block dialogs (global), hiding blocked comments. Spec §0 · Screens 02-series-report-comment, 17-creator-profile-report-sent
 
 ## Phase C – Account and money
-- [ ] T15 Log in / Sign up / code / Forgot / New password (zod rules, demo accounts, returnTo). Spec §5 · Screens 05 → F10
-- [ ] T16 First-time setup /welcome (3 steps, real notification permission request, picks). Spec §24 · Screens 24
+- [x] T15 Log in / Sign up / code / Forgot / New password (zod rules, demo accounts, returnTo). Spec §5 · Screens 05 → F10
+- [x] T16 First-time setup /welcome (3 steps, real notification permission request, picks). Spec §24 · Screens 24
 - [x] T17 Coins: steps, packs, "Covers it" pre-select, methods, pay (countdown, placeholders), processing, success with auto-return, failed/expired, history, FAQ. Spec §6 · Screens 06 → F11
 - [x] T18 Receipt page (paid / failed / refunded) and Help pre-fill. Spec §25 · Screens 25
 - [x] T19 My library (tabs, filter, sort, edit mode, undo, guest banner). Spec §8 · Screens 08 → F12
@@ -221,3 +221,16 @@ T32 → T33 → T34 → F24–F27 → T39–T42. A V2.1 task marked "→ Fnn" is
   16/18/20/22 px in the novel reader. Real mode: name, photo, password, email, devices, log out everywhere and delete use
   the API (delete also asks for the password); reader theme, text size and two push switches sync to /me/settings; the
   rest stays on the device. V1 "Reset demo data" is gone (not in V2.1); demo "Delete account" clears this device's data.
+- V2-32 (F10) **Auth chrome**: /login and /reset show the site header and footer but no phone tab bar (screens 05-*).
+  /signup, /forgot and /verify redirect to /login?mode=… (query kept); the step lives in `?mode=`.
+- V2-33 (F10) **Forgot password**: the demo resets with a 6-digit code on /login (V2.1 design); the real API emails a
+  link, so real mode shows "Check your inbox" and /reset?token= opens the new-password step. A demo reset saves the new
+  password as an account on this device (the demo accounts' own passwords keep working).
+- V2-34 (F10) **Sign-up checks**: all 4 password rules; birth year is checked in the form only (the API has no field);
+  the three demo emails and accounts made on this device count as taken. Apple sign-in is simulated in the demo and
+  "coming soon" in real mode. The 3-try lock is demo only (the API answers 429 after 5 tries).
+- V2-35 (F10) **Who gets /welcome**: new sign-ups (also an unconfirmed real-mode login confirmed with the code); social
+  logins count as existing accounts.
+- V2-36 (T16) **/welcome** has its own top bar (no site header, footer or tab bar), is not gated, and uses the screens'
+  3-segment bar with "Step N of 3". Picks come from the demo catalogue in both modes; in real mode "+ Add" subscribes
+  through the API. A granted notification permission also turns on push for new episodes.
