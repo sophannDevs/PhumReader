@@ -1,7 +1,7 @@
 import type { Metadata } from "next"
 import { getTranslations, setRequestLocale } from "next-intl/server"
 import { Suspense } from "react"
-import { SearchPage } from "@/components/pr/search-page"
+import { SearchPage, SearchSkeleton } from "@/components/pr/search-page"
 
 export async function generateMetadata({ params }: PageProps<"/[locale]/search">): Promise<Metadata> {
   const { locale } = await params
@@ -14,7 +14,7 @@ export default async function Page({ params }: PageProps<"/[locale]/search">) {
   setRequestLocale(locale)
   // useSearchParams (?q=) needs a Suspense boundary.
   return (
-    <Suspense>
+    <Suspense fallback={<SearchSkeleton />}>
       <SearchPage />
     </Suspense>
   )

@@ -1,6 +1,60 @@
 {
   "title": "Rankings",
-  "subtitle": "The most-read series right now. Updated every hour.",
-  "empty": "No rankings yet",
-  "emptyDesc": "Check back soon."
+  "lead": "The most-read series on PhumiReader.",
+  "updated": "Updated every hour · Last update 9:00 AM.",
+  "allTime": "All-time reads.",
+  "how": "How rankings work",
+  "howText": "Trending counts reads, likes and new subscribers over the selected period. Popular counts all-time reads. New only includes series that started in the last 60 days. Arrows show the change since the last update.",
+  "listsLabel": "Ranking type",
+  "lists": {
+    "trending": "Trending",
+    "popular": "Popular",
+    "new": "New",
+    "rising": "Rising"
+  },
+  "formatLabel": "Format",
+  "formats": {
+    "all": "All",
+    "comic": "Comics",
+    "novel": "Web novels"
+  },
+  "genreLabel": "Genre",
+  "allGenres": "All genres",
+  "periodLabel": "Period",
+  "periods": {
+    "day": "Today",
+    "week": "This week",
+    "month": "This month"
+  },
+  "top3": "Top 3",
+  "reads": {
+    "day": "reads today",
+    "week": "reads this week",
+    "month": "reads this month"
+  },
+  "allTimeViews": "all-time views",
+  "moreReaders": "more readers",
+  "likes": "likes",
+  "novel": "Novel",
+  "webNovel": "Web novel",
+  "subscribe": "Subscribe",
+  "subscribed": "Subscribed",
+  "add": "Add",
+  "added": "Added",
+  "subscribeAria": "Subscribe to {title}",
+  "unsubscribeAria": "Unsubscribe from {title}",
+  "emptyTitle": "Nothing ranked here yet",
+  "emptyText": "No {what} in {genre} match this ranking. Try another genre or format.",
+  "emptyWhat": {
+    "all": "series",
+    "comic": "comics",
+    "novel": "web novels"
+  },
+  "showAllGenres": "Show all genres",
+  "showing": "Showing {shown} of {total}",
+  "showMore": "Show more",
+  "loading": "Loading rankings",
+  "errorTitle": "Rankings aren’t loading right now",
+  "errorText": "Check your connection and try again.",
+  "tryAgain": "Try again"
 }

@@ -1,5 +1,54 @@
 {
   "title": "Genres",
-  "empty": "No series in this genre yet",
-  "emptyDesc": "Try another genre."
+  "lead": "Find your next series by genre, format and update day.",
+  "novelsTitle": "Web novels",
+  "novelsLead": "Stories to read in text, chapter by chapter.",
+  "genres": "Genres",
+  "allGenres": "All genres",
+  "bannerCount": "{count, plural, one {# series} other {# series}}",
+  "desc": {
+    "Drama": "Family secrets, second chances and stories that stay with you.",
+    "Fantasy": "Magic, quests and worlds with their own rules.",
+    "Comedy": "Quick laughs, chaotic friends and very small dragons.",
+    "Action": "Chases, fights and heroes who never miss a delivery.",
+    "Slice of life": "Quiet, warm stories about everyday people.",
+    "Romance": "Slow burns, sweet notes and big feelings.",
+    "Superhero": "Capes, secret identities and rent that’s still due.",
+    "Sci-fi": "Signals from space, strange tech and the near future."
+  },
+  "formatLabel": "Format",
+  "formats": {
+    "all": "All",
+    "comic": "Comics",
+    "novel": "Web novels"
+  },
+  "statusLabel": "Status",
+  "status": {
+    "any": "Any status",
+    "ongoing": "Ongoing",
+    "completed": "Completed"
+  },
+  "dayLabel": "Update day",
+  "anyDay": "Any day",
+  "sortLabel": "Sort",
+  "sort": {
+    "popular": "Most popular",
+    "liked": "Most liked",
+    "updated": "Recently updated",
+    "az": "A to Z"
+  },
+  "count": "{count, plural, one {# series} other {# series}}",
+  "countIn": "{count, plural, one {# series} other {# series}} in {genre}",
+  "clearFiltersCount": "Clear filters ({count})",
+  "clearFilters": "Clear filters",
+  "completed": "Completed",
+  "likes": "{count} likes",
+  "emptyTitle": "No series match these filters",
+  "emptyText": "Try a different day or status, or clear the filters.",
+  "showing": "Showing {shown} of {total}",
+  "showMore": "Show more",
+  "loading": "Loading series",
+  "errorTitle": "Series aren’t loading right now",
+  "errorText": "Check your connection and try again.",
+  "tryAgain": "Try again"
 }

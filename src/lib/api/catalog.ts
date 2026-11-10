@@ -179,8 +179,8 @@ export async function fetchGenre(genre: Genre): Promise<{ genre: Genre; series: 
   return { genre, series: list.map(toSeries) }
 }
 
-/** Title, creator or genre; at most 8. An empty query returns the most viewed series. */
-export async function search(query: string): Promise<Series[]> {
-  const found = await api.get<Schemas["SearchResults"]>("/search", { query: { q: query.trim(), limit: 8 } })
+/** Title, creator or genre; at most `limit` (the API allows 1-20). An empty query returns the most viewed series. */
+export async function search(query: string, limit = 8): Promise<Series[]> {
+  const found = await api.get<Schemas["SearchResults"]>("/search", { query: { q: query.trim(), limit: Math.min(limit, 20) } })
   return found.items.map(toSeries)
 }

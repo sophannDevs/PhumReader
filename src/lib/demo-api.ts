@@ -269,15 +269,15 @@ export const fetchGenre = (genre: Genre) =>
     empty: () => ({ genre, series: [] }),
   })
 
-/** Title, creator or genre; max 8. An empty query returns the first 6 series. */
-export const search = (query: string) =>
+/** Title, creator or genre; at most `limit` (default 8). An empty query returns the first 6 series. */
+export const search = (query: string, limit = 8) =>
   withDemo<Series[]>(
     () => {
       const q = query.trim().toLowerCase()
       if (!q) return getSeries().slice(0, 6)
       return getSeries()
         .filter((s) => [s.title, s.creator, s.genre].some((f) => f.toLowerCase().includes(q)))
-        .slice(0, 8)
+        .slice(0, limit)
     },
     { empty: () => [] }
   )
