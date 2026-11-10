@@ -77,10 +77,10 @@ T32 → T33 → T34 → F24–F27 → T39–T42. A V2.1 task marked "→ Fnn" is
   sticky bar, success. Spec §16 · Screens 16. → T30
 - [ ] F23 Manage series `/creator/series/[id]` with tabs (episodes, details, fast-pass, settings), edit / hide /
   delete, changes requested list + resubmit. Spec §21 · Screens 21. → T31
-- [ ] F24 AdminShell (dark top bar, side menu with counts) + overview; admin demo login only. Spec §22 · Screens 22-admin-overview. → T35
-- [ ] F25 Admin series review (queue, flags, checklist, approve / request changes / reject, `reviewNotes`, undo). Screens 22-admin-series-review. → T36
-- [ ] F26 Admin reports (priority, detail, actions, reporter status, undo). Screens 22-admin-reports. → T37
-- [ ] F27 Admin payments (refunds with eligibility, paid but no coins → Add coins). Screens 22-admin-payments. → T38
+- [x] F24 AdminShell (dark top bar, side menu with counts) + overview; admin demo login only. Spec §22 · Screens 22-admin-overview. → T35
+- [x] F25 Admin series review (queue, flags, checklist, approve / request changes / reject, `reviewNotes`, undo). Screens 22-admin-series-review. → T36
+- [x] F26 Admin reports (priority, detail, actions, reporter status, undo). Screens 22-admin-reports. → T37
+- [x] F27 Admin payments (refunds with eligibility, paid but no coins → Add coins). Screens 22-admin-payments. → T38
 
 ## Phase A – Foundations
 - [x] T01 Project setup: Next.js app (npm), Tailwind, shadcn/ui init, lucide, next-intl (en, km), fonts (Inter, Kantumruy Pro, Noto Serif), scripts (typecheck, test:e2e). Copy design/assets → public, demo-data → src/data. Spec §0 (V1 T01–T03; V2.1 data copied in the upgrade)
@@ -127,10 +127,10 @@ T32 → T33 → T34 → F24–F27 → T39–T42. A V2.1 task marked "→ Fnn" is
 - [x] T34 Become a creator landing + calculator. Spec §26 · Screens 26
 
 ## Phase F – Admin
-- [ ] T35 AdminShell + overview (counts, waiting longest, recent decisions); admin demo login only. Spec §22 · Screens 22-admin-overview → F24
-- [ ] T36 Admin series review (queue, auto-check flags, checklist, approve / request changes / reject, `reviewNotes`, undo). Screens 22-admin-series-review → F25
-- [ ] T37 Admin reports (priority order, detail, actions, reporter status update, undo). Screens 22-admin-reports → F26
-- [ ] T38 Admin payments (refunds, paid-but-no-coins). Screens 22-admin-payments → F27
+- [x] T35 AdminShell + overview (counts, waiting longest, recent decisions); admin demo login only. Spec §22 · Screens 22-admin-overview → F24
+- [x] T36 Admin series review (queue, auto-check flags, checklist, approve / request changes / reject, `reviewNotes`, undo). Screens 22-admin-series-review → F25
+- [x] T37 Admin reports (priority order, detail, actions, reporter status update, undo). Screens 22-admin-reports → F26
+- [x] T38 Admin payments (refunds, paid-but-no-coins). Screens 22-admin-payments → F27
 
 ## Phase G – Quality
 - [ ] T39 Khmer pass: every page in km at 390/768/1440; no clipped text; `lang="km"`; fix long strings
@@ -279,3 +279,19 @@ T32 → T33 → T34 → F24–F27 → T39–T42. A V2.1 task marked "→ Fnn" is
   `payoutSet` starts false (warning + "On hold"); the chosen payout method is not stored.
 - V2-50 (T34) **Become a creator**: logged out, "Sign up and start creating" goes to sign up with returnTo /creator/new;
   the calculator uses range inputs (readers 10–2000, episodes 1–12) × the Fast Pass price.
+- V2-51 (F24) **Admin area**: a `(admin)` route group with AdminShell (no site chrome). Demo checks `isAdmin(user)`;
+  real mode asks GET /admin/overview (403 for non-admins). Demo shows "Tuesday, Nov 10" (the queues' waiting times
+  are relative to it); the rest of the app stays pinned to Nov 5. The "Prototype data" badge reads "Demo data".
+- V2-52 (F24) **Admin decisions**: every decision goes into store `adminLog` with a 6 s Undo bar and a toast; real-mode
+  API calls are sent when the Undo window closes (closing the tab within 6 s loses the decision). V1 Users, Content,
+  All orders and Audit log stay as extra real-mode menu items (no Undo); demo hides them.
+- V2-53 (F25) **Series review**: queue = `adminSeriesQueue` + `myWorks` with status "review" (demo data and store in both
+  modes). Series submitted on this device are auto-checked for contact details and similar titles (not watermarks).
+  Approve → "published" (clears notes); Request changes → "changes" + `reviewNotes[id]` (items as text in the admin's
+  language); Reject → "draft" (prototype).
+- V2-54 (F26) **Reports**: demo queue = `adminReportQueue` + the reader's own "In review" reports (their content isn't
+  stored, so it shows "(Content as reported)"). Real mode maps remove / warn / suspend to the API's settle "hide" (or
+  "resolve") with the action as the note, and No violation to "dismiss"; the API has no timed suspension.
+- V2-55 (F27) **Payments**: demo rows come from the prototype (`src/lib/admin.ts`); Add coins adds to this device's wallet
+  (one device plays reader and admin). Real mode lists paid orders with eligibility and refunds after a reason;
+  "Paid but no coins" is hidden (no such API list).
