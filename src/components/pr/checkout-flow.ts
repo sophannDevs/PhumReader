@@ -198,7 +198,7 @@ export function useCheckout({
       }
       return
     }
-    record("Cancelled", `PR-CANCEL${Date.now() % 100000}`)
+    record("Cancelled", `TW-${String(Date.now()).slice(-8)}`)
     toast.error(tt("paymentCancelled"))
     setFlow({ step: "review" })
   }
@@ -245,7 +245,7 @@ export function useCheckout({
         method: method.id,
       })
     } catch (e) {
-      if (e instanceof DemoApiError) record("Failed", `PR-FAILED${Date.now() % 100000}`)
+      if (e instanceof DemoApiError) record("Failed", `TW-${String(Date.now()).slice(-8)}`)
       toast.error(tt("paymentFailed"))
       setFlow({ step: "failed", reason: "declined" })
     } finally {

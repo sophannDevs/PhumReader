@@ -20,12 +20,12 @@ import { useRouter } from "@/i18n/navigation"
 import { useCoinsPage } from "@/lib/queries"
 import { DEMO_MODE } from "@/lib/api/config"
 import { useAccountEmail } from "@/lib/me"
-import { useAppStore, useCoins } from "@/lib/store"
+import { isDemoOrder, useAppStore, useCoins } from "@/lib/store"
 import { useWallet } from "@/lib/wallet"
 
 /** The first-purchase offer lasts until a payment made in this browser succeeds (Assumption 9). */
 export function useFirstPurchaseOffer() {
-  const demoOffer = useAppStore((s) => !s.purchases.some((p) => p.status === "Paid" && p.orderId))
+  const demoOffer = useAppStore((s) => !s.purchases.some((p) => p.status === "Paid" && p.orderId && !isDemoOrder(p.orderId)))
   const email = useAccountEmail()
   const wallet = useWallet().data
   if (DEMO_MODE) return demoOffer

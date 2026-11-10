@@ -17,7 +17,7 @@ T32 → T33 → T34 → F24–F27 → T39–T42. A V2.1 task marked "→ Fnn" is
 
 ## Fix: finished V1 work that differs from V2.1
 
-- [ ] F01 Store and demo accounts: every key in Spec §0 "Simulated state" (`subs`, `read`, `pos`, `settings`,
+- [x] F01 Store and demo accounts: every key in Spec §0 "Simulated state" (`subs`, `read`, `pos`, `settings`,
   `readerBg`/`readerWidth`, `novel`, `prefs`, `notifRead`/`notifGone`/`notifPrefs`, `blocked`, `reports`, `myWorks`,
   `reviewNotes`, `welcomeNext`, `helpPrefill`, `receipt`, `legalDoc`) with a persist migration from the V1 keys;
   the three demo accounts with roles; demo orders TW-48213377 (paid) and TW-48190012 (failed). → T03
@@ -85,7 +85,7 @@ T32 → T33 → T34 → F24–F27 → T39–T42. A V2.1 task marked "→ Fnn" is
 ## Phase A – Foundations
 - [x] T01 Project setup: Next.js app (npm), Tailwind, shadcn/ui init, lucide, next-intl (en, km), fonts (Inter, Kantumruy Pro, Noto Serif), scripts (typecheck, test:e2e). Copy design/assets → public, demo-data → src/data. Spec §0 (V1 T01–T03; V2.1 data copied in the upgrade)
 - [ ] T02 Design tokens + shadcn theme in globals.css; Khmer type rules; add the shadcn components listed in foundations.md §4. Build a `/dev/foundations` page that matches screen 00. Screens 00 → F02
-- [ ] T03 Data layer: typed demo-data helpers, `demo-api.ts` (delay + ?demo flags), zustand store with every key in Spec §0 "Simulated state" (prefix `phumireader.`) → F01
+- [x] T03 Data layer: typed demo-data helpers, `demo-api.ts` (delay + ?demo flags), zustand store with every key in Spec §0 "Simulated state" (prefix `phumireader.`) → F01
 - [ ] T04 i18n: generate messages/km.json from design/i18n/km-dictionary.json (`npm run i18n:km`, done in the upgrade), plus a language switch that saves to the store; Khmer date and time formatters (ICT) → F02
 - [ ] T05 Layout: SiteHeader (search trigger, language button, coin chip, bell, avatar menu, logo), SiteFooter, MobileTabBar, ⌘K search dialog, toasts. Check the header at 390 px logged in. Screens 01-home-search-open, 01-home-account-menu → F03
 - [ ] T06 Shared patterns: SeriesCard, ContinueCard, RankRow, EpisodeRow, OptionCard, StepsBar, StatCard, Timeline, EmptyState, ErrorState, UndoBar, SaveBar → F04
@@ -160,3 +160,12 @@ T32 → T33 → T34 → F24–F27 → T39–T42. A V2.1 task marked "→ Fnn" is
   instead of `npx shadcn add`; charts are plain SVG/CSS (no chart library).
 - V2-8 (upgrade) **Real mode**: V2.1 features the API does not have yet (notifications, reports and blocking,
   welcome picks, receipts, earnings, creator profile, admin payments) run on the local store in real mode too.
+- V2-9 (F01) **Store field names**: one persisted object (`phumireader.app`, version 2). The spec's keys map to
+  `subs` → `subscriptions`, `read` → `lastRead`, `novel` → `novelSettings`; `receipt` and `legalDoc` are URL
+  params (`/coins/orders/[id]`, `/legal/[doc]`). Extra keys for prototype state: `welcomed`, `recentSearches`,
+  `profile`, `payoutSet`, `draftSeries`, `adminLog`. Version 1 data migrates (new keys get defaults; the demo
+  purchase rows get TW-48213377 / TW-48190012).
+- V2-10 (F01) **Demo roles**: reader → READER; creator → READER + CREATOR; admin (moderator) → READER + CREATOR +
+  ADMIN, so the moderator can also open creator pages. Accounts made by sign up are readers.
+- V2-11 (F01) **Order numbers** are `TW-` + 8 digits (V1 Assumption 10 used `PR-`). The two demo rows stay
+  display-only and don't end the first-purchase offer.
