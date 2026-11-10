@@ -1,1 +1,85 @@
-{}
+{
+  "title": "Notifications",
+  "unreadCount": "{count} unread",
+  "caughtUp": "You’re all caught up",
+  "markAll": "Mark all as read",
+  "allRead": "All marked as read",
+  "loginTitle": "Log in to see your notifications",
+  "loginText": "Get alerts when series you subscribe to have new episodes.",
+  "login": "Log in",
+  "inbox": "Inbox",
+  "filter": "Filter notifications",
+  "tabAll": "All",
+  "tabUnread": "Unread",
+  "tabUpdates": "New episodes",
+  "tabComments": "Comments",
+  "tabCoins": "Coins",
+  "groups": {
+    "today": "Today",
+    "thisWeek": "This week",
+    "earlier": "Earlier"
+  },
+  "unreadSr": "Unread.",
+  "markRead": "Mark as read",
+  "markUnread": "Mark as unread",
+  "remove": "Remove notification",
+  "removeShort": "Remove",
+  "removed": "Notification removed",
+  "emptyTitle": "No notifications yet",
+  "emptyText": "Subscribe to series to get new-episode alerts here.",
+  "emptyUnreadText": "New alerts will show up here.",
+  "findSeries": "Find series to subscribe to",
+  "loading": "Loading",
+  "errorTitle": "Your notifications didn’t load",
+  "errorText": "Check your connection and try again.",
+  "tryAgain": "Try again",
+  "am": "AM",
+  "pm": "PM",
+  "days": {
+    "Mon": "Mon",
+    "Tue": "Tue",
+    "Wed": "Wed",
+    "Thu": "Thu",
+    "Fri": "Fri",
+    "Sat": "Sat",
+    "Sun": "Sun"
+  },
+  "settingsTitle": "Alert settings",
+  "settingsText": "Choose what you hear about, and where.",
+  "push": "Push",
+  "email": "Email",
+  "pushAria": "{label}: push",
+  "emailAria": "{label}: email",
+  "rows": {
+    "update": {
+      "label": "New episodes",
+      "desc": "From series you subscribe to"
+    },
+    "fastpass": {
+      "label": "Fast Pass is free",
+      "desc": "When an episode you skipped becomes free"
+    },
+    "comment": {
+      "label": "Replies and likes",
+      "desc": "On your comments"
+    },
+    "coins": {
+      "label": "Coins and payments",
+      "desc": "Receipts and failed payments"
+    },
+    "news": {
+      "label": "PhumiReader news",
+      "desc": "Events, new features and offers"
+    }
+  },
+  "quiet": "Quiet hours",
+  "quietText": "No push alerts during these hours",
+  "from": "From",
+  "to": "to",
+  "toLabel": "To",
+  "ict": "Cambodia time (ICT)",
+  "digest": "Daily digest",
+  "digestText": "One email a day instead of one per episode",
+  "autoSave": "Changes save automatically",
+  "saved": "Saved"
+}

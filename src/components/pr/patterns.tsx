@@ -51,8 +51,8 @@ export function StepsBar({
             </span>
             <span
               className={cn(
-                "text-[13px] whitespace-nowrap max-md:text-xs",
-                cur ? "font-semibold text-foreground" : done ? "text-foreground" : "text-muted-foreground"
+                "text-[13px] font-medium whitespace-nowrap max-md:text-xs",
+                cur ? "text-foreground" : done ? "text-brand-ink" : "text-muted-foreground"
               )}
             >
               {s.label}
@@ -145,26 +145,34 @@ export function UndoBar({ text, onUndo, className }: { text: string; onUndo: () 
  */
 export function useUndo(ms = 6000) {
   const [current, setCurrent] = useState<{ text: string; undo: () => void } | null>(null)
+  // The open bar, also in a ref: `undo` runs its callback outside a state updater (an updater runs during render,
+  // twice in Strict Mode, so a store update there warns "Cannot update a component while rendering").
+  const latest = useRef<{ text: string; undo: () => void } | null>(null)
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined)
   useEffect(() => () => clearTimeout(timer.current), [])
 
   const show = useCallback(
     (text: string, undo: () => void) => {
       clearTimeout(timer.current)
-      setCurrent({ text, undo })
-      timer.current = setTimeout(() => setCurrent(null), ms)
+      latest.current = { text, undo }
+      setCurrent(latest.current)
+      timer.current = setTimeout(() => {
+        latest.current = null
+        setCurrent(null)
+      }, ms)
     },
     [ms]
   )
   const undo = useCallback(() => {
     clearTimeout(timer.current)
-    setCurrent((c) => {
-      c?.undo()
-      return null
-    })
+    const open = latest.current
+    latest.current = null
+    setCurrent(null)
+    open?.undo()
   }, [])
   const dismiss = useCallback(() => {
     clearTimeout(timer.current)
+    latest.current = null
     setCurrent(null)
   }, [])
 

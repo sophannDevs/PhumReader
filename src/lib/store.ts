@@ -49,8 +49,8 @@ export type AppSettings = {
   mode: "scroll" | "page"
   quality: "auto" | "high" | "saver"
   theme: "system" | "light" | "dark"
-  /** Novel text size preset used for the first visit of the novel reader */
-  size: "s" | "m" | "l"
+  /** Novel text size preset used for the first visit of the novel reader (Settings: A− A A+ A++) */
+  size: "s" | "m" | "l" | "xl"
   autoNext: boolean
   saveData: boolean
   region: string
@@ -147,6 +147,8 @@ export type AppState = {
   draftSeries: Record<string, unknown> | null
   /** Admin decisions (newest first), with ids of handled queue items */
   adminLog: AdminDecision[]
+  /** Library > Recently read: series ids removed from the history (demo; prototype `v2histHidden`) */
+  historyHidden: string[]
 }
 
 type AppActions = {
@@ -201,6 +203,7 @@ type AppActions = {
   setDraftSeries: (draft: Record<string, unknown> | null) => void
   logAdmin: (decision: AdminDecision) => void
   undoAdmin: (id: string) => void
+  setHistoryHidden: (ids: string[]) => void
   /** Settings > Reset demo data: back to 3 coins, logged out, the 2 demo purchases, default reader settings. */
   resetDemo: () => void
 }
@@ -215,7 +218,7 @@ export const likeKey = {
 export const DEMO_ORDER_IDS = ["TW-48213377", "TW-48190012"] as const
 
 /** ICT is UTC+7: the demo rows' times as shown on the Receipt screens. */
-const demoOrderTimes = [Date.UTC(2026, 9, 28, 0, 5), Date.UTC(2026, 9, 12, 2, 40)]
+const demoOrderTimes = [Date.UTC(2026, 9, 28, 7, 5), Date.UTC(2026, 9, 12, 2, 40)]
 
 const demoPurchases = (): StoredPurchase[] =>
   purchaseHistory().map((p, i) => ({ ...p, orderId: DEMO_ORDER_IDS[i], at: demoOrderTimes[i] }))
@@ -300,6 +303,7 @@ const initialState = (): AppState => ({
   payoutSet: false,
   draftSeries: null,
   adminLog: [],
+  historyHidden: [],
 })
 
 const toggleIn = <T,>(list: T[], item: T) => (list.includes(item) ? list.filter((x) => x !== item) : [...list, item])
@@ -384,6 +388,7 @@ export const useAppStore = create<AppState & AppActions>()(
       setDraftSeries: (draft) => set({ draftSeries: draft }),
       logAdmin: (decision) => set((s) => ({ adminLog: [decision, ...s.adminLog.filter((d) => d.id !== decision.id)].slice(0, 50) })),
       undoAdmin: (id) => set((s) => ({ adminLog: s.adminLog.filter((d) => d.id !== id) })),
+      setHistoryHidden: (ids) => set({ historyHidden: [...new Set(ids)] }),
       // The language is a preference tied to the URL locale, so a reset keeps it.
       resetDemo: () => set((s) => ({ ...initialState(), lang: s.lang })),
     }),

@@ -1,257 +1,665 @@
 "use client"
 
 import { useQuery, useQueryClient } from "@tanstack/react-query"
-import { BookOpenIcon, LockOpenIcon, LogInIcon, XIcon } from "lucide-react"
-import { useTranslations } from "next-intl"
-import type { ReactNode } from "react"
-import { toast } from "sonner"
-import { ContinueCard } from "@/components/pr/continue-card"
-import { EmptyState } from "@/components/pr/empty-state"
-import { ErrorState } from "@/components/pr/error-state"
-import { EpisodeList, EpisodeRow } from "@/components/pr/episode-row"
-import { SeriesCard } from "@/components/pr/series-card"
-import { SkeletonRow } from "@/components/pr/skeletons"
+import { AlertCircleIcon, CheckIcon, LibraryIcon, RefreshCwIcon, SparklesIcon, XIcon, ZapIcon } from "lucide-react"
+import Image from "next/image"
+import { useLocale, useTranslations } from "next-intl"
+import { useState } from "react"
+import { UndoBar, useUndo } from "@/components/pr/patterns"
+import { NativeSelect } from "@/components/pr/settings-ui"
+import { StateBox } from "@/components/pr/v2-primitives"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import type { ContinueView, Series } from "@/data"
+import { Progress } from "@/components/ui/progress"
+import { Skeleton } from "@/components/ui/skeleton"
+import { Tabs, TabsContent, TabsCount, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { episodesFor, fastPassPrice, type ContinueView, type Series, type Weekday } from "@/data"
 import { Link, usePathname } from "@/i18n/navigation"
 import { DEMO_MODE } from "@/lib/api/config"
 import * as real from "@/lib/api/me"
+import { addDays, daysFromToday, formatShortDate, ictDate, today, weekdayOf } from "@/lib/format"
+import { useLocalize } from "@/lib/localize"
 import { meKeys, useAccountEmail, useFailed, useSubscriptions } from "@/lib/me"
-import { useDemoFlag, useEpisodes, useLibrary } from "@/lib/queries"
-import { useAppStore, useUser } from "@/lib/store"
+import { useDemoFlag, useLibrary } from "@/lib/queries"
+import { readerHref, seriesHref } from "@/lib/routes"
+import { useAppStore, useHydrated, useUser } from "@/lib/store"
+import { cn } from "@/lib/utils"
 
-const GRID = "grid grid-cols-3 gap-3 md:grid-cols-4 md:gap-4 lg:grid-cols-6 lg:gap-5"
+/**
+ * My library (spec §8, prototype Library/): tabs Subscribed / Recently read / Unlocked, the "New episodes" filter,
+ * sort, edit mode (select all, remove) with a 6 s Undo bar, a guest banner and empty states.
+ * Demo mode reads the store (subscriptions, lastRead + the demo history, unlocked); the real API mode reads
+ * /me/subscriptions, /me/history and /me/unlocked and removes / restores through the API.
+ */
+
+type Tab = "subs" | "recent" | "unl"
+type SubSort = "updated" | "added" | "az"
+type RecentSort = "recent" | "progress" | "az"
+
+type HistoryItem = { series: Series; episode: number; progress: number; when: string }
+type UnlockedItem = { series: Series; numbers: number[] }
 
 const NONE_LIST: string[] = []
 const NONE_MAP: Record<string, number[]> = {}
 const NONE_READ: Record<string, number> = {}
+const WEEK: Weekday[] = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
+/** Days ago of the demo history rows, in order (prototype: Today, Today, Yesterday, 2 days ago, …). */
+const DEMO_DAYS_AGO = [0, 0, 1, 2, 3, 7]
 
-function BrowseButton() {
-  const t = useTranslations("library")
+const focusRing =
+  "outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+
+/** New episodes waiting in a subscribed series (prototype: UP series have 1–3). */
+function newCount(s: Series): number {
+  if (!s.badges.up) return 0
+  const m = /^S(\d+)$/.exec(s.id)
+  return m ? (Number(m[1]) % 3) + 1 : 1
+}
+
+/** Days since the series' update day (0 = today), for "Recently updated". */
+function daysSinceUpdate(s: Series): number {
+  if (!s.updateDay) return 7
+  return (WEEK.indexOf(weekdayOf(today)) - WEEK.indexOf(s.updateDay) + 7) % 7
+}
+
+/** "Nov 26, 2026" (episode display date) → "2026-11-26", or undefined. */
+function displayToIso(display: string): string | undefined {
+  const ms = Date.parse(`${display} UTC`)
+  return Number.isNaN(ms) ? undefined : new Date(ms).toISOString().slice(0, 10)
+}
+
+/** ISO date (YYYY-MM-DD) → days between it and `now`'s date (both in ICT). */
+const daysBetween = (fromIso: string, toIso: string) => Math.round((Date.parse(toIso) - Date.parse(fromIso)) / 86_400_000)
+
+function SelectBox({ on, size = "md" }: { on: boolean; size?: "md" | "lg" }) {
   return (
-    <Button asChild variant="outline">
-      <Link href="/">{t("browse")}</Link>
-    </Button>
+    <span
+      aria-hidden
+      className={cn(
+        "inline-flex shrink-0 items-center justify-center border",
+        size === "lg" ? "size-[22px] rounded-md border-transparent shadow-md" : "size-5 rounded-[5px]",
+        on
+          ? "border-primary bg-primary text-primary-foreground"
+          : size === "lg"
+            ? "bg-white/95 text-transparent"
+            : "border-[#a1a1aa] bg-background text-transparent"
+      )}
+    >
+      <CheckIcon className="size-3" strokeWidth={3} />
+    </span>
   )
 }
 
-/** A card with a small Remove button in its corner (real API only: the demo keeps its fixed lists). */
-function Removable({ title, onRemove, children }: { title: string; onRemove: (() => void) | undefined; children: ReactNode }) {
-  const t = useTranslations("library")
-  if (!onRemove) return <>{children}</>
+function Thumb({ series }: { series: Series }) {
   return (
-    <div className="relative min-w-0">
-      {children}
-      <Button
-        type="button"
-        variant="secondary"
-        size="icon"
-        aria-label={t("remove", { title })}
-        className="absolute top-1 right-1 size-6 rounded-full opacity-90 shadow-xs hover:opacity-100"
-        onClick={onRemove}
-      >
-        <XIcon className="size-3.5" />
-      </Button>
-    </div>
+    <Link
+      href={seriesHref(series)}
+      tabIndex={-1}
+      aria-hidden
+      className="h-[74px] w-14 shrink-0 overflow-hidden rounded-lg bg-muted max-md:h-16 max-md:w-12"
+    >
+      <Image src={series.cover} alt="" width={112} height={148} className="size-full object-cover" />
+    </Link>
   )
 }
 
-/** One series' unlocked episodes as rows (its own query for the episode list). */
-function UnlockedGroup({ series, numbers }: { series: Series; numbers: number[] }) {
-  const query = useEpisodes(series.slug)
-  const episodes = (query.data ?? []).filter((e) => numbers.includes(e.n)).reverse()
-  if (episodes.length === 0) return null
+function TitleLink({ series }: { series: Series }) {
   return (
-    <section aria-labelledby={`unlocked-${series.id}`} className="flex flex-col gap-3">
-      <h2 id={`unlocked-${series.id}`} className="type-h4">
-        <Link href={`/series/${series.slug}`} className="rounded-sm hover:text-brand-ink focus-visible:ring-2 focus-visible:ring-ring">
-          {series.title}
-        </Link>
-      </h2>
-      <EpisodeList>
-        {episodes.map((e) => (
-          <EpisodeRow key={e.n} series={series} episode={e} state="unlocked" />
-        ))}
-      </EpisodeList>
-    </section>
+    <Link
+      href={seriesHref(series)}
+      className={cn("type-h4 truncate rounded-sm underline-offset-3 hover:underline", focusRing)}
+    >
+      {series.title}
+    </Link>
   )
 }
 
-/** My library: Continue reading, Subscribed and Unlocked (logged in only). */
 export function LibraryPage() {
   const t = useTranslations("library")
+  const locale = useLocale()
+  const loc = useLocalize()
   const user = useUser()
+  const hydrated = useHydrated()
   const pathname = usePathname()
-  const demoQuery = useLibrary()
   const email = useAccountEmail()
   const qc = useQueryClient()
-  const tt = useTranslations("toasts")
   const failed = useFailed()
+  const undoBar = useUndo()
+  const [now] = useState(() => Date.now())
+
+  const [tab, setTab] = useState<Tab>("subs")
+  const [subSort, setSubSort] = useState<SubSort>("updated")
+  const [recentSort, setRecentSort] = useState<RecentSort>("recent")
+  const [newOnly, setNewOnly] = useState(false)
+  const [editing, setEditing] = useState(false)
+  const [sel, setSel] = useState<string[]>([])
+
+  // ---- data: the demo's query + store, or the three lists of the real API
+  const demoQuery = useLibrary()
   const enabled = !DEMO_MODE && !!email
   const history = useQuery({ queryKey: meKeys.history(email ?? ""), queryFn: real.fetchHistory, enabled })
   const subs = useSubscriptions()
   const unlockedQuery = useQuery({ queryKey: meKeys.unlocked(email ?? ""), queryFn: real.fetchUnlocked, enabled })
-  // One status for the page: the demo's single query, or the three lists of the real API.
-  const parts = DEMO_MODE ? [demoQuery] : [history, subs, unlockedQuery]
-  const query = {
-    isPending: parts.some((q) => q.isPending),
-    isError: parts.some((q) => q.isError),
-    refetch: () => Promise.all(parts.map((q) => q.refetch())),
-  }
+  const parts = DEMO_MODE ? [demoQuery] : enabled ? [history, subs, unlockedQuery] : []
+  const isPending = !hydrated || parts.some((q) => q.isPending)
+  const isError = !isPending && parts.some((q) => q.isError)
+  const refetch = () => void Promise.all(parts.map((q) => q.refetch()))
+
   // ?demo=empty shows the empty tabs even when this device has reading history.
   const forcedEmpty = useDemoFlag() === "empty"
-  const subscriptions = useAppStore((s) => (forcedEmpty ? NONE_LIST : s.subscriptions))
-  const unlocked = useAppStore((s) => (forcedEmpty ? NONE_MAP : s.unlocked))
+  const storeSubs = useAppStore((s) => (forcedEmpty ? NONE_LIST : s.subscriptions))
+  const storeUnlocked = useAppStore((s) => (forcedEmpty ? NONE_MAP : s.unlocked))
   const lastRead = useAppStore((s) => (forcedEmpty ? NONE_READ : s.lastRead))
+  const hidden = useAppStore((s) => s.historyHidden)
 
-  if (!user) {
-    return (
-      <div className="container py-10">
-        <h1 className="type-h1">{t("title")}</h1>
-        <EmptyState
-          icon={LogInIcon}
-          title={t("loginTitle")}
-          description={t("loginDesc")}
-          className="py-16"
-          action={
-            <Button asChild variant="brand" size="lg">
-              <Link href="/login" onClick={() => useAppStore.getState().setReturnTo(pathname)}>
-                {t("login")}
-              </Link>
-            </Button>
-          }
-        />
-      </div>
-    )
-  }
+  const demo = demoQuery.data
+  const byId = new Map((demo?.series ?? []).map((s) => [s.id, s]))
 
-  const demoData = demoQuery.data
-  const byId = new Map((demoData?.series ?? []).map((s) => [s.id, s]))
+  // Subscribed: store order is oldest first; the API's is newest first. Keep "newest first" for "Recently added".
+  const subscribed: Series[] = DEMO_MODE
+    ? [...storeSubs].reverse().flatMap((id) => (byId.get(id) ? [byId.get(id)!] : []))
+    : (subs.data ?? [])
 
-  // Demo entries with the episode raised to `lastRead`, plus series the reader has opened that are not in the demo list.
-  const demoEntries: ContinueView[] = []
-  if (demoData) {
+  // Recently read
+  const whenLabel = (days: number, iso?: string) =>
+    days <= 0
+      ? t("whenToday")
+      : days === 1
+        ? t("whenYesterday")
+        : days < 7
+          ? t("whenDaysAgo", { count: days })
+          : days < 14 || !iso
+            ? t("whenLastWeek")
+            : formatShortDate(iso, locale)
+  const historyItems: HistoryItem[] = []
+  if (DEMO_MODE && demo && !forcedEmpty) {
     const seen = new Set<string>()
-    for (const c of demoData.continueReading) {
+    const base: HistoryItem[] = demo.continueReading.map((c: ContinueView, i) => {
       seen.add(c.seriesData.id)
-      demoEntries.push({ ...c, episode: Math.max(c.episode, lastRead[c.seriesData.id] ?? 0) })
-    }
+      const days = DEMO_DAYS_AGO[i] ?? 7
+      return {
+        series: c.seriesData,
+        episode: Math.max(c.episode, lastRead[c.seriesData.id] ?? 0),
+        progress: c.progress,
+        when: whenLabel(days, addDays(today, -days)),
+      }
+    })
+    // Series opened on this device that the demo history doesn't have come first.
     for (const [id, n] of Object.entries(lastRead)) {
       const s = byId.get(id)
-      if (s && !seen.has(id) && n > 0) {
-        demoEntries.push({ series: s.slug, seriesData: s, episode: n, progress: Math.min(1, n / s.totalEpisodes) })
-      }
+      if (s && n > 0 && !seen.has(id)) historyItems.push({ series: s, episode: n, progress: 0.5, when: t("whenRecently") })
+    }
+    historyItems.push(...base)
+  } else if (!DEMO_MODE) {
+    const nowIso = ictDate(now)
+    for (const h of history.data ?? []) {
+      const iso = h.readAt ? ictDate(Date.parse(h.readAt)) : undefined
+      historyItems.push({
+        series: h.seriesData,
+        episode: h.episode,
+        progress: h.progress,
+        when: iso ? whenLabel(daysBetween(iso, nowIso), iso) : t("whenRecently"),
+      })
     }
   }
-  const demoSubscribed = subscriptions.flatMap((id) => (byId.get(id) ? [byId.get(id)!] : []))
-  const demoGroups = Object.entries(unlocked).flatMap(([id, nums]) =>
-    byId.get(id) && nums.length ? [{ series: byId.get(id)!, numbers: nums }] : []
-  )
+  const recent = DEMO_MODE ? historyItems.filter((h) => !hidden.includes(h.series.id)) : historyItems
 
-  const entries = DEMO_MODE ? demoEntries : (history.data ?? [])
-  const subscribed = DEMO_MODE ? demoSubscribed : (subs.data ?? [])
-  const unlockedGroups = DEMO_MODE ? demoGroups : (unlockedQuery.data ?? [])
+  // Unlocked
+  const unlockedItems: UnlockedItem[] = DEMO_MODE
+    ? Object.entries(storeUnlocked).flatMap(([id, nums]) =>
+        byId.get(id) && nums.length ? [{ series: byId.get(id)!, numbers: [...nums].sort((a, b) => a - b) }] : []
+      )
+    : (unlockedQuery.data ?? [])
 
-  /** Takes a series out of a list now; the toast's Undo puts it back. */
-  async function removeFrom(
-    list: "history" | "subscriptions",
-    series: Series,
-    remove: () => Promise<unknown>,
-    restore: (removed: never) => Promise<unknown>
-  ) {
+  // Reading position per series (Subscribed cards): this device's reads, else the history.
+  const lastOf = (s: Series) => Math.max(lastRead[s.id] ?? 0, recent.find((h) => h.series.id === s.id)?.episode ?? 0)
+
+  // ---- views
+  const withNew = subscribed.filter((s) => newCount(s) > 0)
+  const subView = [...(newOnly ? withNew : subscribed)]
+  if (subSort === "az") subView.sort((a, b) => a.title.localeCompare(b.title))
+  if (subSort === "updated")
+    subView.sort((a, b) => Number(newCount(b) > 0) - Number(newCount(a) > 0) || daysSinceUpdate(a) - daysSinceUpdate(b))
+  const recentView = [...recent]
+  if (recentSort === "az") recentView.sort((a, b) => a.series.title.localeCompare(b.series.title))
+  if (recentSort === "progress") recentView.sort((a, b) => a.progress - b.progress)
+
+  const ready = !isPending && !isError
+  const tabItems = tab === "subs" ? subView : tab === "recent" ? recentView : unlockedItems
+  const emptyFilter = tab === "subs" && newOnly && subscribed.length > 0 && withNew.length === 0
+  const canEdit = ready && tab !== "unl" && tabItems.length > 0
+  const showToolbar = ready && tab !== "unl" && (tabItems.length > 0 || emptyFilter)
+  const selectableIds = tab === "subs" ? subView.map((s) => s.id) : recentView.map((h) => h.series.id)
+  const allOn = selectableIds.length > 0 && selectableIds.every((id) => sel.includes(id))
+  const countsKnown = DEMO_MODE ? hydrated && !!demo : ready
+
+  function pickTab(next: string) {
+    setTab(next as Tab)
+    setEditing(false)
+    setSel([])
+  }
+  const toggleSel = (id: string) => setSel((x) => (x.includes(id) ? x.filter((y) => y !== id) : [...x, id]))
+
+  /** Real API: removes the ids from the cached list now, then from the account; Undo restores them. */
+  async function removeReal(list: "history" | "subscriptions", ids: string[], text: string) {
     if (!email) return
     const key = list === "history" ? meKeys.history(email) : meKeys.subscriptions(email)
     await qc.cancelQueries({ queryKey: key })
     const before = qc.getQueryData<(Series | ContinueView)[]>(key)
     qc.setQueryData(
       key,
-      before?.filter((x) => ("seriesData" in x ? x.seriesData.id : x.id) !== series.id)
+      before?.filter((x) => !ids.includes("seriesData" in x ? x.seriesData.id : x.id))
     )
     try {
-      const removed = await remove()
-      toast(tt("removedFromLibrary", { title: series.title }), {
-        action: {
-          label: tt("undo"),
-          onClick: () =>
-            void restore(removed as never)
-              .catch(failed)
-              .finally(() => void qc.invalidateQueries({ queryKey: key })),
-        },
-      })
+      if (list === "history") {
+        const removed = (await Promise.all(ids.map((id) => real.removeFromHistory(id)))).flat()
+        undoBar.show(text, () => void real.restoreHistory(removed).catch(failed).finally(() => void qc.invalidateQueries({ queryKey: key })))
+      } else {
+        const removed = (await Promise.all(ids.map((id) => real.removeSubscription(id)))).flat()
+        undoBar.show(text, () => void real.restoreSubscriptions(removed).catch(failed).finally(() => void qc.invalidateQueries({ queryKey: key })))
+      }
     } catch (error) {
       qc.setQueryData(key, before)
       failed(error)
     }
   }
 
-  const removeContinue = DEMO_MODE
-    ? undefined
-    : (series: Series) => removeFrom("history", series, () => real.removeFromHistory(series.id), real.restoreHistory)
-  const removeSubscribed = DEMO_MODE
-    ? undefined
-    : (series: Series) => removeFrom("subscriptions", series, () => real.removeSubscription(series.id), real.restoreSubscriptions)
+  function removeSelected() {
+    const ids = sel.filter((id) => selectableIds.includes(id))
+    if (ids.length === 0) return
+    setEditing(false)
+    setSel([])
+    const store = useAppStore.getState()
+    if (tab === "subs") {
+      const text = t("undoUnsubscribed", { count: ids.length })
+      if (!DEMO_MODE) return void removeReal("subscriptions", ids, text)
+      const before = store.subscriptions
+      store.setSubscriptions(before.filter((id) => !ids.includes(id)))
+      undoBar.show(text, () => useAppStore.getState().setSubscriptions(before))
+    } else {
+      const text = t("undoRemoved", { count: ids.length })
+      if (!DEMO_MODE) return void removeReal("history", ids, text)
+      const before = store.historyHidden
+      store.setHistoryHidden([...before, ...ids])
+      undoBar.show(text, () => useAppStore.getState().setHistoryHidden(before))
+    }
+  }
+
+  const toAuth = () => useAppStore.getState().setReturnTo(pathname)
+  const unitShort = (s: Series) => (s.type === "novel" ? "ch" : "ep")
+
+  const empties = {
+    subs: [t("emptySubsTitle"), t("emptySubsText")],
+    recent: [t("emptyRecentTitle"), t("emptyRecentText")],
+    unl: [t("emptyUnlTitle"), t("emptyUnlText")],
+  } as const
+
+  const tabs = [
+    { value: "subs", label: t("tabSubscribed"), count: subscribed.length },
+    { value: "recent", label: t("tabRecent"), count: recent.length },
+    { value: "unl", label: t("tabUnlocked"), count: unlockedItems.length },
+  ] as const
 
   return (
-    <div className="container flex flex-col gap-6 py-8 md:py-10">
-      <h1 className="type-h1">{t("title")}</h1>
-      <Tabs defaultValue="continue" className="gap-6">
-        <TabsList aria-label={t("tabs")} className="w-full max-w-md">
-          <TabsTrigger value="continue" className="min-w-0 px-1.5 max-[359px]:text-[13px] sm:px-3">{t("tabContinue")}</TabsTrigger>
-          <TabsTrigger value="subscribed" className="min-w-0 px-1.5 max-[359px]:text-[13px] sm:px-3">{t("tabSubscribed")}</TabsTrigger>
-          <TabsTrigger value="unlocked" className="min-w-0 px-1.5 max-[359px]:text-[13px] sm:px-3">{t("tabUnlocked")}</TabsTrigger>
+    <div className="container flex flex-col gap-5 pt-7 pb-[72px]">
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex min-w-0 flex-col gap-1">
+          <h1 className="type-h1">{t("title")}</h1>
+          {countsKnown ? (
+            <p className="text-[13px] leading-[18px] text-muted-foreground">
+              {t("headLine", { subs: subscribed.length, withNew: withNew.length, unlocked: unlockedItems.length })}
+            </p>
+          ) : null}
+        </div>
+        {canEdit ? (
+          <Button
+            variant={editing ? "brand" : "outline"}
+            className="mt-1 shrink-0"
+            aria-pressed={editing}
+            onClick={() => {
+              setEditing(!editing)
+              setSel([])
+            }}
+          >
+            {editing ? t("done") : t("edit")}
+          </Button>
+        ) : null}
+      </div>
+
+      {hydrated && !user ? (
+        <div className="flex items-center gap-4 rounded-card border bg-[linear-gradient(120deg,#f0fdf5_0%,#ffffff_70%)] p-5 shadow-xs max-md:flex-col max-md:items-start max-md:p-4">
+          <span aria-hidden className="inline-flex size-11 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground">
+            <LibraryIcon className="size-5" />
+          </span>
+          <div className="flex min-w-0 flex-1 flex-col gap-1">
+            <h2 className="type-h3">{t("guestTitle")}</h2>
+            <p className="text-[13px] leading-[18px] text-muted-foreground">{t("guestText")}</p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Button asChild variant="brand">
+              <Link href="/login" onClick={toAuth}>
+                {t("login")}
+              </Link>
+            </Button>
+            <Button asChild variant="outline">
+              <Link href="/login?mode=signup" onClick={toAuth}>
+                {t("createAccount")}
+              </Link>
+            </Button>
+          </div>
+        </div>
+      ) : null}
+
+      <Tabs value={tab} onValueChange={pickTab} className="gap-5">
+        <TabsList variant="line" aria-label={t("tabs")} className="gap-1">
+          {tabs.map((x) => (
+            <TabsTrigger key={x.value} value={x.value} className="h-11 px-3 pt-0 pb-0">
+              {x.label}
+              {countsKnown ? <TabsCount className="rounded-badge px-2 py-0.5 text-xs font-semibold text-secondary-foreground">{x.count}</TabsCount> : null}
+            </TabsTrigger>
+          ))}
         </TabsList>
 
-        {query.isPending ? (
-          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4" aria-hidden>
-            {Array.from({ length: 4 }, (_, i) => (
-              <div key={i} className="rounded-card border p-3">
-                <SkeletonRow thumb="h-16 w-12" />
+        {showToolbar ? (
+          <div className="flex min-h-10 flex-wrap items-center justify-between gap-3">
+            {editing ? (
+              <>
+                <div className="flex items-center gap-2.5">
+                  <label className="flex cursor-pointer items-center gap-2 text-[13px] leading-[18px]">
+                    <input
+                      type="checkbox"
+                      className="peer sr-only"
+                      checked={allOn}
+                      onChange={() => setSel(allOn ? [] : selectableIds)}
+                    />
+                    <span className="inline-flex rounded-[4px] peer-focus-visible:ring-2 peer-focus-visible:ring-ring peer-focus-visible:ring-offset-2">
+                      <span
+                        aria-hidden
+                        className={cn(
+                          "inline-flex size-4 items-center justify-center rounded-[4px] border",
+                          allOn ? "border-primary bg-primary text-primary-foreground" : "border-[#a1a1aa] bg-background text-transparent"
+                        )}
+                      >
+                        <CheckIcon className="size-3" strokeWidth={3} />
+                      </span>
+                    </span>
+                    {t("selectAll")}
+                  </label>
+                  <span className="text-[13px] leading-[18px] text-muted-foreground" aria-live="polite">
+                    {sel.length ? t("selected", { count: sel.length }) : t("selectHint")}
+                  </span>
+                </div>
+                <Button variant="destructive" size="sm" disabled={sel.length === 0} onClick={removeSelected}>
+                  <XIcon className="size-3.5" />
+                  {tab === "subs"
+                    ? sel.length
+                      ? t("unsubscribeN", { count: sel.length })
+                      : t("unsubscribe")
+                    : sel.length
+                      ? t("removeHistoryN", { count: sel.length })
+                      : t("removeHistory")}
+                </Button>
+              </>
+            ) : (
+              <>
+                <div className="flex flex-wrap items-center gap-2">
+                  {tab === "subs" ? (
+                    <button
+                      type="button"
+                      aria-pressed={newOnly}
+                      onClick={() => setNewOnly(!newOnly)}
+                      className={cn(
+                        "inline-flex h-8 items-center gap-1.5 rounded-full border px-3 text-[13px] font-medium whitespace-nowrap transition-colors",
+                        focusRing,
+                        newOnly ? "border-foreground bg-foreground text-[#fafafa]" : "bg-background hover:bg-accent"
+                      )}
+                    >
+                      <SparklesIcon className="size-3" aria-hidden />
+                      {t("newFilter", { count: withNew.length })}
+                    </button>
+                  ) : null}
+                  <span className="text-[13px] leading-[18px] text-muted-foreground">
+                    {t("seriesCount", { count: tab === "subs" ? subView.length : recent.length })}
+                  </span>
+                </div>
+                <label className="flex items-center gap-2">
+                  <span className="text-[13px] leading-[18px] text-muted-foreground max-md:sr-only">{t("sortBy")}</span>
+                  <NativeSelect
+                    value={tab === "subs" ? subSort : recentSort}
+                    onChange={(e) =>
+                      tab === "subs" ? setSubSort(e.target.value as SubSort) : setRecentSort(e.target.value as RecentSort)
+                    }
+                    wrapperClassName="w-auto"
+                    className="min-w-[170px] max-md:min-w-0"
+                  >
+                    {tab === "subs" ? (
+                      <>
+                        <option value="updated">{t("sortUpdated")}</option>
+                        <option value="added">{t("sortAdded")}</option>
+                        <option value="az">{t("sortAz")}</option>
+                      </>
+                    ) : (
+                      <>
+                        <option value="recent">{t("sortRecent")}</option>
+                        <option value="progress">{t("sortProgress")}</option>
+                        <option value="az">{t("sortAz")}</option>
+                      </>
+                    )}
+                  </NativeSelect>
+                </label>
+              </>
+            )}
+          </div>
+        ) : null}
+
+        {undoBar.current ? <UndoBar text={undoBar.current.text} onUndo={undoBar.undo} /> : null}
+
+        {isPending ? (
+          <div
+            className="grid grid-cols-3 gap-x-3 gap-y-4 md:grid-cols-4 md:gap-x-5 md:gap-y-6 lg:grid-cols-6"
+            aria-busy="true"
+            aria-label={t("loading")}
+          >
+            {Array.from({ length: 6 }, (_, i) => (
+              <div key={i} className="flex flex-col gap-2">
+                <Skeleton className="aspect-[3/4] rounded-[10px]" />
+                <Skeleton className="h-3 w-3/4" />
+                <Skeleton className="h-2.5 w-1/2" />
               </div>
             ))}
           </div>
-        ) : query.isError ? (
-          <ErrorState onRetry={() => void query.refetch()} />
+        ) : isError ? (
+          <StateBox
+            icon={AlertCircleIcon}
+            tone="bad"
+            title={t("errorTitle")}
+            text={t("errorText")}
+            action={
+              <Button variant="outline" size="sm" onClick={refetch}>
+                <RefreshCwIcon className="size-3.5" />
+                {t("tryAgain")}
+              </Button>
+            }
+          />
+        ) : tabItems.length === 0 ? (
+          <StateBox
+            icon={LibraryIcon}
+            title={emptyFilter ? t("emptyNewTitle") : empties[tab][0]}
+            text={emptyFilter ? t("emptyNewText") : empties[tab][1]}
+            className="[&>p:nth-of-type(2)]:max-w-[46ch]"
+            action={
+              emptyFilter ? (
+                <Button variant="outline" size="sm" onClick={() => setNewOnly(false)}>
+                  {t("showAllSubs")}
+                </Button>
+              ) : (
+                <Button asChild variant="brand" size="sm">
+                  <Link href="/">{t("browse")}</Link>
+                </Button>
+              )
+            }
+          />
         ) : (
           <>
-            <TabsContent value="continue">
-              {entries.length === 0 ? (
-                <EmptyState icon={BookOpenIcon} title={t("emptyContinue")} description={t("emptyContinueDesc")} action={<BrowseButton />} />
-              ) : (
-                <div className="grid gap-3 md:grid-cols-2 md:gap-4 xl:grid-cols-4">
-                  {entries.map((e) => (
-                    <Removable key={e.seriesData.id} title={e.seriesData.title} onRemove={removeContinue && (() => void removeContinue(e.seriesData))}>
-                      <ContinueCard series={e.seriesData} episode={e.episode} progress={e.progress} />
-                    </Removable>
-                  ))}
-                </div>
-              )}
+            <TabsContent value="subs" className="mt-0">
+              <ul
+                aria-label={t("subsLabel")}
+                className="m-0 grid list-none grid-cols-3 gap-x-3 gap-y-4 p-0 md:grid-cols-4 md:gap-x-5 md:gap-y-6 lg:grid-cols-6"
+              >
+                {subView.map((s) => {
+                  const n = newCount(s)
+                  const last = lastOf(s)
+                  const next = last > 0 ? Math.min(last + 1, s.freeEpisodes) : 1
+                  const on = sel.includes(s.id)
+                  const unit = unitShort(s)
+                  return (
+                    <li key={s.id} className="relative flex min-w-0 flex-col gap-2.5 rounded-card">
+                      {editing ? (
+                        <button
+                          type="button"
+                          role="checkbox"
+                          aria-checked={on}
+                          aria-label={on ? t("deselect", { title: s.title }) : t("select", { title: s.title })}
+                          onClick={() => toggleSel(s.id)}
+                          className={cn("absolute inset-0 z-[2] flex w-full items-start justify-end rounded-card p-2", focusRing)}
+                        >
+                          <SelectBox on={on} size="lg" />
+                        </button>
+                      ) : null}
+                      <Link
+                        href={seriesHref(s)}
+                        tabIndex={editing ? -1 : undefined}
+                        className={cn("group flex min-w-0 flex-col gap-2.5 rounded-[10px]", focusRing)}
+                      >
+                        <div
+                          className={cn(
+                            "relative aspect-[3/4] w-full overflow-hidden rounded-[10px] bg-muted",
+                            on && "shadow-[0_0_0_3px_var(--primary)]"
+                          )}
+                        >
+                          <Image
+                            src={s.cover}
+                            alt=""
+                            width={360}
+                            height={480}
+                            sizes="(min-width: 1280px) 190px, (min-width: 768px) 25vw, 33vw"
+                            className={cn("cover-zoom size-full object-cover", on && "opacity-80")}
+                          />
+                          {!editing && (n > 0 || s.type === "novel") ? (
+                            <div className="absolute top-2 right-2 left-2 flex flex-wrap gap-1">
+                              {n > 0 ? <Badge variant="up">{t("newBadge", { count: n })}</Badge> : null}
+                              {s.type === "novel" ? <Badge variant="dark">{t("novel")}</Badge> : null}
+                            </div>
+                          ) : null}
+                        </div>
+                        <div className="flex min-w-0 flex-col gap-0.5">
+                          <h3 className="truncate text-sm leading-5 font-semibold max-md:text-[13px] max-md:leading-[18px]">{s.title}</h3>
+                          <p className="truncate text-[13px] leading-[18px] text-muted-foreground max-md:text-xs">
+                            {last > 0
+                              ? t(`readOf.${unit}`, { n: last, total: s.freeEpisodes })
+                              : t("notStarted", { total: s.freeEpisodes })}
+                          </p>
+                          <p className="truncate text-[13px] leading-[18px] text-muted-foreground max-md:text-xs">{loc.schedule(s.schedule)}</p>
+                        </div>
+                      </Link>
+                      {!editing ? (
+                        <Button asChild variant="secondary" size="sm" className="w-full max-md:h-[30px] max-md:px-1.5 max-md:text-xs">
+                          <Link href={readerHref(s, next)}>
+                            <span className="truncate">{last > 0 ? t(`continueAt.${unit}`, { n: next }) : t(`startAt.${unit}`)}</span>
+                          </Link>
+                        </Button>
+                      ) : null}
+                    </li>
+                  )
+                })}
+              </ul>
             </TabsContent>
 
-            <TabsContent value="subscribed">
-              {subscribed.length === 0 ? (
-                <EmptyState title={t("emptySubscribed")} description={t("emptySubscribedDesc")} action={<BrowseButton />} />
-              ) : (
-                <div className={GRID}>
-                  {subscribed.map((s) => (
-                    <Removable key={s.id} title={s.title} onRemove={removeSubscribed && (() => void removeSubscribed(s))}>
-                      <SeriesCard series={s} />
-                    </Removable>
-                  ))}
-                </div>
-              )}
+            <TabsContent value="recent" className="mt-0">
+              <ul aria-label={t("tabRecent")} className="m-0 flex list-none flex-col divide-y overflow-hidden rounded-card border p-0">
+                {recentView.map((h) => {
+                  const s = h.series
+                  const on = sel.includes(s.id)
+                  const pct = Math.round(h.progress * 100)
+                  const done = pct >= 100
+                  const unit = s.type === "novel" ? "chapter" : "episode"
+                  const nextEp = done ? Math.min(h.episode + 1, s.freeEpisodes) : h.episode
+                  return (
+                    <li
+                      key={s.id}
+                      className={cn(
+                        "flex items-center gap-3.5 bg-background px-4 py-3 max-md:gap-3 max-md:px-3 max-md:py-2.5",
+                        on && "bg-brand-soft"
+                      )}
+                    >
+                      {editing ? (
+                        <button
+                          type="button"
+                          role="checkbox"
+                          aria-checked={on}
+                          aria-label={on ? t("deselect", { title: s.title }) : t("select", { title: s.title })}
+                          onClick={() => toggleSel(s.id)}
+                          className={cn("inline-flex rounded-md p-1.5", focusRing)}
+                        >
+                          <SelectBox on={on} />
+                        </button>
+                      ) : null}
+                      <Thumb series={s} />
+                      <div className="flex min-w-0 flex-1 flex-col gap-1">
+                        <TitleLink series={s} />
+                        <span className="text-xs leading-4 text-muted-foreground">
+                          {done ? t(`finished.${unit}`, { n: h.episode }) : t(`readPct.${unit}`, { n: h.episode, pct })} · {h.when}
+                        </span>
+                        <Progress value={pct} aria-label={t("progressOf", { title: s.title })} className="max-w-80" />
+                      </div>
+                      {!editing ? (
+                        <Button asChild variant="brand" size="sm" className="shrink-0">
+                          <Link href={readerHref(s, nextEp)}>{done ? t(`next.${unit}`) : t("continue")}</Link>
+                        </Button>
+                      ) : null}
+                    </li>
+                  )
+                })}
+              </ul>
             </TabsContent>
 
-            <TabsContent value="unlocked">
-              {unlockedGroups.length === 0 ? (
-                <EmptyState icon={LockOpenIcon} title={t("emptyUnlocked")} description={t("emptyUnlockedDesc")} action={<BrowseButton />} />
-              ) : (
-                <div className="flex flex-col gap-6">
-                  {unlockedGroups.map((g) => (
-                    <UnlockedGroup key={g.series.id} series={g.series} numbers={g.numbers} />
-                  ))}
+            <TabsContent value="unl" className="mt-0 flex flex-col gap-5">
+              <div className="flex items-start gap-3 rounded-[10px] border border-brand-soft-border bg-brand-soft px-4 py-3.5">
+                <ZapIcon className="mt-0.5 size-4 shrink-0 text-brand-ink" aria-hidden />
+                <div className="flex min-w-0 flex-col">
+                  <p className="text-sm leading-5 font-semibold">{t("unlockedNoteTitle")}</p>
+                  <p className="text-[13px] leading-[19px]">{t("unlockedNoteText")}</p>
                 </div>
-              )}
+              </div>
+              <ul aria-label={t("unlockedLabel")} className="m-0 flex list-none flex-col divide-y overflow-hidden rounded-card border p-0">
+                {unlockedItems.map((u) => {
+                  const s = u.series
+                  const e = u.numbers
+                  const unit = s.type === "novel" ? "chapter" : "episode"
+                  const lastN = e[e.length - 1]
+                  const fp = episodesFor(s.slug).find((x) => x.n === lastN && x.access === "fastpass")
+                  const freeIso = (fp && displayToIso(fp.date)) || addDays(today, (lastN - s.freeEpisodes) * 7)
+                  return (
+                    <li key={s.id} className="flex items-center gap-3.5 bg-background px-4 py-3 max-md:gap-3 max-md:px-3 max-md:py-2.5">
+                      <Thumb series={s} />
+                      <div className="flex min-w-0 flex-1 flex-col gap-1">
+                        <TitleLink series={s} />
+                        <span className="text-xs leading-4 text-muted-foreground">
+                          {t(`unlockedEps.${unit}`, { count: e.length, list: e.join(", ") })}
+                        </span>
+                        <span className="text-xs leading-4 text-muted-foreground">
+                          {daysFromToday(freeIso) > 0
+                            ? t("spentFree", { coins: e.length * fastPassPrice(), date: formatShortDate(freeIso, locale) })
+                            : t("spentFreeNow", { coins: e.length * fastPassPrice() })}
+                        </span>
+                      </div>
+                      <Button asChild variant="brand" size="sm" className="shrink-0">
+                        <Link href={readerHref(s, e[0])}>{t(`readAt.${unitShort(s)}`, { n: e[0] })}</Link>
+                      </Button>
+                    </li>
+                  )
+                })}
+              </ul>
             </TabsContent>
           </>
         )}
@@ -259,4 +667,3 @@ export function LibraryPage() {
     </div>
   )
 }
-

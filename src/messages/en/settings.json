@@ -1,35 +1,142 @@
 {
   "title": "Settings",
-  "profile": "Profile",
-  "profileLoggedOut": "Log in to see your profile.",
+  "lead": "Manage your account, reading and privacy.",
+  "loginTitle": "Log in to change your settings",
+  "loginText": "Your reading, language and notification choices are saved to your account.",
   "login": "Log in",
+  "sections": "Settings sections",
+  "nav": {
+    "account": "Account",
+    "reading": "Reading",
+    "language": "Language and region",
+    "notifs": "Notifications",
+    "privacy": "Privacy and safety",
+    "coins": "Coins and payments",
+    "danger": "Account actions"
+  },
+  "accountDesc": "This is how you appear in comments.",
   "displayName": "Display name",
-  "email": "Email",
-  "language": "Language",
-  "languageDesc": "Choose the language of menus and buttons.",
-  "appearance": "Appearance",
-  "appearanceDesc": "Choose how PhumiReader looks.",
-  "themeSystem": "System",
+  "nameShort": "Enter at least 2 characters.",
+  "nameHint": "{count}/30 · Shown on your comments",
+  "nameInvalid": "Use 2 to 30 characters.",
+  "connected": "Connected accounts",
+  "connectedNote": "Connected · you can log in with {name}",
+  "notConnected": "Not connected",
+  "disconnect": "Disconnect",
+  "connect": "Connect",
+  "readingDesc": "Applies to every series you read.",
+  "mode": "Comic reading mode",
+  "modes": {
+    "scroll": {
+      "label": "Vertical scroll",
+      "desc": "Scroll through the whole episode"
+    },
+    "page": {
+      "label": "Page by page",
+      "desc": "Tap or swipe to turn panels"
+    }
+  },
+  "quality": "Image quality",
+  "qualities": {
+    "auto": "Automatic",
+    "high": "High",
+    "saver": "Data saver"
+  },
+  "qualityHints": {
+    "auto": "Adjusts to your connection.",
+    "high": "Sharpest images. Uses more data.",
+    "saver": "Smaller images. Good for mobile data."
+  },
+  "theme": "Reader theme",
   "themeLight": "Light",
   "themeDark": "Dark",
-  "reading": "Reading",
-  "preview": "Preview",
-  "previewText": "The quiet village woke before the sun, and every window glowed with lantern light.",
-  "readingDesc": "Defaults for the web novel reader.",
-  "notifications": "Notifications",
-  "notifyEpisodes": "New-episode alerts",
-  "notifyEpisodesDesc": "Tell me when a series I follow has a new episode.",
-  "notifyFastPass": "Fast Pass reminders",
-  "notifyFastPassDesc": "Remind me when an episode I want becomes free.",
-  "notifyNote": "Saved on this device only.",
-  "notifySaved": "Saved to your account.",
-  "account": "Account",
-  "logOut": "Log out",
-  "logOutDesc": "You will stay on this page. Your coins and unlocks stay on this device.",
-  "reset": "Reset demo data",
-  "resetDesc": "Clears coins, unlocks, subscriptions, reading progress and your login on this device.",
-  "resetTitle": "Reset demo data?",
-  "resetBody": "Your coins go back to 3, you are logged out and your unlocks, subscriptions and reading progress are cleared.",
+  "themeSystem": "System",
+  "size": "Web novel text size",
+  "sizes": {
+    "s": {
+      "label": "A−",
+      "aria": "Small"
+    },
+    "m": {
+      "label": "A",
+      "aria": "Medium"
+    },
+    "l": {
+      "label": "A+",
+      "aria": "Large"
+    },
+    "xl": {
+      "label": "A++",
+      "aria": "Extra large"
+    }
+  },
+  "previewText": "The rain started just as the shop lights went out.",
+  "switches": {
+    "autoNext": {
+      "label": "Open the next episode automatically",
+      "desc": "When you reach the end of an episode."
+    },
+    "saveData": {
+      "label": "Save data on mobile networks",
+      "desc": "Loads images only as you scroll."
+    },
+    "publicLib": {
+      "label": "Show my library on my profile",
+      "desc": "Others can see which series you subscribe to."
+    },
+    "mature": {
+      "label": "Show mature series",
+      "desc": "Only for readers 18 and older. Series rated 18+ appear in search and genres."
+    }
+  },
+  "appLanguage": "App language",
+  "langChanged": {
+    "en": "Language: English",
+    "km": "ភាសា៖ ខ្មែរ"
+  },
+  "region": "Region",
+  "regions": {
+    "KH": "Cambodia",
+    "TH": "Thailand",
+    "VN": "Vietnam",
+    "OTHER": "Other"
+  },
+  "regionHint": "Some series are only available in some regions.",
+  "storyLangs": "Show stories in",
+  "langsError": "Choose at least one language.",
+  "notifSummary": "New episodes, replies and payments. Push on, email off.",
+  "notifCustom": "Your custom alert choices are on.",
+  "manage": "Manage",
+  "blocked": "Blocked accounts",
+  "noBlocked": "You haven’t blocked anyone. Blocked people can’t reply to you, and you won’t see their comments.",
+  "unblock": "Unblock",
+  "unblockName": "Unblock {name}",
+  "unblocked": "{name} is unblocked",
+  "reports": "Your reports",
+  "noReports": "Reports you send appear here with their status.",
+  "reportMeta": "Case {id} · {date}",
+  "status": {
+    "inReview": "In review",
+    "removed": "Removed",
+    "noViolation": "No violation found"
+  },
+  "download": "Download your data",
+  "downloadHint": "Get a copy of your library, comments and purchases.",
+  "requestDownload": "Request download",
+  "preparing": "Preparing…",
+  "downloadSent": "We’ll email you a download link",
+  "coinsHint": "{count} coins · Payment details are kept by the payment provider, not PhumiReader.",
+  "history": "Purchase history",
+  "logoutAll": "Log out everywhere",
+  "logoutAllHint": "Logs you out on all phones and computers, including this one.",
+  "loggedOutAll": "Logged out on all devices",
+  "deleteHint": "Deletes your library, comments and unused coins. This can’t be undone.",
+  "unsaved": "You have unsaved changes",
+  "unsavedRegion": "Unsaved changes",
+  "discard": "Discard",
+  "saveChanges": "Save changes",
+  "saved": "Settings saved",
+  "saveFailed": "That didn’t work. Try again.",
   "cancel": "Cancel",
-  "confirmReset": "Reset"
+  "close": "Close"
 }

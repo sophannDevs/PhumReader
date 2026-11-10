@@ -12,17 +12,21 @@ import { useTheme } from "@/lib/theme"
 const SAVE_DELAY_MS = 500
 
 /**
- * Real API only. Signed in: loads the account's settings once and applies the appearance, reading
- * defaults and notifications to this browser; afterwards every change to them is saved to the
- * account (only what changed, half a second after the last change). The language is saved when it
- * is chosen (Settings), not here: the address decides the language of a page.
+ * Real API only. Signed in: loads the account's settings once and applies the reader theme, reading
+ * defaults and alerts to this browser; afterwards every change to them is saved to the account (only
+ * what changed, half a second after the last change). The language is saved when it is chosen
+ * (Settings), not here: the address decides the language of a page.
+ * The API's two alert switches (`notifications.episodes` / `fastPass`) are the push switches of
+ * "New episodes" and "Fast Pass is free" in the V2.1 alert settings (`notifPrefs`); the other V2.1
+ * alert choices stay on this device until the API has them.
  */
 export function SettingsSync() {
   const tt = useTranslations("toasts")
   const email = useAccountEmail()
   const { theme, setTheme } = useTheme()
   const reader = useAppStore((s) => s.novelSettings)
-  const notifications = useAppStore((s) => s.notifications)
+  const episodes = useAppStore((s) => s.notifPrefs.update[0])
+  const fastPass = useAppStore((s) => s.notifPrefs.fastpass[0])
   /** What the account has now; null until loaded. */
   const saved = useRef<account.Settings | null>(null)
 
@@ -36,7 +40,15 @@ export function SettingsSync() {
       .then((s) => {
         if (cancelled) return
         saved.current = s
-        useAppStore.setState({ novelSettings: s.reader, notifications: s.notifications })
+        useAppStore.setState((st) => ({
+          novelSettings: s.reader,
+          notifications: s.notifications,
+          notifPrefs: {
+            ...st.notifPrefs,
+            update: [s.notifications.episodes, st.notifPrefs.update[1]],
+            fastpass: [s.notifications.fastPass, st.notifPrefs.fastpass[1]],
+          },
+        }))
         setTheme(s.theme)
       })
       .catch(() => undefined) // Keep this browser's settings; the next visit tries again.
@@ -49,21 +61,23 @@ export function SettingsSync() {
   useEffect(() => {
     const base = saved.current
     if (DEMO_MODE || !base || !theme) return
+    const notifications = { episodes, fastPass }
     const change: account.SettingsChange = {}
     if (theme !== base.theme) change.theme = theme
     if (JSON.stringify(reader) !== JSON.stringify(base.reader)) change.reader = reader
-    if (JSON.stringify(notifications) !== JSON.stringify(base.notifications)) change.notifications = notifications
+    if (episodes !== base.notifications.episodes || fastPass !== base.notifications.fastPass) change.notifications = notifications
     if (Object.keys(change).length === 0) return
     const timer = setTimeout(() => {
       account.patchSettings(change).then(
         (s) => {
           saved.current = s
+          useAppStore.setState({ notifications: s.notifications })
         },
         () => toast.error(tt("actionFailed"))
       )
     }, SAVE_DELAY_MS)
     return () => clearTimeout(timer)
-  }, [theme, reader, notifications, tt])
+  }, [theme, reader, episodes, fastPass, tt])
 
   return null
 }

@@ -1,263 +1,714 @@
 "use client"
 
+import { ChevronRightIcon, SettingsIcon } from "lucide-react"
 import { useLocale, useTranslations } from "next-intl"
-import { useTheme } from "@/lib/theme"
-import { useState, useSyncExternalStore } from "react"
+import { useEffect, useRef, useState } from "react"
 import { toast } from "sonner"
-import { ReadingSettingsControls } from "@/components/layout/reading-settings"
-import { AvatarEditor, DisplayNameEditor, SecuritySection } from "@/components/pr/account-security"
-import { EmptyState } from "@/components/pr/empty-state"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Button } from "@/components/ui/button"
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
-import { Label } from "@/components/ui/label"
-import { RadioGroup, RadioGroupItem, radioCardClassName } from "@/components/ui/radio-group"
-import { Switch } from "@/components/ui/switch"
+  AvatarRow,
+  DeleteAccountDialog,
+  Devices,
+  EmailField,
+  PasswordRow,
+  fieldError,
+  fieldHint,
+  fieldLabel,
+} from "@/components/pr/account-security"
+import { CoinIcon } from "@/components/pr/coin-icon"
+import { OptionCard } from "@/components/pr/patterns"
+import { NativeSelect, SaveBar, SmallSwitch } from "@/components/pr/settings-ui"
+import { Chip } from "@/components/pr/v2-primitives"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { Link, usePathname, useRouter } from "@/i18n/navigation"
 import { type Locale } from "@/i18n/routing"
-import { cn } from "@/lib/utils"
+import * as account from "@/lib/api/account"
 import { DEMO_MODE } from "@/lib/api/config"
-import { patchSettings } from "@/lib/api/account"
-import { initials } from "@/lib/format"
-import { logOut } from "@/lib/session"
-import { useAppStore, useUser } from "@/lib/store"
-import { useRestoreFocus } from "@/lib/use-restore-focus"
-import { MonitorIcon, MoonIcon, SunIcon, UserIcon } from "lucide-react"
+import { fieldErrors } from "@/lib/api/errors"
+import { formatShortDate, ictDate, initials } from "@/lib/format"
+import { logOut, toUser } from "@/lib/session"
+import {
+  type AppSettings,
+  type ReportStatus,
+  defaultNotifPrefs,
+  useAppStore,
+  useCoins,
+  useHydrated,
+  useUser,
+} from "@/lib/store"
+import { useTheme } from "@/lib/theme"
+import { cn } from "@/lib/utils"
 
-function ReadingPreview() {
-  const t = useTranslations("settings")
-  const ns = useAppStore((s) => s.novelSettings)
-  return (
-    <div
-      data-reader-theme={ns.theme}
-      style={{ "--novel-size": `${ns.size}px`, "--novel-leading": ns.wide ? 1.85 : 1.6 } as React.CSSProperties}
-      className="rounded-card border border-reader-border bg-reader-page p-4 text-reader-text"
-    >
-      <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-reader-quiet">{t("preview")}</p>
-      <p className={cn("type-novel", ns.font === "serif" && "font-novel")}>{t("previewText")}</p>
-    </div>
-  )
+/**
+ * Settings (spec §12, prototype Settings/): a side menu and one card per section. Account, Reading, Language and
+ * region and Privacy switches are a form with a save bar ("You have unsaved changes · Discard / Save changes");
+ * the app language, blocking, password, photo, downloads and account actions act at once.
+ * Saving writes `settings` (+ `novelSettings.size`, the reader theme via useTheme, the display name). With the
+ * real API the name goes to /me/profile and SettingsSync saves the reader theme, text size and alerts; the other
+ * choices stay on this device (the API has no fields for them yet).
+ */
+
+type Form = Pick<
+  AppSettings,
+  "mode" | "quality" | "theme" | "size" | "autoNext" | "saveData" | "region" | "langs" | "publicLib" | "mature" | "google" | "facebook"
+> & { name: string }
+
+const SECTIONS = ["account", "reading", "language", "notifs", "privacy", "coins", "danger"] as const
+type Section = (typeof SECTIONS)[number]
+
+/** Settings text size presets → novel reader px (TEXT_SIZES 14–24) and the preview size (prototype). */
+const SIZE_PX = { s: 16, m: 18, l: 20, xl: 22 } as const
+const PREVIEW_PX = { s: 15, m: 17, l: 19, xl: 22 } as const
+const sizeOfPx = (px: number): AppSettings["size"] => (px <= 16 ? "s" : px <= 18 ? "m" : px <= 20 ? "l" : "xl")
+
+const STATUS_BADGE: Record<ReportStatus, "warn" | "brand" | "secondary"> = {
+  "In review": "warn",
+  Removed: "brand",
+  "No violation found": "secondary",
 }
+const STATUS_KEY: Record<ReportStatus, string> = { "In review": "inReview", Removed: "removed", "No violation found": "noViolation" }
 
-function ThemeChoice() {
-  const t = useTranslations("settings")
-  const { theme, setTheme } = useTheme()
-  const mounted = useSyncExternalStore(
-    () => () => {},
-    () => true,
-    () => false
-  )
-  const options = [
-    ["system", t("themeSystem"), MonitorIcon],
-    ["light", t("themeLight"), SunIcon],
-    ["dark", t("themeDark"), MoonIcon],
-  ] as const
+const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b)
+
+function Card({
+  id,
+  title,
+  desc,
+  danger,
+  children,
+}: {
+  id: Section
+  title: string
+  desc?: string
+  danger?: boolean
+  children: React.ReactNode
+}) {
   return (
-    <RadioGroup
-      value={mounted ? (theme ?? "system") : ""}
-      onValueChange={setTheme}
-      aria-labelledby="theme-title"
-      className="grid-cols-1 gap-3 sm:grid-cols-3"
+    <section
+      id={`set-${id}`}
+      aria-labelledby={`h-${id}`}
+      className={cn("min-w-0 scroll-mt-20 rounded-card border bg-card shadow-xs", danger && "border-[#fecaca]")}
     >
-      {options.map(([value, label, Icon]) => (
-        <label key={value} htmlFor={`theme-${value}`} className={radioCardClassName}>
-          <RadioGroupItem id={`theme-${value}`} value={value} />
-          <Icon className="size-4 text-muted-foreground" aria-hidden />
-          <span className="text-sm font-semibold">{label}</span>
-        </label>
-      ))}
-    </RadioGroup>
-  )
-}
-
-const card = "flex flex-col gap-4 rounded-card border bg-card p-6 shadow-xs"
-
-function Section({ id, title, desc, children }: { id: string; title: string; desc?: string; children: React.ReactNode }) {
-  return (
-    <section aria-labelledby={id} className={card}>
-      <div className="flex flex-col gap-1">
-        <h2 id={id} className="type-h3">
+      <div className="flex flex-col gap-1 px-5 pt-5 max-md:px-4 max-md:pt-4">
+        <h2 id={`h-${id}`} className="type-h3">
           {title}
         </h2>
-        {desc ? <p className="type-small font-normal text-muted-foreground">{desc}</p> : null}
+        {desc ? <p className={fieldHint}>{desc}</p> : null}
       </div>
-      {children}
+      <div className="flex flex-col gap-[18px] p-5 max-md:p-4">{children}</div>
     </section>
   )
 }
 
-/** Settings: profile, language, reading defaults, notifications and account actions. */
+const Sep = () => <div className="h-px shrink-0 bg-border" />
+
+/** A label + hint on the left, a control on the right (prototype `.st-row`). */
+function Row({ id, label, hint, children }: { id?: string; label: React.ReactNode; hint?: React.ReactNode; children: React.ReactNode }) {
+  return (
+    <div className="flex items-center justify-between gap-4 max-md:items-start">
+      <div className="flex min-w-0 flex-col gap-0.5">
+        <span id={id} className={fieldLabel}>
+          {label}
+        </span>
+        {hint ? <span className={fieldHint}>{hint}</span> : null}
+      </div>
+      <div className="flex shrink-0">{children}</div>
+    </div>
+  )
+}
+
+/** Pill track used as a radio group (`.tabs-list` + `.tabs-trigger`), with per-option aria-label / lang. */
+function PillGroup<T extends string>({
+  labelledBy,
+  value,
+  onChange,
+  options,
+  stretch = false,
+}: {
+  labelledBy: string
+  value: T
+  onChange: (value: T) => void
+  options: { value: T; label: string; aria?: string; lang?: string }[]
+  stretch?: boolean
+}) {
+  return (
+    <div
+      role="radiogroup"
+      aria-labelledby={labelledBy}
+      className={cn(
+        "inline-flex h-9 max-w-full items-center gap-0.5 overflow-x-auto rounded-[10px] bg-muted p-[3px] text-muted-foreground [scrollbar-width:none]",
+        stretch && "flex w-full"
+      )}
+    >
+      {options.map((o) => {
+        const on = o.value === value
+        return (
+          <button
+            key={o.value}
+            type="button"
+            role="radio"
+            aria-checked={on}
+            aria-label={o.aria}
+            lang={o.lang}
+            onClick={() => onChange(o.value)}
+            className={cn(
+              "inline-flex h-[30px] shrink-0 items-center justify-center rounded-[7px] px-3 text-sm font-medium whitespace-nowrap transition-colors outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
+              on && "bg-background text-foreground shadow-[0_1px_3px_rgba(9,9,11,0.1)]",
+              stretch && "flex-1",
+              o.lang === "km" && "font-khmer"
+            )}
+          >
+            {o.label}
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
 export function SettingsPage() {
   const t = useTranslations("settings")
-  const tt = useTranslations("toasts")
+  const ta = useTranslations("account")
   const locale = useLocale() as Locale
   const router = useRouter()
   const pathname = usePathname()
   const user = useUser()
-  const notifications = useAppStore((s) => s.notifications)
-  const [confirmOpen, setConfirmOpen] = useState(false)
-  const restoreFocus = useRestoreFocus()
+  const hydrated = useHydrated()
+  const coins = useCoins()
+  const settings = useAppStore((s) => s.settings)
+  const novelSize = useAppStore((s) => s.novelSettings.size)
+  const notifPrefs = useAppStore((s) => s.notifPrefs)
+  const blocked = useAppStore((s) => s.blocked)
+  const reports = useAppStore((s) => s.reports)
+  const { theme, setTheme } = useTheme()
 
-  function changeLanguage(next: string) {
-    if (next === locale) return
-    useAppStore.getState().setLang(next as Locale)
-    // The account remembers the language; the address decides the page's.
-    if (!DEMO_MODE && user) void patchSettings({ language: next as Locale }).catch(() => undefined)
-    router.replace(`${pathname}${window.location.search}`, { locale: next as Locale })
+  const [draft, setDraft] = useState<Partial<Form>>({})
+  const [langErr, setLangErr] = useState(false)
+  const [nameErr, setNameErr] = useState<string | null>(null)
+  const [saving, setSaving] = useState(false)
+  const [dlBusy, setDlBusy] = useState(false)
+  const [deleteOpen, setDeleteOpen] = useState(false)
+  const [current, setCurrent] = useState<Section>("account")
+
+  // What is saved now; the form is the saved values with the draft's changes on top.
+  const base: Form = {
+    ...settings,
+    theme: theme ?? settings.theme,
+    size: sizeOfPx(novelSize),
+    name: user?.name ?? "",
+  }
+  const f: Form = { ...base, ...draft }
+  const changed = (Object.keys(draft) as (keyof Form)[]).filter((k) => !same(draft[k], base[k]))
+  const dirty = !!user && changed.length > 0
+  const nameTrim = f.name.trim()
+  const nameBad = nameTrim.length < 2
+
+  const set = <K extends keyof Form>(key: K, value: Form[K]) => {
+    setDraft((d) => ({ ...d, [key]: value }))
+    setLangErr(false)
+    if (key === "name") setNameErr(null)
   }
 
-  return (
-    <div className="container flex max-w-[720px] flex-col gap-5 py-8 md:py-10">
-      <h1 className="type-h1">{t("title")}</h1>
+  // The side menu follows the section in view: the last one whose top is in the upper third of the window
+  // (a click on the menu wins while the page scrolls to it).
+  const lockUntil = useRef(0)
+  const signedIn = !!user
+  useEffect(() => {
+    if (!signedIn) return
+    let frame = 0
+    const update = () => {
+      frame = 0
+      if (Date.now() < lockUntil.current) return
+      const line = window.innerHeight * 0.35
+      let cur: Section = "account"
+      for (const s of SECTIONS) {
+        const el = document.getElementById(`set-${s}`)
+        if (el && el.getBoundingClientRect().top <= line) cur = s
+      }
+      setCurrent(cur)
+    }
+    const onScroll = () => {
+      if (!frame) frame = requestAnimationFrame(update)
+    }
+    window.addEventListener("scroll", onScroll, { passive: true })
+    return () => {
+      window.removeEventListener("scroll", onScroll)
+      cancelAnimationFrame(frame)
+    }
+  }, [signedIn])
 
-      <Section id="profile-title" title={t("profile")}>
-        {user ? (
-          <div className="flex flex-col gap-4">
-          <div className="flex flex-wrap items-center gap-4">
-            <Avatar variant="brand" size="lg" className="size-14 text-lg">
-              {user.avatarUrl ? <AvatarImage src={user.avatarUrl} alt="" /> : null}
-              <AvatarFallback>{initials(user.name)}</AvatarFallback>
-            </Avatar>
-            <dl className="flex min-w-0 flex-col gap-1 text-sm">
-              <div>
-                <dt className="sr-only">{t("displayName")}</dt>
-                <dd className="text-base font-semibold">{user.name}</dd>
-              </div>
-              <div>
-                <dt className="sr-only">{t("email")}</dt>
-                <dd className="truncate text-muted-foreground">{user.email}</dd>
-              </div>
-            </dl>
-            {DEMO_MODE ? null : (
-              <div className="ml-auto">
-                <DisplayNameEditor />
-              </div>
-            )}
+  async function save() {
+    if (nameBad || !user) return
+    setSaving(true)
+    try {
+      if (nameTrim !== user.name) {
+        if (DEMO_MODE) useAppStore.getState().login({ ...user, name: nameTrim })
+        else useAppStore.getState().login(toUser(await account.patchProfile(nameTrim)))
+      }
+    } catch (e) {
+      setSaving(false)
+      if (fieldErrors(e).displayName) setNameErr(t("nameInvalid"))
+      else toast.error(t("saveFailed"))
+      return
+    }
+    const store = useAppStore.getState()
+    store.setSettings({
+      mode: f.mode,
+      quality: f.quality,
+      theme: f.theme,
+      size: f.size,
+      autoNext: f.autoNext,
+      saveData: f.saveData,
+      region: f.region,
+      langs: [...f.langs],
+      publicLib: f.publicLib,
+      mature: f.mature,
+      google: f.google,
+      facebook: f.facebook,
+    })
+    if (f.size !== base.size) store.setNovelSettings({ size: SIZE_PX[f.size] })
+    if (f.theme !== base.theme) setTheme(f.theme)
+    setDraft({})
+    setSaving(false)
+    toast.success(t("saved"))
+  }
+
+  function changeLanguage(next: Locale) {
+    if (next === locale) return
+    useAppStore.getState().setLang(next)
+    // The account remembers the language; the address decides the page's.
+    if (!DEMO_MODE && user) void account.patchSettings({ language: next }).catch(() => undefined)
+    toast(t(`langChanged.${next}`))
+    router.replace(`${pathname}${window.location.search}${window.location.hash}`, { locale: next })
+  }
+
+  function toggleLang(code: Locale) {
+    const on = f.langs.includes(code)
+    const next = on ? f.langs.filter((x) => x !== code) : [...f.langs, code]
+    if (next.length === 0) return setLangErr(true)
+    set("langs", next)
+  }
+
+  function logOutEverywhere() {
+    if (DEMO_MODE) {
+      useAppStore.getState().logout()
+      toast.success(t("loggedOutAll"))
+      return
+    }
+    // Every device is signed out, this one too.
+    account.signOutEverywhere().then(
+      () => void logOut().then(() => toast.success(t("loggedOutAll"))),
+      () => toast.error(t("saveFailed"))
+    )
+  }
+
+  function requestDownload() {
+    setDlBusy(true)
+    setTimeout(() => {
+      setDlBusy(false)
+      toast.success(t("downloadSent"))
+    }, 1200)
+  }
+
+  const header = (
+    <div className="flex flex-col gap-1">
+      <h1 className="type-h1">{t("title")}</h1>
+      <p className="text-[15px] leading-[26px] text-muted-foreground">{t("lead")}</p>
+    </div>
+  )
+
+  if (!hydrated || !user) {
+    return (
+      <div className="container flex flex-col gap-5 pt-7 pb-16">
+        {header}
+        {hydrated ? (
+          <div className="flex flex-col items-center gap-2.5 rounded-card border bg-card px-5 py-12 text-center shadow-xs">
+            <SettingsIcon className="size-7 text-muted-foreground" aria-hidden />
+            <h2 className="type-h3">{t("loginTitle")}</h2>
+            <p className={fieldHint}>{t("loginText")}</p>
+            <Button asChild variant="brand">
+              <Link href="/login" onClick={() => useAppStore.getState().setReturnTo(pathname)}>
+                {t("login")}
+              </Link>
+            </Button>
           </div>
-            {!DEMO_MODE ? <AvatarEditor /> : null}
-          </div>
-        ) : (
-          <EmptyState
-            icon={UserIcon}
-            title={t("profileLoggedOut")}
-            className="py-6"
-            action={
-              <Button asChild variant="brand">
-                <Link href="/login" onClick={() => useAppStore.getState().setReturnTo(pathname)}>
-                  {t("login")}
+        ) : null}
+      </div>
+    )
+  }
+
+  const switchRow = (key: "autoNext" | "saveData" | "publicLib" | "mature") => (
+    <Row id={`t-${key}`} label={t(`switches.${key}.label`)} hint={t(`switches.${key}.desc`)}>
+      <SmallSwitch checked={f[key]} aria-labelledby={`t-${key}`} onCheckedChange={(v) => set(key, v)} />
+    </Row>
+  )
+
+  const customAlerts = !same(notifPrefs, defaultNotifPrefs)
+
+  return (
+    <div className="container flex flex-col gap-5 pt-7 pb-16">
+      {header}
+
+      <div className="grid items-start gap-8 max-lg:gap-5 lg:grid-cols-[200px_minmax(0,760px)]">
+        <nav
+          aria-label={t("sections")}
+          className="flex gap-0.5 max-lg:gap-1 max-lg:overflow-x-auto max-lg:border-b max-lg:pb-px max-lg:[scrollbar-width:none] lg:sticky lg:top-20 lg:flex-col"
+        >
+          {SECTIONS.map((s) => (
+            <a
+              key={s}
+              href={`#set-${s}`}
+              aria-current={current === s ? "true" : undefined}
+              onClick={() => {
+                lockUntil.current = Date.now() + 1000
+                setCurrent(s)
+              }}
+              className={cn(
+                "flex h-9 shrink-0 items-center rounded-lg px-3 text-sm font-medium whitespace-nowrap transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                current === s ? "bg-muted text-foreground" : "text-muted-foreground hover:bg-accent hover:text-foreground"
+              )}
+            >
+              {t(`nav.${s}`)}
+            </a>
+          ))}
+        </nav>
+
+        <div className="flex min-w-0 flex-col gap-5">
+          {/* Account */}
+          <Card id="account" title={t("nav.account")} desc={t("accountDesc")}>
+            <AvatarRow name={nameTrim || user.name} />
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="flex min-w-0 flex-col gap-2">
+                <label htmlFor="st-name" className={fieldLabel}>
+                  {t("displayName")}
+                </label>
+                <Input
+                  id="st-name"
+                  value={f.name}
+                  maxLength={30}
+                  aria-invalid={nameBad || !!nameErr}
+                  aria-describedby="st-name-h"
+                  onChange={(e) => set("name", e.target.value.slice(0, 30))}
+                />
+                <span id="st-name-h" className={nameBad || nameErr ? fieldError : fieldHint}>
+                  {nameErr ?? (nameBad ? t("nameShort") : t("nameHint", { count: nameTrim.length }))}
+                </span>
+              </div>
+              <EmailField email={user.email} />
+            </div>
+            <Sep />
+            <PasswordRow />
+            <Sep />
+            <span className={fieldLabel}>{t("connected")}</span>
+            {(
+              [
+                ["google", "Google", "G"],
+                ["facebook", "Facebook", "f"],
+              ] as const
+            ).map(([key, name, ic]) => {
+              const on = f[key]
+              return (
+                <div key={key} className="-mt-1.5 flex items-center justify-between gap-4">
+                  <div className="flex min-w-0 items-center gap-2.5">
+                    <span aria-hidden className="inline-flex size-8 shrink-0 items-center justify-center rounded-lg border bg-white text-sm font-extrabold">
+                      {ic}
+                    </span>
+                    <div className="flex min-w-0 flex-col">
+                      <span className="text-[13px] leading-[18px] font-semibold">{name}</span>
+                      <span className="text-xs leading-4 text-muted-foreground">
+                        {on ? t("connectedNote", { name }) : t("notConnected")}
+                      </span>
+                    </div>
+                  </div>
+                  <Button
+                    variant={on ? "ghost" : "outline"}
+                    size="sm"
+                    className="shrink-0"
+                    aria-label={`${on ? t("disconnect") : t("connect")} ${name}`}
+                    onClick={() => set(key, !on)}
+                  >
+                    {on ? t("disconnect") : t("connect")}
+                  </Button>
+                </div>
+              )
+            })}
+          </Card>
+
+          {/* Reading */}
+          <Card id="reading" title={t("nav.reading")} desc={t("readingDesc")}>
+            <div className="flex flex-col gap-2">
+              <span id="lbl-mode" className={fieldLabel}>
+                {t("mode")}
+              </span>
+              <div role="radiogroup" aria-labelledby="lbl-mode" className="grid gap-2.5 md:grid-cols-2">
+                {(["scroll", "page"] as const).map((m) => (
+                  <OptionCard
+                    key={m}
+                    selected={f.mode === m}
+                    onSelect={() => set("mode", m)}
+                    title={<span className="text-[13px] leading-[18px] font-semibold">{t(`modes.${m}.label`)}</span>}
+                    description={t(`modes.${m}.desc`)}
+                  />
+                ))}
+              </div>
+            </div>
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="flex min-w-0 flex-col gap-2">
+                <label htmlFor="st-q" className={fieldLabel}>
+                  {t("quality")}
+                </label>
+                <NativeSelect id="st-q" value={f.quality} aria-describedby="st-q-h" onChange={(e) => set("quality", e.target.value as Form["quality"])}>
+                  <option value="auto">{t("qualities.auto")}</option>
+                  <option value="high">{t("qualities.high")}</option>
+                  <option value="saver">{t("qualities.saver")}</option>
+                </NativeSelect>
+                <span id="st-q-h" className={fieldHint}>
+                  {t(`qualityHints.${f.quality}`)}
+                </span>
+              </div>
+              <div className="flex min-w-0 flex-col gap-2">
+                <span id="lbl-theme" className={fieldLabel}>
+                  {t("theme")}
+                </span>
+                <PillGroup
+                  labelledBy="lbl-theme"
+                  stretch
+                  value={f.theme}
+                  onChange={(v) => set("theme", v)}
+                  options={[
+                    { value: "light", label: t("themeLight") },
+                    { value: "dark", label: t("themeDark") },
+                    { value: "system", label: t("themeSystem") },
+                  ]}
+                />
+              </div>
+            </div>
+            <div className="flex flex-col gap-2">
+              <span id="lbl-size" className={fieldLabel}>
+                {t("size")}
+              </span>
+              <div className="flex flex-wrap items-center gap-3">
+                <PillGroup
+                  labelledBy="lbl-size"
+                  value={f.size}
+                  onChange={(v) => set("size", v)}
+                  options={(["s", "m", "l", "xl"] as const).map((z) => ({ value: z, label: t(`sizes.${z}.label`), aria: t(`sizes.${z}.aria`) }))}
+                />
+                <p
+                  lang="en"
+                  className="m-0 min-w-0 font-novel leading-[1.6] text-[#27272a]"
+                  style={{ fontSize: PREVIEW_PX[f.size] }}
+                >
+                  {t("previewText")}
+                </p>
+              </div>
+            </div>
+            <Sep />
+            {switchRow("autoNext")}
+            {switchRow("saveData")}
+          </Card>
+
+          {/* Language and region */}
+          <Card id="language" title={t("nav.language")}>
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="flex min-w-0 flex-col gap-2">
+                <span id="lbl-app" className={fieldLabel}>
+                  {t("appLanguage")}
+                </span>
+                <PillGroup
+                  labelledBy="lbl-app"
+                  stretch
+                  value={locale}
+                  onChange={changeLanguage}
+                  options={[
+                    { value: "en", label: "English", lang: "en" },
+                    { value: "km", label: "ខ្មែរ", lang: "km" },
+                  ]}
+                />
+              </div>
+              <div className="flex min-w-0 flex-col gap-2">
+                <label htmlFor="st-region" className={fieldLabel}>
+                  {t("region")}
+                </label>
+                <NativeSelect id="st-region" value={f.region} aria-describedby="st-region-h" onChange={(e) => set("region", e.target.value)}>
+                  {(["KH", "TH", "VN", "OTHER"] as const).map((r) => (
+                    <option key={r} value={r}>
+                      {t(`regions.${r}`)}
+                    </option>
+                  ))}
+                </NativeSelect>
+                <span id="st-region-h" className={fieldHint}>
+                  {t("regionHint")}
+                </span>
+              </div>
+            </div>
+            <div className="flex flex-col gap-2">
+              <span id="lbl-cl" className={fieldLabel}>
+                {t("storyLangs")}
+              </span>
+              <div role="group" aria-labelledby="lbl-cl" className="flex flex-wrap gap-2">
+                <Chip check selected={f.langs.includes("en")} onClick={() => toggleLang("en")}>
+                  <span lang="en">English</span>
+                </Chip>
+                <Chip check selected={f.langs.includes("km")} onClick={() => toggleLang("km")}>
+                  <span lang="km" className="font-khmer">
+                    ខ្មែរ
+                  </span>
+                  <span lang="en">(Khmer)</span>
+                </Chip>
+              </div>
+              {langErr ? (
+                <span role="alert" className={fieldError}>
+                  {t("langsError")}
+                </span>
+              ) : null}
+            </div>
+          </Card>
+
+          {/* Notifications */}
+          <section id="set-notifs" aria-labelledby="h-notifs" className="min-w-0 scroll-mt-20 rounded-card border bg-card p-5 shadow-xs max-md:p-4">
+            <div className="flex items-center justify-between gap-4 max-md:items-start">
+              <div className="flex min-w-0 flex-col gap-0.5">
+                <h2 id="h-notifs" className="type-h3">
+                  {t("nav.notifs")}
+                </h2>
+                <span className={fieldHint}>{customAlerts ? t("notifCustom") : t("notifSummary")}</span>
+              </div>
+              <Button asChild variant="outline" size="sm" className="shrink-0">
+                <Link href="/notifications#ns">
+                  {t("manage")}
+                  <ChevronRightIcon className="size-3.5" aria-hidden />
                 </Link>
               </Button>
-            }
-          />
-        )}
-      </Section>
-
-      <Section id="theme-title" title={t("appearance")} desc={t("appearanceDesc")}>
-        <ThemeChoice />
-      </Section>
-
-      <Section id="language-title" title={t("language")} desc={t("languageDesc")}>
-        <RadioGroup value={locale} onValueChange={changeLanguage} aria-labelledby="language-title" className="grid-cols-2 gap-3">
-          {([
-            ["en", "English"],
-            ["km", "ខ្មែរ"],
-          ] as const).map(([value, label]) => (
-            <label key={value} htmlFor={`lang-${value}`} className={radioCardClassName}>
-              <RadioGroupItem id={`lang-${value}`} value={value} />
-              <span lang={value} className="text-sm font-semibold">
-                {label}
-              </span>
-            </label>
-          ))}
-        </RadioGroup>
-      </Section>
-
-      <Section id="reading-title" title={t("reading")} desc={t("readingDesc")}>
-        <ReadingSettingsControls />
-        <ReadingPreview />
-      </Section>
-
-      <Section id="notify-title" title={t("notifications")} desc={DEMO_MODE || !user ? t("notifyNote") : t("notifySaved")}>
-        {(
-          [
-            ["episodes", "notifyEpisodes", "notifyEpisodesDesc"],
-            ["fastPass", "notifyFastPass", "notifyFastPassDesc"],
-          ] as const
-        ).map(([key, label, desc]) => (
-          <div key={key} className="flex items-center justify-between gap-4">
-            <div className="flex flex-col">
-              <Label htmlFor={`notify-${key}`} className="text-sm font-semibold">
-                {t(label)}
-              </Label>
-              <span className="type-small font-normal text-muted-foreground">{t(desc)}</span>
             </div>
-            <Switch
-              id={`notify-${key}`}
-              checked={notifications[key]}
-              onCheckedChange={(v) => useAppStore.getState().setNotification(key, v)}
-            />
-          </div>
-        ))}
-      </Section>
+          </section>
 
-      {!DEMO_MODE && user ? <SecuritySection card={card} /> : null}
+          {/* Privacy and safety */}
+          <Card id="privacy" title={t("nav.privacy")}>
+            {switchRow("publicLib")}
+            {switchRow("mature")}
+            <Sep />
+            <div className="flex flex-col gap-2">
+              <span className={fieldLabel}>{t("blocked")}</span>
+              {blocked.length ? (
+                <ul className="m-0 flex list-none flex-col divide-y rounded-[10px] border p-0">
+                  {blocked.map((name) => (
+                    <li key={name} className="flex items-center justify-between gap-3 px-3 py-2.5">
+                      <span className="flex min-w-0 items-center gap-2 text-[13px] leading-[18px]">
+                        <Avatar className="size-[26px] after:border-0">
+                          <AvatarFallback className="text-[10px] font-semibold text-foreground">{initials(name)}</AvatarFallback>
+                        </Avatar>
+                        <span className="truncate">{name}</span>
+                      </span>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        aria-label={t("unblockName", { name })}
+                        onClick={() => {
+                          useAppStore.getState().unblock(name)
+                          toast.success(t("unblocked", { name }))
+                        }}
+                      >
+                        {t("unblock")}
+                      </Button>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <span className={fieldHint}>{t("noBlocked")}</span>
+              )}
+            </div>
+            <div className="flex flex-col gap-2">
+              <span className={fieldLabel}>{t("reports")}</span>
+              {reports.length ? (
+                <ul className="m-0 flex list-none flex-col divide-y rounded-[10px] border p-0">
+                  {reports.map((r) => (
+                    <li key={r.id} className="flex items-center justify-between gap-3 px-3 py-2.5">
+                      <span className="flex min-w-0 flex-col gap-px">
+                        <span className="truncate text-[13px] leading-[18px]">{r.target.charAt(0).toUpperCase() + r.target.slice(1)}</span>
+                        <span className="text-xs leading-4 text-muted-foreground">
+                          {t("reportMeta", { id: r.id, date: formatShortDate(ictDate(r.at), locale) })}
+                        </span>
+                      </span>
+                      <Badge variant={STATUS_BADGE[r.status]} className="h-[22px] px-2">
+                        {t(`status.${STATUS_KEY[r.status]}`)}
+                      </Badge>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <span className={fieldHint}>{t("noReports")}</span>
+              )}
+            </div>
+            <Sep />
+            <Row label={t("download")} hint={t("downloadHint")}>
+              <Button variant="outline" size="sm" disabled={dlBusy} onClick={requestDownload}>
+                {dlBusy ? t("preparing") : t("requestDownload")}
+              </Button>
+            </Row>
+          </Card>
 
-      {DEMO_MODE || user ? (
-      <Section id="account-title" title={t("account")}>
-        {user ? (
-          <div className="flex items-center justify-between gap-4">
-            <span className="type-small font-normal text-muted-foreground">{t("logOutDesc")}</span>
-            <Button
-              variant="outline"
-              onClick={() => {
-                void logOut().then(() => toast.success(tt("loggedOut")))
-              }}
-            >
-              {t("logOut")}
-            </Button>
-          </div>
-        ) : null}
-        {DEMO_MODE ? (
-          <div className="flex items-center justify-between gap-4">
-            <span className="type-small font-normal text-muted-foreground">{t("resetDesc")}</span>
-            <Button variant="destructive" onClick={() => setConfirmOpen(true)}>
-              {t("reset")}
-            </Button>
-          </div>
-        ) : null}
-      </Section>
+          {/* Coins and payments */}
+          <section id="set-coins" aria-labelledby="h-coins" className="min-w-0 scroll-mt-20 rounded-card border bg-card p-5 shadow-xs max-md:p-4">
+            <div className="flex items-center justify-between gap-4 max-md:items-start">
+              <div className="flex min-w-0 items-center gap-3 max-md:items-start">
+                <CoinIcon size={32} className="text-[13px]" />
+                <div className="flex min-w-0 flex-col gap-0.5">
+                  <h2 id="h-coins" className="type-h3">
+                    {t("nav.coins")}
+                  </h2>
+                  <span className={fieldHint}>{t("coinsHint", { count: coins })}</span>
+                </div>
+              </div>
+              <Button asChild variant="outline" size="sm" className="shrink-0">
+                <Link href="/coins#history-title">
+                  {t("history")}
+                  <ChevronRightIcon className="size-3.5" aria-hidden />
+                </Link>
+              </Button>
+            </div>
+          </section>
+
+          {/* Account actions */}
+          <Card id="danger" title={t("nav.danger")} danger>
+            {DEMO_MODE ? null : (
+              <>
+                <Devices />
+                <Sep />
+              </>
+            )}
+            <Row label={t("logoutAll")} hint={t("logoutAllHint")}>
+              <Button variant="outline" size="sm" onClick={logOutEverywhere}>
+                {t("logoutAll")}
+              </Button>
+            </Row>
+            <Sep />
+            <Row label={ta("deleteAccount")} hint={t("deleteHint")}>
+              <Button variant="destructive" size="sm" onClick={() => setDeleteOpen(true)}>
+                {ta("deleteAccount")}
+              </Button>
+            </Row>
+          </Card>
+        </div>
+      </div>
+
+      {dirty ? (
+        <SaveBar
+          className="-mt-2"
+          onDiscard={() => {
+            setDraft({})
+            setLangErr(false)
+            setNameErr(null)
+          }}
+          onSave={() => void save()}
+          saveDisabled={nameBad}
+          saving={saving}
+        />
       ) : null}
 
-      <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
-        <DialogContent {...restoreFocus}>
-          <DialogHeader>
-            <DialogTitle>{t("resetTitle")}</DialogTitle>
-            <DialogDescription>{t("resetBody")}</DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="gap-2 sm:justify-end">
-            <Button variant="outline" onClick={() => setConfirmOpen(false)}>
-              {t("cancel")}
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={() => {
-                useAppStore.getState().resetDemo()
-                setConfirmOpen(false)
-                toast.success(tt("demoReset"))
-              }}
-            >
-              {t("confirmReset")}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <DeleteAccountDialog open={deleteOpen} onOpenChange={setDeleteOpen} />
     </div>
   )
 }
