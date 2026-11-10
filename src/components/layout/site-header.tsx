@@ -1,7 +1,7 @@
 "use client"
 
 import { BellIcon, BookOpenIcon, CoinsIcon, LogOutIcon, PenLineIcon, SearchIcon, ShieldCheckIcon, SlidersHorizontalIcon } from "lucide-react"
-import { useTranslations } from "next-intl"
+import { useLocale, useTranslations } from "next-intl"
 import { useSyncExternalStore } from "react"
 import { CoinChip } from "@/components/pr/coin-chip"
 import { LanguageButton } from "@/components/layout/language-switch"
@@ -63,6 +63,10 @@ export function SiteHeader({
   const tc = useTranslations("coins")
   const pathname = usePathname()
   const format = useFormatParam()
+  // The wide search box needs room: from 1025 px in English (prototype), from 1280 px in Khmer (longer nav labels).
+  const wide = useLocale() === "km"
+    ? { box: "xl:w-[280px] xl:justify-start xl:pr-2 xl:pl-3", show: "xl:block", kbd: "xl:inline-flex", login: "xl:inline-flex" }
+    : { box: "min-[1025px]:w-[280px] min-[1025px]:justify-start min-[1025px]:pr-2 min-[1025px]:pl-3", show: "min-[1025px]:block", kbd: "min-[1025px]:inline-flex", login: "lg:inline-flex" }
 
   const navItems = [
     { key: "home", href: "/", current: pathname === "/" },
@@ -98,12 +102,12 @@ export function SiteHeader({
             type="button"
             onClick={onSearchOpen}
             aria-label={t("search")}
-            className="hidden h-9 items-center justify-center gap-2 rounded-control border bg-muted text-sm text-muted-foreground transition-colors outline-none hover:bg-[#ececee] focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background md:flex md:w-9 lg:w-[280px] lg:justify-start lg:pr-2 lg:pl-3"
+            className={cn("hidden h-9 w-9 items-center justify-center gap-2 rounded-control border bg-muted text-sm text-muted-foreground transition-colors outline-none hover:bg-[#ececee] focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background md:flex", wide.box)}
           >
             <SearchIcon className="size-4 shrink-0" aria-hidden />
-            <span className="hidden flex-1 truncate text-left lg:block">{t("searchPlaceholder")}</span>
+            <span className={cn("hidden flex-1 truncate text-left", wide.show)}>{t("searchPlaceholder")}</span>
             <kbd
-              className="hidden h-5 items-center rounded-[4px] border bg-muted px-1.5 font-mono text-[11px] text-muted-foreground lg:inline-flex"
+              className={cn("hidden h-5 items-center rounded-[4px] border bg-muted px-1.5 font-mono text-[11px] text-muted-foreground", wide.kbd)}
               aria-hidden
             >
               ⌘K
@@ -188,7 +192,7 @@ export function SiteHeader({
             </>
           ) : (
             <>
-              <Button asChild variant="ghost" size="sm" className="hidden lg:inline-flex">
+              <Button asChild variant="ghost" size="sm" className={cn("hidden", wide.login)}>
                 <Link href="/login" onClick={onLogin}>
                   {t("logIn")}
                 </Link>

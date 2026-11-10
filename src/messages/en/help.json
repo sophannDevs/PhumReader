@@ -1,1 +1,160 @@
-{}
+{
+  "metaTitle": "Help center",
+  "title": "How can we help?",
+  "searchLabel": "Search help articles",
+  "searchPh": "Search: coins, password, Fast Pass, refund…",
+  "clear": "Clear search",
+  "popularLabel": "Popular:",
+  "popular": [
+    "Fast Pass",
+    "Refund",
+    "Forgot password",
+    "Report"
+  ],
+  "topicsLabel": "Topics",
+  "topics": {
+    "account": "Account and log in",
+    "coins": "Coins and payments",
+    "reading": "Reading",
+    "creators": "For creators",
+    "safety": "Safety and reports",
+    "tech": "Technical problems"
+  },
+  "topicCount": "{count, plural, one {# article} other {# articles}}",
+  "common": "Common questions",
+  "results": "Search results",
+  "showAll": "Show all topics",
+  "count": "{count, plural, one {# article} other {# articles}}",
+  "countFor": "{count, plural, one {# article} other {# articles}} for “{q}”",
+  "noneTitle": "No articles match “{q}”",
+  "noneText": "Try other words, or send us a message below.",
+  "helpful": "Was this helpful?",
+  "yes": "Yes",
+  "no": "No",
+  "thanks": "Thanks!",
+  "sorry": "Sorry. Send us a message below.",
+  "articles": [
+    {
+      "q": "What is Fast Pass?",
+      "a": "Fast Pass lets you read the newest episodes before they’re free. Each Fast Pass episode costs 5 coins. Every episode becomes free for everyone 7 days after it comes out."
+    },
+    {
+      "q": "How do I buy coins?",
+      "a": "Go to Coins, pick a pack, and pay with KHQR, ABA Pay or a card. Your first purchase gives you double coins. Coins arrive in a few seconds.",
+      "link": "Go to Coins"
+    },
+    {
+      "q": "Do coins expire?",
+      "a": "No. Coins you buy never expire. Bonus coins from events may have an end date, which we show when you get them."
+    },
+    {
+      "q": "I paid but didn’t get my coins",
+      "a": "Most payments confirm within seconds. If it’s been more than 10 minutes, send us a message with your order number (it starts with TW-). We’ll check with the bank and add your coins or refund you."
+    },
+    {
+      "q": "Can I get a refund?",
+      "a": "Coins you haven’t spent can be refunded within the refund period. Coins already spent on episodes can’t be refunded. If you were charged twice or a payment failed, we refund it in full.",
+      "link": "Read the coins and refunds policy"
+    },
+    {
+      "q": "I forgot my password",
+      "a": "On the Log in page, tap “Forgot password?”, enter your email, and we’ll send you a 6-digit code to set a new password.",
+      "link": "Go to Log in"
+    },
+    {
+      "q": "How do I change my name or language?",
+      "a": "Open Settings. Your display name is under Account, and the app language (English or ខ្មែរ) is under Language and region.",
+      "link": "Open Settings"
+    },
+    {
+      "q": "How do I delete my account?",
+      "a": "Open Settings → Account actions → Delete account. This deletes your library, comments and unused coins, and can’t be undone.",
+      "link": "Open Settings"
+    },
+    {
+      "q": "Images load slowly or look blurry",
+      "a": "Check your connection, then set Image quality to Automatic in Settings → Reading. On mobile data, “Data saver” loads smaller images.",
+      "link": "Open reading settings"
+    },
+    {
+      "q": "How do I get alerts for new episodes?",
+      "a": "Subscribe to a series. You’ll get a notification when a new episode comes out. Choose push or email in Notifications → Alert settings.",
+      "link": "Alert settings"
+    },
+    {
+      "q": "How do I publish my comic or novel?",
+      "a": "Open Creator studio → New series, add the details, summary and cover, then submit it for review. We check new series within 1–2 days. Then upload your first episode.",
+      "link": "Create a series"
+    },
+    {
+      "q": "What image size should episodes be?",
+      "a": "Use JPG or PNG, 690–1600 px wide, up to 20 MB per image. Upload them in reading order; you can reorder before publishing.",
+      "link": "Upload an episode"
+    },
+    {
+      "q": "How do creators get paid?",
+      "a": "You earn when readers spend coins on your Fast Pass episodes. Add a payout method in Earnings. Payout amounts and dates follow the creator agreement.",
+      "link": "Go to Earnings"
+    },
+    {
+      "q": "How do I report a comment or series?",
+      "a": "Tap “Report” next to a comment, or “Report it” on a series’ About tab. Choose a reason and send. We review reports within 24 hours. Reports are anonymous.",
+      "link": "Read the community guidelines"
+    },
+    {
+      "q": "How do I block someone?",
+      "a": "Tap “Block” next to their comment or on their profile. You won’t see their comments and they can’t reply to you. Unblock them any time in Settings → Privacy and safety.",
+      "link": "Blocked accounts"
+    },
+    {
+      "q": "The app shows “You’re offline”",
+      "a": "Turn airplane mode off, then turn Wi-Fi or mobile data off and on again. The page reconnects by itself when you’re back online."
+    },
+    {
+      "q": "Something isn’t working",
+      "a": "Try refreshing the page or updating your browser. If it still doesn’t work, send us a message with a screenshot and what you were trying to do."
+    }
+  ],
+  "contact": {
+    "title": "Contact us",
+    "intro": "We’ll reply by email. Reply time: [SUPPORT RESPONSE TIME].",
+    "topic": "Topic",
+    "chooseTopic": "Choose a topic",
+    "topics": {
+      "payment": "Coins or payment",
+      "account": "Account or log in",
+      "reading": "Reading problem",
+      "creator": "Creator support",
+      "report": "Safety or a report",
+      "other": "Something else"
+    },
+    "topicError": "Choose a topic.",
+    "email": "Email",
+    "emailError": "Enter a valid email, like name@example.com.",
+    "order": "Order number",
+    "orderPh": "TW-12345678",
+    "orderHint": "Optional. Find it in Coins → Purchase history.",
+    "orderError": "Order numbers look like TW-12345678.",
+    "message": "Message",
+    "messagePh": "What happened, and what did you expect?",
+    "messageHint": "Include what you tapped and any error message.",
+    "messageError": "Write at least 20 characters.",
+    "attach": "Add a screenshot",
+    "attached": "{count, plural, one {# screenshot added} other {# screenshots added}}",
+    "attachHint": "PNG or JPG, up to 5 MB",
+    "attachBad": "Choose a PNG or JPG image up to 5 MB.",
+    "send": "Send message",
+    "sendFailed": "Couldn’t send your message. Try again.",
+    "sentTitle": "Message sent",
+    "sentBody": "We’ll reply to {email}. Your ticket number is <b>{ticket}</b>.",
+    "again": "Send another message"
+  },
+  "other": {
+    "title": "Other ways to reach us",
+    "email": "[SUPPORT EMAIL]",
+    "telegram": "Telegram: [SUPPORT TELEGRAM]",
+    "hours": "[SUPPORT HOURS] (Cambodia time)",
+    "community": "Community guidelines",
+    "refunds": "Coins and refunds policy"
+  }
+}
