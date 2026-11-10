@@ -43,7 +43,7 @@ function useShopReturn(packs: CoinPack[], offer: boolean) {
   const shopReturn = useAppStore((s) => s.shopReturn)
   const coins = useCoins()
   if (!shopReturn) return null
-  const novel = getSeriesBySlug(shopReturn.page.split("/").pop() ?? "")?.type === "novel"
+  const novel = getSeriesBySlug(shopReturn.page.split("?")[0].split("/")[2] ?? "")?.type === "novel"
   const need = Math.max(0, fastPassPrice() - coins)
   const covering = need > 0 ? packs.find((p) => packTotal(p, offer) >= need) : undefined
   return { ...shopReturn, novel, need, covering }

@@ -1,29 +1,33 @@
 "use client"
 
-import { BookmarkIcon, ChevronLeftIcon, ChevronRightIcon, HeartIcon, ListIcon, MessageSquareIcon, Share2Icon } from "lucide-react"
+import { BookmarkIcon, ChevronLeftIcon, ChevronRightIcon, HeartIcon, Share2Icon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { toast } from "sonner"
-import { CommentsSection } from "@/components/pr/comments-section"
+import { useReport } from "@/components/pr/report-dialog"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
-import { chapterCommentCount, fastPassPrice, type Series } from "@/data"
-import type { NovelChapter } from "@/data"
+import type { NovelChapter, Series } from "@/data"
 import { Link } from "@/i18n/navigation"
-import { formatCount, initials } from "@/lib/format"
+import { initials } from "@/lib/format"
+import { useAskToLogin, useEpisodeReactions } from "@/lib/me"
 import { seriesHref } from "@/lib/routes"
-import { useEpisodeReactions } from "@/lib/me"
+import { useUser } from "@/lib/store"
 import { cn } from "@/lib/utils"
 
-const card = "rounded-card border border-reader-border"
-const pill =
-  "border-reader-border bg-transparent text-reader-text hover:bg-reader-border/60 hover:text-reader-text focus-visible:ring-offset-reader-page"
+/** `.card.nr-card`: card colours of the reader theme (set on the reader root). */
+const card = "rounded-card border bg-card text-reader-text"
+const outline = "border-border bg-background text-reader-text hover:bg-accent hover:text-reader-text focus-visible:ring-offset-reader-page"
 
-/** End of a chapter: Like / Bookmark / Share, creator's note, Previous / Next and "All chapters". */
+/**
+ * End of a chapter (spec §4, prototype Novel end section): Like, Bookmark, Share, the creator's note,
+ * Previous / Next (with the price when the next chapter is Fast Pass), all chapters and "Report this chapter".
+ */
 export function NovelEndSection({
   series,
   chapter,
   total,
   nextLocked,
+  price,
   onPrev,
   onNext,
   finishRef,
@@ -32,21 +36,19 @@ export function NovelEndSection({
   chapter: NovelChapter
   total: number
   nextLocked: boolean
+  price: number
   onPrev: () => void
   onNext: () => void
-  /** Marks the chapter finished once this section scrolls into view. */
+  /** Marks the chapter finished once the end card scrolls into view. */
   finishRef?: (el: HTMLElement | null) => void
 }) {
   const t = useTranslations("reader")
   const tt = useTranslations("toasts")
+  const user = useUser()
+  const askToLogin = useAskToLogin()
+  const { openReport } = useReport()
   const n = chapter.n
-  const { liked, bookmarked, likeCount, toggleLike, toggleBookmark } = useEpisodeReactions({
-    series,
-    n,
-    kind: "novel",
-    likes: chapter.likes,
-  })
-  const commentCount = chapterCommentCount(chapter)
+  const { liked, bookmarked, toggleLike, toggleBookmark } = useEpisodeReactions({ series, n, kind: "novel", likes: chapter.likes })
 
   async function share() {
     try {
@@ -58,77 +60,58 @@ export function NovelEndSection({
   }
 
   return (
-    <div className="mt-12 flex flex-col gap-3">
-      <section ref={finishRef} className={cn(card, "flex flex-col items-center gap-3 px-5 py-5 text-center")}>
-        <p className="type-caption tracking-wider text-reader-quiet uppercase">{t("endOfChapter", { n })}</p>
+    <section aria-label={t("endOfChapter", { n })} className="flex flex-col gap-3.5 pt-4">
+      <div ref={finishRef} className={cn(card, "flex flex-col items-center gap-3.5 p-6 text-center")}>
+        <p className="text-xs leading-4 font-semibold tracking-[0.06em] text-reader-quiet uppercase">{t("endOfChapter", { n })}</p>
         <div className="flex flex-wrap justify-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            className={pill}
-            aria-pressed={liked}
-            aria-label={`${formatCount(likeCount)} · ${t("likeLabel", { count: likeCount.toLocaleString("en-US") })}`}
-            onClick={() => void toggleLike()}
-          >
-            <HeartIcon className={cn(liked && "fill-destructive text-destructive")} />
-            <span className="tabular-nums">{formatCount(likeCount)}</span>
+          <Button variant="outline" className={outline} aria-pressed={liked} onClick={() => void toggleLike()}>
+            <HeartIcon className={cn(liked && "fill-destructive text-destructive")} aria-hidden />
+            {liked ? t("liked") : t("like")}
           </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className={pill}
-            onClick={() => document.getElementById("comments")?.scrollIntoView({ behavior: "smooth", block: "start" })}
-          >
-            <MessageSquareIcon />
-            <span className="tabular-nums">{commentCount}</span>
+          <Button variant="outline" className={outline} aria-pressed={bookmarked} onClick={() => void toggleBookmark()}>
+            <BookmarkIcon className={cn(bookmarked && "fill-current")} aria-hidden />
+            {bookmarked ? t("bookmarked") : t("bookmark")}
           </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className={pill}
-            aria-pressed={bookmarked}
-            onClick={() => void toggleBookmark()}
-          >
-            <BookmarkIcon className={cn(bookmarked && "fill-current")} />
-            {t("bookmark")}
-          </Button>
-          <Button variant="outline" size="sm" className={pill} onClick={share}>
-            <Share2Icon />
+          <Button variant="outline" className={outline} onClick={share}>
+            <Share2Icon aria-hidden />
             {t("share")}
           </Button>
         </div>
-      </section>
+      </div>
 
-      <section className={cn(card, "flex items-start gap-3 p-4")}>
-        <Avatar variant="brand" size="lg">
-          <AvatarFallback>{initials(series.creator)}</AvatarFallback>
-        </Avatar>
-        <div className="flex min-w-0 flex-col gap-0.5">
-          <h2 className="type-caption text-reader-quiet">{t("creatorNote")}</h2>
-          <p className="type-small font-normal">{chapter.creatorNote}</p>
+      {chapter.creatorNote ? (
+        <div className={cn(card, "flex items-start gap-3 p-4")}>
+          <Avatar variant="brand" className="after:border-transparent">
+            <AvatarFallback className="text-xs">{initials(series.creator)}</AvatarFallback>
+          </Avatar>
+          <div className="flex min-w-0 flex-col gap-1">
+            <h2 className="text-xs leading-4 font-semibold text-reader-quiet">{t("creatorNote")}</h2>
+            <p className="text-[13px] leading-[18px]">{chapter.creatorNote}</p>
+          </div>
         </div>
-      </section>
+      ) : null}
 
-      <CommentsSection kind="episode" slug={`${series.slug}:${n}`} variant="novel" count={commentCount} />
-
-      <div className="grid grid-cols-2 gap-3">
-        <Button variant="outline" size="lg" className={cn(pill, "text-reader-quiet")} disabled={n <= 1} onClick={onPrev}>
-          <ChevronLeftIcon />
+      <div className="flex gap-2.5">
+        <Button variant="outline" size="lg" className={cn(outline, "flex-1")} disabled={n <= 1} onClick={onPrev}>
+          <ChevronLeftIcon aria-hidden />
           {t("previous")}
         </Button>
-        <Button variant="brand" size="lg" disabled={n >= total} onClick={onNext}>
-          {nextLocked ? t("nextCoins", { price: fastPassPrice() }) : t("nextChapterBtn")}
-          <ChevronRightIcon />
+        <Button variant="brand" size="lg" className="flex-1" disabled={n >= total} onClick={onNext}>
+          {nextLocked ? t("nextCoins", { price }) : t("nextChapterBtn")}
+          <ChevronRightIcon aria-hidden />
         </Button>
       </div>
 
-      <Link
-        href={seriesHref(series)}
-        className="mx-auto inline-flex items-center gap-2 rounded-sm text-sm font-medium outline-none hover:text-brand-ink focus-visible:ring-2 focus-visible:ring-ring"
+      <Button asChild variant="ghost" className="self-center text-reader-text hover:bg-accent hover:text-reader-text">
+        <Link href={seriesHref(series)}>{t("allChapters", { title: series.title })}</Link>
+      </Button>
+      <button
+        type="button"
+        onClick={() => (user ? openReport({ kind: "episode", target: `${series.title} · ${chapter.title}` }) : askToLogin())}
+        className="self-center rounded-sm text-[13px] leading-[18px] text-reader-quiet underline underline-offset-[3px] outline-none hover:text-reader-text focus-visible:ring-2 focus-visible:ring-ring"
       >
-        <ListIcon className="size-4" aria-hidden />
-        {t("allChapters", { title: series.title })}
-      </Link>
-    </div>
+        {t("reportChapter")}
+      </button>
+    </section>
   )
 }

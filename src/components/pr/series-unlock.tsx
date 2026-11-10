@@ -25,7 +25,11 @@ import { applyBalance } from "@/lib/wallet"
  * Coins (saves shopReturn + pendingUnlock with `bundle` when the bundle was chosen). On mount it reopens the
  * dialog when a pendingUnlock for this series is waiting.
  */
-export function useSeriesUnlock(series: Series) {
+export function useSeriesUnlock(
+  series: Series,
+  /** `returnPage`: where Coins sends the reader back after buying (default: the series page; the readers pass their own page). */
+  opts?: { returnPage?: string }
+) {
   const tt = useTranslations("toasts")
   const t = useTranslations("unlock")
   const router = useRouter()
@@ -79,6 +83,20 @@ export function useSeriesUnlock(series: Series) {
   const here = () => `${pathname}${typeof window === "undefined" ? "" : window.location.search}`
 
   const request = (episode: Episode, mode: UnlockMode = "one") => setTarget({ episode, mode })
+  const returnPage = opts?.returnPage ?? seriesHref(series)
+
+  /**
+   * The readers' Fast Pass lock screen: straight to Log in or Coins for this episode (no dialog first), saving the
+   * same hand-offs as the dialog's buttons. Coming back, the dialog reopens for it.
+   */
+  const handOff = (to: "login" | "coins", episode: Episode, mode: UnlockMode = "one") => {
+    selfRequest.current = true
+    if (to === "login") store().setReturnTo(here())
+    else store().setShopReturn({ page: returnPage, episode: episode.n, title: series.title })
+    store().setPendingUnlock({ seriesId: series.id, episode: episode.n, ...(mode === "all" ? { bundle: true } : {}) })
+    setTarget(null)
+    router.push(to === "login" ? "/login" : "/coins")
+  }
 
   let dialog: React.ReactNode = null
   if (target) {
@@ -120,7 +138,7 @@ export function useSeriesUnlock(series: Series) {
         }}
         onGetCoins={() => {
           selfRequest.current = true
-          store().setShopReturn({ page: seriesHref(series), episode: target.episode.n, title: series.title })
+          store().setShopReturn({ page: returnPage, episode: target.episode.n, title: series.title })
           saveRequest()
           setTarget(null)
           router.push("/coins")
@@ -172,5 +190,5 @@ export function useSeriesUnlock(series: Series) {
     )
   }
 
-  return { request, dialog, lockedFast }
+  return { request, dialog, lockedFast, handOff }
 }

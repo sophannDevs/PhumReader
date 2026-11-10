@@ -92,7 +92,8 @@ export type StoredReport = {
 
 export type ReviewNote = { items: string[]; note: string }
 export type HelpPrefill = { topic: string; order: string; msg: string }
-export type CreatorProfile = { name: string; location: string; bio: string }
+/** `handle`: the profile it belongs to (/creators/[handle]); older saves without one belong to the signed-in creator. */
+export type CreatorProfile = { name: string; location: string; bio: string; handle?: string }
 export type AdminDecision = { id: string; queue: "series" | "reports" | "payments"; label: string; action: string; at: number }
 
 export type AppState = {
@@ -114,6 +115,8 @@ export type AppState = {
   pendingUnlock: { seriesId: string; episode: number; direct?: boolean; bundle?: boolean } | null
   /** Spec `novel` */
   novelSettings: NovelSettings
+  /** The novel reader's own settings were chosen (its Aa popover); until then its size and theme follow Settings. */
+  novelCustom: boolean
   settings: AppSettings
   readerBg: "dark" | "light"
   readerWidth: "fit" | "narrow"
@@ -170,6 +173,8 @@ type AppActions = {
   setPendingUnlock: (value: NonNullable<AppState["pendingUnlock"]>) => void
   clearPendingUnlock: () => void
   setNovelSettings: (patch: Partial<NovelSettings>) => void
+  /** The novel reader's Aa popover: saves all its settings and marks them as chosen (`novelCustom`). */
+  chooseNovelSettings: (value: NovelSettings) => void
   setSettings: (patch: Partial<AppSettings>) => void
   setReaderBg: (value: AppState["readerBg"]) => void
   setReaderWidth: (value: AppState["readerWidth"]) => void
@@ -279,6 +284,7 @@ const initialState = (): AppState => ({
   shopReturn: null,
   pendingUnlock: null,
   novelSettings: { size: 18, theme: "light", font: "sans", wide: true },
+  novelCustom: false,
   settings: { ...defaultSettings, langs: [...defaultSettings.langs] },
   readerBg: "dark",
   readerWidth: "fit",
@@ -337,6 +343,7 @@ export const useAppStore = create<AppState & AppActions>()(
       setPendingUnlock: (value) => set({ pendingUnlock: value }),
       clearPendingUnlock: () => set({ pendingUnlock: null }),
       setNovelSettings: (patch) => set((s) => ({ novelSettings: { ...s.novelSettings, ...patch } })),
+      chooseNovelSettings: (value) => set({ novelSettings: { ...value }, novelCustom: true }),
       setSettings: (patch) => set((s) => ({ settings: { ...s.settings, ...patch } })),
       setReaderBg: (value) => set({ readerBg: value }),
       setReaderWidth: (value) => set({ readerWidth: value }),

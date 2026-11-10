@@ -87,7 +87,7 @@ function SuccessPanel({ flow, onReset }: { flow: Extract<Flow, { step: "success"
   const router = useRouter()
   const shopReturn = useAppStore((s) => s.shopReturn)
   const [backIn, setBackIn] = useState(() => (shopReturn?.episode ? AUTO_BACK_SECONDS : 0))
-  const novel = getSeriesBySlug(shopReturn?.page.split("/").pop() ?? "")?.type === "novel"
+  const novel = getSeriesBySlug(shopReturn?.page.split("?")[0].split("/")[2] ?? "")?.type === "novel"
 
   const goBack = useCallback(() => {
     const ret = useAppStore.getState().shopReturn
