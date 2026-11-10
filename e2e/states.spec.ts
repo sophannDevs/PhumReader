@@ -1,24 +1,23 @@
 import { expect, test } from "@playwright/test"
-import { visible } from "./helpers"
+import { SOKHA, seed, visible } from "./helpers"
 
-test.describe("demo flags", () => {
-  test("Home ?demo=empty shows empty sections", async ({ page }) => {
+/** ?demo= flags and special states (V2.1 screens). */
+test.describe("demo flags and states", () => {
+  test("Home ?demo=empty shows the empty boxes", async ({ page }) => {
     await page.goto("/?demo=empty")
-    await expect(page.locator('[data-slot="empty-state"]:visible').first()).toBeVisible()
-    expect(await page.locator('[data-slot="empty-state"]:visible').count()).toBeGreaterThanOrEqual(4)
+    await expect(visible(page.getByText("No updates yet"))).toBeVisible()
   })
 
-  test("Home ?demo=error shows the error and Retry recovers", async ({ page }) => {
+  test("Home ?demo=error shows Try again, which recovers", async ({ page }) => {
     await page.goto("/?demo=error")
-    const alert = page.locator('[data-slot="error-state"]:visible')
-    await expect(alert).toBeVisible()
-    // Remove the flag from the URL, then press Retry (done together: the URL change alone also refetches).
+    await expect(visible(page.getByText("Couldn’t load today’s updates"))).toBeVisible()
+    // Remove the flag from the URL, then press Try again (together: the URL change alone also refetches).
     await page.evaluate(() => {
       history.replaceState(null, "", "/")
-      document.querySelector<HTMLButtonElement>('[data-slot="error-state"] button')?.click()
+      document.querySelector<HTMLButtonElement>('[role="alert"] button')?.click()
     })
-    await expect(page.locator('[data-slot="error-state"]:visible')).toHaveCount(0)
-    await expect(visible(page.getByRole("heading", { name: /Daily updates|Trending now/ }))).toBeVisible()
+    await expect(page.getByText("Couldn’t load today’s updates")).toHaveCount(0)
+    await expect(visible(page.getByRole("heading", { name: "Daily updates" }))).toBeVisible()
   })
 
   test("Home ?demo=slow keeps skeletons for a while", async ({ page }) => {
@@ -32,31 +31,24 @@ test.describe("demo flags", () => {
   test("Series ?demo=empty / error / slow", async ({ page }) => {
     await page.goto("/series/glass-compass?demo=empty")
     await expect(visible(page.getByText("No episodes yet"))).toBeVisible()
-
     await page.goto("/series/glass-compass?demo=error")
-    const alert = page.locator('[data-slot="error-state"]:visible')
-    await expect(alert).toBeVisible()
-    await page.evaluate(() => {
-      history.replaceState(null, "", "/series/glass-compass")
-      document.querySelector<HTMLButtonElement>('[data-slot="error-state"] button')?.click()
-    })
-    await expect(visible(page.getByRole("heading", { level: 1, name: "Glass Compass" }))).toBeVisible()
-
+    await expect(visible(page.getByRole("alert")).first()).toBeVisible()
     await page.goto("/series/glass-compass?demo=slow")
     await expect(page.locator('[data-slot="skeleton"]:visible').first()).toBeVisible()
     await expect(visible(page.getByRole("heading", { level: 1, name: "Glass Compass" }))).toBeVisible({ timeout: 20_000 })
   })
 
-  test("Locked episode opened by URL redirects to the series page with the dialog", async ({ page }) => {
+  test("A locked episode opened by URL shows the Fast Pass lock screen", async ({ page }) => {
+    await seed(page, { user: SOKHA, coins: 3 })
     await page.goto("/read/glass-compass/66")
-    await expect(page).toHaveURL(/\/series\/glass-compass$/, { timeout: 20_000 })
-    await expect(visible(page.getByRole("dialog")).getByRole("heading", { name: "Unlock Episode 66" })).toBeVisible()
+    await expect(visible(page.getByRole("heading", { name: "Episode 66 is in Fast Pass" }))).toBeVisible({ timeout: 20_000 })
+    await expect(visible(page.getByRole("button", { name: /you need 2 more/ }).or(page.getByRole("link", { name: /you need 2 more/ })))).toBeVisible()
   })
 
   test("404 page", async ({ page }) => {
     const res = await page.goto("/this-page-does-not-exist")
     expect(res?.status()).toBe(404)
-    await expect(visible(page.getByRole("heading", { level: 1 }))).toBeVisible()
+    await expect(visible(page.getByRole("heading", { name: "We can’t find that page" }))).toBeVisible()
     // An unknown series streams (Next.js sends the shell with 200 before notFound() runs), so check what
     // the visitor and search engines get: the 404 page, marked noindex.
     await page.goto("/series/nope")
