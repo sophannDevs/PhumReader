@@ -152,8 +152,10 @@ T32 → T33 → T34 → F24–F27 → T39–T42. A V2.1 task marked "→ Fnn" is
 - V2-4 (upgrade) **Old names that stay**: the Java package `app.phumreader`, the backend settings `phumreader.*`, the
   backend seed account `creator@toonwave.app` and the generated `src/lib/api/schema.d.ts` keep the old spelling
   (backend code, out of V2.1 scope).
-- V2-5 (upgrade) **Storage**: old `phumreader.*` and `toonwave.*` keys are copied to `phumireader.*` once, in the
-  first-paint script (`src/lib/storage-migration.ts`), then removed. `phumreader.` wins over `toonwave.`.
+- V2-5 (upgrade) **Storage**: old `phumreader.*` and `toonwave.*` keys are copied to `phumireader.*` once
+  (`src/lib/storage-migration.ts`, run by StoreHydrator before the store loads), then removed. `phumreader.` wins
+  over `toonwave.`. There is no first-paint script any more (the site is light only), which also ends React's
+  "script tag" console error on client navigations.
 - V2-6 (upgrade) **Khmer strings**: `npm run i18n:km` copies the dictionary's Khmer for every English string that is a
   dictionary entry (109 strings changed); everything else keeps the V1 Khmer.
 - V2-7 (upgrade) **No downloads**: missing shadcn components are written by hand on the installed `radix-ui` package

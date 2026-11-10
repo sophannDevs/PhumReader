@@ -5,8 +5,8 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 
 /**
  * Light / dark / system theme. Replaces next-themes, whose inline <script> inside a client component
- * makes React 19 log a console error. The first-paint script (theme-script.ts) is rendered
- * by the server layout, so there is no flash of the wrong theme.
+ * makes React 19 log a console error. V2.1 keeps the site light (the stored choice is the reader theme), so
+ * there is no first-paint script.
  */
 export type Theme = "light" | "dark" | "system"
 
