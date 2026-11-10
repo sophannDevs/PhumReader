@@ -3,7 +3,7 @@ import type { Locator, Page } from "@playwright/test"
 export const DEMO = { email: "reader@phumireader.app", password: "PhumiReader1!", code: "123456" }
 
 type Seed = {
-  user?: { name: string; email: string } | null
+  user?: { name: string; email: string; roles?: string[] } | null
   coins?: number
   returnTo?: string | null
   lang?: "en" | "km"
