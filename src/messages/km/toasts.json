@@ -6,7 +6,7 @@
   "copyFailed": "មិនអាចចម្លងតំណបានទេ",
   "followed": "កំពុងតាមដាន {name}",
   "unfollowed": "បានឈប់តាមដាន {name}",
-  "episodeUnlocked": "បានដោះសោវគ្គ {n}",
+  "episodeUnlocked": "បានដោះសោភាគ {n}",
   "chapterUnlocked": "បានដោះសោជំពូក {n}",
   "unlockFailed": "មិនអាចដោះសោបានទេ។ សូមព្យាយាមម្ដងទៀត។",
   "loginToComment": "ចូលគណនីដើម្បីបញ្ចេញមតិ",

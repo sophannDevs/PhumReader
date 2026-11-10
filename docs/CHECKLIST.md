@@ -21,7 +21,7 @@ T32 → T33 → T34 → F24–F27 → T39–T42. A V2.1 task marked "→ Fnn" is
   `readerBg`/`readerWidth`, `novel`, `prefs`, `notifRead`/`notifGone`/`notifPrefs`, `blocked`, `reports`, `myWorks`,
   `reviewNotes`, `welcomeNext`, `helpPrefill`, `receipt`, `legalDoc`) with a persist migration from the V1 keys;
   the three demo accounts with roles; demo orders TW-48213377 (paid) and TW-48190012 (failed). → T03
-- [ ] F02 Foundations: `/dev/foundations` page matching screen 00; shadcn components from foundations.md §4 that are
+- [x] F02 Foundations: `/dev/foundations` page matching screen 00; shadcn components from foundations.md §4 that are
   missing (hand-written on `radix-ui`, no downloads); status badge variants (§8); Khmer dates and times in ICT with
   Khmer month names. → T02, T04
 - [x] F03 Site chrome: logo (done in the upgrade), language pill (shows the other language), coin chip, bell with the
@@ -33,10 +33,10 @@ T32 → T33 → T34 → F24–F27 → T39–T42. A V2.1 task marked "→ Fnn" is
 - [x] F05 Home: spotlight (main hero + "Featured this week", no autoplay), genre picker → "Recommended for you",
   Daily updates (day tabs with counts, type filter, "New today", 6 cards + "Show all N"), Trending (top 3 larger),
   Browse by genre with counts + "Surprise me", Web novels, creator CTA; states. Spec §1 · Screens 01. → T07
-- [ ] F06 Series page: hero with progress line, Episodes tab (Fast Pass card with countdown, toolbar with Go to #,
+- [x] F06 Series page: hero with progress line, Episodes tab (Fast Pass card with countdown, toolbar with Go to #,
   grouped list, "Free Nov 26 · in 21 days", badges, "Show 12 more"), About with Report, comments preview → Comments
   page, phone sticky bar, unavailable series state. Spec §2 · Screens 02. → T08
-- [ ] F07 Unlock dialog: single (5) or all Fast Pass episodes (15), balance and "after unlocking", log-in hand-off,
+- [x] F07 Unlock dialog: single (5) or all Fast Pass episodes (15), balance and "after unlocking", log-in hand-off,
   "You need N more coins" → Coins (`shopReturn`, `pendingUnlock`) → reopen. Spec §2, §6. → T09
 - [ ] F08 Comic reader: bars with progress, episode list, settings panel (scroll/page, dark/light, full/narrow,
   auto-next, data saver → `settings`), page-by-page taps and ← →, resume chip from `pos`, end of episode (like,
@@ -47,12 +47,12 @@ T32 → T33 → T34 → F24–F27 → T39–T42. A V2.1 task marked "→ Fnn" is
   line, language toggle, Caps Lock warning, Remember me, Google / Facebook / Apple, sign-up name / email (taken
   check) / strength meter / confirm / app language / birth year (under 13 blocked, 13–17 note) / terms, code with
   resend after 30 s, forgot → code → new password; new accounts → `/welcome`. Spec §5 · Screens 05. → T15
-- [ ] F11 Coins: steps bar, balance "≈ N Fast Pass episodes", "Almost there" + "Covers it", packs with bonus % and
+- [x] F11 Coins: steps bar, balance "≈ N Fast Pass episodes", "Almost there" + "Covers it", packs with bonus % and
   "You get N", methods, pay (10-minute countdown, placeholders), processing, success with 5 s auto-return and "Stay
   here", failed / expired, trust notes, history rows → Receipt, FAQ. Spec §6 · Screens 06. → T17
-- [ ] F12 My library: tabs Subscribed / Recently read / Unlocked, "New episodes" filter, sort, edit mode with select
+- [x] F12 My library: tabs Subscribed / Recently read / Unlocked, "New episodes" filter, sort, edit mode with select
   all + remove + 6 s Undo, guest banner, empty states. Spec §8 · Screens 08. → T19
-- [ ] F13 Settings: side menu and section cards (Account, Reading, Language and region, Notifications, Privacy and
+- [x] F13 Settings: side menu and section cards (Account, Reading, Language and region, Notifications, Privacy and
   safety, Coins and payments, Account actions), inline password change, story languages, blocked accounts, your
   reports, DELETE dialog, save bar. Spec §12 · Screens 12. → T20
 - [ ] F14 Search page: landing (recent + trending), tabs with counts, filters (genre, day, sort), highlight, Subscribe
@@ -84,30 +84,30 @@ T32 → T33 → T34 → F24–F27 → T39–T42. A V2.1 task marked "→ Fnn" is
 
 ## Phase A – Foundations
 - [x] T01 Project setup: Next.js app (npm), Tailwind, shadcn/ui init, lucide, next-intl (en, km), fonts (Inter, Kantumruy Pro, Noto Serif), scripts (typecheck, test:e2e). Copy design/assets → public, demo-data → src/data. Spec §0 (V1 T01–T03; V2.1 data copied in the upgrade)
-- [ ] T02 Design tokens + shadcn theme in globals.css; Khmer type rules; add the shadcn components listed in foundations.md §4. Build a `/dev/foundations` page that matches screen 00. Screens 00 → F02
+- [x] T02 Design tokens + shadcn theme in globals.css; Khmer type rules; add the shadcn components listed in foundations.md §4. Build a `/dev/foundations` page that matches screen 00. Screens 00 → F02
 - [x] T03 Data layer: typed demo-data helpers, `demo-api.ts` (delay + ?demo flags), zustand store with every key in Spec §0 "Simulated state" (prefix `phumireader.`) → F01
-- [ ] T04 i18n: generate messages/km.json from design/i18n/km-dictionary.json (`npm run i18n:km`, done in the upgrade), plus a language switch that saves to the store; Khmer date and time formatters (ICT) → F02
+- [x] T04 i18n: generate messages/km.json from design/i18n/km-dictionary.json (`npm run i18n:km`, done in the upgrade), plus a language switch that saves to the store; Khmer date and time formatters (ICT) → F02
 - [x] T05 Layout: SiteHeader (search trigger, language button, coin chip, bell, avatar menu, logo), SiteFooter, MobileTabBar, ⌘K search dialog, toasts. Check the header at 390 px logged in. Screens 01-home-search-open, 01-home-account-menu → F03
 - [ ] T06 Shared patterns: SeriesCard, ContinueCard, RankRow, EpisodeRow, OptionCard, StepsBar, StatCard, Timeline, EmptyState, ErrorState, UndoBar, SaveBar → F04
 
 ## Phase B – Reading
 - [x] T07 Home (all rows, genre picker, daily updates, states). Spec §1 · Screens 01 → F05
-- [ ] T08 Series page: hero, progress, episodes tab (Fast Pass card, toolbar, grouped list), About, comments preview, phone sticky bar. Spec §2 · Screens 02 → F06
-- [ ] T09 Unlock flow: single or bundle dialog, log in hand-off, short of coins → Coins → return and reopen (`shopReturn`, `pendingUnlock`). Spec §2, §6 → F07
+- [x] T08 Series page: hero, progress, episodes tab (Fast Pass card, toolbar, grouped list), About, comments preview, phone sticky bar. Spec §2 · Screens 02 → F06
+- [x] T09 Unlock flow: single or bundle dialog, log in hand-off, short of coins → Coins → return and reopen (`shopReturn`, `pendingUnlock`). Spec §2, §6 → F07
 - [ ] T10 Comic reader: bars, episode list, settings panel, scroll and page modes, resume chip, auto-next, end-of-episode, arrow keys. Spec §3 · Screens 03 → F08
 - [ ] T11 Fast Pass lock screen in the comic and novel readers. Screens 03-viewer-locked, 04-novel-locked → F08, F09
 - [ ] T12 Novel reader: settings (size, theme, font, spacing; defaults from Settings), resume, chapter end. Spec §4 · Screens 04 → F09
-- [ ] T13 Comments page + CommentThread (pinned, spoilers, replies, edit/delete, sort, creator filter). Spec §23 · Screens 23
-- [ ] T14 Report and Block dialogs (global), hiding blocked comments. Spec §0 · Screens 02-series-report-comment, 17-creator-profile-report-sent
+- [x] T13 Comments page + CommentThread (pinned, spoilers, replies, edit/delete, sort, creator filter). Spec §23 · Screens 23
+- [x] T14 Report and Block dialogs (global), hiding blocked comments. Spec §0 · Screens 02-series-report-comment, 17-creator-profile-report-sent
 
 ## Phase C – Account and money
 - [ ] T15 Log in / Sign up / code / Forgot / New password (zod rules, demo accounts, returnTo). Spec §5 · Screens 05 → F10
 - [ ] T16 First-time setup /welcome (3 steps, real notification permission request, picks). Spec §24 · Screens 24
-- [ ] T17 Coins: steps, packs, "Covers it" pre-select, methods, pay (countdown, placeholders), processing, success with auto-return, failed/expired, history, FAQ. Spec §6 · Screens 06 → F11
-- [ ] T18 Receipt page (paid / failed / refunded) and Help pre-fill. Spec §25 · Screens 25
-- [ ] T19 My library (tabs, filter, sort, edit mode, undo, guest banner). Spec §8 · Screens 08 → F12
-- [ ] T20 Settings (all sections, password rules, save bar, delete dialog, blocked accounts, your reports). Spec §12 · Screens 12 → F13
-- [ ] T21 Notifications (inbox, groups, read/unread, remove + undo, alert settings) and the header bell count. Spec §13 · Screens 13
+- [x] T17 Coins: steps, packs, "Covers it" pre-select, methods, pay (countdown, placeholders), processing, success with auto-return, failed/expired, history, FAQ. Spec §6 · Screens 06 → F11
+- [x] T18 Receipt page (paid / failed / refunded) and Help pre-fill. Spec §25 · Screens 25
+- [x] T19 My library (tabs, filter, sort, edit mode, undo, guest banner). Spec §8 · Screens 08 → F12
+- [x] T20 Settings (all sections, password rules, save bar, delete dialog, blocked accounts, your reports). Spec §12 · Screens 12 → F13
+- [x] T21 Notifications (inbox, groups, read/unread, remove + undo, alert settings) and the header bell count. Spec §13 · Screens 13
 
 ## Phase D – Discovery and help
 - [ ] T22 Search page (landing, tabs, filters, highlight, did-you-mean, show more). Spec §7 · Screens 07 → F14
@@ -186,3 +186,38 @@ T32 → T33 → T34 → F24–F27 → T39–T42. A V2.1 task marked "→ Fnn" is
   Segmented, Eyebrow, SectionHead, `phoneSwipeRow`). SeriesCard, ContinueCard and RankRow follow the V2.1 classes;
   OptionCard, StepsBar, StatCard, Timeline, UndoBar, SaveBar, ListRowActions, ResumeChip and FastPassLockCard are
   built with the first page that uses them. Buttons: `lg` is 44 px / 22 px padding / 15 px text / 10 px radius.
+- V2-19 (F02) **/dev/foundations** is a developer reference (screen 00) built from the real components. It renders only
+  in development builds (404 in production) and is English only, like V1's `/dev/kit`.
+- V2-20 (i18n) **Messages per namespace**: `src/messages/<locale>/<namespace>.json`, merged by the generated
+  `src/messages/<locale>/index.ts` (`npm run i18n:index`); `npm run i18n:km [-- <namespace>…]` works per namespace.
+- V2-21 (T14) **Report and Block** is one app-wide dialog (`ReportProvider` in `src/lib/query.tsx`, `useReport()`).
+  Reports are stored locally (`reports`, case numbers R-20481 up) in both modes; callers can also send them to the
+  API (`onSend`, used for comments in real mode). Blocking is local (`blocked`); the API has no block list yet.
+- V2-22 (F06) **Series details come from the data**: Glass Compass shows "Completed" (its `status`; the prototype hard-codes
+  "Ongoing"); tags are built from the data (#genre, #format, #language); the sidebar moves under the tabs below 1024 px.
+- V2-23 (F06) **Unavailable series**: `?demo=unavailable` on any series page in the demo; in real mode a 404 for a series
+  that is still in the reader's subscriptions. Similar series: same genre first, then trending comics.
+- V2-24 (F06) **Fast Pass countdown and Up next**: a Fast Pass episode's `date` is its free date, counted from the pinned
+  demo today (real mode: today in ICT). "Up next" is the episode after the last one read; the phone sticky bar shows once
+  the whole hero is out of view.
+- V2-25 (F07) **Bundle unlock**: one demo call plus store updates; the real API unlocks each episode in turn (episodes
+  already unlocked stay unlocked if one fails), then the reader opens the first one. Coins needed = one episode's price.
+- V2-26 (T13) **Comments page data**: demo `commentThreads`, shared by every series and episode; creator comments take the
+  series' creator name. Posted comments, replies, edits and deletes last for the visit (prototype); likes persist. Real
+  mode: the API's latest 50 comments (post, like, delete, report); replies, edits, spoilers and pins are visit-only.
+- V2-27 (F11) **Coins**: pack and method cards stay RadioGroup cards (arrow keys); history shows the 6 newest orders; an
+  expired demo KHQR code adds a Failed row; a demo order's time is the pinned date plus the real ICT time of day.
+  Placeholders stay English on Khmer pages.
+- V2-28 (T18) **Receipt**: spending takes the oldest coins first (TW-48213377: 15 spent / 18 unused, as in the
+  prototype). States: paid, failed, refunded (demo: `?status=refunded`), cancelled, pending (real mode), not found.
+  "Download receipt" is a placeholder toast. Real mode reads `GET /coins/orders/{number}`.
+- V2-29 (F12) **Library**: a new demo login starts with no subscriptions or unlocks (the prototype shows 10 demo
+  subscriptions). Recently read = the demo continue-reading entries plus series opened on this device; removing hides
+  them (`historyHidden`). New-episode counts per series follow the prototype (UP series: id % 3 + 1).
+- V2-30 (T21) **Notifications** run on the store in both modes; notification text is English demo content in Khmer too;
+  quiet hours default to 10:00 PM – 7:00 AM (the design screen shows 12:00 AM twice, a prototype select bug).
+- V2-31 (F13) **Settings save**: account, reading, region, story languages and privacy switches go through the save bar;
+  language, blocking, password, photo, download and account actions apply at once. Text size presets A− A A+ A++ =
+  16/18/20/22 px in the novel reader. Real mode: name, photo, password, email, devices, log out everywhere and delete use
+  the API (delete also asks for the password); reader theme, text size and two push switches sync to /me/settings; the
+  rest stays on the device. V1 "Reset demo data" is gone (not in V2.1); demo "Delete account" clears this device's data.
