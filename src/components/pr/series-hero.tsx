@@ -10,7 +10,8 @@ import { Button } from "@/components/ui/button"
 import { Link } from "@/i18n/navigation"
 import type { Series } from "@/data"
 import { initials } from "@/lib/format"
-import { genreHref, readerHref } from "@/lib/routes"
+import { creatorNameByHandle } from "@/lib/creator-profiles"
+import { creatorHandle, creatorHref, genreHref, readerHref } from "@/lib/routes"
 import { useSeriesViewer, useSubscribe } from "@/lib/me"
 import { useLocalize } from "@/lib/localize"
 import { cn } from "@/lib/utils"
@@ -142,7 +143,17 @@ export function SeriesHero({
             <span aria-hidden className="inline-flex size-6 items-center justify-center rounded-full bg-muted text-[10px] font-semibold text-foreground">
               {initials(series.creator)}
             </span>
-            {series.creator}
+            {/* The creator's profile (/creators/[handle]) exists for the creators in the demo data. */}
+            {creatorNameByHandle(creatorHandle(series.creator)) ? (
+              <Link
+                href={creatorHref(series.creator)}
+                className="rounded-sm underline-offset-3 hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-surface focus-visible:outline-none"
+              >
+                {series.creator}
+              </Link>
+            ) : (
+              series.creator
+            )}
           </p>
           <p className="max-w-[62ch] text-[15px] leading-6 text-[#d4d4d8]">{synopsis}</p>
 
