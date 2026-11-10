@@ -1,11 +1,16 @@
 {
-  "bonus": "+{count} ប្រាក់រង្វាន់",
+  "group": "កញ្ចប់កាក់",
+  "bonus": "+{count} កាក់ថែម ({pct}%)",
   "noBonus": "គ្មានកាក់ថែម",
-  "first": "+{count} ទិញលើកដំបូង",
+  "youGet": "ទទួលបាន {count}",
+  "aboutEpisodes": "≈ {count} ភាគ",
+  "aboutChapters": "≈ {count} ជំពូក",
   "popular": "ពេញនិយម",
   "bestValue": "តម្លៃល្អបំផុត",
+  "coversIt": "គ្រប់គ្រាន់",
   "coinsLabel": "{count} កាក់",
   "method": {
+    "group": "វិធីបង់ប្រាក់",
     "recommended": "ណែនាំ"
   }
 }
