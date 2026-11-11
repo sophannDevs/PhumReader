@@ -97,6 +97,7 @@ public final class CatalogViews {
      *
      * @param related up to 4 other series in the same genre
      * @param creatorId the creator's id (follow / unfollow)
+     * @param creatorHandle the address of the creator's profile, {@code /creators/<handle>}
      * @param creatorSeriesCount the creator's published series, this one included
      * @param secondGenre the second genre's slug, if the series has one (V21-02)
      * @param breakMessage the creator's "On break" message while the status is hiatus
@@ -109,6 +110,7 @@ public final class CatalogViews {
             SeriesStats stats,
             List<SeriesCard> related,
             UUID creatorId,
+            String creatorHandle,
             int creatorSeriesCount,
             @Nullable String secondGenre,
             @Nullable String breakMessage,

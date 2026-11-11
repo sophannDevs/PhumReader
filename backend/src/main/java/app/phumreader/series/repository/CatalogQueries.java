@@ -153,6 +153,14 @@ public class CatalogQueries {
                 .list();
     }
 
+    /** The address of the creator's public profile. */
+    public String creatorHandle(UUID creatorId) {
+        return jdbc.sql("select handle from creator_profiles where user_id = :id")
+                .param("id", creatorId)
+                .query(String.class)
+                .single();
+    }
+
     public int publishedSeriesOfCreator(UUID creatorId) {
         return jdbc.sql(
                         "select count(*) from series where creator_id = :id"

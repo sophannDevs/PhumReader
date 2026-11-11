@@ -1,6 +1,6 @@
 "use client"
 
-import { useQuery } from "@tanstack/react-query"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { AlertCircleIcon, AlertTriangleIcon, CoinsIcon } from "lucide-react"
 import Image from "next/image"
 import { useLocale } from "next-intl"
@@ -16,7 +16,10 @@ import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Skeleton } from "@/components/ui/skeleton"
 import { DEMO_MODE } from "@/lib/api/config"
+import * as real from "@/lib/api/creators"
+import { creatorKeys } from "@/lib/api/keys"
 import { withDemo } from "@/lib/demo-api"
+import { useAccountEmail, useFailed } from "@/lib/me"
 import { formatDate } from "@/lib/format"
 import { useDemoFlag } from "@/lib/queries"
 import { useAppStore } from "@/lib/store"
@@ -26,27 +29,62 @@ import { cn } from "@/lib/utils"
  * Earnings (spec §18, prototype Earnings/): period 30 days / 3 months / 6 months, stat cards (money stays
  * [USD AMOUNT] at [REVENUE SHARE]%), coins by month as a chart or a table, by-series breakdown, payouts and payout
  * history. Without a payout method (store `payoutSet`) a warning shows and history says "On hold"; the dialog shows the
- * [PAYOUT PROVIDER FORM] placeholder. The API has no earnings yet: demo numbers in both modes (?demo=empty = no coins).
+ * [PAYOUT PROVIDER FORM] placeholder. Demo: demo numbers (?demo=empty = no coins). Real API (V21-05): GET /creator/earnings
+ * (the last 6 months from the creator's Fast Pass unlocks, by series; readers = people who unlocked that month, added up
+ * over the period) and the payout method (aba / bank) saved with the account.
  */
 
 type Period = "30d" | "3m" | "6m"
+type EarningsSeries = { id: string; title: string; cover: string | null; live: boolean; coins: number[] }
 type EarningsData = {
-  /** Coins earned per month, Jun–Nov 2026 (the last is the current month) */
+  /** The last 6 months, oldest first (the last is the current month) */
+  months: { year: number; month: number }[]
+  /** Coins earned per month */
   coins: number[]
+  /** Unlocks and readers per month; null in the demo (worked out from the price) */
+  unlocks: number[] | null
+  readers: number[] | null
   /** Payouts, newest first: [ISO date, coins] */
   history: [string, number][]
+  /** Real API: the series with their coins per month; null in the demo (the store's works share the total) */
+  series: EarningsSeries[] | null
+  /** Real API: where payouts go; undefined in the demo (store `payoutSet`) */
+  method?: real.PayoutMethod | null
 }
 
-const MONTHS = [6, 7, 8, 9, 10, 11]
+const DEMO_MONTHS = [6, 7, 8, 9, 10, 11].map((month) => ({ year: 2026, month }))
 const DEMO: EarningsData = {
+  months: DEMO_MONTHS,
   coins: [1240, 1610, 1980, 2450, 2830, 3420],
+  unlocks: null,
+  readers: null,
+  series: null,
   history: [
     ["2026-11-01", 2830],
     ["2026-10-01", 2450],
     ["2026-09-01", 1980],
   ],
 }
-const NONE: EarningsData = { coins: [0, 0, 0, 0, 0, 0], history: [] }
+const NONE: EarningsData = { ...DEMO, coins: [0, 0, 0, 0, 0, 0], history: [] }
+
+const ymOf = (month: string) => ({ year: Number(month.slice(0, 4)), month: Number(month.slice(5, 7)) })
+/** A finished month is paid on the 1st of the next one. */
+const payDay = (month: string) => {
+  const { year, month: m } = ymOf(month)
+  return m === 12 ? `${year + 1}-01-01` : `${year}-${String(m + 1).padStart(2, "0")}-01`
+}
+
+function fromApi(e: real.CreatorEarnings): EarningsData {
+  return {
+    months: e.months.map((m) => ymOf(m.month)),
+    coins: e.months.map((m) => m.coins),
+    unlocks: e.months.map((m) => m.unlocks),
+    readers: e.months.map((m) => m.readers),
+    series: e.series.map((s) => ({ id: s.id, title: s.title, cover: s.cover ?? null, live: s.visibility === "published", coins: s.coins })),
+    history: e.history.map((h) => [payDay(h.month), h.coins]),
+    method: (e.payoutMethod as real.PayoutMethod | null | undefined) ?? null,
+  }
+}
 /** Fast Pass price and the prototype's "≈ 2.6 unlocks each". */
 const PRICE = 5
 const UNLOCKS_PER_READER = 2.6
@@ -68,20 +106,28 @@ function Earnings() {
   const t = useTranslations("earnings")
   const ts = useTranslations("states")
   const flag = useDemoFlag()
-  const payoutSet = useAppStore((s) => s.payoutSet)
+  const email = useAccountEmail()
+  const storePayoutSet = useAppStore((s) => s.payoutSet)
   const [period, setPeriod] = useState<Period>("6m")
   const [asTable, setAsTable] = useState(false)
   const [methodOpen, setMethodOpen] = useState(false)
   const query = useQuery({
-    queryKey: ["earnings", flag],
-    queryFn: () => (DEMO_MODE ? withDemo(() => DEMO, { empty: () => NONE }) : Promise.resolve(DEMO)),
+    queryKey: DEMO_MODE ? ["earnings", flag] : creatorKeys.earnings(email ?? ""),
+    queryFn: () => (DEMO_MODE ? withDemo(() => DEMO, { empty: () => NONE }) : real.fetchEarnings().then(fromApi)),
+    enabled: DEMO_MODE || !!email,
   })
 
   const n = period === "30d" ? 1 : period === "3m" ? 3 : 6
   const data = query.data
+  const payoutSet = data && data.method !== undefined ? data.method !== null : storePayoutSet
   const coins = data ? data.coins.slice(-n) : []
-  const months = MONTHS.slice(-n)
+  const months = data ? data.months.slice(-n) : []
   const total = coins.reduce((a, b) => a + b, 0)
+  const unlocks = data?.unlocks ? data.unlocks.slice(-n).reduce((a, b) => a + b, 0) : Math.round(total / PRICE)
+  const readers = data?.readers ? data.readers.slice(-n).reduce((a, b) => a + b, 0) : Math.round(total / PRICE / UNLOCKS_PER_READER)
+  // Real API: this month against the one before (the demo shows the prototype's 21 %).
+  const previous = data && data.series ? (data.coins[data.coins.length - 2] ?? 0) : null
+  const pct = previous === null ? 21 : previous > 0 ? Math.round(((coins[coins.length - 1] - previous) / previous) * 100) : null
 
   return (
     <>
@@ -137,12 +183,12 @@ function Earnings() {
               <StatCard
                 label={t("statCoins")}
                 value={fmt(total)}
-                change={<span className="font-normal">{total === 0 ? t("noCoinsShort") : n === 1 ? t("vsLastMonth", { pct: 21 }) : t("acrossMonths", { count: n })}</span>}
-                tone={total > 0 && n === 1 ? "up" : "muted"}
+                change={<span className="font-normal">{total === 0 ? t("noCoinsShort") : n === 1 && pct !== null ? t("vsLastMonth", { pct }) : t("acrossMonths", { count: n })}</span>}
+                tone={total > 0 && n === 1 && pct !== null && pct > 0 ? "up" : "muted"}
               />
-              <StatCard label={t("statUnlocks")} value={fmt(Math.round(total / PRICE))} change={<span className="font-normal">{t("coinsEach", { count: PRICE })}</span>} />
+              <StatCard label={t("statUnlocks")} value={fmt(unlocks)} change={<span className="font-normal">{t("coinsEach", { count: PRICE })}</span>} />
               <StatCard label={t("statEstimate")} value={<span className="font-bold">[USD AMOUNT]</span>} placeholder change={<span className="font-normal">{t("estimateNote")}</span>} />
-              <StatCard label={t("statReaders")} value={fmt(Math.round(total / PRICE / UNLOCKS_PER_READER))} change={<span className="font-normal">{t("unlocksEach", { n: UNLOCKS_PER_READER })}</span>} />
+              <StatCard label={t("statReaders")} value={fmt(readers)} change={<span className="font-normal">{data?.readers ? t("readersNote") : t("unlocksEach", { n: UNLOCKS_PER_READER })}</span>} />
             </div>
 
             <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
@@ -162,13 +208,13 @@ function Earnings() {
                     {total === 0 ? (
                       <StateBox icon={CoinsIcon} title={t("noCoinsTitle")} text={t("noCoinsText")} />
                     ) : asTable ? (
-                      <CoinsTable months={months} coins={coins} />
+                      <CoinsTable months={months} coins={coins} unlocks={data?.unlocks ? data.unlocks.slice(-n) : null} />
                     ) : (
                       <CoinsChart months={months} coins={coins} />
                     )}
                   </div>
                 </section>
-                <BySeries total={total} />
+                <BySeries total={total} data={data!} n={n} />
               </div>
 
               <div className="flex min-w-0 flex-col gap-6">
@@ -180,36 +226,38 @@ function Earnings() {
           </>
         )}
       </div>
-      <MethodDialog open={methodOpen} onOpenChange={setMethodOpen} />
+      <MethodDialog open={methodOpen} onOpenChange={setMethodOpen} current={data?.method ?? null} />
     </>
   )
 }
 
-function CoinsChart({ months, coins }: { months: number[]; coins: number[] }) {
+type Months = { year: number; month: number }[]
+
+function CoinsChart({ months, coins }: { months: Months; coins: number[] }) {
   const t = useTranslations("earnings")
   const max = Math.max(...coins, 1)
   return (
     <div
       role="img"
-      aria-label={t("chartAria", { list: months.map((m, i) => `${t(`month.${m}`)} ${fmt(coins[i])}`).join(", ") })}
+      aria-label={t("chartAria", { list: months.map((m, i) => `${t(`month.${m.month}`)} ${fmt(coins[i])}`).join(", ") })}
       className="grid h-[200px] items-end gap-3 max-md:h-40 max-md:gap-1"
       style={{ gridTemplateColumns: `repeat(${coins.length}, minmax(0, 1fr))` }}
     >
       {coins.map((v, i) => (
-        <div key={months[i]} className="flex h-full min-w-0 flex-col items-center justify-end gap-1.5">
+        <div key={`${months[i].year}-${months[i].month}`} className="flex h-full min-w-0 flex-col items-center justify-end gap-1.5">
           <strong className="text-xs leading-4 font-bold tabular-nums max-md:text-[9px] max-md:leading-3">{fmt(v)}</strong>
           <span
             className={cn("w-full max-w-11 rounded-t-md rounded-b-[2px]", i === coins.length - 1 ? "bg-primary" : "bg-brand-soft-border")}
             style={{ height: `${Math.round((v / max) * 100 * 0.82)}%` }}
           />
-          <span className="text-[11px] leading-[14px] text-muted-foreground">{t(`month.${months[i]}`)}</span>
+          <span className="text-[11px] leading-[14px] text-muted-foreground">{t(`month.${months[i].month}`)}</span>
         </div>
       ))}
     </div>
   )
 }
 
-function CoinsTable({ months, coins }: { months: number[]; coins: number[] }) {
+function CoinsTable({ months, coins, unlocks }: { months: Months; coins: number[]; unlocks: number[] | null }) {
   const t = useTranslations("earnings")
   return (
     <table className="w-full border-collapse text-sm">
@@ -229,12 +277,12 @@ function CoinsTable({ months, coins }: { months: number[]; coins: number[] }) {
       </thead>
       <tbody>
         {coins.map((v, i) => (
-          <tr key={months[i]} className="not-last:border-b">
+          <tr key={`${months[i].year}-${months[i].month}`} className="not-last:border-b">
             <th scope="row" className="px-1 py-2.5 text-left font-normal">
-              {t("monthLong", { month: t(`monthFull.${months[i]}`), year: 2026 })}
+              {t("monthLong", { month: t(`monthFull.${months[i].month}`), year: months[i].year })}
             </th>
             <td className="px-1 py-2.5 text-right tabular-nums">{fmt(v)}</td>
-            <td className="px-1 py-2.5 text-right tabular-nums">{fmt(Math.round(v / PRICE))}</td>
+            <td className="px-1 py-2.5 text-right tabular-nums">{fmt(unlocks ? unlocks[i] : Math.round(v / PRICE))}</td>
           </tr>
         ))}
       </tbody>
@@ -242,14 +290,20 @@ function CoinsTable({ months, coins }: { months: number[]; coins: number[] }) {
   )
 }
 
-function BySeries({ total }: { total: number }) {
+function BySeries({ total, data, n }: { total: number; data: EarningsData; n: number }) {
   const t = useTranslations("earnings")
   const works = useAppStore((s) => s.myWorks).filter((w) => w.status !== "draft")
   const live = works.filter((w) => w.status === "published")
-  const rows = works.map((w) => {
-    const coins = w.status === "published" && live.length ? Math.round((total * FAST_PASS_SHARE) / live.length) : 0
-    return { w, coins, pct: total ? Math.round((coins / total) * 100) : 0 }
-  })
+  // Demo: the works in the store share the total. Real API: each series' own coins in the period.
+  const rows = data.series
+    ? data.series.map((s) => {
+        const coins = s.coins.slice(-n).reduce((a, b) => a + b, 0)
+        return { w: { id: s.id, title: s.title, cover: s.cover ?? "", status: s.live ? "published" : "review" }, coins, pct: total ? Math.round((coins / total) * 100) : 0 }
+      })
+    : works.map((w) => {
+        const coins = w.status === "published" && live.length ? Math.round((total * FAST_PASS_SHARE) / live.length) : 0
+        return { w, coins, pct: total ? Math.round((coins / total) * 100) : 0 }
+      })
   return (
     <section aria-labelledby="by-title" className="rounded-card border bg-card shadow-xs">
       <h2 id="by-title" className="type-h3 px-5 pt-5 max-md:px-4 max-md:pt-4">
@@ -271,7 +325,9 @@ function BySeries({ total }: { total: number }) {
               <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted" aria-hidden>
                 <span className="block h-full rounded-full bg-primary" style={{ width: `${pct}%` }} />
               </div>
-              <span className="text-xs leading-4 text-muted-foreground">{w.status === "published" ? t("metaLive", { count: 3 }) : t("metaWaiting")}</span>
+              <span className="text-xs leading-4 text-muted-foreground">
+                {data.series ? (w.status === "published" ? t("metaFastPass") : t("metaWaiting")) : w.status === "published" ? t("metaLive", { count: 3 }) : t("metaWaiting")}
+              </span>
             </li>
           ))}
         </ul>
@@ -298,10 +354,10 @@ function Payouts({ data, payoutSet, onMethod }: { data: EarningsData; payoutSet:
             <div className="flex items-center justify-between gap-3">
               <span className="flex min-w-0 items-center gap-2.5">
                 <span aria-hidden className="inline-flex h-7 w-10 shrink-0 items-center justify-center rounded-md bg-muted text-[10px] font-extrabold">
-                  ABA
+                  {data.method === "bank" ? "BANK" : "ABA"}
                 </span>
                 <span className="flex min-w-0 flex-col">
-                  <span className="text-[13px] leading-[18px] font-semibold">{t("abaBank")}</span>
+                  <span className="text-[13px] leading-[18px] font-semibold">{data.method === "bank" ? t("otherBank") : t("abaBank")}</span>
                   <span className="text-xs leading-4 text-muted-foreground">[PAYOUT ACCOUNT]</span>
                 </span>
               </span>
@@ -351,9 +407,33 @@ function History({ data, payoutSet }: { data: EarningsData; payoutSet: boolean }
   )
 }
 
-function MethodDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
+function MethodDialog({ open, onOpenChange, current }: { open: boolean; onOpenChange: (open: boolean) => void; current: real.PayoutMethod | null }) {
   const t = useTranslations("earnings")
-  const [method, setMethod] = useState<"aba" | "bank">("aba")
+  const qc = useQueryClient()
+  const email = useAccountEmail()
+  const failed = useFailed()
+  const [method, setMethod] = useState<"aba" | "bank">(current ?? "aba")
+  const [saving, setSaving] = useState(false)
+
+  async function save() {
+    if (DEMO_MODE) {
+      useAppStore.getState().setPayoutSet(true)
+    } else {
+      // Only the kind of account is saved: the account details come from the payout provider's form.
+      setSaving(true)
+      try {
+        await real.setPayoutMethod(method)
+        await qc.invalidateQueries({ queryKey: creatorKeys.earnings(email ?? "") })
+      } catch (error) {
+        failed(error)
+        return
+      } finally {
+        setSaving(false)
+      }
+    }
+    onOpenChange(false)
+    toast.success(t("methodSaved"))
+  }
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[calc(100dvh-40px)] overflow-y-auto">
@@ -368,15 +448,7 @@ function MethodDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (op
         <div className="flex min-h-[120px] items-center justify-center rounded-[10px] border-[1.5px] border-dashed border-[#a1a1aa] bg-[#fafafa] text-[13px] font-bold text-[#3f3f46]">
           [PAYOUT PROVIDER FORM]
         </div>
-        <Button
-          variant="brand"
-          className="w-full"
-          onClick={() => {
-            useAppStore.getState().setPayoutSet(true)
-            onOpenChange(false)
-            toast.success(t("methodSaved"))
-          }}
-        >
+        <Button variant="brand" className="w-full" loading={saving} onClick={() => void save()}>
           {t("saveMethod")}
         </Button>
       </DialogContent>

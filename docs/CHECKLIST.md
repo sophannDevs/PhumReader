@@ -297,8 +297,14 @@ docs/BACKEND_CHECKLIST.md, "V2.1 API additions" (V21-01 … V21-07).
   time of day.
 - V2-48 (T32) **Creator profiles**: every creator name in the demo series has `/creators/<slug>`; unknown handles are a
   404 (except the signed-in creator's own `?view=owner`). Followers = the series' subscribers summed; Follow uses store
-  `follows`; owner edits are saved with the handle. Profiles run on demo data in both modes.
-- V2-49 (T33) **Earnings**: demo numbers in both modes (default period 6 months); published works share 94 % of coins;
+  `follows`; owner edits are saved with the handle. Demo mode only: in real mode (V21-05) the page reads
+  GET /creators/{handle} (any handle; an unknown one is the 404 page), Follow uses the creator's account, Edit profile
+  is PATCH /creator/profile, and the series page links to the handle the API sends. The profile's Report button and the
+  Updates tab (demo posts) stay local / empty; search still links creators by name-derived handle.
+- V2-49 (T33) **Earnings**: demo numbers in demo mode; real mode (V21-05) reads GET /creator/earnings (the last 6 months of
+  Fast Pass unlocks, by series; "readers" are added up by month) and saves the payout method kind (aba / bank, no
+  account details). The payout history lists finished months, paid on the 1st of the next one, "On hold" without a
+  method; nothing is paid by the API. Demo: (default period 6 months); published works share 94 % of coins;
   `payoutSet` starts false (warning + "On hold"); the chosen payout method is not stored.
 - V2-50 (T34) **Become a creator**: logged out, "Sign up and start creating" goes to sign up with returnTo /creator/new;
   the calculator uses range inputs (readers 10–2000, episodes 1–12) × the Fast Pass price.

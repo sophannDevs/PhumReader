@@ -1805,7 +1805,53 @@ test("19. key flow 3: report a comment -> admin removes it -> the reporter sees 
   }
 });
 
-test("20. delete the account: signed out everywhere, wrong password refused first", async () => {
+test("20. creator earnings and public profile show API data: payout method, Edit profile, a guest sees the profile", async ({
+  browser,
+}) => {
+  test.setTimeout(120_000);
+  // The pen name "E2E Pen" (test 8) gives the handle "e2e-pen"; the dashboard says which one this account has.
+  const handle = ((await (await page.request.get("/api/v1/creator/dashboard")).json()) as { handle: string }).handle;
+  expect(handle).toMatch(/^e2e-pen/);
+
+  // Earnings: no unlocks yet, no payout method; choosing one is saved with the account (no bank fields).
+  await page.goto("/creator/earnings");
+  await expect(visible(page.getByText("Add a payout method to get paid"))).toBeVisible();
+  await visible(page.getByRole("button", { name: "Add payout method" })).click();
+  const dialog = visible(page.getByRole("dialog"));
+  await expect(dialog.getByText("[PAYOUT PROVIDER FORM]")).toBeVisible();
+  await dialog.getByRole("button", { name: "Save payout method" }).click();
+  await expect(visible(page.getByText("Payout method saved"))).toBeVisible();
+  await expect
+    .poll(async () => ((await (await page.request.get("/api/v1/creator/earnings")).json()) as { payoutMethod: string | null }).payoutMethod)
+    .toBe("aba");
+  await page.reload();
+  await expect(page.getByText("Add a payout method to get paid")).toHaveCount(0);
+
+  // Profile: the owner edits the bio and location; the handle stays.
+  await page.goto(`/creators/${handle}?view=owner`);
+  await expect(visible(page.getByRole("heading", { level: 1, name: "E2E Pen" }))).toBeVisible();
+  await visible(page.getByRole("button", { name: "Edit profile" })).click();
+  await visible(page.getByLabel("Location")).fill("Battambang");
+  await visible(page.getByLabel("Bio")).fill(`Stories from the river ${stamp}`);
+  await visible(page.getByRole("button", { name: "Save profile" })).click();
+  await expect(visible(page.getByText("Profile saved"))).toBeVisible();
+
+  // A guest in another browser sees the same profile, without the owner's tools.
+  const guest = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+  const gp = await guest.newPage();
+  try {
+    await gp.goto(`/creators/${handle}`);
+    await expect(visible(gp.getByRole("heading", { level: 1, name: "E2E Pen" }))).toBeVisible();
+    await expect(visible(gp.getByText(`Stories from the river ${stamp}`))).toBeVisible();
+    await expect(gp.getByRole("button", { name: "Edit profile" })).toHaveCount(0);
+    await gp.goto("/creators/no-such-creator-here");
+    await expect(visible(gp.getByText(/Page not found|Error 404/))).toBeVisible();
+  } finally {
+    await guest.close();
+  }
+});
+
+test("21. delete the account: signed out everywhere, wrong password refused first", async () => {
   await page.goto("/settings");
   await visible(page.getByRole("button", { name: "Delete account" })).click();
   // V2.1: type DELETE first; the button stays disabled until then.

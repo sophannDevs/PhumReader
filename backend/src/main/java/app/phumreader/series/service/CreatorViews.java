@@ -21,13 +21,83 @@ public final class CreatorViews {
     /**
      * @param creator the account has accepted the Creator terms; readers get an empty dashboard
      * @param name the pen name ({@code null} for readers)
+     * @param handle the address of the public profile, {@code /creators/<handle>} ({@code null} for
+     *     readers)
      * @param series the creator's series, most viewed first
      */
     public record CreatorDashboard(
             boolean creator,
             @Nullable String name,
+            @Nullable String handle,
             CreatorTotals totals,
             List<CreatorSeries> series) {}
+
+    /**
+     * A creator's public profile (V21-05).
+     *
+     * @param id the creator's account (follow, block)
+     * @param since when they became a creator
+     * @param followers people who follow the creator
+     * @param views total views of the published series
+     * @param likes total likes of the published series
+     * @param following the signed-in reader follows the creator
+     * @param owner the signed-in reader is this creator
+     * @param series the published series, most viewed first
+     */
+    public record CreatorProfile(
+            UUID id,
+            String handle,
+            String name,
+            @Nullable String avatarUrl,
+            @Nullable String bio,
+            @Nullable String location,
+            Instant since,
+            long followers,
+            long views,
+            long likes,
+            boolean following,
+            boolean owner,
+            List<SeriesCard> series) {}
+
+    /**
+     * One month of earnings.
+     *
+     * @param month {@code yyyy-MM} (Asia/Phnom_Penh)
+     * @param coins coins readers spent on the creator's Fast Pass episodes
+     * @param unlocks episodes unlocked
+     * @param readers different people who unlocked something that month
+     */
+    public record EarningsMonth(String month, long coins, long unlocks, long readers) {}
+
+    /**
+     * A series' earnings, one number per month of {@link CreatorEarnings#months()} (same order).
+     */
+    public record EarningsSeries(
+            UUID id,
+            String slug,
+            String title,
+            @Nullable String cover,
+            SeriesVisibility visibility,
+            List<Long> coins,
+            long unlocks) {}
+
+    /** A finished month of earnings, as the payout history lists it. */
+    public record PayoutMonth(String month, long coins) {}
+
+    /**
+     * The earnings page. The API pays nothing out yet: {@code history} lists the finished months,
+     * the website marks them "On hold" until {@code payoutMethod} is set.
+     *
+     * @param months the last 6 months, oldest first, empty months included
+     * @param series every series that is not a draft
+     * @param history up to 3 finished months with coins, newest first
+     * @param payoutMethod {@code aba}, {@code bank} or {@code null}
+     */
+    public record CreatorEarnings(
+            List<EarningsMonth> months,
+            List<EarningsSeries> series,
+            List<PayoutMonth> history,
+            @Nullable String payoutMethod) {}
 
     /**
      * Sums over all the creator's series.

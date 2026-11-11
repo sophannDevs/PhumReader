@@ -11,7 +11,7 @@ import { Link } from "@/i18n/navigation"
 import type { Series } from "@/data"
 import { initials } from "@/lib/format"
 import { creatorNameByHandle } from "@/lib/creator-profiles"
-import { creatorHandle, creatorHref, genreHref, readerHref } from "@/lib/routes"
+import { creatorHandle as creatorHandle_, creatorHref, genreHref, readerHref } from "@/lib/routes"
 import { useSeriesViewer, useSubscribe } from "@/lib/me"
 import { useLocalize } from "@/lib/localize"
 import { cn } from "@/lib/utils"
@@ -53,9 +53,12 @@ export function SeriesHero({
   stats,
   secondGenre,
   breakMessage,
+  creatorHandle,
 }: {
   series: Series
   synopsis: string
+  /** Real API (V21-05): the creator's profile address; the demo links the creators in its data */
+  creatorHandle?: string
   stats: { subscribers: string; comments: string }
   /** Real API (V21-02): the second genre, shown as a badge after the main one */
   secondGenre?: string | null
@@ -151,10 +154,10 @@ export function SeriesHero({
             <span aria-hidden className="inline-flex size-6 items-center justify-center rounded-full bg-muted text-[10px] font-semibold text-foreground">
               {initials(series.creator)}
             </span>
-            {/* The creator's profile (/creators/[handle]) exists for the creators in the demo data. */}
-            {creatorNameByHandle(creatorHandle(series.creator)) ? (
+            {/* The creator's profile (/creators/[handle]): the API sends the address; the demo has profiles for the creators in its data. */}
+            {creatorHandle || creatorNameByHandle(creatorHandle_(series.creator)) ? (
               <Link
-                href={creatorHref(series.creator)}
+                href={creatorHandle ? `/creators/${creatorHandle}` : creatorHref(series.creator)}
                 className="rounded-sm underline-offset-3 hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-surface focus-visible:outline-none"
               >
                 {series.creator}

@@ -1840,6 +1840,129 @@
         "tags" : [ "creator" ]
       }
     },
+    "/api/v1/creator/earnings" : {
+      "get" : {
+        "description" : "403 not_a_creator. Nothing is paid out by the API yet.",
+        "operationId" : "earnings",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CreatorEarnings"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Earnings of the last 6 months: coins from Fast Pass unlocks, by month and series",
+        "tags" : [ "creator" ]
+      }
+    },
+    "/api/v1/creator/payout-method" : {
+      "delete" : {
+        "operationId" : "removePayoutMethod",
+        "responses" : {
+          "204" : {
+            "description" : "No Content"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Remove the payout method",
+        "tags" : [ "creator" ]
+      },
+      "put" : {
+        "description" : "400 fields.method invalid_method; 403 not_a_creator.",
+        "operationId" : "setPayoutMethod",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/PayoutMethodRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "204" : {
+            "description" : "No Content"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Choose where payouts will go",
+        "tags" : [ "creator" ]
+      }
+    },
+    "/api/v1/creator/profile" : {
+      "patch" : {
+        "description" : "400 fields.name / location / bio (required, too_long: name and location 60, bio 200); 403 not_a_creator.",
+        "operationId" : "updateProfile_1",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ProfileRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CreatorProfile"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Edit the public profile: name, location and bio (the handle stays)",
+        "tags" : [ "creator" ]
+      }
+    },
     "/api/v1/creator/series" : {
       "get" : {
         "description" : "q matches the title; visibility is draft, review, changes, published or hidden. review is the latest submission for review (null when the series was never submitted).",
@@ -2688,6 +2811,44 @@
         },
         "summary" : "Check the uploaded image and make its WebP variants",
         "tags" : [ "media" ]
+      }
+    },
+    "/api/v1/creators/{handle}" : {
+      "get" : {
+        "description" : "Public. Signed in, it also says whether you follow the creator and whether this is your own profile. 404 creator_not_found.",
+        "operationId" : "profile",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "handle",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CreatorProfile"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "A creator's public profile with their published series",
+        "tags" : [ "creators" ]
       }
     },
     "/api/v1/creators/{id}/follow" : {
@@ -5743,6 +5904,9 @@
           "creator" : {
             "type" : "boolean"
           },
+          "handle" : {
+            "type" : [ "string", "null" ]
+          },
           "name" : {
             "type" : [ "string", "null" ]
           },
@@ -5757,6 +5921,33 @@
           }
         },
         "required" : [ "creator", "series", "totals" ]
+      },
+      "CreatorEarnings" : {
+        "type" : "object",
+        "properties" : {
+          "history" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/PayoutMonth"
+            }
+          },
+          "months" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/EarningsMonth"
+            }
+          },
+          "payoutMethod" : {
+            "type" : [ "string", "null" ]
+          },
+          "series" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/EarningsSeries"
+            }
+          }
+        },
+        "required" : [ "history", "months", "series" ]
       },
       "CreatorEpisode" : {
         "type" : "object",
@@ -5803,6 +5994,59 @@
           }
         },
         "required" : [ "commentsEnabled", "likes", "number", "status", "title", "views" ]
+      },
+      "CreatorProfile" : {
+        "type" : "object",
+        "properties" : {
+          "avatarUrl" : {
+            "type" : [ "string", "null" ]
+          },
+          "bio" : {
+            "type" : [ "string", "null" ]
+          },
+          "followers" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "following" : {
+            "type" : "boolean"
+          },
+          "handle" : {
+            "type" : "string"
+          },
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "likes" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "location" : {
+            "type" : [ "string", "null" ]
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "owner" : {
+            "type" : "boolean"
+          },
+          "series" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/SeriesCard"
+            }
+          },
+          "since" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "views" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        },
+        "required" : [ "followers", "following", "handle", "id", "likes", "name", "owner", "series", "since", "views" ]
       },
       "CreatorSeries" : {
         "type" : "object",
@@ -6183,6 +6427,61 @@
           }
         },
         "required" : [ "items" ]
+      },
+      "EarningsMonth" : {
+        "type" : "object",
+        "properties" : {
+          "coins" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "month" : {
+            "type" : "string"
+          },
+          "readers" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "unlocks" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        },
+        "required" : [ "coins", "month", "readers", "unlocks" ]
+      },
+      "EarningsSeries" : {
+        "type" : "object",
+        "properties" : {
+          "coins" : {
+            "type" : "array",
+            "items" : {
+              "type" : "integer",
+              "format" : "int64"
+            }
+          },
+          "cover" : {
+            "type" : [ "string", "null" ]
+          },
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "slug" : {
+            "type" : "string"
+          },
+          "title" : {
+            "type" : "string"
+          },
+          "unlocks" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "visibility" : {
+            "type" : "string",
+            "enum" : [ "draft", "review", "changes", "published", "hidden" ]
+          }
+        },
+        "required" : [ "coins", "id", "slug", "title", "unlocks", "visibility" ]
       },
       "EmailChangeResponse" : {
         "type" : "object",
@@ -7100,6 +7399,30 @@
         },
         "required" : [ "password" ]
       },
+      "PayoutMethodRequest" : {
+        "type" : "object",
+        "properties" : {
+          "method" : {
+            "type" : "string",
+            "maxLength" : 10,
+            "minLength" : 0
+          }
+        },
+        "required" : [ "method" ]
+      },
+      "PayoutMonth" : {
+        "type" : "object",
+        "properties" : {
+          "coins" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "month" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "coins", "month" ]
+      },
       "ProfileRequest" : {
         "type" : "object",
         "properties" : {
@@ -7646,6 +7969,9 @@
           "commentsEnabled" : {
             "type" : "boolean"
           },
+          "creatorHandle" : {
+            "type" : "string"
+          },
           "creatorId" : {
             "type" : "string",
             "format" : "uuid"
@@ -7673,7 +7999,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "commentsEnabled", "creatorId", "creatorSeriesCount", "related", "series", "stats", "synopsis" ]
+        "required" : [ "commentsEnabled", "creatorHandle", "creatorId", "creatorSeriesCount", "related", "series", "stats", "synopsis" ]
       },
       "SeriesEdit" : {
         "type" : "object",

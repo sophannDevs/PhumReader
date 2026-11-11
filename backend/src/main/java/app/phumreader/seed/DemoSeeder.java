@@ -1,6 +1,7 @@
 package app.phumreader.seed;
 
 import app.phumreader.seed.DemoRules.SeedEpisode;
+import app.phumreader.series.service.Handles;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
@@ -12,6 +13,7 @@ import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -181,11 +183,24 @@ public class DemoSeeder {
                 new int[] {UUID_T, TEXT},
                 roles);
         batch(
-                "insert into creator_profiles (user_id, pen_name, accepted_terms_at, created_at,"
-                        + " updated_at) values (?, ?, ?, ?, ?) on conflict do nothing",
-                new int[] {UUID_T, TEXT, TIME, TIME, TIME},
-                profiles.stream().map(p -> append(p, p[3])).toList());
+                "insert into creator_profiles (user_id, pen_name, handle, accepted_terms_at,"
+                        + " created_at, updated_at) values (?, ?, ?, ?, ?, ?)"
+                        + " on conflict do nothing",
+                new int[] {UUID_T, TEXT, TEXT, TIME, TIME, TIME},
+                withHandles(profiles));
         settings(DemoRules.id("creator", DemoRules.STAND_IN_CREATOR), ctx);
+    }
+
+    /** The creator rows with the handle the name asks for (a number is added when it is taken). */
+    private static List<Object[]> withHandles(List<Object[]> profiles) {
+        Set<String> taken = new HashSet<>();
+        List<Object[]> rows = new ArrayList<>();
+        for (Object[] p : profiles) {
+            String handle = Handles.free((String) p[1], taken::contains);
+            taken.add(handle);
+            rows.add(new Object[] {p[0], p[1], handle, p[2], p[3], p[3]});
+        }
+        return rows;
     }
 
     // ---------- series ----------

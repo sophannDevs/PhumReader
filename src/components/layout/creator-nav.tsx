@@ -22,6 +22,9 @@ export type CreatorTab = "dashboard" | "new" | "upload" | "earnings" | "profile"
 /** The signed-in account's profile handle ("Dara Vann" → "dara-vann"), or null when logged out. */
 export function useOwnHandle(): string | null {
   const user = useUser()
+  const dashboard = useCreator()
+  // Real API (V21-05): the creator's own handle comes with the dashboard.
+  if (!DEMO_MODE) return dashboard.data?.handle ?? null
   return user ? creatorHandle(user.name) : null
 }
 

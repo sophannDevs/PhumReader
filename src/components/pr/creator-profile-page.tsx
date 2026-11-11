@@ -1,7 +1,7 @@
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useQuery } from "@tanstack/react-query"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { AlertCircleIcon, BookOpenIcon, CheckIcon, EyeIcon, MegaphoneIcon, PlusIcon, ShareIcon } from "lucide-react"
 import Image from "next/image"
 import { useLocale } from "next-intl"
@@ -22,6 +22,11 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
 import { derivedStats, type Weekday } from "@/data"
+import { DEMO_MODE } from "@/lib/api/config"
+import { toSeries } from "@/lib/api/catalog"
+import * as real from "@/lib/api/creators"
+import { creatorKeys } from "@/lib/api/keys"
+import { putFollow } from "@/lib/api/me"
 import { Link } from "@/i18n/navigation"
 import {
   catalogSeriesBy,
@@ -33,7 +38,7 @@ import {
 import { withDemo } from "@/lib/demo-api"
 import { daysFromToday, formatCount, formatShortDate, formatTime, initials, localDigits, parseCount } from "@/lib/format"
 import { useLocalize } from "@/lib/localize"
-import { useAskToLogin } from "@/lib/me"
+import { useAccountEmail, useAskToLogin, useFailed } from "@/lib/me"
 import { useDemoFlag } from "@/lib/queries"
 import { creatorHandle, readerHref } from "@/lib/routes"
 import { unblockUser } from "@/lib/moderation"
@@ -46,7 +51,9 @@ import { cn } from "@/lib/utils"
  * report-sent step) and Block / Unblock. Owner view (`?view=owner` on your own handle): CreatorNav, a "This is your
  * public profile" note and Edit profile (name, location, bio up to 200 characters; store `profile`).
  * Profiles come from the demo series' creator names; the demo creator account also shows its studio works
- * (store `myWorks`). The API has no public profiles yet, so this runs on demo data in both modes.
+ * (store `myWorks`). Demo: demo data. Real API (V21-05): GET /creators/{handle} (bio, location, followers, the published
+ * series), Follow with the creator's account, Edit profile saved with PATCH /creator/profile; the Report button on an
+ * account stays on this device.
  */
 
 type Item = {
@@ -77,6 +84,37 @@ const SIX_PM = Date.UTC(2026, 10, 7, 11)
 const countFmt = (n: number) => (n < 100_000 ? Math.round(n).toLocaleString("en-US") : formatCount(n))
 
 export function CreatorProfilePage({ handle, name: knownName, ownerView }: { handle: string; name: string | null; ownerView: boolean }) {
+  if (!DEMO_MODE) return <RealProfile handle={handle} ownerView={ownerView} />
+  return <DemoProfile handle={handle} knownName={knownName} ownerView={ownerView} />
+}
+
+/** Real API: loads the profile; an unknown handle is a 404 page. */
+function RealProfile({ handle, ownerView }: { handle: string; ownerView: boolean }) {
+  const ts = useTranslations("states")
+  const email = useAccountEmail()
+  const query = useQuery({ queryKey: creatorKeys.profile(handle, email ?? ""), queryFn: () => real.fetchCreatorProfile(handle) })
+  if (query.isPending) return <ProfileSkeleton />
+  if (query.isError)
+    return (
+      <div className="container py-10">
+        <StateBox
+          icon={AlertCircleIcon}
+          tone="bad"
+          title={ts("errorTitle")}
+          text={ts("errorDescription")}
+          action={
+            <Button variant="outline" size="sm" className="mt-1" onClick={() => void query.refetch()}>
+              {ts("retry")}
+            </Button>
+          }
+        />
+      </div>
+    )
+  if (!query.data) return <NotFoundView />
+  return <Profile handle={handle} baseName={query.data.name} isOwner={ownerView && query.data.owner} api={query.data} />
+}
+
+function DemoProfile({ handle, knownName, ownerView }: { handle: string; knownName: string | null; ownerView: boolean }) {
   const user = useUser()
   const hydrated = useHydrated()
   const ownHandle = useOwnHandle()
@@ -89,7 +127,7 @@ export function CreatorProfilePage({ handle, name: knownName, ownerView }: { han
   return <Profile handle={handle} baseName={knownName ?? user?.name ?? handle} isOwner={isOwner} />
 }
 
-function Profile({ handle, baseName, isOwner }: { handle: string; baseName: string; isOwner: boolean }) {
+function Profile({ handle, baseName, isOwner, api }: { handle: string; baseName: string; isOwner: boolean; api?: real.CreatorProfile }) {
   const t = useTranslations("profile")
   const ts = useTranslations("states")
   const tt = useTranslations("toasts")
@@ -102,24 +140,32 @@ function Profile({ handle, baseName, isOwner }: { handle: string; baseName: stri
   const ownHandle = useOwnHandle()
   const storedProfile = useAppStore((s) => s.profile)
   const myWorks = useAppStore((s) => s.myWorks)
-  const following = useAppStore((s) => s.follows.includes(baseName))
+  const qc = useQueryClient()
+  const email = useAccountEmail()
+  const failed = useFailed()
+  const storeFollowing = useAppStore((s) => s.follows.includes(baseName))
+  const following = api ? api.following : storeFollowing
   const blocked = useAppStore((s) => s.blocked.includes(baseName))
   const [editing, setEditing] = useState(false)
   const [tab, setTab] = useState("series")
-  const query = useQuery({
+  const demoQuery = useQuery({
     queryKey: ["creator-profile", handle, flag],
     queryFn: () => withDemo(() => true, { empty: () => false }),
+    enabled: !api,
   })
+  // Real API: the profile is loaded already (RealProfile).
+  const query = api ? { isPending: false, isError: false, data: true, refetch: () => Promise.resolve() } : demoQuery
 
-  const isDemoCreator = handle === creatorHandle(DEMO_CREATOR_NAME)
-  const stored = storedProfile && (storedProfile.handle ? storedProfile.handle === handle : handle === ownHandle) ? storedProfile : null
-  const name = stored?.name.trim() || baseName
-  const place = stored?.location.trim() || t("defaultPlace")
-  const catalog = catalogSeriesBy(baseName)
+  const isDemoCreator = !api && handle === creatorHandle(DEMO_CREATOR_NAME)
+  const stored = !api && storedProfile && (storedProfile.handle ? storedProfile.handle === handle : handle === ownHandle) ? storedProfile : null
+  const name = api ? api.name : stored?.name.trim() || baseName
+  const place = api ? api.location?.trim() || t("defaultPlace") : stored?.location.trim() || t("defaultPlace")
+  const catalog = api ? [] : catalogSeriesBy(baseName)
+  const apiSeries = api ? api.series.map(toSeries) : []
 
   const items: Item[] = query.data
     ? [
-        ...(isDemoCreator || isOwner
+        ...(!api && (isDemoCreator || isOwner)
           ? myWorks
               .filter((w) => w.status !== "draft")
               .sort((a, b) => Number(b.status === "published") - Number(a.status === "published"))
@@ -138,7 +184,7 @@ function Profile({ handle, baseName, isOwner }: { handle: string; baseName: stri
                 studio: true,
               }))
           : []),
-        ...catalog.map((s) => ({
+        ...[...catalog, ...apiSeries].map((s) => ({
           key: s.id,
           title: s.title,
           cover: s.cover,
@@ -158,20 +204,37 @@ function Profile({ handle, baseName, isOwner }: { handle: string; baseName: stri
 
   const genres = [...new Set(items.map((i) => loc.genre(i.genre)))].map((g) => (locale === "en" ? g.toLowerCase() : g))
   const genreList = genres.length > 1 ? t("listAnd", { a: genres.slice(0, -1).join(", "), b: genres[genres.length - 1] }) : (genres[0] ?? "")
-  const bio = stored?.bio.trim() || (isDemoCreator ? DEMO_CREATOR_BIO : genres.length ? t("bioDefault", { genres: genreList }) : t("bioEmpty"))
-  const followers = items.reduce((n, i) => n + parseCount(i.subs), 0) + (following ? 1 : 0)
+  const bio = (api ? api.bio?.trim() : stored?.bio.trim()) || (isDemoCreator ? DEMO_CREATOR_BIO : genres.length ? t("bioDefault", { genres: genreList }) : t("bioEmpty"))
+  const followers = api ? api.followers : items.reduce((n, i) => n + parseCount(i.subs), 0) + (following ? 1 : 0)
   const stats = [
     { k: t("statFollowers"), v: countFmt(followers) },
     { k: t("statSeries"), v: String(items.length) },
-    { k: t("statLikes"), v: formatCount(items.reduce((n, i) => n + parseCount(i.likes), 0)) },
+    { k: t("statLikes"), v: api ? formatCount(api.likes) : formatCount(items.reduce((n, i) => n + parseCount(i.likes), 0)) },
     { k: t("statEpisodes"), v: items.reduce((n, i) => n + i.eps, 0).toLocaleString("en-US") },
   ]
-  const year = localDigits(Number(CREATING_SINCE.slice(0, 4)), locale)
+  const year = localDigits(api ? new Date(api.since).getUTCFullYear() : Number(CREATING_SINCE.slice(0, 4)), locale)
 
-  function toggleFollow() {
+  async function toggleFollow() {
     if (!user) return askToLogin()
-    useAppStore.getState().toggleFollow(baseName)
-    toast.success(tt(following ? "unfollowed" : "followed", { name }))
+    if (!api) {
+      useAppStore.getState().toggleFollow(baseName)
+      toast.success(tt(following ? "unfollowed" : "followed", { name }))
+      return
+    }
+    const next = !api.following
+    const key = creatorKeys.profile(handle, email ?? "")
+    await qc.cancelQueries({ queryKey: key })
+    const before = qc.getQueryData<real.CreatorProfile | null>(key)
+    qc.setQueryData<real.CreatorProfile | null>(key, (old) => (old ? { ...old, following: next, followers: old.followers + (next ? 1 : -1) } : old))
+    try {
+      await putFollow(api.id, next)
+      toast.success(tt(next ? "followed" : "unfollowed", { name }))
+    } catch (error) {
+      qc.setQueryData(key, before)
+      failed(error)
+    } finally {
+      void qc.invalidateQueries({ queryKey: key })
+    }
   }
   async function share() {
     try {
@@ -183,7 +246,7 @@ function Profile({ handle, baseName, isOwner }: { handle: string; baseName: stri
   }
   function report() {
     if (!user) return askToLogin()
-    openReport({ kind: "user", target: t("reportTarget", { name }), who: baseName })
+    openReport({ kind: "user", target: t("reportTarget", { name }), who: baseName, whoId: api?.id })
   }
   function block() {
     if (!user) return askToLogin()
@@ -193,7 +256,7 @@ function Profile({ handle, baseName, isOwner }: { handle: string; baseName: stri
       })
       return
     }
-    openBlock(baseName)
+    openBlock(baseName, api?.id)
   }
 
   return (
@@ -266,7 +329,7 @@ function Profile({ handle, baseName, isOwner }: { handle: string; baseName: stri
               </div>
               <div className="flex shrink-0 items-center gap-2 max-md:w-full">
                 {isOwner ? null : (
-                  <Button variant={following ? "secondary" : "brand"} aria-pressed={following} className="max-md:flex-1" onClick={toggleFollow}>
+                  <Button variant={following ? "secondary" : "brand"} aria-pressed={following} className="max-md:flex-1" onClick={() => void toggleFollow()}>
                     {following ? <CheckIcon aria-hidden /> : <PlusIcon aria-hidden />}
                     {following ? t("following") : t("follow")}
                   </Button>
@@ -292,7 +355,8 @@ function Profile({ handle, baseName, isOwner }: { handle: string; baseName: stri
             <div className="container">
               <EditProfile
                 handle={handle}
-                initial={{ name, location: place, bio }}
+                initial={{ name, location: api ? (api.location ?? "") : place, bio: api ? (api.bio ?? "") : bio }}
+                real={api ? { email: email ?? "" } : undefined}
                 onClose={() => setEditing(false)}
               />
             </div>
@@ -425,14 +489,28 @@ const editSchema = z.object({
 })
 type EditValues = z.infer<typeof editSchema>
 
-function EditProfile({ handle, initial, onClose }: { handle: string; initial: EditValues; onClose: () => void }) {
+function EditProfile({ handle, initial, onClose, real: realMode }: { handle: string; initial: EditValues; onClose: () => void; real?: { email: string } }) {
   const t = useTranslations("profile")
+  const qc = useQueryClient()
+  const failed = useFailed()
   const form = useForm<EditValues>({ resolver: zodResolver(editSchema), defaultValues: initial })
   const errors = form.formState.errors
   const bioLength = (useWatch({ control: form.control, name: "bio" }) ?? "").length
 
-  function save(values: EditValues) {
-    useAppStore.getState().setProfile({ name: values.name.trim(), location: values.location.trim(), bio: values.bio.trim(), handle })
+  async function save(values: EditValues) {
+    if (realMode) {
+      try {
+        const saved = await real.updateCreatorProfile({ name: values.name.trim(), location: values.location.trim(), bio: values.bio.trim() })
+        qc.setQueryData(creatorKeys.profile(handle, realMode.email), saved)
+        // The studio name in the creator bar comes from the dashboard.
+        void qc.invalidateQueries({ queryKey: creatorKeys.all })
+      } catch (error) {
+        failed(error)
+        return
+      }
+    } else {
+      useAppStore.getState().setProfile({ name: values.name.trim(), location: values.location.trim(), bio: values.bio.trim(), handle })
+    }
     toast.success(t("saved"))
     onClose()
   }

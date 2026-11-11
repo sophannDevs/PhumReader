@@ -7,6 +7,7 @@ import app.phumreader.series.domain.SeriesVisibility;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.DayOfWeek;
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -143,13 +144,159 @@ public class CreatorQueries {
     }
 
     /** Saves the profile (the Creator terms were accepted now). */
-    public void insertProfile(UUID userId, String penName) {
+    public void insertProfile(UUID userId, String penName, String handle) {
         jdbc.sql(
-                        "insert into creator_profiles (user_id, pen_name, accepted_terms_at)"
-                                + " values (:id, :name, now())")
+                        "insert into creator_profiles (user_id, pen_name, handle, accepted_terms_at)"
+                                + " values (:id, :name, :handle, now())")
                 .param("id", userId)
                 .param("name", penName)
+                .param("handle", handle)
                 .update();
+    }
+
+    public boolean handleTaken(String handle) {
+        return jdbc.sql("select exists (select 1 from creator_profiles where handle = :h)")
+                .param("h", handle)
+                .query(Boolean.class)
+                .single();
+    }
+
+    public Optional<String> handle(UUID userId) {
+        return jdbc.sql("select handle from creator_profiles where user_id = :id")
+                .param("id", userId)
+                .query(String.class)
+                .optional();
+    }
+
+    /** A creator's public profile row. */
+    public record ProfileRow(
+            UUID userId,
+            String handle,
+            String penName,
+            @Nullable String bio,
+            @Nullable String location,
+            @Nullable String avatarUrl,
+            OffsetDateTime since,
+            long followers,
+            @Nullable String payoutMethod) {}
+
+    public Optional<ProfileRow> profile(String handle) {
+        return jdbc.sql(PROFILE + " where p.handle = :h")
+                .param("h", handle)
+                .query((rs, n) -> profile(rs))
+                .optional();
+    }
+
+    public Optional<ProfileRow> profile(UUID userId) {
+        return jdbc.sql(PROFILE + " where p.user_id = :id")
+                .param("id", userId)
+                .query((rs, n) -> profile(rs))
+                .optional();
+    }
+
+    private static final String PROFILE =
+            "select p.user_id, p.handle, p.pen_name, p.bio, p.location, u.avatar_url,"
+                    + " p.created_at, p.payout_method,"
+                    + " (select count(*) from creator_follows f where f.creator_id = p.user_id)"
+                    + " as followers from creator_profiles p join users u on u.id = p.user_id";
+
+    private static ProfileRow profile(ResultSet rs) throws SQLException {
+        return new ProfileRow(
+                rs.getObject("user_id", UUID.class),
+                rs.getString("handle"),
+                rs.getString("pen_name"),
+                rs.getString("bio"),
+                rs.getString("location"),
+                rs.getString("avatar_url"),
+                rs.getObject("created_at", OffsetDateTime.class),
+                rs.getLong("followers"),
+                rs.getString("payout_method"));
+    }
+
+    public void updateProfile(
+            UUID userId, String penName, @Nullable String location, @Nullable String bio) {
+        jdbc.sql(
+                        "update creator_profiles set pen_name = :name, location = :loc, bio = :bio,"
+                                + " updated_at = now() where user_id = :id")
+                .param("id", userId)
+                .param("name", penName)
+                .param("loc", location, java.sql.Types.VARCHAR)
+                .param("bio", bio, java.sql.Types.VARCHAR)
+                .update();
+    }
+
+    public void setPayoutMethod(UUID userId, @Nullable String method) {
+        jdbc.sql(
+                        "update creator_profiles set payout_method = :m, updated_at = now() where user_id = :id")
+                .param("id", userId)
+                .param("m", method, java.sql.Types.VARCHAR)
+                .update();
+    }
+
+    public boolean follows(UUID viewer, UUID creator) {
+        return jdbc.sql(
+                        "select exists (select 1 from creator_follows where user_id = :v"
+                                + " and creator_id = :c)")
+                .param("v", viewer)
+                .param("c", creator)
+                .query(Boolean.class)
+                .single();
+    }
+
+    /** The creator's live series: what the public profile lists. */
+    public List<UUID> publishedSeries(UUID creatorId) {
+        return jdbc.sql("select id from series where creator_id = :c and visibility = 'PUBLISHED'")
+                .param("c", creatorId)
+                .query(UUID.class)
+                .list();
+    }
+
+    /** One series' earnings in one month (first day of the month, Asia/Phnom_Penh). */
+    public record MonthlySeries(UUID seriesId, LocalDate month, long coins, long unlocks) {}
+
+    /** One month's earnings and the people behind them. */
+    public record MonthlyTotal(LocalDate month, long coins, long unlocks, long readers) {}
+
+    public List<MonthlySeries> earningsBySeries(UUID creatorId, OffsetDateTime from) {
+        return jdbc.sql(
+                        """
+                        select e.series_id,
+                               date_trunc('month', ce.created_at at time zone 'Asia/Phnom_Penh')::date as m,
+                               sum(ce.coins) as coins, count(*) as unlocks
+                        from creator_earnings ce join episodes e on e.id = ce.episode_id
+                        where ce.creator_id = :c and ce.created_at >= :from
+                        group by 1, 2
+                        """)
+                .param("c", creatorId)
+                .param("from", from)
+                .query((rs, n) ->
+                        new MonthlySeries(
+                                rs.getObject("series_id", UUID.class),
+                                rs.getObject("m", LocalDate.class),
+                                rs.getLong("coins"),
+                                rs.getLong("unlocks")))
+                .list();
+    }
+
+    public List<MonthlyTotal> earningsByMonth(UUID creatorId, OffsetDateTime from) {
+        return jdbc.sql(
+                        """
+                        select date_trunc('month', ce.created_at at time zone 'Asia/Phnom_Penh')::date as m,
+                               sum(ce.coins) as coins, count(*) as unlocks,
+                               count(distinct u.user_id) as readers
+                        from creator_earnings ce join unlocks u on u.id = ce.unlock_id
+                        where ce.creator_id = :c and ce.created_at >= :from
+                        group by 1
+                        """)
+                .param("c", creatorId)
+                .param("from", from)
+                .query((rs, n) ->
+                        new MonthlyTotal(
+                                rs.getObject("m", LocalDate.class),
+                                rs.getLong("coins"),
+                                rs.getLong("unlocks"),
+                                rs.getLong("readers")))
+                .list();
     }
 
     /** The series for editing, whoever owns it. */

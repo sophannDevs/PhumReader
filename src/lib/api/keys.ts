@@ -45,6 +45,9 @@ export const commentsKeys = {
 
 export const creatorKeys = {
   all: ["creator"] as const,
+  /** GET /creators/{handle} and GET /creator/earnings (V21-05). */
+  profile: (handle: string, email?: string) => ["creator", "profile", handle, email ?? ""] as const,
+  earnings: (email?: string) => ["creator", "earnings", email ?? ""] as const,
   dashboard: (email?: string, flag?: string | null) => ["creator", "dashboard", email ?? "", flag ?? null] as const,
   series: (email: string, filter: { q?: string; visibility?: string }) =>
     ["creator", "series", email, filter.q, filter.visibility] as const,

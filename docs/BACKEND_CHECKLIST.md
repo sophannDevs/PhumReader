@@ -1087,12 +1087,34 @@ as the plan tasks (tests, `./gradlew check`, OpenAPI + `npm run api:gen`); commi
     - **Not in this task.** Reports on an account (`/creators/<handle>` profile; its reasons) wait for V21-05, which
       adds the handle; the warning is recorded, not yet sent to the accused as an inbox item.
 
-- [ ] **V21-05 Creator earnings and public profile**
+- [x] **V21-05 Creator earnings and public profile**
   - Build: earnings from coins spent on the creator's Fast Pass episodes (per series and month, `[REVENUE SHARE]`
     stays a placeholder); payout settings without real bank fields (`[PAYOUT PROVIDER FORM]`); a unique creator
     handle for `/creators/<handle>` with bio and public series, plus the owner view.
   - Depends on: P3-10, P3-14
   - Done when: Earnings and the public profile show API data in real mode.
+  - Design (proposed 2026-11-11, not yet confirmed by the owner):
+    - **Migration V13.** `creator_profiles` gains `handle` (unique, lower case a-z 0-9 and "-", up to 40 characters; made
+      from the pen name when someone becomes a creator, a number is added when it is taken, "creator" when the name
+      has no Latin letters; filled in for existing creators), `location` (up to 60) and `payout_method` (ABA / BANK,
+      no account details: `[PAYOUT PROVIDER FORM]` stays a placeholder). The handle does not change when the name does.
+    - **Earnings** come from `creator_earnings` (one row per unlock of the creator's Fast Pass episodes).
+      `GET /creator/earnings`: the last 6 months (Asia/Phnom_Penh, zero-filled, oldest first) with coins, unlocks and
+      readers (distinct people who unlocked that month); every non-draft series with its coins per month; "history" =
+      the last 3 full months with coins, newest first; `payoutMethod`. Money stays `[USD AMOUNT]` at `[REVENUE SHARE]`
+      on the website. No payout is made by the API: history rows are months, and the website shows "On hold" without
+      a method. `PUT` / `DELETE /creator/payout-method`.
+    - **Profile.** `GET /creators/{handle}` is public: name, avatar, bio, location, member since, followers, counts,
+      the published series as catalog cards, and for the viewer `following` and `owner`. The creator's account id is in
+      it, so Follow (`/creators/{id}/follow`) and Block (V21-04) work from the profile. `PATCH /creator/profile`
+      (name up to 60, location up to 60, bio up to 200). The dashboard also returns the creator's `handle`.
+    - **Done 2026-11-11.** V13, the endpoints and `CreatorProfileApiTest` (11 tests); `./gradlew check` green; OpenAPI
+      and `api:gen` updated. The series detail also returns `creatorHandle`, so a series page links to the real profile.
+      Website: Earnings, the profile (read, Follow, Edit profile, Block with the account id) and the creator bar's
+      handle use the API (`src/components/pr/creator-real.test.tsx`). `e2e/real.spec.ts` test 20 passes (payout method
+      saved, bio edited, a guest sees the profile); run with `NEXT_PUBLIC_DEMO=0`. Tests 15-18 were not run (storage).
+    - **Not in this task.** Reports on an account (the profile's Report button): they need an account target in the
+      admin queue and stay on this device for now.
 
 - [ ] **V21-06 Admin payments: refund requests and stuck payments**
   - Build: readers request a refund (receipt / Help); the admin list shows eligibility (`[REFUND WINDOW]`) and

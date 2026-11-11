@@ -37,6 +37,8 @@ public class SecurityConfig {
         "/api/v1/rankings",
         "/api/v1/genres",
         "/api/v1/genres/*",
+        // A creator's public profile (V21-05).
+        "/api/v1/creators/*",
         "/api/v1/series",
         "/api/v1/series/*",
         "/api/v1/series/*/episodes",

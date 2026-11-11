@@ -150,6 +150,8 @@ export type CreatorData = {
   isCreator?: boolean
   /** Real API only: coins earned from unlocks. */
   earnedCoins?: number
+  /** Real API only (V21-05): the address of the public profile, /creators/<handle>. */
+  handle?: string | null
 }
 
 /** The demo has no creator accounts: the dashboard shows Chan Sreyleak's series. */
@@ -179,6 +181,8 @@ export type SeriesDetail = {
   creatorSeriesCount: number
   /** Real API only: the id the Follow button needs. */
   creatorId?: string
+  /** Real API only (V21-05): the address of the creator's profile, /creators/<handle>. */
+  creatorHandle?: string
   /** Real API only (V21-02): the second genre; demo series have one genre. */
   secondGenre?: Genre | null
   /** Real API only (V21-02): the "On break" message; demo series are never on a break. */

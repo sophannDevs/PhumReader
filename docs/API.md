@@ -282,6 +282,10 @@ Paths below are relative to `/api/v1`. "CSRF" applies to every write (see [CSRF]
 | POST | `/comments/{id}/report` | Signed in | Report a comment (`reason` is a key, `details` separate; 400 `invalid_reason`, `details_required`) |
 | GET | `/me/reports` | Signed in | Your reports with status in_review / removed / no_violation |
 | GET | `/me/blocks` | Signed in | Accounts you blocked |
+| GET | `/creators/{handle}` | Public | A creator's profile with their published series (V21-05) |
+| PATCH | `/creator/profile` | Creator | Edit name, location (60) and bio (200) |
+| GET | `/creator/earnings` | Creator | Coins from Fast Pass unlocks, last 6 months, by series; history; payout method |
+| PUT / DELETE | `/creator/payout-method` | Creator | `aba` or `bank` (no account details) |
 | PUT / DELETE | `/users/{id}/block` | Signed in | Block / unblock (idempotent; 400 `cannot_block_self`) |
 | **Coins and payments** ||||
 | GET | `/coins/packs` | Public | Coin packs and payment methods |

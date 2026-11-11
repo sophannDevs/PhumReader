@@ -61,5 +61,6 @@ export async function fetchCreator(): Promise<RealCreatorData> {
     series,
     totals: { views: formatCount(d.totals.views), likes: formatCount(d.totals.likes) },
     earnedCoins: d.totals.earnedCoins,
+    handle: d.handle ?? null,
   }
 }

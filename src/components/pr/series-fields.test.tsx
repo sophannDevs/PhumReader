@@ -39,6 +39,7 @@ const detail = (cardOver: Record<string, unknown> = {}, over: Record<string, unk
     related: [],
     creatorSeriesCount: 1,
     creatorId: "c1",
+    creatorHandle: "c1",
     secondGenre: null,
     breakMessage: null,
     commentsEnabled: true,

@@ -45,6 +45,8 @@ export type CreatorData = {
   isCreator?: boolean
   /** Real API: coins earned from unlocks. */
   earnedCoins?: number
+  /** Real API only: the address of the public profile, /creators/<handle> (V21-05). */
+  handle?: string | null
 }
 
 export type SeriesDetail = {
@@ -55,6 +57,8 @@ export type SeriesDetail = {
   creatorSeriesCount: number
   /** Real API: creator account UUID for following. */
   creatorId?: string
+  /** Real API (V21-05): the address of the creator's profile, /creators/<handle>. */
+  creatorHandle?: string
   /** Real API (V21-02): the second genre, or null. */
   secondGenre?: Genre | null
   /** Real API (V21-02): the creator's "On break" message while the status is hiatus, or null. */

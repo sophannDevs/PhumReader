@@ -152,6 +152,7 @@ class CatalogApiTest {
                     assertThat(r.get("slug").asString()).isNotEqualTo("glass-compass");
                 });
         assertThat(page.get("creatorSeriesCount").asInt()).isEqualTo(seriesOfCreator("Owen Blake"));
+        assertThat(page.get("creatorHandle").asString()).isEqualTo("owen-blake");
     }
 
     @Test

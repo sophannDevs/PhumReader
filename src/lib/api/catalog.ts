@@ -145,6 +145,7 @@ export function toSeriesDetail(d: Schemas["SeriesDetail"]): SeriesDetail {
     related: d.related.map(toSeries),
     creatorSeriesCount: d.creatorSeriesCount,
     creatorId: d.creatorId,
+    creatorHandle: d.creatorHandle,
     // V21-02: the API sends the second genre as a slug; the pages show genre names ("slice-of-life" -> "Slice of life").
     secondGenre: d.secondGenre ? ((genreFromSlug(d.secondGenre, genreSchema.options) ?? d.secondGenre) as Genre) : null,
     breakMessage: series.status === "hiatus" ? (d.breakMessage ?? null) : null,

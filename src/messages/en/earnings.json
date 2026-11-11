@@ -69,5 +69,7 @@
   "otherBank": "Other Cambodian bank",
   "otherBankDesc": "Paid by bank transfer",
   "saveMethod": "Save payout method",
-  "methodSaved": "Payout method saved"
+  "methodSaved": "Payout method saved",
+  "readersNote": "People who unlocked, added up by month",
+  "metaFastPass": "Fast Pass unlocks in this period"
 }

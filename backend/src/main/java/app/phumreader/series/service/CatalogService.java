@@ -319,6 +319,7 @@ public class CatalogService {
                 new SeriesStats(row.subscribers(), queries.visibleComments(row.id())),
                 cards.of(queries.related(row.id(), RELATED, at)),
                 row.creatorId(),
+                queries.creatorHandle(row.creatorId()),
                 queries.publishedSeriesOfCreator(row.creatorId()),
                 row.secondGenreSlug(),
                 row.breakMessage(),

@@ -83,7 +83,7 @@ type Detail = NonNullable<ReturnType<typeof useSeries>["data"]>
 const tabClass =
   "-mb-px inline-flex h-11 shrink-0 items-center gap-1.5 border-b-2 border-transparent px-3 text-sm font-medium whitespace-nowrap text-muted-foreground outline-none transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset data-[state=active]:border-foreground data-[state=active]:text-foreground"
 
-function SeriesBody({ series, synopsis, stats, related, creatorSeriesCount, creatorId, secondGenre, breakMessage, commentsEnabled }: Detail) {
+function SeriesBody({ series, synopsis, stats, related, creatorSeriesCount, creatorId, creatorHandle, secondGenre, breakMessage, commentsEnabled }: Detail) {
   const t = useTranslations("series")
   const { request, dialog } = useSeriesUnlock(series)
   const heroRef = useRef<HTMLDivElement>(null)
@@ -92,7 +92,7 @@ function SeriesBody({ series, synopsis, stats, related, creatorSeriesCount, crea
   return (
     <>
       <div ref={heroRef}>
-        <SeriesHero series={series} synopsis={synopsis} stats={stats} secondGenre={secondGenre} breakMessage={breakMessage} />
+        <SeriesHero series={series} synopsis={synopsis} stats={stats} secondGenre={secondGenre} breakMessage={breakMessage} creatorHandle={creatorHandle} />
       </div>
       <div className="container grid grid-cols-[minmax(0,1fr)] items-start gap-7 pt-3 pb-[72px] md:gap-10 md:pt-6 lg:grid-cols-[minmax(0,1fr)_320px]">
         <TabsPrimitive.Root defaultValue="episodes" className="flex min-w-0 flex-col gap-5">

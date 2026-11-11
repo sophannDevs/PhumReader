@@ -5,6 +5,7 @@ import { getTranslations } from "@/i18n/translations-server"
 import { Suspense } from "react"
 import { CreatorProfilePage, ProfileSkeleton } from "@/components/pr/creator-profile-page"
 import { routing } from "@/i18n/routing"
+import { DEMO_MODE } from "@/lib/api/config"
 import { creatorNameByHandle, creatorNames } from "@/lib/creator-profiles"
 import { creatorHandle } from "@/lib/routes"
 
@@ -25,8 +26,9 @@ async function Content({ params, searchParams }: PageProps<"/[locale]/creators/[
   setRequestLocale(locale)
   const name = creatorNameByHandle(handle) ?? null
   const ownerView = query.view === "owner"
-  // Unknown handles 404, except the owner view: a creator outside the demo data (a new account) opens their own.
-  if (!name && !ownerView) notFound()
+  // Demo: unknown handles 404, except the owner view (a creator outside the demo data opens their own). Real API: the
+  // page asks the API and shows the 404 page when there is no such creator.
+  if (DEMO_MODE && !name && !ownerView) notFound()
   return <CreatorProfilePage handle={handle} name={name} ownerView={ownerView} />
 }
 

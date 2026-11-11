@@ -813,6 +813,67 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/creator/earnings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Earnings of the last 6 months: coins from Fast Pass unlocks, by month and series
+         * @description 403 not_a_creator. Nothing is paid out by the API yet.
+         */
+        get: operations["earnings"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/creator/payout-method": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Choose where payouts will go
+         * @description 400 fields.method invalid_method; 403 not_a_creator.
+         */
+        put: operations["setPayoutMethod"];
+        post?: never;
+        /** Remove the payout method */
+        delete: operations["removePayoutMethod"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/creator/profile": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Edit the public profile: name, location and bio (the handle stays)
+         * @description 400 fields.name / location / bio (required, too_long: name and location 60, bio 200); 403 not_a_creator.
+         */
+        patch: operations["updateProfile_1"];
+        trace?: never;
+    };
     "/api/v1/creator/series": {
         parameters: {
             query?: never;
@@ -1089,6 +1150,26 @@ export interface paths {
          * @description 422 with a reason code (image_too_small, not_square, unsupported_type, corrupt_image, file_too_large, too_many_pixels) when a check fails; 409 upload_missing when the file is not in storage yet. Calling it again after success answers the same.
          */
         post: operations["complete"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/creators/{handle}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * A creator's public profile with their published series
+         * @description Public. Signed in, it also says whether you follow the creator and whether this is your own profile. 404 creator_not_found.
+         */
+        get: operations["profile"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -2185,9 +2266,16 @@ export interface components {
         };
         CreatorDashboard: {
             creator: boolean;
+            handle?: string | null;
             name?: string | null;
             series: components["schemas"]["CreatorSeries"][];
             totals: components["schemas"]["CreatorTotals"];
+        };
+        CreatorEarnings: {
+            history: components["schemas"]["PayoutMonth"][];
+            months: components["schemas"]["EarningsMonth"][];
+            payoutMethod?: string | null;
+            series: components["schemas"]["EarningsSeries"][];
         };
         CreatorEpisode: {
             commentsEnabled: boolean;
@@ -2206,6 +2294,26 @@ export interface components {
             status: string;
             thumbnailUrl?: string | null;
             title: string;
+            /** Format: int64 */
+            views: number;
+        };
+        CreatorProfile: {
+            avatarUrl?: string | null;
+            bio?: string | null;
+            /** Format: int64 */
+            followers: number;
+            following: boolean;
+            handle: string;
+            /** Format: uuid */
+            id: string;
+            /** Format: int64 */
+            likes: number;
+            location?: string | null;
+            name: string;
+            owner: boolean;
+            series: components["schemas"]["SeriesCard"][];
+            /** Format: date-time */
+            since: string;
             /** Format: int64 */
             views: number;
         };
@@ -2327,6 +2435,27 @@ export interface components {
         };
         DeviceList: {
             items: components["schemas"]["Device"][];
+        };
+        EarningsMonth: {
+            /** Format: int64 */
+            coins: number;
+            month: string;
+            /** Format: int64 */
+            readers: number;
+            /** Format: int64 */
+            unlocks: number;
+        };
+        EarningsSeries: {
+            coins: number[];
+            cover?: string | null;
+            /** Format: uuid */
+            id: string;
+            slug: string;
+            title: string;
+            /** Format: int64 */
+            unlocks: number;
+            /** @enum {string} */
+            visibility: "draft" | "review" | "changes" | "published" | "hidden";
         };
         EmailChangeResponse: {
             /** Format: int64 */
@@ -2672,6 +2801,14 @@ export interface components {
         PasswordRequest: {
             password: string;
         };
+        PayoutMethodRequest: {
+            method: string;
+        };
+        PayoutMonth: {
+            /** Format: int64 */
+            coins: number;
+            month: string;
+        };
         ProfileRequest: {
             displayName: string;
         };
@@ -2865,6 +3002,7 @@ export interface components {
         SeriesDetail: {
             breakMessage?: string | null;
             commentsEnabled: boolean;
+            creatorHandle: string;
             /** Format: uuid */
             creatorId: string;
             /** Format: int32 */
@@ -4532,6 +4670,126 @@ export interface operations {
             };
         };
     };
+    earnings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CreatorEarnings"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    setPayoutMethod: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PayoutMethodRequest"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    removePayoutMethod: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    updateProfile_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProfileRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CreatorProfile"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
     list: {
         parameters: {
             query?: {
@@ -5161,6 +5419,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["UploadView"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    profile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                handle: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CreatorProfile"];
                 };
             };
             /** @description Error */
