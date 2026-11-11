@@ -1,11 +1,15 @@
 import "@testing-library/jest-dom/vitest"
 import { cleanup } from "@testing-library/react"
 import { createElement, type AnchorHTMLAttributes } from "react"
+import { MotionGlobalConfig } from "motion/react"
 import { afterAll, afterEach, beforeAll, vi } from "vitest"
 import { clearAuthDraft } from "@/components/auth/auth-draft"
 import { useAppStore } from "@/lib/store"
 import { resetNavigation } from "./navigation"
 import { defaultHandlers, server } from "./server"
+
+// ---- animations (Animate UI / motion): jump straight to the end, so a closed dialog leaves the DOM at once
+MotionGlobalConfig.skipAnimations = true
 
 // ---- routing: Next.js and next-intl need the Next.js runtime, so tests get plain stand-ins
 vi.mock("next/navigation", async () => {
