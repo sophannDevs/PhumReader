@@ -153,6 +153,9 @@ docs/BACKEND_CHECKLIST.md, "V2.1 API additions" (V21-01 … V21-07).
 - [ ] T45 Real-API e2e for the V2.1 screens: `e2e/real.spec.ts` (15 tests) still describes the V1 screens (V2-63); it
   hasn't changed since the V2.1 upgrade (c8b3193 ported the Vitest unit tests, not this file). Needs the backend
   running (home PC). Key flows 3 and 4 also need V21-04 and V21-01. → P6-03
+  Done 2026-11-11 (V2-68): tests 1–8, 14 and 15 rewritten for V2.1 and green against the local backend (10 passed).
+  Open: tests 9–13 (Create series, uploads, comic episode, chapter editor, creator writes) still describe the V1
+  creator screens and are marked `test.fixme`: they need S3 storage for uploads, so they wait for the home PC.
 - [x] T46 No coin balance for logged-out visitors: header chip, series Fast Pass card and Coins page (owner decision
   2026-11-11; the design shows them). V2-66
 
@@ -374,3 +377,14 @@ docs/BACKEND_CHECKLIST.md, "V2.1 API additions" (V21-01 … V21-07).
   The Help page's own `{n}` workaround is gone. Not converted: digits written into fixed Khmer strings ("© 2026",
   "3:4", "690–1600 px", "13+"): flagged "Latin digits" in the review doc for the native reviewer; and the demo data's
   English time stamps on comments ("6d").
+- V2-68 (T45) **Real-API e2e on V2.1**: `e2e/real.spec.ts` tests 1–8, 14 and 15 follow the V2.1 screens (sign-up with
+  birth year and the first-time setup, "+ Subscribe", Library edit mode with Undo, Settings saved with "Save changes"
+  where "Dark" is the reader theme and the site stays light, the password form in place, the creator gate and
+  dialog, the Creator studio empty state, the V2.1 Reports queue with "Remove content", and the delete dialog that
+  asks for DELETE). Users, Content, All orders and Audit log are still the V1 screens (now separate pages). Tests 9–13
+  are `test.fixme` until they are rewritten on a PC with S3 storage: without it the backend keeps uploads in memory
+  and hands out `memory:` upload addresses that a browser cannot PUT to (test 8 then creates two drafts instead of a
+  live series). Running the suite on the office PC also needed: `bootRun` with the Redis auto-configuration
+  excluded (the dev profile's empty `REDIS_URL` makes Spring Boot 4.1.2 refuse to start), a real-mode build whose
+  type check skips the test files (no Vitest here), and a backend restart after 10 sign-ups in an hour (the per-IP
+  sign-up limit is kept in memory without Redis).
