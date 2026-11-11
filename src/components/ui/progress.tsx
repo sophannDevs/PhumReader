@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { cn } from "cn"
-import { Progress as ProgressPrimitive } from "radix-ui"
+import { Progress as ProgressPrimitive } from "@animate-ui/react/primitives/radix-ui"
 
 // Green fill, 6 px high.
 function Progress({
