@@ -316,9 +316,13 @@ class CatalogApiTest {
             List<JsonNode> cards = list(daily.get(day));
             assertThat(cards).as(day).hasSize(6);
             assertThat(cards).as(day).allMatch(c -> c.get("updateDay").asString().equals(day));
+            // Today's (Thursday's) ongoing series are UP; completed ones no longer update.
             assertThat(cards)
                     .as(day + " UP")
-                    .allMatch(c -> c.get("badges").get("up").asBoolean() == day.equals("Thu"));
+                    .allMatch(c ->
+                            c.get("badges").get("up").asBoolean()
+                                    == (day.equals("Thu")
+                                            && c.get("status").asString().equals("ongoing")));
             assertViewsNeverRise(cards);
         }
 
