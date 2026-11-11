@@ -19,6 +19,9 @@ export default defineConfig({
     command: "npm run build && npx next start -p 3100",
     url: "http://localhost:3100",
     reuseExistingServer: true,
+    // .env.local (the demo setting for `npm run dev`) would otherwise leak into this build: real mode needs
+    // NEXT_PUBLIC_DEMO off, and a process variable wins over .env.local.
+    env: { NEXT_PUBLIC_DEMO: "0" },
     timeout: 300_000,
   },
   projects: [{ name: "real", use: { ...devices["Desktop Chrome"], viewport: { width: 1280, height: 900 } } }],

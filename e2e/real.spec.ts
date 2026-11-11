@@ -6,7 +6,6 @@ import {
   expect,
   request as playwrightRequest,
   test,
-  type Locator,
   type Page,
 } from "@playwright/test";
 import { visible } from "./helpers";
@@ -378,169 +377,111 @@ test("8. become a creator in the dialog; the dashboard lists the series with the
 
 });
 
-test("9. Create and edit a series in the form: validation, uploads with rules, draft, publish, unpublish", async () => {
-  // T45: still the V1 creator screens; rewrite for V2.1 (Create series in 4 steps, Manage series, Upload
-  // episode) on a PC with S3 storage, where uploads work.
-  test.fixme(true, "V2.1 rewrite pending: needs S3 storage for uploads (T45)");
-  test.setTimeout(120_000);
-  const slugOf = async (id: string) =>
-    (await (await page.request.get(`/api/v1/creator/series/${id}`)).json())
-      .slug as string;
+test("9. Create series wizard: step checks, cover rules with a real upload, draft, submit for review", async () => {
+  test.setTimeout(180_000);
+  const title = `E2E Wizard ${stamp}`;
+  const field = (id: string) => visible(page.locator(`#${id}`));
+  const next = () => visible(page.getByRole("button", { name: "Continue" }));
   const anonymous = await playwrightRequest.newContext({
     baseURL: "http://localhost:3100",
   });
-  const title = `E2E Form ${stamp}`;
-  // The "new series" page stays mounted (hidden) behind later pages, so only look at what is on screen.
-  const on = (locator: Locator) => locator.and(page.locator(":visible"));
-  const titleField = () => on(page.getByLabel("Title", { exact: true }));
-  const genre = () => on(page.getByLabel("Genre"));
-  const tag = () => on(page.getByPlaceholder("For example: sea, mystery"));
-  const day = () => on(page.getByLabel("Update schedule"));
-  const terms = () =>
-    on(page.getByRole("checkbox", { name: /I own this work/ }));
 
-  await page.goto("/creator/series");
-  await page.getByRole("link", { name: "Create series" }).first().click();
-  await expect(page).toHaveURL(/\/creator\/series\/new$/);
-  await page.waitForLoadState("networkidle");
+  // Basics: Continue lists what is missing, next to the fields.
+  await page.goto("/creator/new");
+  await next().click();
+  await expect(visible(page.getByText("Fix 2 things to continue"))).toBeVisible();
+  await expect(field("cs-title")).toHaveAttribute("aria-invalid", "true");
+  await field("cs-title").fill(title);
+  await field("cs-genre").selectOption({ label: "Fantasy" });
+  await next().click();
 
-  // An empty form says what is missing, next to the fields.
-  await page.getByRole("button", { name: "Save draft" }).click();
-  await expect(page.getByText("Enter a title.")).toBeVisible();
-  await expect(page.getByText("Choose a genre.")).toBeVisible();
-
-  await titleField().fill(title);
-  await genre().selectOption("fantasy");
-  await tag().fill("sea");
-  await tag().press("Enter");
-  await tag().fill("glass");
-  await tag().press("Enter");
-  await page.getByRole("button", { name: "Remove tag glass" }).click();
+  // Story: a short summary is refused; tags are added and removed.
+  await next().click();
   await expect(
-    page.getByRole("list", { name: "Tags" }).getByRole("listitem"),
-  ).toHaveCount(1);
-  await day().selectOption("Fri");
-  await page.getByRole("radio", { name: /Teen/ }).click();
-
-  // Publishing needs a summary, a cover and the terms.
-  await page.getByRole("button", { name: "Publish" }).click();
-  await expect(page.getByText("Write a summary to publish.")).toBeVisible();
-  await expect(page.getByText("Add a cover to publish.")).toBeVisible();
-  await expect(page.getByText("Accept the terms to publish.")).toBeVisible();
-  await expect(page).toHaveURL(/\/creator\/series\/new$/);
-
-  // Image rules are checked before the file is sent; a good file uploads straight to storage.
-  const files = page.locator("input[type=file]");
-  const file = (name: string, w: number, h: number) => ({
-    name,
-    mimeType: "image/png",
-    buffer: png(w, h),
-  });
-  await files.nth(0).setInputFiles(file("narrow.png", 599, 800));
-  await expect(
-    page.getByText("This image is 599 px wide; the minimum is 600 px."),
+    visible(page.getByText("Write a summary of at least 50 characters.")).first(),
   ).toBeVisible();
-  await files
-    .nth(0)
-    .setInputFiles({
-      name: "notes.txt",
-      mimeType: "text/plain",
-      buffer: Buffer.from("hello"),
-    });
-  await expect(page.getByText("Use a JPG or PNG image.")).toBeVisible();
-  await files.nth(0).setInputFiles(file("cover.png", 600, 800));
-  await expect(
-    page.getByRole("button", { name: "Replace image" }).first(),
-  ).toBeVisible();
-  await expect(page.getByAltText("Cover preview")).toBeVisible();
-  await files.nth(1).setInputFiles(file("banner.png", 700, 300));
-  await expect(
-    page.getByText("This image is 700 px wide; the minimum is 800 px."),
-  ).toBeVisible();
-  await files.nth(1).setInputFiles(file("banner.png", 800, 300));
-  await expect(page.getByAltText("Banner (optional) preview")).toBeVisible();
+  await field("cs-sum").fill(
+    "A sea made of glass, and the people who dare to cross it before the tide turns.",
+  );
+  await field("cs-tag").fill("sea");
+  await field("cs-tag").press("Enter");
+  await field("cs-tag").fill("glass");
+  await field("cs-tag").press("Enter");
+  await visible(page.getByRole("button", { name: "Remove tag glass" })).click();
+  await expect(page.getByRole("button", { name: "Remove tag glass" })).toHaveCount(0);
+  await next().click();
 
-  // The filled form never scrolls sideways, from a small phone to a desktop.
+  // Cover: image rules are checked, then a good file uploads straight to storage.
+  const file = () => visible(page.locator("input[type=file]"));
+  await next().click();
+  await expect(visible(page.getByText("Add a cover image.")).first()).toBeVisible();
+  await file().setInputFiles({ name: "narrow.png", mimeType: "image/png", buffer: png(599, 800) });
+  await expect(
+    visible(page.getByText("This image is 599 px wide; the minimum is 600 px.")),
+  ).toBeVisible();
+  await file().setInputFiles({ name: "notes.txt", mimeType: "text/plain", buffer: Buffer.from("hello") });
+  await expect(visible(page.getByText("Use a JPG or PNG image."))).toBeVisible();
+  await file().setInputFiles({ name: "cover.png", mimeType: "image/png", buffer: png(600, 800) });
+  await expect(visible(page.getByAltText("Cover preview"))).toHaveAttribute(
+    "src",
+    /127\.0\.0\.1:9000/,
+    { timeout: 30_000 },
+  );
+  await next().click();
+
+  // Publishing: two things are missing; the filled wizard never scrolls sideways.
+  await expect(visible(page.getByRole("heading", { level: 2, name: "Publishing" }))).toBeVisible();
+  await visible(page.getByRole("button", { name: "Submit for review" })).click();
+  await expect(visible(page.getByText(/^Fix \d things? to continue$/))).toBeVisible();
   for (const width of [320, 390, 768, 1440]) {
     await page.setViewportSize({ width, height: 900 });
     expect(
-      await page.evaluate(
-        () =>
-          document.documentElement.scrollWidth -
-          document.documentElement.clientWidth,
-      ),
+      await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth),
       `${width}px`,
     ).toBeLessThanOrEqual(0);
   }
   await page.setViewportSize({ width: 1280, height: 900 });
 
-  // Save as a draft: back on My series with the next step.
-  await on(page.getByLabel("Summary")).fill(
-    "A sea made of glass, and the people who cross it.",
+  // Save draft: it is private, and reopening it brings the values and the stored cover back.
+  const created = page.waitForResponse(
+    (r) => /\/api\/v1\/creator\/series(\/|$)/.test(r.url()) && ["POST", "PUT"].includes(r.request().method()) && r.ok(),
   );
-  await page.getByRole("button", { name: "Save draft" }).click();
-  await expect(page).toHaveURL(
-    /\/creator\/series\?notice=series-created&series=/,
-  );
-  await expect(page.getByText("Series created")).toBeVisible();
-  const row = page
-    .getByRole("list", { name: "My series" })
-    .getByRole("listitem")
-    .filter({ hasText: title });
-  await expect(row.getByText("Draft")).toBeVisible();
-  const id = new URL(page.url()).searchParams.get("series") as string;
-  const slug = await slugOf(id);
-  expect((await anonymous.get(`/api/v1/series/${slug}`)).status()).toBe(404);
+  await visible(page.getByRole("button", { name: "Save draft" })).click();
+  await created;
+  const id = sql(`select id from series where title = '${title}'`);
+  expect(id).toMatch(/^[0-9a-f-]{36}$/);
+  const draft = await (await page.request.get(`/api/v1/creator/series/${id}`)).json();
+  expect(draft).toMatchObject({ visibility: "draft", genre: "fantasy" });
+  expect(draft.tags).toEqual(["sea"]);
+  expect((await anonymous.get(`/api/v1/series/${draft.slug}`)).status()).toBe(404);
+  await page.goto(`/creator/new?draft=${id}`);
+  const publishing = visible(page.getByRole("heading", { level: 2, name: "Publishing" }));
+  const step = visible(page.getByRole("button", { name: "Continue" }));
+  await expect(publishing.or(step)).toBeVisible();
+  await visible(page.getByRole("button", { name: /^Basics/ })).click();
+  await expect(field("cs-title")).toHaveValue(title);
+  await expect(field("cs-genre")).toHaveValue(/fantasy|Fantasy/);
 
-  // Edit: the saved values come back, the type is fixed, publishing needs the terms again.
-  await row.getByRole("link", { name: "Edit" }).click();
-  await expect(page).toHaveURL(new RegExp(`/creator/series/${id}/edit$`));
-  await expect(titleField()).toHaveValue(title);
-  await expect(genre()).toHaveValue("fantasy");
-  await expect(day()).toHaveValue("Fri");
-  await expect(page.getByRole("radio", { name: /Teen/ })).toBeChecked();
-  await expect(page.getByRole("radio", { name: "Comic" })).toBeDisabled();
-  await expect(on(page.getByAltText("Cover preview"))).toHaveAttribute(
-    "src",
-    /127\.0\.0\.1:9000.*\.webp$/,
-  );
+  // Submit for review: update day and the original-work promise are required; then it waits for an admin.
+  for (let n = 0; n < 3 && !(await publishing.isVisible()); n++) await step.click();
+  await expect(publishing).toBeVisible();
+  await visible(page.getByRole("group", { name: /Update days/ }).getByRole("button", { name: "Fri" })).click();
+  const original = visible(page.getByRole("checkbox", { name: /original work/ }));
+  if (!(await original.isChecked())) await original.click();
+  await visible(page.getByRole("button", { name: "Submit for review" })).click();
+  await expect(visible(page.getByRole("heading", { name: `${title} is in review` }))).toBeVisible();
+  expect((await (await page.request.get(`/api/v1/creator/series/${id}`)).json()).visibility).toBe("review");
+  expect((await anonymous.get(`/api/v1/series/${draft.slug}`)).status()).toBe(404);
 
-  // Opening "Create series" again starts from a blank form, not from the series just saved.
-  await page.goto("/creator/series/new");
-  await expect(titleField()).toHaveValue("");
-  await page.goBack();
-  await titleField().fill(`${title} Edited`);
-  await page.getByRole("button", { name: "Publish" }).click();
-  await expect(page.getByText("Accept the terms to publish.")).toBeVisible();
-  await terms().click();
-  await page.getByRole("button", { name: "Publish" }).click();
-  await expect(page.getByText("Your series is live.")).toBeVisible();
-  await expect(
-    page.getByRole("link", { name: "View public page" }),
-  ).toBeVisible();
-  expect((await anonymous.get(`/api/v1/series/${slug}`)).status()).toBe(200);
-
-  // A live series can be edited and taken back to a draft.
-  await titleField().fill(`${title} Live`);
-  await page.getByRole("button", { name: "Save changes" }).click();
-  await expect(page.getByText("Changes saved.")).toBeVisible();
-  expect(
-    (await (await anonymous.get(`/api/v1/series/${slug}`)).json()).series.title,
-  ).toBe(`${title} Live`);
-  await page.getByRole("button", { name: "Unpublish" }).click();
-  await expect(page.getByText("Your series is a draft again.")).toBeVisible();
-  expect((await anonymous.get(`/api/v1/series/${slug}`)).status()).toBe(404);
-
-  // An unknown id says so.
-  await page.goto("/creator/series/00000000-0000-0000-0000-000000000000/edit");
-  await expect(page.getByText("Series not found")).toBeVisible();
+  // Keep the dev catalog clean: back to a draft, then deleted.
+  sql(`delete from series_reviews where series_id = '${id}'`);
+  sql(`update series set visibility = 'DRAFT' where id = '${id}'`);
+  const headers = await apiHeaders();
+  expect((await page.request.delete(`/api/v1/creator/series/${id}`, { headers })).status()).toBe(204);
   await anonymous.dispose();
 });
 
 test("10. creator image upload: presigned upload to storage, WebP variants, 799 px refused", async () => {
-  // T45: still the V1 creator screens; rewrite for V2.1 (Create series in 4 steps, Manage series, Upload
-  // episode) on a PC with S3 storage, where uploads work.
-  test.fixme(true, "V2.1 rewrite pending: needs S3 storage for uploads (T45)");
   // The signed-in browser's cookies; writes need the CSRF header.
   await page.request.get("/api/v1/auth/csrf");
   const xsrf =
@@ -605,16 +546,16 @@ test("10. creator image upload: presigned upload to storage, WebP variants, 799 
   expect((await fake.complete()).status()).toBe(422);
 });
 
-/** A series made through the API for the episode tests (the form tests cover the series form itself). */
+/**
+ * A live series made through the API for the episode tests (the wizard tests cover the series form itself). A new
+ * series goes live when an admin approves it; this sets what "Approve" sets, without making this account an admin
+ * (test 14 checks that the account is not one yet).
+ */
 async function makeSeries(
   type: "comic" | "novel",
   title: string,
 ): Promise<{ id: string; slug: string; headers: { "X-XSRF-TOKEN": string } }> {
-  await page.request.get("/api/v1/auth/csrf");
-  const xsrf =
-    (await page.context().cookies()).find((c) => c.name === "XSRF-TOKEN")
-      ?.value ?? "";
-  const headers = { "X-XSRF-TOKEN": xsrf };
+  const headers = await apiHeaders();
   const image = png(600, 800);
   const ticket = await (
     await page.request.post("/api/v1/creator/uploads", {
@@ -637,67 +578,59 @@ async function makeSeries(
         type,
         genre: "fantasy",
         languages: ["en"],
-        summary: "A test story.",
+        summary: "A test story about a sea made of glass and the people who cross it.",
         tags: [],
+        ageRating: "all",
+        status: "ongoing",
+        updateDays: ["Fri"],
         coverUploadId: ticket.id,
       },
     })
   ).json();
-  expect(
-    (
-      await page.request.post(`/api/v1/creator/series/${created.id}/publish`, {
-        headers,
-      })
-    ).status(),
-  ).toBe(200);
+  // A new series cannot be published directly: it goes through review.
+  const direct = await page.request.post(`/api/v1/creator/series/${created.id}/publish`, { headers });
+  expect(direct.status()).toBe(409);
+  expect((await direct.json()).error.code).toBe("review_required");
+  sql(
+    `update series set visibility = 'PUBLISHED', launched_at = coalesce(launched_at, now()) where id = '${created.id}'`,
+  );
   return { id: created.id, slug: created.slug, headers };
 }
 
-test("11. Comic episode page: 60 panels at 10 Mbps with per-file progress, a failed file retried alone, reorder, preview, Fast Pass, publish, schedule, draft", async () => {
-  // T45: still the V1 creator screens; rewrite for V2.1 (Create series in 4 steps, Manage series, Upload
-  // episode) on a PC with S3 storage, where uploads work.
-  test.fixme(true, "V2.1 rewrite pending: needs S3 storage for uploads (T45)");
-  test.setTimeout(240_000);
-  const { id, slug, headers } = await makeSeries("comic", `E2E Comic ${stamp}`);
+test("11. Comic episode page: 60 images at 10 Mbps with per-file progress, a failed file retried alone, reorder, Fast Pass, publish, schedule, draft", async () => {
+  test.setTimeout(300_000);
+  const title = `E2E Comic ${stamp}`;
+  const { id, slug } = await makeSeries("comic", title);
   const anonymous = await playwrightRequest.newContext({
     baseURL: "http://localhost:3100",
   });
-  const on = (locator: Locator) => locator.and(page.locator(":visible"));
+  const epTitle = visible(page.locator("#up-title"));
+  const list = () => visible(page.getByRole("list", { name: "Images in reading order" }));
+  const ready = (done: number, total: number, ok = "done") =>
+    visible(page.locator("li", { hasText: `Images ready (${done}/${total}) (${ok})` }));
 
-  await page.goto(`/creator/series/${id}/episodes/new`);
-  await page.waitForLoadState("networkidle");
-  await expect(
-    on(page.getByRole("heading", { name: "Add episode" })),
-  ).toBeVisible();
-  await expect(on(page.getByLabel("Number"))).toHaveAttribute(
-    "placeholder",
-    "1",
-  );
+  await page.goto(`/creator/upload?series=${id}`);
+  await expect(visible(page.getByRole("heading", { level: 1, name: "Upload episode" }))).toBeVisible();
+  await expect(visible(page.getByText(`${title} · Episode 1`))).toBeVisible();
 
-  // Validation first: nothing to publish yet.
-  await on(page.getByRole("button", { name: "Publish now" })).click();
-  await expect(on(page.getByText("Enter a title."))).toBeVisible();
+  // Validation first: nothing to publish yet. (A series with update days offers the next slot by default.)
+  await visible(page.getByRole("radio", { name: /^Publish now/ })).click();
+  await visible(page.getByRole("button", { name: "Publish episode" })).click();
+  await expect(visible(page.getByText("Fix 2 things before publishing"))).toBeVisible();
+  await expect(visible(page.getByText("Add at least one image.")).first()).toBeVisible();
 
-  // 60 good panels (about 190 KB each) and one 799 px wide file; one panel's first upload is cut off.
+  // 60 good images (about 190 KB each) and one 500 px wide file; one image's first upload is cut off.
   const good = Array.from({ length: 60 }, (_, i) => ({
     name: `panel-${String(i + 1).padStart(2, "0")}.png`,
     mimeType: "image/png",
     buffer: noisyPng(800, i === 6 ? 79 : 80),
   }));
-  const narrow = {
-    name: "too-narrow.png",
-    mimeType: "image/png",
-    buffer: png(799, 200),
-  };
+  const narrow = { name: "too-narrow.png", mimeType: "image/png", buffer: png(500, 200) };
   const cutOffSize = good[6].buffer.length;
   let cutOff = false;
   await page.route("**/127.0.0.1:9000/**", (route) => {
     const request = route.request();
-    if (
-      request.method() === "PUT" &&
-      !cutOff &&
-      request.postDataBuffer()?.length === cutOffSize
-    ) {
+    if (request.method() === "PUT" && !cutOff && request.postDataBuffer()?.length === cutOffSize) {
       cutOff = true;
       return route.abort("failed");
     }
@@ -711,355 +644,182 @@ test("11. Comic episode page: 60 panels at 10 Mbps with per-file progress, a fai
     downloadThroughput: (10 * 1024 * 1024) / 8,
     uploadThroughput: (10 * 1024 * 1024) / 8,
   });
-
   const started = Date.now();
-  await page
-    .locator("input[type=file][multiple]")
-    .setInputFiles([...good, narrow]);
-  // Every file has its own progress while it travels.
+  await visible(page.locator("input[type=file][multiple]")).setInputFiles([...good, narrow]);
+
+  // Every file has its own progress while it travels; at the end 59 of 61 are ready.
   await expect(
-    on(
-      page.getByRole("progressbar", { name: /^Uploading panel \d+$/ }).first(),
-    ),
+    visible(page.getByRole("progressbar", { name: /^Uploading panel-\d+\.png$/ }).first()),
   ).toBeVisible();
-  await expect(on(page.getByText("59 of 61 panels uploaded"))).toBeVisible({
-    timeout: 120_000,
-  });
-  await expect(on(page.getByText("2 failed"))).toBeVisible();
-  console.log(
-    `60 panels at 10 Mbps: ${Math.round((Date.now() - started) / 1000)} s`,
-  );
+  await expect(ready(59, 61, "not yet")).toBeVisible({ timeout: 150_000 });
+  console.log(`60 images at 10 Mbps: ${Math.round((Date.now() - started) / 1000)} s`);
   await cdp.send("Network.emulateNetworkConditions", {
     offline: false,
     latency: 0,
     downloadThroughput: -1,
     uploadThroughput: -1,
   });
-
-  // The cut-off file can be retried on its own; the 799 px file cannot be retried, only removed.
-  const retryButtons = on(page.getByRole("button", { name: "Retry" }));
-  await expect(retryButtons).toHaveCount(1);
-  await expect(
-    on(page.getByText("This image is 799 px wide; the minimum is 800 px.")),
-  ).toBeVisible();
-  await retryButtons.click();
-  await expect(on(page.getByText("60 of 61 panels uploaded"))).toBeVisible();
-  await on(
-    page.getByRole("button", { name: /^Remove panel \d+$/ }).last(),
-  ).click();
-  await expect(on(page.getByText("60 of 60 panels uploaded"))).toBeVisible();
   expect(cutOff).toBe(true);
 
-  // Reorder with the buttons and by dragging; remove one.
-  const names = () =>
-    on(page.getByRole("list", { name: "Panels in reading order" }))
-      .locator("li p.truncate")
-      .allTextContents();
-  expect((await names())[0]).toBe("panel-01.png");
-  await on(
-    page.getByRole("button", { name: "Move panel 2 up", exact: true }),
-  ).click();
-  expect((await names()).slice(0, 2)).toEqual(["panel-02.png", "panel-01.png"]);
-  const cards = on(
-    page.getByRole("list", { name: "Panels in reading order" }),
-  ).locator("li");
-  await cards.nth(2).dragTo(cards.nth(0));
-  expect((await names()).slice(0, 3)).toEqual([
-    "panel-03.png",
-    "panel-02.png",
-    "panel-01.png",
-  ]);
-  await on(
-    page.getByRole("button", { name: "Remove panel 3", exact: true }),
-  ).click();
-  await expect(on(page.getByText("59 of 59 panels uploaded"))).toBeVisible();
+  // The cut-off file can be tried again on its own; the narrow one only says why and can be removed.
+  await expect(visible(page.getByText("Too narrow: 500 px. Use 690–1600 px."))).toBeVisible();
+  await expect(visible(page.getByText("The upload was interrupted. Try again."))).toBeVisible();
+  await expect(page.getByRole("button", { name: /^Try .* again$/ })).toHaveCount(1);
+  await visible(page.getByRole("button", { name: "Try panel-07.png again" })).click();
+  await expect(ready(60, 61, "not yet")).toBeVisible({ timeout: 30_000 });
+  await visible(page.getByRole("button", { name: "Remove too-narrow.png" })).click();
+  await expect(ready(60, 60)).toBeVisible();
 
-  // 59 panels on the page: no sideways scroll from a small phone to a desktop.
+  // Reorder with the buttons; remove one.
+  const names = () => list().locator("li span.font-medium").allTextContents();
+  expect((await names())[0]).toBe("panel-01.png");
+  await visible(page.getByRole("button", { name: "Move panel-02.png up" })).click();
+  expect((await names()).slice(0, 2)).toEqual(["panel-02.png", "panel-01.png"]);
+  await visible(page.getByRole("button", { name: "Move panel-03.png up" })).click();
+  await visible(page.getByRole("button", { name: "Move panel-03.png up" })).click();
+  expect((await names()).slice(0, 3)).toEqual(["panel-03.png", "panel-02.png", "panel-01.png"]);
+  await visible(page.getByRole("button", { name: "Remove panel-03.png" })).click();
+  await expect(ready(59, 59)).toBeVisible();
+
+  // 59 images on the page: no sideways scroll from a small phone to a desktop.
   for (const width of [320, 390, 768, 1440]) {
     await page.setViewportSize({ width, height: 900 });
     expect(
-      await page.evaluate(
-        () =>
-          document.documentElement.scrollWidth -
-          document.documentElement.clientWidth,
-      ),
+      await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth),
       `${width}px`,
     ).toBeLessThanOrEqual(0);
   }
   await page.setViewportSize({ width: 1280, height: 900 });
 
-  // Thumbnail must be square; details; Fast Pass rules.
-  await on(page.locator("input[type=file]:not([multiple])")).setInputFiles({
-    name: "wide.png",
-    mimeType: "image/png",
-    buffer: png(400, 300),
-  });
-  await expect(on(page.getByText("The image must be square."))).toBeVisible();
-  await on(page.locator("input[type=file]:not([multiple])")).setInputFiles({
-    name: "square.png",
-    mimeType: "image/png",
-    buffer: png(400, 400),
-  });
-  await expect(on(page.getByAltText("Thumbnail preview"))).toBeVisible();
-  await on(page.getByLabel("Title", { exact: true })).fill(
-    `Episode one ${stamp}`,
-  );
-  await on(page.getByLabel("Creator's note")).fill("Thank you for reading!");
-  await on(page.getByRole("switch", { name: "Comments" })).click();
-  await expect(
-    on(page.getByText("Comments are turned off for this episode.")),
-  ).toBeVisible();
-  await on(page.getByRole("radio", { name: /Fast Pass/ })).click();
-  await on(page.getByLabel("Price (coins)")).fill("12");
-  await on(page.getByRole("button", { name: "Publish now" })).click();
-  await expect(
-    on(page.getByText("Choose a price from 3 to 10 coins.")),
-  ).toBeVisible();
-  await on(page.getByLabel("Price (coins)")).fill("4");
-  await on(page.getByLabel("Free after (days)")).fill("3");
-
-  // The preview shows the panels in order.
-  await on(page.getByRole("button", { name: "Preview" })).click();
-  const preview = page.getByRole("dialog");
-  await expect(preview.getByText(`Episode one ${stamp}`)).toBeVisible();
-  await expect(preview.getByRole("img")).toHaveCount(59);
-  await page.keyboard.press("Escape");
+  // Details, Fast Pass and comments.
+  await epTitle.fill(`Episode one ${stamp}`);
+  await visible(page.locator("#up-note")).fill("Thank you for reading!");
+  await visible(page.getByRole("switch", { name: "Fast Pass" })).setChecked(true);
+  await expect(visible(page.getByText(/Readers pay 5 coins to read early/))).toBeVisible();
+  await visible(page.getByRole("switch", { name: "Allow comments" })).setChecked(false);
+  await expect(ready(59, 59)).toBeVisible();
 
   // Publish: the success screen, and the API agrees.
-  await on(page.getByRole("button", { name: "Publish now" })).click();
-  await expect(on(page.getByText("Episode 1 is live"))).toBeVisible({
-    timeout: 30_000,
-  });
-  await expect(
-    on(page.getByRole("link", { name: "View episode" })),
-  ).toHaveAttribute("href", new RegExp(`/read/${slug}/1$`));
-  const saved = await (
-    await page.request.get(`/api/v1/creator/series/${id}/episodes/1`)
-  ).json();
+  await visible(page.getByRole("button", { name: "Publish episode" })).click();
+  await expect(visible(page.getByRole("heading", { name: "Episode 1 is live" }))).toBeVisible({ timeout: 60_000 });
+  const saved = await (await page.request.get(`/api/v1/creator/series/${id}/episodes/1`)).json();
   expect(saved).toMatchObject({
     status: "published",
-    priceCoins: 4,
-    freeAfterDays: 3,
+    priceCoins: 5,
+    freeAfterDays: 21, // Fri only, 3 episodes ahead: free after ceil(3 × 7 ÷ 1) days
     commentsEnabled: false,
     creatorNote: "Thank you for reading!",
   });
   expect(saved.panels).toHaveLength(59);
-  expect(saved.thumbnailUrl).toBeTruthy();
-  expect(
-    (await anonymous.get(`/api/v1/series/${slug}/episodes/1`)).status(),
-  ).toBe(402);
+  expect((await anonymous.get(`/api/v1/series/${slug}/episodes/1`)).status()).toBe(402);
 
-  // Upload another: a blank form that suggests number 2; a past time is refused, a future one is kept in Phnom Penh time.
-  await on(page.getByRole("button", { name: "Upload another" })).click();
-  await expect(on(page.getByLabel("Number"))).toHaveAttribute(
-    "placeholder",
-    "2",
-  );
-  await expect(on(page.getByLabel("Title", { exact: true }))).toHaveValue("");
-  await on(page.locator("input[type=file][multiple]")).setInputFiles([
-    good[0],
-    good[1],
-  ]);
-  await expect(on(page.getByText("2 of 2 panels uploaded"))).toBeVisible({
-    timeout: 30_000,
-  });
-  await on(page.getByLabel("Title", { exact: true })).fill(
-    `Episode two ${stamp}`,
-  );
-  await on(page.getByRole("radio", { name: "Schedule for later" })).click();
-  await on(page.getByRole("button", { name: "Schedule" }).last()).click();
-  await expect(on(page.getByText("Choose a release time."))).toBeVisible();
-  const phnomPenh = (ms: number) =>
-    new Date(Date.now() + ms + 7 * 3600_000).toISOString().slice(0, 16);
-  await on(page.getByLabel("Release time")).fill(phnomPenh(-3600_000));
-  await on(page.getByRole("button", { name: "Schedule" }).last()).click();
-  await expect(
-    on(page.getByText("Choose a time in the future.")),
-  ).toBeVisible();
-  const later = phnomPenh(3 * 3600_000);
-  await on(page.getByLabel("Release time")).fill(later);
-  await on(page.getByRole("button", { name: "Schedule" }).last()).click();
-  await expect(on(page.getByText("Episode 2 is scheduled"))).toBeVisible({
-    timeout: 30_000,
-  });
-  const scheduled = await (
-    await page.request.get(`/api/v1/creator/series/${id}/episodes/2`)
-  ).json();
+  // Next episode: a blank form that numbers itself; a scheduled episode stays hidden.
+  await visible(page.getByRole("button", { name: "Upload episode 2" })).click();
+  await expect(visible(page.getByText(`${title} · Episode 2`))).toBeVisible();
+  await expect(epTitle).toHaveValue("");
+  await visible(page.locator("input[type=file][multiple]")).setInputFiles([good[0], good[1]]);
+  await expect(ready(2, 2)).toBeVisible({ timeout: 30_000 });
+  await epTitle.fill(`Episode two ${stamp}`);
+  await visible(page.getByRole("radio", { name: /^Schedule/ })).click();
+  await visible(page.getByRole("button", { name: /^Schedule for / })).click();
+  await expect(visible(page.getByRole("heading", { name: "Episode 2 is scheduled" }))).toBeVisible({ timeout: 60_000 });
+  const scheduled = await (await page.request.get(`/api/v1/creator/series/${id}/episodes/2`)).json();
   expect(scheduled.status).toBe("scheduled");
-  expect(scheduled.publishedAt).toBe(
-    `${new Date(`${later}:00+07:00`).toISOString().slice(0, 19)}Z`,
-  );
-  expect(
-    (await anonymous.get(`/api/v1/series/${slug}/episodes/2`)).status(),
-  ).toBe(404);
+  expect(Date.parse(scheduled.publishedAt)).toBeGreaterThan(Date.now());
+  expect((await anonymous.get(`/api/v1/series/${slug}/episodes/2`)).status()).toBe(404);
 
-  // Draft: saved without needing everything, reopened from the edit page.
-  await on(page.getByRole("button", { name: "Upload another" })).click();
-  await on(page.getByLabel("Title", { exact: true })).fill(
-    `Episode three ${stamp}`,
-  );
-  await on(page.getByRole("button", { name: "Save draft" })).click();
-  await expect(on(page.getByText("Draft saved"))).toBeVisible({
-    timeout: 30_000,
-  });
-  await on(page.getByRole("link", { name: "Edit episode" })).click();
-  await expect(page).toHaveURL(
-    new RegExp(`/creator/series/${id}/episodes/3/edit$`),
-  );
-  await expect(on(page.getByLabel("Title", { exact: true }))).toHaveValue(
-    `Episode three ${stamp}`,
-  );
-  await expect(on(page.getByLabel("Number"))).toBeDisabled();
+  // Draft: saved without images, reopened from its address.
+  await visible(page.getByRole("button", { name: "Upload episode 3" })).click();
+  await epTitle.fill(`Episode three ${stamp}`);
+  await visible(page.getByRole("button", { name: "Save draft" })).click();
+  await expect(visible(page.getByText("Draft saved just now"))).toBeVisible({ timeout: 30_000 });
+  await page.goto(`/creator/upload?series=${id}&ep=3`);
+  await expect(visible(page.getByRole("heading", { level: 1, name: "Edit episode 3" }))).toBeVisible();
+  await expect(epTitle).toHaveValue(`Episode three ${stamp}`);
 
-  // A live episode is edited in place and keeps its panels, thumbnail and Fast Pass.
-  await page.goto(`/creator/series/${id}/episodes/1/edit`);
-  await expect(on(page.getByLabel("Title", { exact: true }))).toHaveValue(
-    `Episode one ${stamp}`,
-  );
-  await expect(
-    on(
-      page.getByRole("list", { name: "Panels in reading order" }).locator("li"),
-    ),
-  ).toHaveCount(59);
-  await on(page.getByLabel("Title", { exact: true })).fill(
-    `Episode one edited ${stamp}`,
-  );
-  await on(page.getByRole("button", { name: "Save changes" })).click();
-  await expect(on(page.getByText("Episode 1 is live"))).toBeVisible();
-  const edited = await (
-    await page.request.get(`/api/v1/creator/series/${id}/episodes/1`)
-  ).json();
-  expect(edited).toMatchObject({
-    title: `Episode one edited ${stamp}`,
-    priceCoins: 4,
-  });
+  // A live episode is edited in place and keeps its images and Fast Pass.
+  await page.goto(`/creator/upload?series=${id}&ep=1`);
+  await expect(epTitle).toHaveValue(`Episode one ${stamp}`);
+  await expect(list().locator("li")).toHaveCount(59);
+  await epTitle.fill(`Episode one edited ${stamp}`);
+  await visible(page.getByRole("button", { name: "Save changes" })).click();
+  await expect(visible(page.getByRole("heading", { name: "Episode 1 is saved" }))).toBeVisible({ timeout: 30_000 });
+  const edited = await (await page.request.get(`/api/v1/creator/series/${id}/episodes/1`)).json();
+  expect(edited).toMatchObject({ title: `Episode one edited ${stamp}`, priceCoins: 5 });
   expect(edited.panels).toHaveLength(59);
-  expect(edited.thumbnailUrl).toBeTruthy();
 
-  await page.goto(
-    "/creator/series/00000000-0000-0000-0000-000000000000/episodes/new",
-  );
-  await expect(on(page.getByText("Series not found"))).toBeVisible();
+  // An unknown series id does not break the page: it opens with one of the creator's own series selected.
+  // The series goes back to a draft so the dev data stays clean.
+  await page.goto("/creator/upload?series=00000000-0000-0000-0000-000000000000");
+  await expect(visible(page.getByRole("heading", { level: 1, name: "Upload episode" }))).toBeVisible();
+  await expect(visible(page.getByRole("combobox", { name: "Series" }))).not.toHaveValue("00000000-0000-0000-0000-000000000000");
   expect(
-    (
-      await page.request.post(`/api/v1/creator/series/${id}/unpublish`, {
-        headers,
-      })
-    ).status(),
+    (await page.request.post(`/api/v1/creator/series/${id}/unpublish`, { headers: await apiHeaders() })).status(),
   ).toBe(200);
   await anonymous.dispose();
 });
 
-test("12. Chapter page: block editor with bold, heading, scene break and word count; readers see the marks", async () => {
-  // T45: still the V1 creator screens; rewrite for V2.1 (Create series in 4 steps, Manage series, Upload
-  // episode) on a PC with S3 storage, where uploads work.
-  test.fixme(true, "V2.1 rewrite pending: needs S3 storage for uploads (T45)");
-  test.setTimeout(120_000);
-  const { id, slug, headers } = await makeSeries("novel", `E2E Novel ${stamp}`);
-  const on = (locator: Locator) => locator.and(page.locator(":visible"));
+test("12. Chapter page: a novel chapter from plain text (heading, scene break, quote), the word minimum, readers see it", async () => {
+  test.setTimeout(150_000);
+  const { id, slug } = await makeSeries("novel", `E2E Novel ${stamp}`);
+  const words = (n: number) => Array.from({ length: n }, (_, i) => `word${i % 7}`).join(" ");
+  const chapterTitle = visible(page.locator("#up-title"));
+  const text = visible(page.locator("#up-text"));
 
-  await page.goto(`/creator/series/${id}/episodes/new`);
-  await page.waitForLoadState("networkidle");
-  await expect(
-    on(page.getByRole("heading", { name: "Add chapter" })),
-  ).toBeVisible();
-  await on(page.getByLabel("Title", { exact: true })).fill(
-    `The glass sea ${stamp}`,
-  );
+  await page.goto(`/creator/upload?series=${id}`);
+  await expect(visible(page.getByRole("heading", { level: 1, name: "Upload chapter" }))).toBeVisible();
 
-  // An empty chapter cannot be published.
-  await on(page.getByRole("button", { name: "Publish now" })).click();
-  await expect(on(page.getByText("Write the chapter first."))).toBeVisible();
+  // An empty chapter cannot be published; a short one is told how many words it has.
+  await visible(page.getByRole("radio", { name: /^Publish now/ })).click();
+  await visible(page.getByRole("button", { name: "Publish chapter" })).click();
+  await expect(visible(page.getByText("Fix 2 things before publishing"))).toBeVisible();
+  await expect(visible(page.getByText("Chapters need at least 300 words (now 0).")).first()).toBeVisible();
+  await chapterTitle.fill(`The glass sea ${stamp}`);
+  await text.fill(words(20));
+  await expect(visible(page.getByText(/^20 words · about 1 min read$/))).toBeVisible();
+  await visible(page.getByRole("button", { name: "Publish chapter" })).click();
+  await expect(visible(page.getByText("Chapters need at least 300 words (now 20).")).first()).toBeVisible();
 
-  // Write: bold with the button and with Ctrl+B, italic, a heading, a scene break, a quote.
-  const text1 = on(page.getByLabel("Text of block 1"));
-  await text1.fill("The sea was glass.");
-  await text1.press("ControlOrMeta+A");
-  await on(page.getByRole("button", { name: "Bold, block 1" })).click();
-  await expect(text1).toHaveValue("**The sea was glass.**");
-  await on(page.getByRole("button", { name: "Bold, block 1" })).click();
-  await expect(text1).toHaveValue("The sea was glass.");
-  await text1.fill("She waited for the tide.");
-  await text1.press("ControlOrMeta+A");
-  await text1.press("ControlOrMeta+B");
-  await expect(text1).toHaveValue("**She waited for the tide.**");
-  await text1.fill("She **waited** for the *tide*.");
-  await on(page.getByRole("button", { name: "Heading", exact: true })).click();
-  await on(page.getByLabel("Text of block 2")).fill("Chapter one");
-  await on(
-    page.getByRole("button", { name: "Scene break", exact: true }),
-  ).click();
-  await on(
-    page.getByRole("button", { name: "Paragraph", exact: true }),
-  ).click();
-  await on(page.getByLabel("Text of block 4")).fill("Morning came.");
-  await on(page.getByLabel("Block 4 type")).selectOption("quote");
-  await on(page.getByRole("button", { name: "Move block 2 up" })).click();
-  await expect(on(page.getByLabel("Text of block 1"))).toHaveValue(
-    "Chapter one",
-  );
-  await expect(on(page.getByText("9 words"))).toBeVisible();
-
-  await on(page.getByRole("button", { name: "Preview" })).click();
-  const preview = page.getByRole("dialog");
-  await expect(preview.locator("strong")).toHaveText("waited");
-  await expect(preview.locator("em").first()).toHaveText("tide");
-  await expect(
-    preview.getByRole("heading", { name: "Chapter one", level: 4 }),
-  ).toBeVisible();
-  await page.keyboard.press("Escape");
-
-  await on(page.getByRole("button", { name: "Publish now" })).click();
-  await expect(on(page.getByText("Episode 1 is live"))).toBeVisible({
-    timeout: 30_000,
-  });
-  await expect(
-    on(page.getByRole("link", { name: "View episode" })),
-  ).toHaveAttribute("href", new RegExp(`/novel/${slug}/1$`));
-  const saved = await (
-    await page.request.get(`/api/v1/creator/series/${id}/episodes/1`)
-  ).json();
-  expect(saved.wordCount).toBe(9);
+  // Enough words: a heading, paragraphs, a scene break and a quote.
+  await text.fill(`# Chapter one\n\nThe sea was glass. ${words(310)}\n\n* * *\n\n> Morning came.\n\nShe waited for the tide.`);
+  await expect(visible(page.getByText("Looks good"))).toBeVisible();
+  await visible(page.getByRole("button", { name: "Publish chapter" })).click();
+  await expect(visible(page.getByRole("heading", { name: "Chapter 1 is live" }))).toBeVisible({ timeout: 30_000 });
+  const saved = await (await page.request.get(`/api/v1/creator/series/${id}/episodes/1`)).json();
+  expect(saved.status).toBe("published");
+  expect(saved.wordCount).toBeGreaterThan(300);
   expect(saved.blocks.map((b: { type: string }) => b.type)).toEqual([
     "heading",
     "paragraph",
     "scene-break",
     "quote",
+    "paragraph",
   ]);
 
-  // The reader renders the heading and the marks as formatting, never as raw asterisks.
+  // Readers get the chapter with its heading and quote.
   await page.goto(`/novel/${slug}/1`);
-  await expect(
-    page.getByRole("heading", { name: "Chapter one", level: 2 }),
-  ).toBeVisible();
-  await expect(page.locator("strong").first()).toHaveText("waited");
-  await expect(page.getByText("**waited**")).toHaveCount(0);
+  await expect(visible(page.getByText("Chapter one").first())).toBeVisible();
+  await expect(visible(page.getByText("Morning came."))).toBeVisible();
 
-  // A slug nobody made still answers "not found" (the API says so; the demo data is not consulted).
+  // Editing it brings the text back as written, and saving keeps it live.
+  await page.goto(`/creator/upload?series=${id}&ep=1`);
+  await expect(text).toHaveValue(/^# Chapter one\n\nThe sea was glass\./);
+  await expect(text).toHaveValue(/\n\n\* \* \*\n\n> Morning came\.\n\n/);
+  await chapterTitle.fill(`The glass sea edited ${stamp}`);
+  await visible(page.getByRole("button", { name: "Save changes" })).click();
+  await expect(visible(page.getByRole("heading", { name: "Chapter 1 is saved" }))).toBeVisible({ timeout: 30_000 });
+
+  // A slug nobody made still answers "not found".
   await page.goto("/series/there-is-no-such-series");
-  await expect(
-    page.getByRole("heading", { name: "Page not found" }),
-  ).toBeVisible();
-
+  await expect(visible(page.getByRole("heading", { name: "We can’t find that page" }))).toBeVisible();
   expect(
-    (
-      await page.request.post(`/api/v1/creator/series/${id}/unpublish`, {
-        headers,
-      })
-    ).status(),
+    (await page.request.post(`/api/v1/creator/series/${id}/unpublish`, { headers: await apiHeaders() })).status(),
   ).toBe(200);
 });
 
-test("13. creator writes: draft series, publish, free and Fast Pass episodes, a scheduled episode goes live by itself", async () => {
-  // T45: still the V1 creator screens; rewrite for V2.1 (Create series in 4 steps, Manage series, Upload
-  // episode) on a PC with S3 storage, where uploads work.
-  test.fixme(true, "V2.1 rewrite pending: needs S3 storage for uploads (T45)");
-  test.setTimeout(150_000);
-  await page.request.get("/api/v1/auth/csrf");
-  const xsrf =
-    (await page.context().cookies()).find((c) => c.name === "XSRF-TOKEN")
-      ?.value ?? "";
-  const headers = { "X-XSRF-TOKEN": xsrf };
+test("13. creator writes through the API: review is required, free and Fast Pass episodes, a scheduled episode goes live by itself", async () => {
+  test.setTimeout(180_000);
+  const headers = await apiHeaders();
   const anonymous = await playwrightRequest.newContext({
     baseURL: "http://localhost:3100",
   });
@@ -1071,35 +831,23 @@ test("13. creator writes: draft series, publish, free and Fast Pass episodes, a 
         data: { kind, contentType: "image/png", size: image.length },
       })
     ).json();
+    expect((await page.request.put(ticket.uploadUrl, { headers: ticket.headers, data: image })).ok()).toBe(true);
     expect(
-      (
-        await page.request.put(ticket.uploadUrl, {
-          headers: ticket.headers,
-          data: image,
-        })
-      ).ok(),
-    ).toBe(true);
-    expect(
-      (
-        await page.request.post(
-          `/api/v1/creator/uploads/${ticket.id}/complete`,
-          { headers },
-        )
-      ).status(),
+      (await page.request.post(`/api/v1/creator/uploads/${ticket.id}/complete`, { headers })).status(),
     ).toBe(200);
     return ticket.id;
   }
   const post = (path: string, data?: unknown) =>
     page.request.post(`/api/v1/creator/series${path}`, { headers, data });
 
-  // A draft series is private; publishing makes it public.
+  // A new series is private, cannot skip the review, and waits for an admin once submitted.
   const cover = await upload("COVER", png(600, 800));
   const created = await post("", {
     title: `E2E Tides ${stamp}`,
     type: "comic",
     genre: "fantasy",
     languages: ["en"],
-    summary: "A sea made of glass.",
+    summary: "A sea made of glass, and the people who dare to cross it.",
     ageRating: "all",
     updateDays: ["Fri"],
     status: "ongoing",
@@ -1109,13 +857,23 @@ test("13. creator writes: draft series, publish, free and Fast Pass episodes, a 
   expect(created.status()).toBe(201);
   const series = await created.json();
   expect(series.visibility).toBe("draft");
-  expect((await anonymous.get(`/api/v1/series/${series.slug}`)).status()).toBe(
-    404,
+  expect((await anonymous.get(`/api/v1/series/${series.slug}`)).status()).toBe(404);
+  const direct = await post(`/${series.id}/publish`);
+  expect(direct.status()).toBe(409);
+  expect((await direct.json()).error.code).toBe("review_required");
+  const submitted = await post(`/${series.id}/submit`);
+  expect(submitted.status()).toBe(200);
+  expect((await submitted.json()).visibility).toBe("review");
+  expect((await anonymous.get(`/api/v1/series/${series.slug}`)).status()).toBe(404);
+
+  // The admin's approval (test 15 does it in the admin screens): the series goes live.
+  sql(
+    `update series_reviews set decided_at = now(), decision = 'APPROVED', decided_by = (select id from users where email = '${EMAIL}') where series_id = '${series.id}' and decided_at is null`,
   );
-  expect((await post(`/${series.id}/publish`)).status()).toBe(200);
-  expect((await anonymous.get(`/api/v1/series/${series.slug}`)).status()).toBe(
-    200,
+  sql(
+    `update series set visibility = 'PUBLISHED', launched_at = coalesce(launched_at, now()) where id = '${series.id}'`,
   );
+  expect((await anonymous.get(`/api/v1/series/${series.slug}`)).status()).toBe(200);
 
   // Episode 1 is free, episode 2 is Fast Pass (anonymous readers get 402), the count follows.
   const panel = await upload("PANEL", png(800, 1000));
@@ -1126,72 +884,41 @@ test("13. creator writes: draft series, publish, free and Fast Pass episodes, a 
     imageUploadIds: [panel],
     ...extra,
   });
-  const free = await post(
-    `/${series.id}/episodes`,
-    episode({ title: "Free", publish: { mode: "now" } }),
-  );
+  const free = await post(`/${series.id}/episodes`, episode({ title: "Free", publish: { mode: "now" } }));
   expect(free.status()).toBe(201);
-  const paid = await post(
-    `/${series.id}/episodes`,
-    episode({ title: "Paid", fastPass: {}, publish: { mode: "now" } }),
-  );
+  const paid = await post(`/${series.id}/episodes`, episode({ title: "Paid", fastPass: {}, publish: { mode: "now" } }));
   expect(paid.status()).toBe(201);
-  expect(await paid.json()).toMatchObject({
-    number: 2,
-    priceCoins: 5,
-    freeAfterDays: 7,
-  });
-  expect(
-    (await anonymous.get(`/api/v1/series/${series.slug}/episodes/1`)).status(),
-  ).toBe(200);
-  expect(
-    (await anonymous.get(`/api/v1/series/${series.slug}/episodes/2`)).status(),
-  ).toBe(402);
+  expect(await paid.json()).toMatchObject({ number: 2, priceCoins: 5, freeAfterDays: 7 });
+  expect((await anonymous.get(`/api/v1/series/${series.slug}/episodes/1`)).status()).toBe(200);
+  expect((await anonymous.get(`/api/v1/series/${series.slug}/episodes/2`)).status()).toBe(402);
   const listed = await (
-    await page.request.get(
-      `/api/v1/creator/series?q=${encodeURIComponent(`E2E Tides ${stamp}`)}`,
-    )
+    await page.request.get(`/api/v1/creator/series?q=${encodeURIComponent(`E2E Tides ${stamp}`)}`)
   ).json();
   expect(listed[0].series.totalEpisodes).toBe(2);
 
-  // Rules: a published episode needs panels; 799 px panels cannot even be attached.
-  const empty = await post(
-    `/${series.id}/episodes`,
-    episode({ title: "Empty", imageUploadIds: [], publish: { mode: "now" } }),
-  );
+  // Rules: a published episode needs images.
+  const empty = await post(`/${series.id}/episodes`, episode({ title: "Empty", imageUploadIds: [], publish: { mode: "now" } }));
   expect(empty.status()).toBe(400);
   expect((await empty.json()).error.fields.imageUploadIds).toBe("required");
 
   // A scheduled episode is hidden, then the publish job (every 30 s) makes it live.
   const at = new Date(Date.now() + 4000).toISOString();
-  const scheduled = await post(
-    `/${series.id}/episodes`,
-    episode({ title: "Soon", publish: { mode: "scheduled", at } }),
-  );
+  const scheduled = await post(`/${series.id}/episodes`, episode({ title: "Soon", publish: { mode: "scheduled", at } }));
   expect(scheduled.status()).toBe(201);
   expect((await scheduled.json()).status).toBe("scheduled");
-  expect(
-    (await anonymous.get(`/api/v1/series/${series.slug}/episodes/3`)).status(),
-  ).toBe(404);
+  expect((await anonymous.get(`/api/v1/series/${series.slug}/episodes/3`)).status()).toBe(404);
   await expect
-    .poll(
-      async () =>
-        (
-          await anonymous.get(`/api/v1/series/${series.slug}/episodes/3`)
-        ).status(),
-      { timeout: 75_000, intervals: [2_000] },
-    )
+    .poll(async () => (await anonymous.get(`/api/v1/series/${series.slug}/episodes/3`)).status(), {
+      timeout: 75_000,
+      intervals: [2_000],
+    })
     .toBe(200);
-  const live = await (
-    await page.request.get(`/api/v1/creator/series/${series.id}/episodes/3`)
-  ).json();
+  const live = await (await page.request.get(`/api/v1/creator/series/${series.id}/episodes/3`)).json();
   expect(live.status).toBe("published");
 
-  // Another creator's series is off limits, and the series goes back to a draft so the dev data stays clean.
+  // The series goes back to a draft so the dev data stays clean.
   expect((await post(`/${series.id}/unpublish`)).status()).toBe(200);
-  expect((await anonymous.get(`/api/v1/series/${series.slug}`)).status()).toBe(
-    404,
-  );
+  expect((await anonymous.get(`/api/v1/series/${series.slug}`)).status()).toBe(404);
   await anonymous.dispose();
 });
 
@@ -1276,8 +1003,11 @@ test("14. admin: only ADMIN gets in; remove a reported comment, suspend a user, 
     const detail = visible(ap.getByRole("region", { name: "Spam or scam" }));
     await expect(detail.getByText(target)).toBeVisible();
     await detail.getByRole("radio", { name: /^Remove content/ }).click();
+    // The decision is sent after the 6-second Undo window; wait for it before leaving the page.
+    const settled = ap.waitForResponse((r) => r.url().includes("/settle") && r.ok(), { timeout: 20_000 });
     await detail.getByRole("button", { name: "Confirm" }).click();
     await expect(queue.getByRole("button", { name: new RegExp(target) })).toHaveCount(0);
+    await settled;
 
     // Readers no longer see it.
     await page.goto("/series/glass-compass");
@@ -1763,8 +1493,11 @@ test("19. key flow 3: report a comment -> admin removes it -> the reporter sees 
     await queue.getByRole("button", { name: new RegExp(target) }).click();
     const detail = visible(ap.getByRole("region", { name: "Spam or scam" }));
     await detail.getByRole("radio", { name: /^Remove content/ }).click();
+    // The decision is sent after the 6-second Undo window; wait for it before leaving the page.
+    const settled = ap.waitForResponse((r) => r.url().includes("/settle") && r.ok(), { timeout: 20_000 });
     await detail.getByRole("button", { name: "Confirm" }).click();
     await expect(queue.getByRole("button", { name: new RegExp(target) })).toHaveCount(0);
+    await settled;
 
     // The decision is saved after the Undo window; the API then lists the case as removed for the reporter.
     await expect

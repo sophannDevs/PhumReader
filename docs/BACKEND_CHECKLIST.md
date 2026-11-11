@@ -472,7 +472,8 @@ Spring Boot owns every business rule; the website never talks to the database di
     worker; a 20 MB image takes a second or two. (4) Not yet: the per-episode limits (100 images, 200 MB), cleaning up
     uploads that never complete, and uploading the demo artwork in the seed (the demo covers are SVG, which the
     JPG/PNG pipeline refuses; the seed keeps its current `/covers/…` paths). Per-episode limits belong to P3-14.
-    (5) Browser PUTs to MinIO work (MinIO allows any origin); R2 needs a CORS rule on the bucket (Phase 7).
+    (5) Browser PUTs to the local storage work because the `storage-bucket` job in docker-compose.yml sets a CORS rule
+    (RustFS sends no CORS headers by default; MinIO used to allow any origin); R2 needs a CORS rule on the bucket (Phase 7).
 
 - [ ] **P3-08 Image access Worker**
   - Build: Cloudflare Worker in `infra/image-worker/` that validates a short-lived signed token for paid episode
@@ -726,7 +727,7 @@ wiring them are fixed in P5-07.
     Tests: real-mode Playwright test 9 (validation, 599 / 700 px images refused in the browser, real uploads to MinIO,
     draft, edit, publish, edit while live, unpublish, public API checks, no sideways scroll at 320 / 390 / 768 / 1440 px),
     demo spec for the demo notice. Assumptions 106 and 107 in docs/CHECKLIST.md.
-  - Notes: the browser PUTs to MinIO directly (works: MinIO allows any origin); Cloudflare R2 needs a CORS rule on the
+  - Notes: the browser PUTs to local storage directly (works: the `storage-bucket` job in docker-compose.yml sets a CORS rule, RustFS has none by default); Cloudflare R2 needs a CORS rule on the
     bucket for the site's origin (Phase 7). The pen name from "Become a creator" is not editable yet.
 
 - [x] **P4-15 Upload episode** `/creator/series/[id]/episodes/new` (A1)

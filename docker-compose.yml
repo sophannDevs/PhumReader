@@ -52,7 +52,8 @@ services:
       timeout: 3s
       retries: 12
 
-  # One-off job: creates the dev bucket (the name in S3_BUCKET) and exits.
+  # One-off job: creates the dev bucket (the name in S3_BUCKET), sets its CORS rule (the browser PUTs uploads straight
+  # to storage; RustFS, unlike MinIO, sends no CORS headers by default) and exits.
   storage-bucket:
     image: ${AWS_CLI_IMAGE:-amazon/aws-cli:2.27.0}
     depends_on:
@@ -62,7 +63,11 @@ services:
     entrypoint:
       - /bin/sh
       - -c
-      - aws --endpoint-url http://storage:9000 s3api head-bucket --bucket "$$S3_BUCKET" 2>/dev/null || aws --endpoint-url http://storage:9000 s3api create-bucket --bucket "$$S3_BUCKET"
+      - >-
+        aws --endpoint-url http://storage:9000 s3api head-bucket --bucket "$$S3_BUCKET" 2>/dev/null ||
+        aws --endpoint-url http://storage:9000 s3api create-bucket --bucket "$$S3_BUCKET";
+        aws --endpoint-url http://storage:9000 s3api put-bucket-cors --bucket "$$S3_BUCKET"
+        --cors-configuration '{"CORSRules":[{"AllowedOrigins":["*"],"AllowedMethods":["GET","PUT","HEAD"],"AllowedHeaders":["*"],"ExposeHeaders":["ETag"],"MaxAgeSeconds":3000}]}'
     environment:
       AWS_ACCESS_KEY_ID: ${S3_ACCESS_KEY:-phumreader}
       AWS_SECRET_ACCESS_KEY: ${S3_SECRET_KEY:-phumreader-dev-secret}
