@@ -119,7 +119,8 @@ export function SiteHeader({
           </Button>
 
           <LanguageButton />
-          <CoinChip count={coins} />
+          {/* Logged out there is no wallet to show (owner decision, assumption V2-66; the design shows it to guests too). */}
+          {user ? <CoinChip count={coins} /> : null}
 
           {user ? (
             <>
