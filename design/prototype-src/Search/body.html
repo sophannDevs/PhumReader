@@ -1,0 +1,143 @@
+<div class="v2">
+<!--HEADER-->
+  <main class="wrap col" style="gap: 24px; padding-top: 28px; padding-bottom: 72px" id="main">
+    <h1 class="sr-only">Search</h1>
+
+    <!-- Search field -->
+    <form class="sf" role="search" onSubmit="{{ submit }}">
+      <span class="sf-ic" aria-hidden="true">[[i:search:20]]</span>
+      <label class="sr-only" for="q">Search series, creators and genres</label>
+      <input id="q" class="sf-input" type="search" autocomplete="off" enterkeyhint="search" value="{{ draft }}" onChange="{{ onDraft }}" placeholder="Search series, creators, genres…" aria-describedby="q-hint">
+      <sc-if value="{{ hasDraft }}" hint-placeholder-val="{{ true }}"><button type="button" class="btn btn-ghost btn-icon btn-sm" onClick="{{ clearDraft }}" aria-label="Clear search">[[i:x]]</button></sc-if>
+      <button type="submit" class="btn btn-primary">Search</button>
+    </form>
+    <p id="q-hint" class="sr-only">Results update as you type.</p>
+
+    <!-- Landing: nothing typed -->
+    <sc-if value="{{ isLanding }}" hint-placeholder-val="{{ false }}">
+      <div class="land">
+        <sc-if value="{{ hasRecent }}" hint-placeholder-val="{{ true }}">
+          <section class="col" style="gap: 10px" aria-labelledby="rc-h">
+            <div class="row" style="justify-content: space-between"><h2 id="rc-h" class="h4">Recent searches</h2><button type="button" class="btn btn-ghost btn-sm" onClick="{{ clearRecent }}">Clear all</button></div>
+            <div class="row" style="gap: 8px; flex-wrap: wrap">
+              <sc-for list="{{ recent }}" as="r" hint-placeholder-count="4">
+                <span class="rc-chip"><button type="button" class="rc-go" onClick="{{ r.go }}">[[i:clock:12]]{{ r.t }}</button><button type="button" class="rc-x" onClick="{{ r.remove }}" aria-label="{{ r.removeAria }}">[[i:x:12]]</button></span>
+              </sc-for>
+            </div>
+          </section>
+        </sc-if>
+        <section class="col" style="gap: 10px" aria-labelledby="tr-h">
+          <h2 id="tr-h" class="h4 row" style="gap: 6px">[[i:trending:16]]Trending searches</h2>
+          <ol class="tr-list">
+            <sc-for list="{{ trending }}" as="t" hint-placeholder-count="8"><li><button type="button" class="tr-item" onClick="{{ t.go }}"><span class="tr-no">{{ t.no }}</span>{{ t.t }}</button></li></sc-for>
+          </ol>
+        </section>
+        <section class="col" style="gap: 10px" aria-labelledby="bg-h">
+          <h2 id="bg-h" class="h4">Browse by genre</h2>
+          <div class="row" style="gap: 8px; flex-wrap: wrap"><sc-for list="{{ genreLinks }}" as="g" hint-placeholder-count="8"><button type="button" class="chip" onClick="{{ g.go }}">{{ g.t }}</button></sc-for></div>
+        </section>
+      </div>
+    </sc-if>
+
+    <!-- Results -->
+    <sc-if value="{{ isResults }}" hint-placeholder-val="{{ true }}">
+      <div class="col" style="gap: 16px">
+        <div class="sec-head" style="align-items: center">
+          <p class="small" aria-live="polite"><strong>{{ resultLine }}</strong> <span class="muted">for “{{ query }}”</span></p>
+        </div>
+        <div class="line-tabs" role="tablist" aria-label="Result type">
+          <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="4"><button type="button" role="tab" class="line-tab {{ t.cls }}" aria-selected="{{ t.on }}" onClick="{{ t.pick }}">{{ t.label }}<span class="badge badge-secondary">{{ t.count }}</span></button></sc-for>
+        </div>
+        <sc-if value="{{ showFilters }}" hint-placeholder-val="{{ true }}">
+          <div class="filters">
+            <div class="row" style="gap: 8px; flex-wrap: wrap">
+              <label class="flt"><span class="sr-only">Genre</span>
+                <select class="select" value="{{ genre }}" onChange="{{ onGenre }}"><sc-for list="{{ genreOpts }}" as="o" hint-placeholder-count="9"><option value="{{ o.v }}">{{ o.t }}</option></sc-for></select>
+              </label>
+              <label class="flt"><span class="sr-only">Update day</span>
+                <select class="select" value="{{ day }}" onChange="{{ onDay }}"><sc-for list="{{ dayOpts }}" as="o" hint-placeholder-count="8"><option value="{{ o.v }}">{{ o.t }}</option></sc-for></select>
+              </label>
+              <sc-if value="{{ hasFilters }}" hint-placeholder-val="{{ false }}"><button type="button" class="btn btn-ghost btn-sm" onClick="{{ resetFilters }}">[[i:x:14]]Clear filters</button></sc-if>
+            </div>
+            <label class="flt row" style="gap: 8px"><span class="small muted only-desk">Sort by</span>
+              <select class="select" value="{{ sort }}" onChange="{{ onSort }}" aria-label="Sort by"><sc-for list="{{ sortOpts }}" as="o" hint-placeholder-count="4"><option value="{{ o.v }}">{{ o.t }}</option></sc-for></select>
+            </label>
+          </div>
+        </sc-if>
+
+        <!-- Loading -->
+        <sc-if value="{{ isLoading }}" hint-placeholder-val="{{ false }}">
+          <div class="col" aria-busy="true" aria-label="Loading results">
+            <sc-for list="{{ skel }}" as="k" hint-placeholder-count="4"><div class="res-row"><div class="skeleton" style="width: 72px; height: 96px; flex: 0 0 72px"></div><div class="col grow" style="gap: 8px"><div class="skeleton" style="height: 14px; width: 40%"></div><div class="skeleton" style="height: 11px; width: 60%"></div><div class="skeleton" style="height: 11px; width: 30%"></div></div></div></sc-for>
+          </div>
+        </sc-if>
+
+        <!-- Error -->
+        <sc-if value="{{ isError }}" hint-placeholder-val="{{ false }}">
+          <div class="state" role="alert"><span class="state-ic bad">[[i:alert:20]]</span><span class="h4">Search isn’t working right now</span><span class="small muted">Check your connection and try again.</span><button type="button" class="btn btn-outline btn-sm" onClick="{{ retry }}">[[i:refresh:14]]Try again</button></div>
+        </sc-if>
+
+        <!-- No results -->
+        <sc-if value="{{ isNone }}" hint-placeholder-val="{{ false }}">
+          <div class="state">
+            <span class="state-ic">[[i:search:20]]</span>
+            <span class="h4">{{ noneTitle }}</span>
+            <span class="small muted">{{ noneText }}</span>
+            <sc-if value="{{ hasSuggest }}" hint-placeholder-val="{{ false }}"><button type="button" class="btn btn-outline btn-sm" onClick="{{ suggest.go }}">Search “{{ suggest.t }}” instead</button></sc-if>
+            <sc-if value="{{ hasFilters }}" hint-placeholder-val="{{ false }}"><button type="button" class="btn btn-ghost btn-sm" onClick="{{ resetFilters }}">Clear filters</button></sc-if>
+          </div>
+          <section class="col" style="gap: 12px; padding-top: 8px" aria-labelledby="pp-h">
+            <h2 id="pp-h" class="h4">Popular right now</h2>
+            <div class="pop-row"><sc-for list="{{ popular }}" as="s" hint-placeholder-count="6"><a class="s-card" href="{{ s.href }}" onClick="{{ s.open }}"><div class="cover"><img src="{{ s.cover }}" alt="" loading="lazy"></div><div class="col" style="gap: 2px"><span class="t">{{ s.title }}</span><span class="m">{{ s.meta }}</span></div></a></sc-for></div>
+          </section>
+        </sc-if>
+
+        <!-- Creators -->
+        <sc-if value="{{ showCreators }}" hint-placeholder-val="{{ true }}">
+          <section class="col" style="gap: 10px" aria-labelledby="cr-h">
+            <sc-if value="{{ isAll }}" hint-placeholder-val="{{ true }}"><h2 id="cr-h" class="h4">Creators</h2></sc-if>
+            <div class="cr-grid">
+              <sc-for list="{{ creators }}" as="c" hint-placeholder-count="2">
+                <div class="card cr-item">
+                  <span class="avatar brand" style="width: 44px; height: 44px; font-size: 14px">{{ c.ini }}</span>
+                  <div class="col grow" style="min-width: 0"><span class="h4 trunc"><sc-for list="{{ c.segs }}" as="g" hint-placeholder-count="1"><sc-if value="{{ g.m }}" hint-placeholder-val="{{ false }}"><mark class="hl">{{ g.t }}</mark></sc-if><sc-if value="{{ g.n }}" hint-placeholder-val="{{ true }}"><span>{{ g.t }}</span></sc-if></sc-for></span><span class="xs muted trunc">{{ c.meta }}</span></div>
+                  <button type="button" class="btn btn-outline btn-sm" onClick="{{ c.follow }}" aria-pressed="{{ c.on }}">{{ c.label }}</button>
+                </div>
+              </sc-for>
+            </div>
+          </section>
+        </sc-if>
+
+        <!-- Series -->
+        <sc-if value="{{ showSeries }}" hint-placeholder-val="{{ true }}">
+          <section class="col" style="gap: 4px" aria-labelledby="se-h">
+            <sc-if value="{{ isAll }}" hint-placeholder-val="{{ true }}"><h2 id="se-h" class="h4" style="padding-bottom: 6px">Series</h2></sc-if>
+            <ul class="res-list">
+              <sc-for list="{{ results }}" as="s" hint-placeholder-count="5">
+                <li class="res-row">
+                  <a class="res-cover" href="{{ s.href }}" onClick="{{ s.open }}" tabindex="-1" aria-hidden="true"><img src="{{ s.cover }}" alt="" loading="lazy"></a>
+                  <div class="col grow" style="gap: 4px; min-width: 0">
+                    <div class="row" style="gap: 6px; flex-wrap: wrap"><sc-if value="{{ s.isNovelCard }}" hint-placeholder-val="{{ false }}"><span class="badge badge-secondary">Web novel</span></sc-if><sc-if value="{{ s.up }}" hint-placeholder-val="{{ false }}"><span class="badge badge-up">UP</span></sc-if><span class="badge badge-outline">{{ s.genre }}</span></div>
+                    <a class="res-title" href="{{ s.href }}" onClick="{{ s.open }}"><sc-for list="{{ s.segs }}" as="g" hint-placeholder-count="1"><sc-if value="{{ g.m }}" hint-placeholder-val="{{ false }}"><mark class="hl">{{ g.t }}</mark></sc-if><sc-if value="{{ g.n }}" hint-placeholder-val="{{ true }}"><span>{{ g.t }}</span></sc-if></sc-for></a>
+                    <span class="small muted trunc">{{ s.hook }}</span>
+                    <span class="xs muted row" style="gap: 10px; flex-wrap: wrap"><span>{{ s.creator }}</span><span>{{ s.unitCount }}</span><span class="row" style="gap: 3px">[[i:heart:12]]{{ s.likes }}</span><span>{{ s.schedule }}</span></span>
+                  </div>
+                  <button type="button" class="btn btn-outline btn-sm res-sub" onClick="{{ s.toggleSub }}" aria-pressed="{{ s.subbed }}" aria-label="{{ s.subAria }}">{{ s.subLabel }}</button>
+                </li>
+              </sc-for>
+            </ul>
+            <sc-if value="{{ hasMore }}" hint-placeholder-val="{{ true }}">
+              <div class="col" style="align-items: center; gap: 8px; padding-top: 12px">
+                <span class="xs muted">Showing {{ shownCount }} of {{ totalCount }}</span>
+                <button type="button" class="btn btn-outline" onClick="{{ more }}" disabled="{{ moreBusy }}"><sc-if value="{{ moreBusy }}" hint-placeholder-val="{{ false }}"><span class="spin"></span></sc-if>Show more results</button>
+              </div>
+            </sc-if>
+          </section>
+        </sc-if>
+      </div>
+    </sc-if>
+  </main>
+<!--FOOTER-->
+<!--MOBNAV-->
+<!--LAYERS-->
+</div>

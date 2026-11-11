@@ -1,135 +1,275 @@
-"use client"
+"use client";
 
-import { ArrowRightIcon, BellIcon, CheckIcon, HeartIcon, ListIcon, Share2Icon, ZapIcon } from "lucide-react"
+import { ArrowRightIcon, BellIcon, HeartIcon, ListIcon, MessageSquareIcon, Share2Icon, ZapIcon } from "lucide-react"
 import Image from "next/image"
 import { useTranslations } from "next-intl"
+import { useMemo, useState } from "react"
 import { toast } from "sonner"
-import { CommentsSection } from "@/components/pr/comments-section"
+import { CommentThread } from "@/components/pr/comment-thread"
+import { BlockedHiddenLine, useBlockedFilter, useReport } from "@/components/pr/report-dialog"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
+import { Button, buttonVariants } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Skeleton } from "@/components/ui/skeleton"
 import { episodeCommentCount, type Episode, type Series } from "@/data"
 import { Link } from "@/i18n/navigation"
+import { DEMO_MODE } from "@/lib/api/config"
+import { useCommentThreads } from "@/lib/comments"
 import { formatCount } from "@/lib/format"
-import { readerHref, seriesHref } from "@/lib/routes"
-import { useEpisodeReactions, useSubscribe } from "@/lib/me"
-import { cn } from "@/lib/utils"
 import { useLocalize } from "@/lib/localize"
+import { useAskToLogin, useEpisodeReactions, useSubscribe } from "@/lib/me"
+import { seriesHref } from "@/lib/routes"
+import { useAppStore, useUser } from "@/lib/store"
+import { cn } from "@/lib/utils"
 
-const card = "rounded-card border border-surface-border bg-surface-panel p-5"
-const pill =
-  "border-surface-border-strong bg-transparent text-surface-foreground hover:bg-surface-border hover:text-surface-foreground focus-visible:ring-offset-surface-panel"
+/** `.vw-card`: the reader's card colours (set on the reader root), 14 px radius. */
+const card = "rounded-[14px] border bg-card p-6 text-card-foreground max-md:p-[18px]"
+/** `.vw-pill`: round grey button. */
+export const pill = "rounded-full border-input bg-secondary text-foreground shadow-none hover:bg-input hover:text-foreground"
+const TOP = 3
+const MAX = 300
 
-/** Below the strip: end card (Like / Subscribe / Share), next episode, comments, all episodes. */
+/**
+ * Below the strip (spec §3 "End of episode", prototype `.vw-end`): the end card (Like, Subscribe, Share, Report this
+ * episode), the auto-next countdown with Cancel, the next episode card (price and free date when it is Fast Pass) or
+ * "all caught up", the top comments (CommentThread, Report / Block, "See all") and all episodes.
+ */
 export function ComicEndSection({
   series,
   episode,
   next,
   nextLocked,
-  onUnlockNext,
+  price,
+  onNext,
+  countdown,
+  onCancelAuto,
+  dark,
   finishRef,
 }: {
-  series: Series
-  episode: Episode
+  series: Series;
+  episode: Episode;
   /** The following episode, or undefined on the last one. */
   next?: Episode
   nextLocked: boolean
-  onUnlockNext: () => void
-  /** Marks the episode finished once this section scrolls into view. */
+  price: number
+  /** Opens the next episode (or the UnlockDialog when it is locked). */
+  onNext: () => void
+  /** Seconds left before the next episode opens; null when not counting. */
+  countdown: number | null
+  onCancelAuto: () => void
+  /** Dark reading background (comment text colour) */
+  dark: boolean
+  /** Marks the episode finished once the end card scrolls into view. */
   finishRef?: (el: HTMLElement | null) => void
 }) {
   const t = useTranslations("reader")
-  const loc = useLocalize()
   const tt = useTranslations("toasts")
+  const td = useTranslations("data")
+  const loc = useLocalize()
+  const user = useUser()
+  const askToLogin = useAskToLogin()
+  const { openReport } = useReport()
   const { liked, likeCount, toggleLike } = useEpisodeReactions({ series, n: episode.n, kind: "comic", likes: episode.likes })
   const { subscribed, toggle: toggleSubscribe } = useSubscribe(series)
 
   async function share() {
     try {
-      await navigator.clipboard.writeText(window.location.href)
-      toast.success(tt("linkCopied"))
+      await navigator.clipboard.writeText(window.location.href);
+      toast.success(tt("linkCopied"));
     } catch {
-      toast.error(tt("copyFailed"))
+      toast.error(tt("copyFailed"));
     }
   }
 
+  function like() {
+    const liking = !liked
+    void toggleLike()
+    if (liking && (DEMO_MODE || user)) toast.success(t("thanksLike"))
+  }
+
+  const caughtUp =
+    series.status === "completed" || !series.updateDay
+      ? t("caughtUpDone")
+      : t("caughtUpLine", { day: td(`dayFull.${series.updateDay}`) })
+
   return (
-    <div className="mx-auto flex w-full max-w-[600px] flex-col gap-3 px-4 py-6">
-      <section ref={finishRef} className={cn(card, "flex flex-col items-center gap-3 text-center")}>
-        <p className="type-eyebrow text-surface-quiet">{t("endOf", { n: episode.n })}</p>
+    <section aria-label={t("endOf", { n: episode.n })} className="mx-auto flex w-full max-w-[800px] flex-col gap-4 px-4 pt-8 pb-[72px]">
+      <div ref={finishRef} className={cn(card, "flex flex-col items-center gap-4 text-center")}>
+        <p className="text-xs leading-4 font-semibold tracking-[0.06em] text-muted-foreground uppercase">{t("endOf", { n: episode.n })}</p>
         <h2 className="type-h3">{loc.title(episode.title)}</h2>
         <div className="flex flex-wrap items-center justify-center gap-2">
           <Button
             variant="outline"
-            size="sm"
             aria-pressed={liked}
-            aria-label={`${formatCount(likeCount)} · ${t("likeLabel", { count: likeCount.toLocaleString("en-US") })}`}
-            className={cn(pill, "tabular-nums")}
-            onClick={() => void toggleLike()}
+            aria-label={t("likeLabel", { count: formatCount(likeCount) })}
+            className={cn(pill, "tabular-nums", liked && "bg-foreground text-background hover:bg-foreground/90 hover:text-background")}
+            onClick={like}
           >
-            <HeartIcon className={cn(liked && "fill-destructive text-destructive")} />
+            <HeartIcon className={cn(liked && "fill-destructive text-destructive")} aria-hidden />
             {formatCount(likeCount)}
           </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            aria-pressed={subscribed}
-            className={pill}
-            onClick={() => void toggleSubscribe()}
-          >
-            {subscribed ? <CheckIcon /> : <BellIcon />}
+          <Button variant="outline" aria-pressed={subscribed} className={pill} onClick={() => void toggleSubscribe()}>
+            <BellIcon aria-hidden />
             {subscribed ? t("subscribed") : t("subscribe")}
           </Button>
-          <Button variant="outline" size="sm" className={pill} onClick={share}>
-            <Share2Icon />
+          <Button variant="outline" className={pill} onClick={share}>
+            <Share2Icon aria-hidden />
             {t("share")}
           </Button>
         </div>
-      </section>
+        <button
+          type="button"
+          onClick={() => (user ? openReport({ kind: "episode", target: `${series.title} · ${episode.title}` }) : askToLogin())}
+          className="rounded-sm text-[13px] leading-[18px] text-muted-foreground underline underline-offset-[3px] outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          {t("reportEpisode")}
+        </button>
+      </div>
 
       {next ? (
-        <section className={cn(card, "flex items-center gap-4")}>
-          <div className="relative size-12 shrink-0 overflow-hidden rounded-control bg-surface">
-            <Image src={next.thumb} alt="" width={96} height={96} sizes="48px" className="size-full object-cover" />
-          </div>
-          <div className="flex min-w-0 flex-1 flex-col items-start gap-0.5">
-            <p className="type-caption text-surface-quiet">{t("nextEpisode_card")}</p>
-            <h3 className="type-h4 truncate">{loc.title(next.title)}</h3>
-            {nextLocked ? (
-              <Badge variant="warn">
-                <ZapIcon /> Fast Pass
-              </Badge>
-            ) : null}
-          </div>
-          {nextLocked ? (
-            <Button variant="brand" size="sm" onClick={onUnlockNext}>
-              {t("unlock")}
-            </Button>
-          ) : (
-            <Button asChild variant="brand" size="sm">
-              <Link href={readerHref(series, next.n)}>
-                {t("readNext")}
-                <ArrowRightIcon />
-              </Link>
-            </Button>
-          )}
-        </section>
+        <>
+          {countdown !== null && !nextLocked ? (
+            <div
+              role="status"
+              className="flex items-center justify-between gap-3 rounded-xl border border-primary/35 bg-primary/12 py-2.5 pr-3 pl-4 text-sm tabular-nums"
+            >
+              {t("nextIn", { count: countdown })}
+              <Button variant="ghost" size="sm" onClick={onCancelAuto}>
+                {t("cancel")}
+              </Button>
+            </div>
+          ) : null}
+          <button
+            type="button"
+            onClick={onNext}
+            className="group flex w-full items-center gap-4 rounded-[14px] border bg-card p-4 text-left text-card-foreground transition-colors outline-none hover:border-input focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background max-md:flex-wrap"
+          >
+            <Image src={next.thumb} alt="" width={144} height={144} sizes="72px" className="size-[72px] shrink-0 rounded-[10px] object-cover" />
+            <span className="flex min-w-0 flex-1 flex-col items-start gap-1">
+              <span className="text-xs leading-4 text-muted-foreground">{t("nextEpisodeCard")}</span>
+              <span className="type-h4">{loc.title(next.title)}</span>
+              {nextLocked ? (
+                <Badge variant="warn" className="h-auto min-h-5 whitespace-normal">
+                  <ZapIcon className="size-3" aria-hidden />
+                  {t("nextFastPass", { price, date: loc.date(next.date) })}
+                </Badge>
+              ) : null}
+            </span>
+            <span className={cn(buttonVariants({ variant: "brand" }), "max-md:w-full")}>
+              {nextLocked ? t("unlock") : t("readNext")}
+              <ArrowRightIcon className="size-3.5" aria-hidden />
+            </span>
+          </button>
+        </>
       ) : (
-        <section className={cn(card, "flex flex-col items-center gap-1 text-center")}>
-          <h3 className="type-h4">{t("caughtUp")}</h3>
-          <p className="type-small font-normal text-surface-quiet">{t("caughtUpDesc")}</p>
-        </section>
+        <div className={cn(card, "text-center text-[13px] leading-[18px] text-foreground/80")}>{caughtUp}</div>
       )}
 
-      <CommentsSection kind="episode" slug={`${series.slug}:${episode.n}`} variant="reader" count={episodeCommentCount(episode)} />
+      <TopComments series={series} episode={episode} dark={dark} />
 
-      <div className="flex justify-center pt-2">
-        <Button asChild variant="outline" size="sm" className={pill}>
-          <Link href={seriesHref(series)}>
-            <ListIcon />
-            {t("allEpisodes", { title: series.title })}
-          </Link>
-        </Button>
-      </div>
-    </div>
+      <Button asChild variant="outline" className={cn(pill, "self-center")}>
+        <Link href={seriesHref(series)}>
+          <ListIcon className="size-3.5" aria-hidden />
+          {t("allEpisodes", { title: series.title })}
+        </Link>
+      </Button>
+    </section>
   )
+}
+
+/** "Comments 1.2K · See all", a one-line composer and the top 3 threads (the reader's own new ones first). */
+function TopComments({ series, episode, dark }: { series: Series; episode: Episode; dark: boolean }) {
+  const t = useTranslations("reader")
+  const user = useUser()
+  const data = useCommentThreads(series, `${series.slug}:${episode.n}`)
+  const blocked = useAppStore((s) => s.blocked)
+  const { visible, hidden, reveal } = useBlockedFilter(data.threads, (c) => c.name)
+  const [draft, setDraft] = useState("")
+  const [posting, setPosting] = useState(false)
+
+  const top = useMemo(() => {
+    const mine = visible.filter((c) => c.mine)
+    const others = visible.filter((c) => !c.mine && !c.pinned).sort((a, b) => b.likes - a.likes)
+    return [...mine, ...others.slice(0, TOP)]
+  }, [visible])
+
+  async function post(e: React.FormEvent) {
+    e.preventDefault()
+    if (!draft.trim() || posting) return
+    setPosting(true)
+    const ok = await data.post(draft, false)
+    setPosting(false)
+    if (ok) setDraft("")
+  }
+
+  return (
+    <div className={cn(card, "flex flex-col gap-3.5")}>
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="type-h4">
+          {t("commentsTitle")} <span className="font-medium text-muted-foreground tabular-nums">{episodeCommentCount(episode)}</span>
+        </h2>
+        <Link
+          href={`/series/${series.slug}/comments?ep=${episode.n}`}
+          className="rounded-sm text-xs leading-4 font-semibold underline underline-offset-[3px] outline-none hover:text-brand-ink focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          {t("seeAll")}
+        </Link>
+      </div>
+      <form className="flex gap-2" onSubmit={post}>
+        <Input
+          value={draft}
+          maxLength={MAX}
+          onChange={(e) => setDraft(e.target.value.slice(0, MAX))}
+          placeholder={user ? t("addCommentPh") : t("loginToComment")}
+          aria-label={t("addComment")}
+          className="shadow-none"
+        />
+        <Button type="submit" variant="brand" loading={posting}>
+          {t("post")}
+        </Button>
+      </form>
+      {data.query.isPending ? (
+        <div className="flex flex-col gap-4" aria-hidden>
+          {Array.from({ length: TOP }, (_, i) => (
+            <div key={i} className="flex gap-3">
+              <Skeleton className="size-8 rounded-full bg-muted" />
+              <div className="flex flex-1 flex-col gap-2">
+                <Skeleton className="h-3 w-32 bg-muted" />
+                <Skeleton className="h-3 w-full bg-muted" />
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : data.query.isError ? (
+        <p className="flex flex-wrap items-center gap-2 text-[13px] text-muted-foreground" role="alert">
+          {t("commentsError")}
+          <Button variant="ghost" size="sm" onClick={() => void data.query.refetch()}>
+            {t("tryAgain")}
+          </Button>
+        </p>
+      ) : top.length === 0 ? (
+        <p className="flex items-center gap-2 text-[13px] text-muted-foreground">
+          <MessageSquareIcon className="size-4" aria-hidden />
+          {data.threads.length === 0 ? t("noComments") : t("noVisibleComments")}
+        </p>
+      ) : (
+        <ul aria-label={t("commentsTitle")} className={cn("flex flex-col [&>li:last-child]:border-b-0 [&>li:last-child]:pb-0", dark && "[&_p]:text-[#e4e4e7]")}>
+          {top.map((c) => (
+            <CommentThread
+              key={c.id}
+              thread={c}
+              hideReplyFrom={blocked}
+              onLike={(id) => void data.like(id)}
+              onReply={data.reply}
+              onEdit={data.edit}
+              onDelete={(id) => void data.remove(id)}
+              onReportSend={data.reportSend}
+              className="py-3"
+            />
+          ))}
+        </ul>
+      )}
+      <BlockedHiddenLine count={hidden} onShow={reveal} className="text-xs" />
+    </div>
+  );
 }

@@ -15,6 +15,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ApiError } from "@/lib/api/client";
+import { useRestoreFocus } from "@/lib/use-restore-focus";
 
 export type ReasonAsk = {
   title: string;
@@ -24,8 +25,8 @@ export type ReasonAsk = {
   required: boolean;
   destructive?: boolean;
   run: (reason: string) => Promise<unknown>;
-  /** Toast after success. */
-  done: string;
+  /** Toast after success; leave it out when the caller shows its own feedback (the admin Undo bar). */
+  done?: string;
 };
 
 /** The message for an error code the API can answer (409 coins_spent, …), else a general one. */
@@ -60,7 +61,7 @@ function ReasonForm({ ask, onClose }: { ask: ReasonAsk; onClose: () => void }) {
     setError(null);
     try {
       await ask.run(reason.trim());
-      toast.success(ask.done);
+      if (ask.done) toast.success(ask.done);
       onClose();
     } catch (err) {
       setError(message(err));
@@ -123,9 +124,10 @@ export function ReasonDialog({
   ask: ReasonAsk | null;
   onClose: () => void;
 }) {
+  const restoreFocus = useRestoreFocus();
   return (
     <Dialog open={ask !== null} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent>
+      <DialogContent {...restoreFocus}>
         {ask ? <ReasonForm ask={ask} onClose={onClose} /> : null}
       </DialogContent>
     </Dialog>

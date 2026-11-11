@@ -2,8 +2,8 @@ import type { MetadataRoute } from "next"
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "PhumReader",
-    short_name: "Phum",
+    name: "PhumiReader",
+    short_name: "Phumi",
     description: "Read and share stories in Khmer and English.",
     start_url: "/",
     display: "standalone",

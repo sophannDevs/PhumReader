@@ -8,6 +8,8 @@ phumreader:
     refresh-reuse-grace: 0s
   payments:
     simulator: true
+    # Tests run the reconciliation by hand.
+    reconcile-enabled: false
   notifications:
     # Tests run the dispatcher by hand.
     enabled: false

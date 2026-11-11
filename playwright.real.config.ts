@@ -10,7 +10,11 @@ export default defineConfig({
   workers: 1,
   retries: 0,
   reporter: [["list"]],
-  use: { baseURL: "http://localhost:3100", trace: "retain-on-failure" },
+  use: {
+    headless: process.env.CI ? true : false,
+    baseURL: "http://localhost:3100",
+    trace: "retain-on-failure",
+  },
   webServer: {
     command: "npm run build && npx next start -p 3100",
     url: "http://localhost:3100",

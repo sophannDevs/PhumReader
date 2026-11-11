@@ -1,15 +1,30 @@
 import { expect, test } from "@playwright/test"
-import { SOKHA, seed } from "./helpers"
+import { ADMIN, SOKHA, seed, visible } from "./helpers"
 
-/** /admin in demo mode: asks for a login, then explains that the admin area needs the real API; no sideways scroll. */
+const noSidewaysScroll = async (page: import("@playwright/test").Page) =>
+  expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(0)
+
+/** /admin in demo mode (V2.1 AdminShell): admins only; every queue opens; no sideways scroll. */
 test.describe("Admin (demo)", () => {
-  test("asks for a login, then says the demo has no admin area", async ({ page }) => {
+  test("logged out and readers see the admins-only message", async ({ page }) => {
     await page.goto("/admin")
-    await expect(page.getByRole("heading", { name: "Log in to open the admin area" })).toBeVisible()
+    await expect(visible(page.getByRole("heading", { name: "This area is only for PhumiReader admins" }))).toBeVisible()
     await seed(page, { user: SOKHA })
     await page.goto("/admin")
-    await expect(page.getByRole("heading", { name: "The admin area needs the real API" })).toBeVisible()
-    const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)
-    expect(overflow).toBeLessThanOrEqual(0)
+    await expect(visible(page.getByRole("heading", { name: "This area is only for PhumiReader admins" }))).toBeVisible()
+  })
+
+  test("the admin sees the overview and each queue", async ({ page }) => {
+    await seed(page, { user: ADMIN })
+    for (const [path, heading] of [
+      ["/admin", "Today"],
+      ["/admin/series", "Series review"],
+      ["/admin/reports", "Reports"],
+      ["/admin/payments", /Payments/],
+    ] as const) {
+      await page.goto(path)
+      await expect(visible(page.getByRole("heading", { level: 1, name: heading }))).toBeVisible()
+      await noSidewaysScroll(page)
+    }
   })
 })

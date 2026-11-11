@@ -1,6 +1,7 @@
-// PhumReader service worker: only shows the offline page when a page cannot be loaded.
+// PhumiReader service worker: only shows the offline page when a page cannot be loaded.
 // It caches /offline and /km/offline (and the styles they use) and never touches API calls or other files.
-const CACHE = "phumreader-offline-v1"
+// v2: the V2.1 offline page (activate deletes the old cache).
+const CACHE = "phumireader-offline-v2"
 const PAGES = ["/offline", "/km/offline"]
 
 self.addEventListener("install", (event) => {

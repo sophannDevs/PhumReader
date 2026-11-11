@@ -16,7 +16,7 @@ import {
  * state and ends by deleting it (30-day grace on the server). The demo suite is `npm run test:e2e`.
  */
 const stamp = Date.now();
-const EMAIL = `e2e-${stamp}@phumreader.test`;
+const EMAIL = `e2e-${stamp}@phumireader.test`;
 const PASSWORD = "Phum-Reader-2026!";
 const NEW_PASSWORD = "Phum-Reader-2027!";
 const CODE = "123456";
@@ -1287,7 +1287,7 @@ test("14. admin: only ADMIN gets in; hide a reported comment, suspend a user, se
   await page.goto("/admin");
   await expect(page.getByText("You do not have access")).toBeVisible();
 
-  const troll = `e2e-troll-${stamp}@phumreader.test`;
+  const troll = `e2e-troll-${stamp}@phumireader.test`;
   const target = `E2E admin target ${stamp}`;
   sql(
     `insert into user_roles (user_id, role) select id, 'ADMIN' from users where email = '${EMAIL}'`,

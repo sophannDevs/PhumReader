@@ -4,7 +4,8 @@ The backend for the PhumReader website. Design and decisions: [../docs/BACKEND.m
 progress: [../docs/BACKEND_CHECKLIST.md](../docs/BACKEND_CHECKLIST.md).
 
 Java 21, Spring Boot 4.1.2, Gradle 9.8.2 (wrapper), Supabase PostgreSQL 17, Flyway, springdoc-openapi.
-**No Docker** anywhere: not for running, not for tests.
+**No Docker is needed** to run the API or its tests. Docker is only an optional way to run the helper services
+(`npm run services:docker:up` in the repo root).
 
 ## Requirements
 
@@ -39,8 +40,8 @@ types are.
 
 | Email | Password | What it is |
 |---|---|---|
-| `reader@toonwave.app` | `Toonwave1!` | Demo reader Sokha Chan: 3 coins, four series in Continue reading |
-| `creator@toonwave.app` | `Toonwave1!` | Chan Sreyleak, the demo's stand-in creator, owner of their series |
+| `reader@phumireader.app` | `PhumiReader1!` | Demo reader Sokha Chan: 3 coins, four series in Continue reading |
+| `creator@toonwave.app` | `PhumiReader1!` | Chan Sreyleak, the demo's stand-in creator, owner of their series |
 
 The other demo creators and commenters exist as accounts without a password (they cannot log in).
 

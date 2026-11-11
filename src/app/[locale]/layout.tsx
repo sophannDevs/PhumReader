@@ -1,15 +1,14 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, Kantumruy_Pro, Noto_Serif } from "next/font/google";
 import { notFound } from "next/navigation";
-import Script from "next/script";
 import { hasLocale, NextIntlClientProvider } from "next-intl";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import "../globals.css";
+import { loadMessages } from "@/i18n/messages";
 import { routing } from "@/i18n/routing";
 import { ServiceWorker } from "@/components/pr/service-worker";
 import { Providers } from "@/lib/query";
 import { cn } from "@/lib/utils";
-import { THEME_INIT_SCRIPT } from "@/lib/theme-script";
 
 // Self-hosted by next/font. Latin falls to Inter, Khmer falls to Kantumruy Pro
 // (see --font-sans in globals.css). Noto Serif is only for the novel reader.
@@ -68,17 +67,16 @@ export default async function LocaleLayout({
   setRequestLocale(locale);
   // Explicit locale + messages: the provider then needs no request-time lookup,
   // which keeps the route prerenderable under Cache Components.
-  const messages = (await import(`@/messages/${locale}.json`)).default;
+  const messages = await loadMessages(locale);
 
   return (
     <html
       lang={locale}
       suppressHydrationWarning
       className={cn("h-full antialiased font-sans", inter.variable, kantumruy.variable, notoSerif.variable)}
+      style={{ colorScheme: "light" }}
     >
       <body className="min-h-full flex flex-col">
-        {/* Sets the dark class before first paint, so the page does not flash. */}
-        <Script id="theme-init" strategy="beforeInteractive" dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
         <NextIntlClientProvider locale={locale} messages={messages}>
           <Providers>{children}</Providers>
           <ServiceWorker />

@@ -4,24 +4,15 @@ import { useQuery } from "@tanstack/react-query"
 import { useSyncExternalStore } from "react"
 import type { Genre } from "@/data"
 import { usePathname } from "@/i18n/navigation"
+import { catalogKeys, commentsKeys, creatorKeys, walletKeys } from "@/lib/api/keys"
 import * as real from "@/lib/api/catalog"
 import * as realAccount from "@/lib/api/account"
 import * as realCoins from "@/lib/api/coins"
 import { DEMO_MODE } from "@/lib/api/config"
-import * as demo from "@/lib/demo-api"
-import { getDemoFlag, type DemoFlag } from "@/lib/demo-api"
+import { getDemoFlag, type DemoFlag } from "@/lib/demo-flags"
 import { useHydrated, useUser } from "@/lib/store"
 
-/**
- * The catalog pages read the demo (`NEXT_PUBLIC_DEMO=1`) or the real API; both give the same
- * shapes. `useComments` and `useLibrary` are the demo-mode paths only (`enabled: DEMO_MODE`): the real
- * API versions live in `src/lib/comments.ts` and `src/components/pr/library-page.tsx`.
- */
-type Catalog = Pick<
-  typeof demo,
-  "fetchHome" | "fetchSeries" | "fetchEpisodes" | "fetchEpisode" | "fetchChapter" | "fetchRankings" | "fetchGenre" | "search"
->
-const catalog: Catalog = DEMO_MODE ? demo : real
+const getDemo = () => import("@/lib/demo-api")
 
 function subscribe(onChange: () => void) {
   window.addEventListener("popstate", onChange)
@@ -40,47 +31,77 @@ export function useDemoFlag(): DemoFlag | null {
 
 export const useHome = () => {
   const flag = useDemoFlag()
-  return useQuery({ queryKey: ["home", flag], queryFn: catalog.fetchHome })
+  return useQuery({
+    queryKey: catalogKeys.home(flag),
+    queryFn: () => (DEMO_MODE ? getDemo().then((m) => m.fetchHome()) : real.fetchHome()),
+  })
 }
 
 export const useSeries = (slug: string, enabled = true) => {
   const flag = useDemoFlag()
-  return useQuery({ queryKey: ["series", slug, flag], queryFn: () => catalog.fetchSeries(slug), enabled })
+  return useQuery({
+    queryKey: catalogKeys.series(slug, flag),
+    queryFn: () => (DEMO_MODE ? getDemo().then((m) => m.fetchSeries(slug)) : real.fetchSeries(slug)),
+    enabled,
+  })
 }
 
 export const useEpisodes = (slug: string) => {
   const flag = useDemoFlag()
-  return useQuery({ queryKey: ["episodes", slug, flag], queryFn: () => catalog.fetchEpisodes(slug) })
+  return useQuery({
+    queryKey: catalogKeys.episodes(slug, flag),
+    queryFn: () => (DEMO_MODE ? getDemo().then((m) => m.fetchEpisodes(slug)) : real.fetchEpisodes(slug)),
+  })
 }
 
 export const useEpisode = (slug: string, n: number) => {
   const flag = useDemoFlag()
-  return useQuery({ queryKey: ["episode", slug, n, flag], queryFn: () => catalog.fetchEpisode(slug, n) })
+  return useQuery({
+    queryKey: catalogKeys.episode(slug, n, flag),
+    queryFn: () => (DEMO_MODE ? getDemo().then((m) => m.fetchEpisode(slug, n)) : real.fetchEpisode(slug, n)),
+  })
 }
 
 export const useChapter = (slug: string, n: number) => {
   const flag = useDemoFlag()
-  return useQuery({ queryKey: ["chapter", slug, n, flag], queryFn: () => catalog.fetchChapter(slug, n) })
+  return useQuery({
+    queryKey: catalogKeys.chapter(slug, n, flag),
+    queryFn: () => (DEMO_MODE ? getDemo().then((m) => m.fetchChapter(slug, n)) : real.fetchChapter(slug, n)),
+  })
 }
 
 export const useComments = (kind: "series" | "episode", slug: string) => {
   const flag = useDemoFlag()
-  return useQuery({ queryKey: ["comments", kind, slug, flag], queryFn: () => demo.fetchComments(kind, slug), enabled: DEMO_MODE })
+  return useQuery({
+    queryKey: commentsKeys.thread(kind, slug, flag),
+    queryFn: () => getDemo().then((m) => m.fetchComments(kind, slug)),
+    enabled: DEMO_MODE,
+  })
 }
 
 export const useRankings = (kind: "comics" | "novels") => {
   const flag = useDemoFlag()
-  return useQuery({ queryKey: ["rankings", kind, flag], queryFn: () => catalog.fetchRankings(kind) })
+  return useQuery({
+    queryKey: catalogKeys.rankings(kind, flag),
+    queryFn: () => (DEMO_MODE ? getDemo().then((m) => m.fetchRankings(kind)) : real.fetchRankings(kind)),
+  })
 }
 
 export const useGenre = (genre: Genre) => {
   const flag = useDemoFlag()
-  return useQuery({ queryKey: ["genre", genre, flag], queryFn: () => catalog.fetchGenre(genre) })
+  return useQuery({
+    queryKey: catalogKeys.genre(genre, flag),
+    queryFn: () => (DEMO_MODE ? getDemo().then((m) => m.fetchGenre(genre)) : real.fetchGenre(genre)),
+  })
 }
 
-export const useSearchSeries = (query: string) => {
+/** `limit` defaults to 8 (the API allows up to 20). */
+export const useSearchSeries = (query: string, limit = 8) => {
   const flag = useDemoFlag()
-  return useQuery({ queryKey: ["search", query.trim().toLowerCase(), flag], queryFn: () => catalog.search(query) })
+  return useQuery({
+    queryKey: catalogKeys.search(query, flag, limit),
+    queryFn: () => (DEMO_MODE ? getDemo().then((m) => m.search(query, limit)) : real.search(query, limit)),
+  })
 }
 
 /** The Coins page: the demo's, or the API's packs plus the reader's own purchase history. */
@@ -89,7 +110,11 @@ export const useCoinsPage = () => {
   const user = useUser()
   const hydrated = useHydrated()
   const email = hydrated ? user?.email : undefined
-  const demoQuery = useQuery({ queryKey: ["coins-page", flag], queryFn: demo.fetchCoinsPage, enabled: DEMO_MODE })
+  const demoQuery = useQuery({
+    queryKey: walletKeys.coinsPage(undefined, flag),
+    queryFn: () => getDemo().then((m) => m.fetchCoinsPage()),
+    enabled: DEMO_MODE,
+  })
   const realQuery = useQuery({
     queryKey: ["coins-page", "real", email ?? ""],
     queryFn: () => realCoins.fetchCoinsPage(!!email),
@@ -100,7 +125,11 @@ export const useCoinsPage = () => {
 
 export const useLibrary = () => {
   const flag = useDemoFlag()
-  return useQuery({ queryKey: ["library", flag], queryFn: demo.fetchLibrary, enabled: DEMO_MODE })
+  return useQuery({
+    queryKey: ["library", flag],
+    queryFn: () => getDemo().then((m) => m.fetchLibrary()),
+    enabled: DEMO_MODE,
+  })
 }
 
 /** The creator dashboard: the demo's stand-in creator, or the signed-in account's own series. */
@@ -109,7 +138,11 @@ export const useCreator = () => {
   const user = useUser()
   const hydrated = useHydrated()
   const email = hydrated ? user?.email : undefined
-  const demoQuery = useQuery({ queryKey: ["creator", flag], queryFn: demo.fetchCreator, enabled: DEMO_MODE })
+  const demoQuery = useQuery({
+    queryKey: creatorKeys.dashboard(undefined, flag),
+    queryFn: () => getDemo().then((m) => m.fetchCreator()),
+    enabled: DEMO_MODE,
+  })
   const realQuery = useQuery({
     queryKey: ["creator", "real", email ?? ""],
     queryFn: realAccount.fetchCreator,

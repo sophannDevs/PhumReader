@@ -1,0 +1,61 @@
+<div class="v2 wl">
+  <a ref="{{ goRef }}" href="{{ nextHref }}" tabindex="-1" aria-hidden="true" style="display: none">Continue</a>
+  <header class="wl-top"><a class="logo" href="{{ homeHref }}"><span class="logo-mark" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M3 4.5h10M3 8h10M3 11.5h6"></path></svg></span><span class="logo-t">Phumi<span class="logo-r">Reader</span></span></a>
+    <sc-if value="{{ notDone }}" hint-placeholder-val="{{ true }}"><button type="button" class="btn btn-ghost btn-sm" onClick="{{ skipAll }}">Skip for now</button></sc-if></header>
+  <main class="wl-main">
+    <sc-if value="{{ notDone }}" hint-placeholder-val="{{ true }}">
+      <div class="wl-prog" role="progressbar" aria-label="Setup progress" aria-valuenow="{{ stepNo }}" aria-valuemin="1" aria-valuemax="3"><sc-for list="{{ dots }}" as="d" hint-placeholder-count="3"><span class="{{ d.cls }}"></span></sc-for></div>
+      <span class="xs muted">Step {{ stepNo }} of 3</span>
+    </sc-if>
+
+    <sc-if value="{{ isLang }}" hint-placeholder-val="{{ true }}">
+      <section class="col wl-sec" aria-labelledby="wl-h1">
+        <h1 id="wl-h1" class="wl-h">Welcome, {{ firstName }}! Which language do you read in?</h1>
+        <p class="wl-sub">You can change this any time in Settings.</p>
+        <div class="wl-langs" role="radiogroup" aria-label="App language">
+          <button type="button" role="radio" aria-checked="{{ isKm }}" class="wl-lang {{ kmCls }}" onClick="{{ pickKm }}" lang="km" data-no-tr="1"><span class="wl-big">ខ្មែរ</span><span class="small muted">ភាសាខ្មែរ</span></button>
+          <button type="button" role="radio" aria-checked="{{ isEn }}" class="wl-lang {{ enCls }}" onClick="{{ pickEn }}" lang="en" data-no-tr="1"><span class="wl-big">English</span><span class="small muted">English</span></button>
+        </div>
+        <div class="col" style="gap: 8px"><span class="label" id="wl-stories">Show me stories in</span><div class="row" style="gap: 8px; flex-wrap: wrap" role="group" aria-labelledby="wl-stories"><sc-for list="{{ storyLangs }}" as="c" hint-placeholder-count="2"><button type="button" class="chip {{ c.cls }}" aria-pressed="{{ c.on }}" onClick="{{ c.toggle }}">{{ c.tick }}{{ c.label }}</button></sc-for></div></div>
+      </section>
+    </sc-if>
+
+    <sc-if value="{{ isGenres }}" hint-placeholder-val="{{ false }}">
+      <section class="col wl-sec" aria-labelledby="wl-h2">
+        <h1 id="wl-h2" class="wl-h">What do you like to read?</h1>
+        <p class="wl-sub">Pick at least one. We’ll put these first on your Home page.</p>
+        <div class="wl-genres" role="group" aria-label="Genres"><sc-for list="{{ genres }}" as="g" hint-placeholder-count="8"><button type="button" class="wl-genre {{ g.cls }}" aria-pressed="{{ g.on }}" onClick="{{ g.toggle }}"><img src="{{ g.cover }}" alt=""><span class="wl-gname">{{ g.label }}</span><span class="wl-gtick" aria-hidden="true">[[i:check:14]]</span></button></sc-for></div>
+        <div class="col" style="gap: 8px"><span class="label" id="wl-fmt">Format</span><div class="tabs-list" role="radiogroup" aria-labelledby="wl-fmt"><sc-for list="{{ formats }}" as="f" hint-placeholder-count="3"><button type="button" role="radio" aria-checked="{{ f.on }}" class="tabs-trigger {{ f.cls }}" onClick="{{ f.pick }}">{{ f.label }}</button></sc-for></div></div>
+        <sc-if value="{{ genreErr }}" hint-placeholder-val="{{ false }}"><span class="err" role="alert">Pick at least one genre, or tap “Skip for now”.</span></sc-if>
+      </section>
+    </sc-if>
+
+    <sc-if value="{{ isAlerts }}" hint-placeholder-val="{{ false }}">
+      <section class="col wl-sec" aria-labelledby="wl-h3">
+        <div class="wl-bell" aria-hidden="true">[[i:bell:28]]</div>
+        <h1 id="wl-h3" class="wl-h">Get told when new episodes come out?</h1>
+        <p class="wl-sub">Only for series you subscribe to. No ads. You can turn this off in Settings.</p>
+        <ul class="wl-perks"><li>[[i:check:14]]New episodes the minute they’re out</li><li>[[i:check:14]]When a Fast Pass episode you skipped becomes free</li><li>[[i:check:14]]Replies to your comments</li></ul>
+        <sc-if value="{{ denied }}" hint-placeholder-val="{{ false }}"><div class="alert warn" role="status"><span>[[i:info]]</span><span class="alert-desc">Your browser blocked notifications. You’ll still see alerts under the bell icon. To change it, allow notifications for PhumiReader in your browser settings.</span></div></sc-if>
+      </section>
+    </sc-if>
+
+    <sc-if value="{{ isDone }}" hint-placeholder-val="{{ false }}">
+      <section class="col wl-sec" aria-labelledby="wl-h4">
+        <span class="ok-ic2">[[i:check:26]]</span>
+        <h1 id="wl-h4" class="wl-h">You’re all set</h1>
+        <p class="wl-sub">{{ doneLine }}</p>
+        <div class="col" style="gap: 10px; width: 100%"><span class="label">Start with one of these</span>
+          <ul class="wl-picks"><sc-for list="{{ picks }}" as="p" hint-placeholder-count="4"><li class="wl-pick"><img src="{{ p.cover }}" alt=""><span class="col grow" style="gap: 2px; min-width: 0; text-align: left"><span class="small trunc" style="font-weight: 600">{{ p.title }}</span><span class="xs muted trunc">{{ p.meta }}</span></span><button type="button" class="btn btn-sm {{ p.subCls }}" onClick="{{ p.toggleSub }}" aria-pressed="{{ p.subbed }}" aria-label="{{ p.subAria }}">{{ p.subLabel }}</button></li></sc-for></ul>
+        </div>
+      </section>
+    </sc-if>
+  </main>
+  <footer class="wl-foot">
+    <sc-if value="{{ canBack }}" hint-placeholder-val="{{ false }}"><button type="button" class="btn btn-ghost" onClick="{{ back }}">[[i:chevron-left:16]]Back</button></sc-if>
+    <sc-if value="{{ isAlerts }}" hint-placeholder-val="{{ false }}"><button type="button" class="btn btn-ghost" onClick="{{ notNow }}" style="margin-left: auto">Not now</button><button type="button" class="btn btn-primary btn-lg" onClick="{{ allow }}">[[i:bell:16]]Turn on alerts</button></sc-if>
+    <sc-if value="{{ showNext }}" hint-placeholder-val="{{ true }}"><button type="button" class="btn btn-primary btn-lg" style="margin-left: auto" onClick="{{ next }}">Continue</button></sc-if>
+    <sc-if value="{{ isDone }}" hint-placeholder-val="{{ false }}"><button type="button" class="btn btn-primary btn-lg wl-full" onClick="{{ finish }}">{{ finishLabel }}</button></sc-if>
+  </footer>
+<!--LAYERS-->
+</div>

@@ -1,0 +1,22 @@
+.hp-hero{background:radial-gradient(900px 300px at 50% -10%,#d9f7e6 0%,rgba(217,247,230,0) 70%),#fafafa;border-bottom:1px solid var(--border)}
+.hp-search{position:relative;width:100%;max-width:620px}
+.hp-search .input{height:52px;padding:0 44px;font-size:16px;border-radius:12px;box-shadow:var(--shadow-md)}
+.hp-sic{position:absolute;left:16px;top:17px;color:var(--muted-foreground);display:inline-flex;pointer-events:none}
+.hp-clear{position:absolute;right:8px;top:10px}
+.hp-pop{height:28px;font-size:12px}
+.hp-topics{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px}
+.hp-topic{display:flex;align-items:center;gap:10px;padding:12px;border:1px solid var(--border);border-radius:12px;background:var(--background);font:inherit;color:inherit;cursor:pointer;min-width:0}
+.hp-topic:hover{border-color:#a1a1aa}
+.hp-topic.on{border-color:var(--primary);box-shadow:0 0 0 1px var(--primary);background:#f6fef9}
+.hp-topic:focus-visible{outline:none;box-shadow:0 0 0 2px var(--background),0 0 0 4px var(--ring)}
+.hp-tic{width:34px;height:34px;border-radius:10px;background:var(--muted);display:inline-flex;align-items:center;justify-content:center;font-size:16px;flex:0 0 auto}
+.hp-grid{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:28px;align-items:start}
+.acc{padding:0 16px}
+.acc-item+.acc-item{border-top:1px solid var(--border)}
+.acc-trigger{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;min-height:56px;padding:12px 0;border:0;background:none;font:inherit;font-size:14px;font-weight:500;color:inherit;cursor:pointer;text-align:left}
+.acc-trigger:focus-visible{outline:none;box-shadow:0 0 0 2px var(--ring);border-radius:6px}
+.acc-chev{transition:transform .2s;color:var(--muted-foreground);display:inline-flex;flex:0 0 auto}
+.acc-chev.on{transform:rotate(180deg)}
+.acc-body{padding:0 0 16px;font-size:14px;line-height:22px;color:#3f3f46}
+@container page (max-width: 1024px){ .hp-topics{grid-template-columns:repeat(3,minmax(0,1fr))} .hp-grid{grid-template-columns:minmax(0,1fr)} }
+@container page (max-width: 760px){ .hp-topics{grid-template-columns:repeat(2,minmax(0,1fr))} .hp-search .input{height:48px} .hp-sic{top:15px} .hp-clear{top:8px} }

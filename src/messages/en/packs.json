@@ -1,0 +1,16 @@
+{
+  "group": "Coin packs",
+  "bonus": "+{count} bonus ({pct}%)",
+  "noBonus": "No bonus",
+  "youGet": "You get {count}",
+  "aboutEpisodes": "≈ {count, plural, one {# episode} other {# episodes}}",
+  "aboutChapters": "≈ {count, plural, one {# chapter} other {# chapters}}",
+  "popular": "Popular",
+  "bestValue": "Best value",
+  "coversIt": "Covers it",
+  "coinsLabel": "{count} coins",
+  "method": {
+    "group": "Payment method",
+    "recommended": "Recommended"
+  }
+}

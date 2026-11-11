@@ -2,46 +2,34 @@
 
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useMutation } from "@tanstack/react-query"
-import { ArrowLeftIcon, KeyRoundIcon, MailCheckIcon } from "lucide-react"
+import { MailCheckIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
-import { useState } from "react"
-import { useForm } from "react-hook-form"
+import { useEffect } from "react"
+import { useForm, useWatch } from "react-hook-form"
 import { toast } from "sonner"
+import { authDraft } from "@/components/auth/auth-draft"
 import { forgotSchema, type ForgotValues } from "@/components/auth/auth-schemas"
-import { Button } from "@/components/ui/button"
+import { AuthHead, authInput, AuthNote, BackButton, FieldError, SubmitButton } from "@/components/auth/auth-ui"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { retryAfterSeconds } from "@/lib/api/errors"
-import { requestPasswordReset } from "@/lib/session"
+import { requestPasswordReset, RESET_WITH_CODE } from "@/lib/session"
 import { useWaitText } from "@/lib/use-wait-text"
 
-const iconTile = "flex size-12 items-center justify-center rounded-card bg-muted text-muted-foreground"
-
-function BackToLogin({ onBack }: { onBack: () => void }) {
-  const t = useTranslations("auth")
-  return (
-    <button
-      type="button"
-      onClick={onBack}
-      className="inline-flex items-center gap-1.5 rounded-sm text-sm font-medium outline-none hover:text-brand-ink focus-visible:ring-2 focus-visible:ring-ring"
-    >
-      <ArrowLeftIcon className="size-4" aria-hidden />
-      {t("backLogin")}
-    </button>
-  )
-}
-
-/** Forgot password: email -> "Send reset link" (spinner) -> "Check your inbox" -> back to Log in. */
-export function ForgotView({ onBack }: { onBack: () => void }) {
+/** Forgot password: email → "Send code" (demo: a 6-digit code) or "Send reset link" (real API: an emailed link). */
+export function ForgotView({ onBack, onSent }: { onBack: () => void; onSent: (email: string, withCode: boolean) => void }) {
   const t = useTranslations("auth")
   const ts = useTranslations("states")
   const waitText = useWaitText()
-  const [sentTo, setSentTo] = useState<string | null>(null)
-  const form = useForm<ForgotValues>({ resolver: zodResolver(forgotSchema), defaultValues: { email: "" } })
+  const form = useForm<ForgotValues>({ resolver: zodResolver(forgotSchema), defaultValues: { email: authDraft.forgotEmail ?? "" } })
   const { errors } = form.formState
+  const email = useWatch({ control: form.control, name: "email" })
+  useEffect(() => {
+    authDraft.forgotEmail = email
+  }, [email])
+
   const send = useMutation({
     mutationFn: (v: ForgotValues) => requestPasswordReset(v.email),
-    onSuccess: setSentTo,
+    onSuccess: (sentTo) => onSent(sentTo.trim().toLowerCase(), RESET_WITH_CODE),
     onError: (e) => {
       const wait = retryAfterSeconds(e)
       if (wait !== undefined) toast.error(t("tooManyTitle"), { description: waitText(wait), duration: 5000 })
@@ -49,61 +37,50 @@ export function ForgotView({ onBack }: { onBack: () => void }) {
     },
   })
 
-  if (sentTo) {
-    return (
-      <div className="flex flex-col items-center gap-5 text-center" role="status">
-        <span className={iconTile}>
-          <MailCheckIcon className="size-6" aria-hidden />
-        </span>
-        <div className="flex flex-col gap-1.5">
-          <h1 className="type-h2">{t("sentTitle")}</h1>
-          <p className="type-body text-muted-foreground">
-            {t("sentSub")} <span className="font-medium text-foreground">{sentTo}</span>.
-          </p>
-          <p className="type-body text-muted-foreground">{t("sentSub2")}</p>
-        </div>
-        <BackToLogin onBack={onBack} />
-      </div>
-    )
-  }
-
   return (
-    <form noValidate className="flex flex-col gap-5" onSubmit={form.handleSubmit((v) => send.mutate(v))}>
-      <div className="flex flex-col items-center gap-4 text-center">
-        <span className={iconTile}>
-          <KeyRoundIcon className="size-6" aria-hidden />
-        </span>
-        <div className="flex flex-col gap-1.5">
-          <h1 className="type-h2">{t("forgotTitle")}</h1>
-          <p className="type-body text-muted-foreground">{t("forgotSub")}</p>
+    <div className="flex flex-col gap-[18px]">
+      <BackButton onClick={onBack}>{t("backLogin")}</BackButton>
+      <AuthHead title={t("forgotTitle")} sub={RESET_WITH_CODE ? t("forgotSubCode") : t("forgotSub")} />
+      <form noValidate className="flex flex-col gap-4" onSubmit={form.handleSubmit((v) => send.mutate(v))}>
+        <div className="flex flex-col gap-2">
+          <label htmlFor="forgot-email" className="text-sm leading-5 font-medium">
+            {t("email")}
+          </label>
+          <Input
+            id="forgot-email"
+            type="email"
+            autoComplete="email"
+            inputMode="email"
+            placeholder={t("emailPlaceholder")}
+            className={authInput}
+            aria-invalid={!!errors.email}
+            aria-describedby={errors.email ? "forgot-email-error" : undefined}
+            {...form.register("email")}
+          />
+          {errors.email ? <FieldError id="forgot-email-error">{t(errors.email.message as "emailRequired")}</FieldError> : null}
         </div>
-      </div>
+        <SubmitButton loading={send.isPending}>{RESET_WITH_CODE ? t("sendCode") : t("sendLink")}</SubmitButton>
+      </form>
+    </div>
+  )
+}
 
-      <div className="flex flex-col gap-1.5">
-        <Label htmlFor="forgot-email">{t("email")}</Label>
-        <Input
-          id="forgot-email"
-          type="email"
-          autoComplete="email"
-          inputMode="email"
-          placeholder={t("emailPlaceholder")}
-          aria-invalid={!!errors.email}
-          aria-describedby={errors.email ? "forgot-email-error" : undefined}
-          {...form.register("email")}
-        />
-        {errors.email ? (
-          <p id="forgot-email-error" className="text-[13px] text-destructive">
-            {t(errors.email.message as "emailRequired")}
-          </p>
-        ) : null}
-      </div>
-
-      <Button type="submit" variant="brand" size="lg" loading={send.isPending}>
-        {t("sendLink")}
-      </Button>
-      <div className="flex justify-center">
-        <BackToLogin onBack={onBack} />
-      </div>
-    </form>
+/** Real API: "Check your inbox" after the reset link was emailed (it opens /reset?token=…). */
+export function SentView({ email, onBack }: { email: string; onBack: () => void }) {
+  const t = useTranslations("auth")
+  return (
+    <div className="flex flex-col gap-[18px]" role="status">
+      <BackButton onClick={onBack}>{t("backLogin")}</BackButton>
+      <AuthHead
+        icon={<MailCheckIcon className="size-5" />}
+        title={t("sentTitle")}
+        sub={
+          <>
+            {t("sentSub")} <strong className="font-semibold break-all text-foreground">{email}</strong>. {t("sentSub2")}
+          </>
+        }
+      />
+      <AuthNote>{t("spam")}</AuthNote>
+    </div>
   )
 }

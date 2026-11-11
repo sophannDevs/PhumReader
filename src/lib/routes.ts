@@ -11,7 +11,16 @@ export const readerHref = (series: Pick<Series, "slug" | "type">, episode: numbe
 
 /** "Slice of life" -> "slice-of-life", "Sci-fi" -> "sci-fi" (used by /genres/[genre], T43). */
 export const genreSlug = (genre: string) => genre.toLowerCase().replace(/\s+/g, "-")
-export const genreHref = (genre: string) => `/genres/${genreSlug(genre)}`
+/** Genres page for one genre (V2.1: /genres?g=<Genre>; the V1 /genres/<slug> redirects there). */
+export const genreHref = (genre: string) => `/genres?g=${encodeURIComponent(genre)}`
+
+/** A creator's profile handle: "Dara Vann" -> "dara-vann", "Pich & Co." -> "pich-co" (V2.1 /creators/[handle]). */
+export const creatorHandle = (name: string) =>
+  name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+export const creatorHref = (name: string) => `/creators/${creatorHandle(name)}`
 
 /** The inverse of `genreSlug` over the demo genres ("slice-of-life" -> "Slice of life"). */
 export const genreFromSlug = <G extends string>(slug: string, genres: readonly G[]): G | undefined =>

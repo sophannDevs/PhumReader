@@ -1,0 +1,95 @@
+{
+  "title": "My library",
+  "headLine": "{subs} subscribed · {withNew} with new episodes · {unlocked} with unlocked episodes",
+  "edit": "Edit",
+  "done": "Done",
+  "tabs": "Library",
+  "tabSubscribed": "Subscribed",
+  "tabRecent": "Recently read",
+  "tabUnlocked": "Unlocked",
+  "guestTitle": "Keep your library on every device",
+  "guestText": "Log in to see your subscriptions, unlocked episodes and reading history on your phone and computer.",
+  "login": "Log in",
+  "createAccount": "Create account",
+  "selectAll": "Select all",
+  "selected": "{count} selected",
+  "selectHint": "Select series to remove",
+  "unsubscribe": "Unsubscribe",
+  "unsubscribeN": "Unsubscribe ({count})",
+  "removeHistory": "Remove from history",
+  "removeHistoryN": "Remove from history ({count})",
+  "select": "Select {title}",
+  "deselect": "Deselect {title}",
+  "newFilter": "New episodes ({count})",
+  "seriesCount": "{count, plural, one {# series} other {# series}}",
+  "sortBy": "Sort by",
+  "sortUpdated": "Recently updated",
+  "sortAdded": "Recently added",
+  "sortAz": "A to Z",
+  "sortRecent": "Last read",
+  "sortProgress": "Least finished",
+  "undoUnsubscribed": "Unsubscribed from {count} series",
+  "undoRemoved": "Removed {count} from history",
+  "loading": "Loading",
+  "errorTitle": "Your library didn’t load",
+  "errorText": "Your series are safe. Check your connection and try again.",
+  "tryAgain": "Try again",
+  "emptySubsTitle": "No subscriptions yet",
+  "emptySubsText": "Subscribe to a series to get new-episode alerts and find it here.",
+  "emptyRecentTitle": "Nothing read yet",
+  "emptyRecentText": "Episodes and chapters you open will show up here so you can pick up where you left off.",
+  "emptyUnlTitle": "No unlocked episodes",
+  "emptyUnlText": "When you unlock a Fast Pass episode with coins, it stays here for good.",
+  "emptyNewTitle": "No new episodes right now",
+  "emptyNewText": "Your subscriptions are all caught up.",
+  "showAllSubs": "Show all subscriptions",
+  "browse": "Browse series",
+  "subsLabel": "Subscribed series",
+  "newBadge": "{count} new",
+  "novel": "Novel",
+  "readOf": {
+    "ep": "Read Ep. {n} of {total}",
+    "ch": "Read Ch. {n} of {total}"
+  },
+  "notStarted": "Not started · {total} free",
+  "continueAt": {
+    "ep": "Continue Ep. {n}",
+    "ch": "Continue Ch. {n}"
+  },
+  "startAt": {
+    "ep": "Start Ep. 1",
+    "ch": "Start Ch. 1"
+  },
+  "readPct": {
+    "episode": "Episode {n} · {pct}% read",
+    "chapter": "Chapter {n} · {pct}% read"
+  },
+  "finished": {
+    "episode": "Episode {n} · finished",
+    "chapter": "Chapter {n} · finished"
+  },
+  "next": {
+    "episode": "Next episode",
+    "chapter": "Next chapter"
+  },
+  "continue": "Continue",
+  "progressOf": "{title} progress",
+  "whenToday": "Today",
+  "whenYesterday": "Yesterday",
+  "whenDaysAgo": "{count} days ago",
+  "whenLastWeek": "Last week",
+  "whenRecently": "Recently",
+  "unlockedNoteTitle": "Unlocked episodes are yours to keep",
+  "unlockedNoteText": "Read them again anytime, on any device, even after they become free for everyone.",
+  "unlockedLabel": "Unlocked episodes",
+  "unlockedEps": {
+    "episode": "{count, plural, one {Episode {list}} other {Episodes {list}}} unlocked with Fast Pass",
+    "chapter": "{count, plural, one {Chapter {list}} other {Chapters {list}}} unlocked with Fast Pass"
+  },
+  "spentFree": "{coins} coins · free for everyone from {date}",
+  "spentFreeNow": "{coins} coins · now free for everyone",
+  "readAt": {
+    "ep": "Read Ep. {n}",
+    "ch": "Read Ch. {n}"
+  }
+}

@@ -73,6 +73,42 @@ class ArchitectureTest {
                     .should(onlyBeUsedInsideTheirOwnFeature())
                     .allowEmptyShould(true);
 
+    @ArchTest
+    static final ArchRule webClassesAreNotUsedByOtherFeaturesServices =
+            classes()
+                    .that()
+                    .resideInAPackage("..web..")
+                    .and()
+                    .resideOutsideOfPackage(ROOT + ".common..")
+                    .should(onlyBeUsedByOwnFeatureOrOtherWebLayers())
+                    .because(
+                            "other features call a feature through its service and domain; only"
+                                    + " another web layer may reuse its response records, and"
+                                    + " config wires the security filters")
+                    .allowEmptyShould(true);
+
+    private static ArchCondition<JavaClass> onlyBeUsedByOwnFeatureOrOtherWebLayers() {
+        return new ArchCondition<>("only be used by their own feature or by other web layers") {
+            @Override
+            public void check(JavaClass webClass, ConditionEvents events) {
+                String feature = featureOf(webClass);
+                for (Dependency dependency : webClass.getDirectDependenciesToSelf()) {
+                    JavaClass origin = dependency.getOriginClass();
+                    String originFeature = featureOf(origin);
+                    boolean allowed =
+                            feature.equals(originFeature)
+                                    || originFeature.equals("config")
+                                    || origin.getPackageName().contains(".web");
+                    if (!allowed) {
+                        events.add(
+                                SimpleConditionEvent.violated(
+                                        dependency, dependency.getDescription()));
+                    }
+                }
+            }
+        };
+    }
+
     private static ArchCondition<JavaClass> onlyBeUsedInsideTheirOwnFeature() {
         return new ArchCondition<>("only be used inside their own feature") {
             @Override

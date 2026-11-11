@@ -6,14 +6,20 @@ import { SeriesPage, SeriesSkeleton } from "@/components/pr/series-page"
 import { getSeries, getSeriesBySlug } from "@/data"
 import { routing } from "@/i18n/routing"
 import { DEMO_MODE } from "@/lib/api/config"
+import { fetchSeriesServer } from "@/lib/api/server"
 
 export function generateStaticParams() {
   return routing.locales.flatMap((locale) => getSeries().map((s) => ({ locale, slug: s.slug })))
 }
 
 export async function generateMetadata({ params }: PageProps<"/[locale]/series/[slug]">): Promise<Metadata> {
+  "use cache"
   const { slug } = await params
-  const series = getSeriesBySlug(slug)
+  let series = getSeriesBySlug(slug)
+  if (!series && !DEMO_MODE) {
+    const detail = await fetchSeriesServer(slug).catch(() => null)
+    if (detail) series = detail.series
+  }
   return series ? { title: series.title, description: `${series.title} by ${series.creator}` } : {}
 }
 
@@ -26,7 +32,10 @@ async function SeriesContent({ params }: { params: PageProps<"/[locale]/series/[
   return <SeriesPage slug={slug} />
 }
 
-export default function Page({ params }: PageProps<"/[locale]/series/[slug]">) {
+export default async function Page({ params }: PageProps<"/[locale]/series/[slug]">) {
+  const { locale, slug } = await params
+  setRequestLocale(locale)
+  if (DEMO_MODE && !getSeriesBySlug(slug)) notFound()
   return (
     <Suspense fallback={<SeriesSkeleton />}>
       <SeriesContent params={params} />

@@ -7,9 +7,9 @@ means PhumReader here.
 
 Two local rules still apply on top of the plan:
 
-1. **No Docker anywhere in this project**: not on development machines (company policy), not in CI, no
-   Dockerfile, no Testcontainers. Every service in the plan runs without Docker (see "Local development
-   without Docker").
+1. **Docker only for optional local services** (changed 2026-11-08; before that, no Docker anywhere): `docker-compose.yml`
+   runs Redis, Meilisearch, S3 storage (RustFS) and Mailpit. Still no Dockerfile, no Testcontainers, no Docker in CI. Every service
+   also runs without Docker (see "Local development without Docker").
 2. **The repository layout stays as it is.** The frontend stays in the repo root with npm; the API lives in
    `backend/` (the plan's `apps/api`); the plan's `packages/api-client` is `src/lib/api/`; the plan's `infra/`
    holds the Cloudflare Worker and deploy files.
@@ -91,7 +91,7 @@ creator_follows, genres, featured_slides, rankings, episode_bookmarks, coin_wall
 
 Demo content: `./gradlew bootRun --args='--spring.profiles.active=dev,seed'` loads `src/data/demo-data.json`
 (copied onto the classpath at build time) with stable ids, so it can run again safely. Accounts that can log in:
-`reader@toonwave.app` (3 coins, Continue reading) and `creator@toonwave.app` (Chan Sreyleak, the demo's stand-in
+`reader@phumireader.app` (3 coins, Continue reading) and `creator@toonwave.app` (Chan Sreyleak, the demo's stand-in
 creator); both use the demo password. The demo's two purchase-history rows are not seeded, because they have no
 matching ledger entries.
 
@@ -135,6 +135,10 @@ matching ledger entries.
 - Every unlock records the creator's earning in `creator_earnings`; refunds go back through the ledger.
 
 ## Local development without Docker
+
+Docker is optional since 2026-11-08: `npm run services:docker:up` starts Redis, Meilisearch, S3 storage (RustFS, with the
+`phumreader-dev` bucket) and Mailpit from `docker-compose.yml`; `npm run services:docker:down` stops them. Use it or the
+replacements below, not both at once (same ports).
 
 | Plan service (docker-compose in the plan) | Local replacement |
 |---|---|
@@ -183,6 +187,7 @@ npm run api:check                    fail if src/lib/api/schema.d.ts is out of d
 | 2026-11-06 | B01 revised: no Docker on dev machines, Supabase PostgreSQL, no Redis |
 | 2026-11-06 | Replaced by the plan doc: task ids P1–P7, JWT + refresh cookies instead of server sessions, Redis, Meilisearch, R2 image Worker, ABA PayWay for all payment methods, per-episode Fast Pass, creators and admin in scope. Kept: no Docker on dev machines, Supabase, `backend/` folder, npm. |
 | 2026-11-06 | Stage 1 agreed (project setup, database, every existing page on the real API; no deployment). No Docker anywhere in the project, also not in CI. Spring Boot 4.1.2 instead of 3.x. |
+| 2026-11-08 | Docker allowed for the optional local services only (`docker-compose.yml`: Redis, Meilisearch, S3 storage (RustFS), Mailpit). Still no Dockerfile, no Testcontainers, no Docker in CI. | MinIO's own images are no longer published (Docker Hub and Quay refuse the pull), so the S3 stand-in in Docker is RustFS 1.0.4; the brew scripts still use the MinIO binary. |
 
 ## Open items
 

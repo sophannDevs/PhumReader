@@ -47,10 +47,16 @@ export const saveProgress = (slug: string, episode: number, progress: number) =>
 
 // ---------------------------------------------------------------- library
 
-/** Continue reading, most recent first. */
-export async function fetchHistory(): Promise<ContinueView[]> {
+/** Continue reading, most recent first; `readAt` (ISO) is when it was last read (Library > Recently read). */
+export async function fetchHistory(): Promise<(ContinueView & { readAt?: string })[]> {
   const list = await allPages<Schemas["HistoryEntry"]>("/me/history", { sort: "recent" })
-  return list.map((h) => ({ series: h.seriesData.slug, seriesData: toSeries(h.seriesData), episode: h.episode, progress: h.progress }))
+  return list.map((h) => ({
+    series: h.seriesData.slug,
+    seriesData: toSeries(h.seriesData),
+    episode: h.episode,
+    progress: h.progress,
+    readAt: h.readAt,
+  }))
 }
 
 export async function fetchSubscriptions(): Promise<Series[]> {

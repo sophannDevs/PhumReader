@@ -3,6 +3,7 @@
 import { type QueryClient, useQuery } from "@tanstack/react-query"
 import { useEffect } from "react"
 import { DEMO_MODE } from "@/lib/api/config"
+import { ApiError, api, type Schemas } from "@/lib/api/client"
 import * as coins from "@/lib/api/coins"
 import { useAccountEmail } from "@/lib/me"
 import { useAppStore } from "@/lib/store"
@@ -13,7 +14,9 @@ import { useAppStore } from "@/lib/store"
  * The demo keeps its own balance in the store.
  */
 
-export const walletKey = (email: string) => ["wallet", email] as const
+import { walletKeys } from "@/lib/api/keys"
+
+export const walletKey = (email: string) => walletKeys.balance(email)
 
 export function useWallet() {
   const email = useAccountEmail()
@@ -26,6 +29,23 @@ export function useWalletSync() {
   useEffect(() => {
     if (balance !== undefined) useAppStore.setState({ coins: balance })
   }, [balance])
+}
+
+/** One of the reader's coin orders, as the API keeps it (the Receipt page, real API only). */
+export type OrderView = Schemas["OrderView"]
+
+export const orderKey = (email: string, number: string) => ["order", email, number] as const
+
+/** Real API: the order `number` of the signed-in reader (`GET /coins/orders/{number}`); 404 when it isn't theirs. */
+export function useOrder(number: string) {
+  const email = useAccountEmail()
+  return useQuery({
+    queryKey: orderKey(email ?? "", number),
+    queryFn: () => api.get<OrderView>(`/coins/orders/${encodeURIComponent(number)}`),
+    enabled: !DEMO_MODE && !!email,
+    // An unknown order stays unknown: no retries on 404.
+    retry: (count, error) => !(error instanceof ApiError && error.status === 404) && count < 2,
+  })
 }
 
 /** A call returned the new balance: show it now, and read the wallet again (first-purchase bonus). */

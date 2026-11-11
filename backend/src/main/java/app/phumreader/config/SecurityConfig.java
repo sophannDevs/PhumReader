@@ -65,7 +65,9 @@ public class SecurityConfig {
         "/api/v1/auth/refresh",
         "/api/v1/auth/logout",
         "/api/v1/auth/forgot-password",
-        "/api/v1/auth/reset-password"
+        "/api/v1/auth/reset-password",
+        // ABA PayWay's server-to-server callback: signed by PayWay, no cookie, no CSRF (P3-11).
+        "/api/v1/payments/payway/callback"
     };
 
     /** Argon2id password hashes (Spring Security 5.8+ parameters). */
@@ -85,7 +87,8 @@ public class SecurityConfig {
                 // One stable token per browser: by default Spring replaces it whenever a request
                 // becomes authenticated, which with cookie sign-in means on every request.
                 .csrf(csrf ->
-                                csrf.spa()
+                                csrf.ignoringRequestMatchers("/api/v1/payments/payway/callback")
+                                        .spa()
                                         .sessionAuthenticationStrategy(
                                                 new NullAuthenticatedSessionStrategy()))
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

@@ -1,0 +1,17 @@
+{
+  "emptyTitle": "Nothing here yet",
+  "emptyAction": "Back to Home",
+  "errorTitle": "Something went wrong",
+  "errorDescription": "We couldn't load this. Check your connection and try again.",
+  "retry": "Retry",
+  "undo": "Undo",
+  "forbiddenTitle": "Access denied",
+  "forbiddenDesc": "You do not have permission to access this page.",
+  "notFoundTitle": "Page not found",
+  "notFoundDesc": "The requested content could not be found.",
+  "unauthorizedTitle": "Authentication required",
+  "unauthorizedDesc": "Please sign in to access this page.",
+  "login": "Log in",
+  "offlineBanner": "You are currently offline. Check your internet connection.",
+  "backOnline": "Back online"
+}

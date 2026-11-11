@@ -1,0 +1,93 @@
+<div class="v2">
+<!--HEADER-->
+<!--CNAV-->
+  <main class="wrap col" style="gap: 24px; padding-top: 24px; padding-bottom: 64px">
+    <div class="sec-head">
+      <div class="col" style="gap: 4px"><h1 class="h2">{{ hello }}</h1><p class="small muted">{{ subLine }}</p></div>
+      <div class="row" style="gap: 8px"><a class="btn btn-outline" href="{{ createHref }}">[[i:plus:16]]New series</a><sc-if value="{{ hasWorks }}" hint-placeholder-val="{{ true }}"><a class="btn btn-primary" href="{{ uploadHref }}">[[i:external:16]]Upload episode</a></sc-if></div>
+    </div>
+
+    <sc-if value="{{ isNew }}" hint-placeholder-val="{{ false }}">
+      <section class="card cr-start" aria-labelledby="st-h">
+        <div class="col" style="gap: 6px"><h2 id="st-h" class="h3">Publish your first story in 3 steps</h2><p class="small muted">Most creators finish setup in about 15 minutes. You can save and come back any time.</p></div>
+        <ol class="cr-steps">
+          <sc-for list="{{ startSteps }}" as="x" hint-placeholder-count="3"><li class="{{ x.cls }}"><span class="cr-sn">{{ x.n }}</span><div class="col" style="gap: 2px"><span class="small" style="font-weight: 600">{{ x.t }}</span><span class="xs muted">{{ x.d }}</span></div></li></sc-for>
+        </ol>
+        <a class="btn btn-primary btn-lg" href="{{ createHref }}" style="align-self: flex-start">Create your first series</a>
+      </section>
+    </sc-if>
+
+    <sc-if value="{{ hasWorks }}" hint-placeholder-val="{{ true }}">
+      <div class="row" style="justify-content: space-between; gap: 12px; flex-wrap: wrap"><h2 class="h3">Last 30 days</h2><span class="xs muted">Compared with the 30 days before · Updated hourly</span></div>
+      <div class="cr-stats">
+        <sc-for list="{{ stats }}" as="x" hint-placeholder-count="4">
+          <a class="card stat cr-stat" href="{{ x.href }}"><span class="small muted row" style="gap: 6px">{{ x.label }}</span><span class="v tnum">{{ x.v }}</span><span class="d {{ x.dCls }}">{{ x.delta }}</span></a>
+        </sc-for>
+      </div>
+
+      <div class="cr-grid">
+        <div class="col" style="gap: 24px; min-width: 0">
+          <section class="card" aria-labelledby="ch-h">
+            <div class="card-head"><div class="row" style="justify-content: space-between"><h2 id="ch-h" class="h3">Daily views</h2><span class="xs muted">Last 14 days</span></div></div>
+            <div class="card-body">
+              <div class="cr-chart" role="img" aria-label="{{ chartAria }}">
+                <sc-for list="{{ bars }}" as="b" hint-placeholder-count="14"><div class="cr-bar {{ b.cls }}" title="{{ b.tip }}"><span style="height: {{ b.h }}"></span><em>{{ b.d }}</em></div></sc-for>
+              </div>
+            </div>
+          </section>
+
+          <section class="col" style="gap: 12px" aria-labelledby="ms-h">
+            <div class="row" style="justify-content: space-between; gap: 12px; flex-wrap: wrap"><h2 id="ms-h" class="h3">My series</h2>
+              <div class="tabs-list" role="group" aria-label="Filter series"><sc-for list="{{ filters }}" as="f" hint-placeholder-count="3"><button type="button" class="tabs-trigger {{ f.cls }}" aria-pressed="{{ f.on }}" onClick="{{ f.pick }}">{{ f.label }} <span class="xs muted">{{ f.count }}</span></button></sc-for></div>
+            </div>
+            <ul class="cr-list">
+              <sc-for list="{{ works }}" as="w" hint-placeholder-count="3">
+                <li class="cr-work">
+                  <img class="cr-wcover" src="{{ w.cover }}" alt="">
+                  <div class="col grow" style="gap: 4px; min-width: 0">
+                    <div class="row" style="gap: 6px; flex-wrap: wrap"><span class="badge {{ w.statusCls }}">{{ w.statusLabel }}</span><span class="badge badge-outline">{{ w.formatLabel }}</span><span class="badge badge-outline">{{ w.genre }}</span></div>
+                    <span class="h4 trunc">{{ w.title }}</span>
+                    <span class="xs muted">{{ w.meta }}</span>
+                    <span class="xs {{ w.nextCls }}">{{ w.next }}</span>
+                  </div>
+                  <div class="cr-wacts">
+                    <a class="btn btn-primary btn-sm" href="{{ w.primaryHref }}" onClick="{{ w.upload }}">{{ w.uploadLabel }}</a>
+                    <a class="btn btn-outline btn-sm" href="{{ manageHref }}" onClick="{{ w.edit }}">Manage</a>
+                  </div>
+                </li>
+              </sc-for>
+            </ul>
+          </section>
+        </div>
+
+        <div class="col" style="gap: 24px; min-width: 0">
+          <section class="card" aria-labelledby="td-h">
+            <div class="card-head"><h2 id="td-h" class="h3">To do</h2></div>
+            <ul class="card-body cr-todo">
+              <sc-for list="{{ todos }}" as="t" hint-placeholder-count="3"><li><span class="cr-tic {{ t.cls }}">{{ t.ic }}</span><span class="col" style="gap: 2px; min-width: 0"><span class="small" style="font-weight: 600">{{ t.t }}</span><span class="xs muted">{{ t.d }}</span></span></li></sc-for>
+            </ul>
+          </section>
+          <section class="card" aria-labelledby="cm-h">
+            <div class="card-head"><div class="row" style="justify-content: space-between"><h2 id="cm-h" class="h3">New comments</h2><span class="badge badge-secondary">{{ commentCount }}</span></div></div>
+            <div class="card-body col" style="gap: 14px">
+              <sc-for list="{{ comments }}" as="c" hint-placeholder-count="3">
+                <div class="col" style="gap: 6px">
+                  <div class="row" style="gap: 8px"><span class="avatar" style="width: 28px; height: 28px; font-size: 11px">{{ c.ini }}</span><span class="small" style="font-weight: 600">{{ c.name }}</span><span class="xs muted">{{ c.where }}</span></div>
+                  <p class="small" style="margin: 0; color: #3f3f46">{{ c.text }}</p>
+                  <sc-if value="{{ c.replied }}" hint-placeholder-val="{{ false }}"><p class="xs cr-reply">You: {{ c.reply }}</p></sc-if>
+                  <sc-if value="{{ c.open }}" hint-placeholder-val="{{ false }}">
+                    <form class="row" style="gap: 6px" onSubmit="{{ c.send }}"><label class="sr-only" for="{{ c.inId }}">Reply to {{ c.name }}</label><input id="{{ c.inId }}" class="input" placeholder="Write a reply…" value="{{ c.draft }}" onChange="{{ c.onDraft }}"><button type="submit" class="btn btn-primary btn-sm">Send</button></form>
+                  </sc-if>
+                  <sc-if value="{{ c.canReply }}" hint-placeholder-val="{{ true }}"><div class="row" style="gap: 4px"><button type="button" class="btn btn-ghost btn-sm" onClick="{{ c.toggle }}">Reply</button><button type="button" class="btn btn-ghost btn-sm" onClick="{{ c.like }}" aria-pressed="{{ c.liked }}">{{ c.likeLabel }}</button></div></sc-if>
+                </div>
+              </sc-for>
+            </div>
+          </section>
+        </div>
+      </div>
+    </sc-if>
+  </main>
+<!--FOOTER-->
+<!--MOBNAV-->
+<!--LAYERS-->
+</div>

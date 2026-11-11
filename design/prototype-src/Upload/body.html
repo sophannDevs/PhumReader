@@ -1,0 +1,104 @@
+<div class="v2">
+<!--HEADER-->
+<!--CNAV-->
+  <main class="wrap col" style="gap: 20px; padding-top: 24px; padding-bottom: 64px">
+    <sc-if value="{{ notDone }}" hint-placeholder-val="{{ true }}">
+    <div class="sec-head"><div class="col" style="gap: 4px"><h1 class="h2">Upload {{ unitLower }}</h1><p class="small muted">{{ w.title }} · {{ unit }} {{ epNo }}</p></div><span class="xs muted">{{ savedLine }}</span></div>
+    <div class="up-grid">
+      <form class="col" style="gap: 20px; min-width: 0" onSubmit="{{ publish }}" novalidate="true">
+        <sc-if value="{{ hasErrors }}" hint-placeholder-val="{{ false }}">
+          <div class="alert bad" role="alert"><span>[[i:alert]]</span><div class="col"><span class="alert-title">Fix {{ errCount }} {{ errWord }} before publishing</span><ul class="cs-errs"><sc-for list="{{ errList }}" as="e" hint-placeholder-count="2"><li>{{ e.t }}</li></sc-for></ul></div></div>
+        </sc-if>
+        <section class="card" aria-labelledby="u-det">
+          <div class="card-head"><h2 id="u-det" class="h3">Details</h2></div>
+          <div class="card-body col" style="gap: 18px">
+            <div class="field-row">
+              <div class="field"><label class="label" for="u-series">Series</label><select id="u-series" class="select" value="{{ w.id }}" onChange="{{ onSeries }}"><sc-for list="{{ seriesOpts }}" as="o" hint-placeholder-count="2"><option value="{{ o.id }}">{{ o.label }}</option></sc-for></select></div>
+              <div class="field"><span class="label">{{ unit }} number</span><div class="up-epno"><strong class="tnum">{{ epNo }}</strong><span class="xs muted">Next in order after {{ unitLower }} {{ prevNo }}</span></div></div>
+            </div>
+            <div class="field"><label class="label" for="u-title">{{ unit }} title <span class="req">*</span></label><input id="u-title" class="input {{ titleCls }}" value="{{ title }}" onChange="{{ onTitle }}" maxlength="60" placeholder="{{ titlePh }}" aria-invalid="{{ titleBad }}"><span class="{{ titleHintCls }}">{{ titleHint }}</span></div>
+          </div>
+        </section>
+
+        <section class="card" aria-labelledby="u-con">
+          <div class="card-head"><div class="row" style="justify-content: space-between; gap: 12px"><h2 id="u-con" class="h3">{{ contentTitle }}</h2><span class="xs muted">{{ contentSummary }}</span></div></div>
+          <div class="card-body col" style="gap: 14px">
+            <sc-if value="{{ isComic }}" hint-placeholder-val="{{ true }}">
+              <button type="button" class="drop {{ dropCls }}" onClick="{{ addImages }}">[[i:plus:22]]<span class="small" style="font-weight: 600">{{ dropLabel }}</span><span class="xs muted">JPG or PNG · 690–1600 px wide · up to 20 MB each · up to 100 images</span></button>
+              <sc-if value="{{ hasImgs }}" hint-placeholder-val="{{ true }}">
+                <ol class="up-list" aria-label="Images in reading order">
+                  <sc-for list="{{ imgs }}" as="m" hint-placeholder-count="5">
+                    <li class="up-img {{ m.cls }}">
+                      <span class="up-n tnum">{{ m.n }}</span>
+                      <img class="up-th" src="{{ m.src }}" alt="">
+                      <div class="col grow" style="gap: 4px; min-width: 0">
+                        <span class="small trunc" style="font-weight: 500">{{ m.name }}</span>
+                        <sc-if value="{{ m.loading }}" hint-placeholder-val="{{ false }}"><div class="progress" role="progressbar" aria-label="Uploading {{ m.name }}" aria-valuenow="{{ m.pct }}" aria-valuemin="0" aria-valuemax="100"><span style="width: {{ m.pctW }}"></span></div></sc-if>
+                        <span class="xs {{ m.metaCls }}">{{ m.meta }}</span>
+                      </div>
+                      <div class="up-acts">
+                        <button type="button" class="btn btn-ghost btn-icon btn-sm" onClick="{{ m.up }}" disabled="{{ m.first }}" aria-label="Move {{ m.name }} up">↑</button>
+                        <button type="button" class="btn btn-ghost btn-icon btn-sm" onClick="{{ m.down }}" disabled="{{ m.last }}" aria-label="Move {{ m.name }} down">↓</button>
+                        <button type="button" class="btn btn-ghost btn-icon btn-sm" onClick="{{ m.remove }}" aria-label="Remove {{ m.name }}">[[i:x:14]]</button>
+                      </div>
+                    </li>
+                  </sc-for>
+                </ol>
+              </sc-if>
+            </sc-if>
+            <sc-if value="{{ isNovel }}" hint-placeholder-val="{{ false }}">
+              <label class="sr-only" for="u-text">Chapter text</label>
+              <textarea id="u-text" class="textarea up-text {{ textCls }}" rows="14" value="{{ text }}" onChange="{{ onText }}" placeholder="Write or paste your chapter here. Leave an empty line between paragraphs."></textarea>
+              <div class="row" style="justify-content: space-between"><span class="{{ textHintCls }}">{{ textHint }}</span><span class="xs muted tnum">{{ words }} words · about {{ mins }} min read</span></div>
+            </sc-if>
+          </div>
+        </section>
+
+        <section class="card" aria-labelledby="u-rel">
+          <div class="card-head"><h2 id="u-rel" class="h3">Release</h2></div>
+          <div class="card-body col" style="gap: 16px">
+            <div class="up-when" role="radiogroup" aria-label="When to publish"><sc-for list="{{ whens }}" as="o" hint-placeholder-count="2"><button type="button" role="radio" aria-checked="{{ o.on }}" class="cs-opt {{ o.cls }}" onClick="{{ o.pick }}"><span class="cs-dot"></span><span class="col" style="gap: 2px; text-align: left"><span class="small" style="font-weight: 600">{{ o.label }}</span><span class="xs muted">{{ o.desc }}</span></span></button></sc-for></div>
+            <sc-if value="{{ isSchedule }}" hint-placeholder-val="{{ true }}">
+              <div class="field-row"><div class="field"><label class="label" for="u-date">Date</label><select id="u-date" class="select" value="{{ date }}" onChange="{{ onDate }}"><sc-for list="{{ dates }}" as="x" hint-placeholder-count="7"><option value="{{ x.v }}">{{ x.label }}</option></sc-for></select></div><div class="field"><label class="label" for="u-time">Time (ICT)</label><select id="u-time" class="select" value="{{ time }}" onChange="{{ onTime }}"><option value="12">12:00 PM</option><option value="18">6:00 PM</option><option value="20">8:00 PM</option><option value="21">9:00 PM</option></select></div></div>
+            </sc-if>
+            <div class="sep"></div>
+            <div class="st-rowc"><span class="col" style="gap: 2px"><span class="small" style="font-weight: 600" id="fp-l">Fast Pass</span><span class="xs muted">{{ fpDesc }}</span></span><button type="button" role="switch" class="switch {{ fpCls }}" aria-checked="{{ fastPass }}" aria-labelledby="fp-l" onClick="{{ toggleFp }}"></button></div>
+            <div class="st-rowc"><span class="col" style="gap: 2px"><span class="small" style="font-weight: 600" id="cm-l">Allow comments</span><span class="xs muted">You can turn comments off later</span></span><button type="button" role="switch" class="switch {{ cmCls }}" aria-checked="{{ comments }}" aria-labelledby="cm-l" onClick="{{ toggleCm }}"></button></div>
+            <div class="field"><label class="label" for="u-note">Creator’s note <span class="xs muted">(optional)</span></label><textarea id="u-note" class="textarea" rows="2" maxlength="300" value="{{ note }}" onChange="{{ onNote }}" placeholder="Shown to readers at the end of the {{ unitLower }}"></textarea><span class="xs muted tnum" style="align-self: flex-end">{{ noteCount }}/300</span></div>
+          </div>
+        </section>
+
+        <div class="up-bar">
+          <button type="button" class="btn btn-outline" onClick="{{ saveDraft }}">Save draft</button>
+          <button type="submit" class="btn btn-primary btn-lg" disabled="{{ busy }}"><sc-if value="{{ busy }}" hint-placeholder-val="{{ false }}"><span class="spin"></span></sc-if>{{ publishLabel }}</button>
+        </div>
+      </form>
+
+      <aside class="col up-side" style="gap: 16px">
+        <section class="card" aria-labelledby="ck-h"><div class="card-head"><h2 id="ck-h" class="h4">Before you publish</h2></div>
+          <ul class="cs-req up-ck"><sc-for list="{{ checks }}" as="r" hint-placeholder-count="4"><li class="{{ r.cls }}"><span class="cs-tick">{{ r.ic }}</span>{{ r.t }}</li></sc-for></ul>
+        </section>
+        <section class="col" style="gap: 8px" aria-label="Phone preview"><span class="xs muted" style="font-weight: 600; letter-spacing: .06em; text-transform: uppercase">Phone preview</span>
+          <div class="up-phone"><div class="up-ptop"><span class="xs" style="font-weight: 600">{{ unit }} {{ epNo }}</span><span class="xs muted trunc">{{ previewTitle }}</span></div>
+            <div class="up-pbody">
+              <sc-if value="{{ isComic }}" hint-placeholder-val="{{ true }}"><sc-for list="{{ previewImgs }}" as="p" hint-placeholder-count="3"><img src="{{ p.src }}" alt=""></sc-for><sc-if value="{{ noPreview }}" hint-placeholder-val="{{ false }}"><span class="xs muted" style="padding: 40px 12px; text-align: center">Your images will appear here</span></sc-if></sc-if>
+              <sc-if value="{{ isNovel }}" hint-placeholder-val="{{ false }}"><p class="up-ptext">{{ previewText }}</p></sc-if>
+            </div>
+          </div>
+        </section>
+      </aside>
+    </div>
+    </sc-if>
+    <sc-if value="{{ isDone }}" hint-placeholder-val="{{ false }}">
+      <section class="card col cs-done" role="status">
+        <span class="ok-ic2">[[i:check:26]]</span>
+        <h1 class="h2">{{ doneTitle }}</h1>
+        <p class="small muted" style="max-width: 52ch">{{ doneBody }}</p>
+        <div class="row" style="gap: 8px; flex-wrap: wrap; justify-content: center"><button type="button" class="btn btn-primary" onClick="{{ another }}">Upload {{ unitLower }} {{ nextNo }}</button><a class="btn btn-outline" href="{{ creatorHref }}">Back to dashboard</a></div>
+      </section>
+    </sc-if>
+  </main>
+<!--FOOTER-->
+<!--MOBNAV-->
+<!--LAYERS-->
+</div>

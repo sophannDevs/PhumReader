@@ -1,6 +1,7 @@
 # PhumReader backend: implementation checklist (Spring Boot)
 
-Phase 2 of this repo. The frontend (docs/CHECKLIST.md, T01–T53) is finished and runs on demo data. This list follows
+Phase 2 of this repo. The frontend follows the V2.1 design (docs/CHECKLIST.md, F01–F27 and T01–T42, all done; the V1
+list T01–T53 is docs/CHECKLIST-v1.md); features it has that the API lacks are under "V2.1 API additions". This list follows
 the plan doc **"Toonwave V2 – Implementation plan"** (https://claude.ai/artifact/9bbCmhSxqAbRZeTbjU8QVT, 2026-11-05):
 same task ids, same "depends on" and the same acceptance criteria. "Toonwave" in the plan means PhumReader.
 It replaces the earlier B01–B52 list.
@@ -37,7 +38,7 @@ Sources of truth: the plan doc, `CLAUDE.md`, `docs/BACKEND.md` (decisions and lo
 - Money: balances change only through the ledger, in one transaction with a wallet row lock; every payment and
   unlock call is idempotent. Never build card number fields: cards use the PayWay hosted page.
 
-Progress: 30 / 51 tasks · Stage 1 done · Phase 5 complete · Milestone M5 complete (M1, M3, M4, M6, M7 pending formal verification)
+Progress: 35 / 51 plan tasks · 0 / 7 V2.1 API additions · Stage 1 done · Phase 5 complete · Milestone M5 complete (M1, M3, M4, M6, M7 pending formal verification)
 
 ---
 
@@ -65,7 +66,7 @@ deployment and no Docker. A step is done when its checks pass; tick the plan tas
     (41 comics, 7 novels), 3,956 episodes, 30,303 panels, 589 chapters, 12,012 comments, 5 packs, 3 hero slides,
     48 ranking rows; a second run changed nothing (18 users, 1 ledger row). Health through the website: UP.
     41 backend tests green. Staging (P3-01's second half) waits for P1-10.
-- [ ] **Step 3: Other local services** (P1-02 rest) — services part 1 done 2026-11-06 (see below); stand-in swaps remain
+- [x] **Step 3: Other local services** (P1-02 rest) — done 2026-11-08 on the offline stand-ins; Upstash and R2 move to P1-10 (see below)
   - Upstash Redis, Meilisearch (`meilisearch.exe`), email printed in the backend console; a services check.
   - Check: the services check shows every service healthy.
   - Done 2026-11-06 (part 1, on a Mac with Homebrew, no Docker): Redis, Meilisearch, MinIO (R2 stand-in) and Mailpit
@@ -125,6 +126,13 @@ deployment and no Docker. A step is done when its checks pass; tick the plan tas
     providers** (needs the A14 apps: Google Cloud OAuth client, Meta app with Facebook Login), so P3-04 stays
     unticked until a sign-in works on dev or staging with each provider. Still open in Step 3: Upstash and R2
     accounts, MinIO bucket (P3-07).
+  - Done 2026-11-08 (Docker option): `docker-compose.yml` + `npm run services:docker:up` / `services:docker:down` run Redis 8,
+    Meilisearch 1.56.1 (same version as the brew one; v1.15 failed the Khmer search test), S3 storage and Mailpit, and
+    create the `phumreader-dev` bucket. Docker replaces nothing: the brew scripts still work, but not at the same time
+    (same ports). MinIO's images are no longer published, so the S3 stand-in is RustFS 1.0.4 (`rustfs/rustfs`). Checked:
+    `npm run services:check` shows all 5 healthy; the real-service tests pass against the containers
+    (`S3ObjectStoreTest`, `MeilisearchIndexTest` 6/6, `RedisStandInsTest`, `RedisViewCounterTest`); an object was
+    written, read and deleted in the bucket. Still open: Upstash and a real R2 bucket (accounts), Google / Facebook apps.
   - 2026-11-06: the company PC may not download programs, so Step 4 runs first with built-in stand-ins
     (rate limits and codes in memory, search in PostgreSQL, JWT signed with the JDK). At home: install the
     services, fill in `backend/.env`, swap the stand-ins (and optionally the JWT code for a JWT library), add
@@ -265,19 +273,38 @@ Resend), Phase 6 gates.
 
 P1-03 (Next.js app) and P1-04 (web libraries + shadcn/ui) are done by T01–T06.
 
-- [ ] **P1-01 Repository and README**
+- [x] **P1-01 Repository and README**
   - Build: `backend/` (Spring Boot, Gradle), `infra/` (Cloudflare Worker, deploy files), `src/lib/api/` for the
     generated client, `docs/`. Root README gains a "Run the backend" section.
   - Depends on: —
   - Done when: clone + README steps start both apps on a new machine in under 15 minutes (without Docker).
+  - Done 2026-11-08: folders `backend/`, `infra/image-worker/`, `src/lib/api/` and `docs/` exist; the root README has a
+    "Run it" quick start and a "Run the backend" section. Checked on a fresh `git clone` of the pull request branch, the
+    README steps in order: clone 4 s, `npm install` 6 s, demo mode with `echo "NEXT_PUBLIC_DEMO=1" > .env.local` loads
+    the home page with no error box (headless browser), `CI=true npm run test:e2e` builds and passes 48 of 48 in 62 s,
+    `cd backend && ./gradlew check` passes 245 tests in 61 s with no Docker. Times were taken on the development
+    machine with warm npm and Gradle caches; a first run on a new machine also downloads Node packages, Gradle, the
+    JDK toolchain and the embedded PostgreSQL binaries (not measured, expect a few more minutes). Not tried: the API
+    against a database on a second machine (needs the Supabase password, which stays out of the repo).
+    Found and fixed on the way: README said `copy` (Windows only), never said to create `.env.local` (a newcomer saw
+    error screens without a backend) and described an older stage of the project; and starting the API without
+    `backend/.env` ended in "'url' must start with jdbc" without naming `DB_URL`. New `config/RequiredSettings` stops
+    the API at start-up with "Missing required setting(s): DB_URL, ..." (3 tests; normal start and `./gradlew check`
+    still pass), which makes P1-08's "names it" true for the database settings.
 
-- [ ] **P1-02 Local services (no Docker)**
+- [x] **P1-02 Local services (no Docker)**
   - Build: the plan's five local services without Docker: Supabase dev project `phumreader-dev` (Singapore,
     Data API off, session pooler), Upstash Redis (Memurai offline), Meilisearch Windows binary, R2 dev bucket
     (MinIO binary offline), Mailpit binary (optional; console mail otherwise). `backend/.env.example` lists every
     setting; a script `scripts/check-services` (or npm `services:check`) pings each one.
   - Depends on: P1-01
   - Done when: the check shows all 5 services healthy.
+  - Done 2026-11-08 on the offline stand-ins the task allows (local Redis for Memurai, MinIO for R2): `npm run
+    services:check` shows all 5 healthy. `scripts/check-services.mjs` can now also check the real services: Redis over
+    TLS with a user and password (Upstash) and a signed HEAD on the bucket for a non-local `S3_ENDPOINT` (R2; 403 =
+    wrong keys, 404 = no such bucket). Those two paths are untested until the accounts exist. **Moved to P1-10:**
+    create the Upstash database and the R2 buckets, put them in the staging settings, and run the check against them.
+    P3-08 (image Worker) needs the R2 bucket to be verified.
 
 - [x] **P1-05 Spring Boot app**
   - Build: Spring Boot 4.1.2 / Java 21 (Gradle Kotlin DSL): web, security, validation, data-jpa, Flyway
@@ -296,6 +323,13 @@ P1-03 (Next.js app) and P1-04 (web libraries + shadcn/ui) are done by T01–T06.
     signature, features do not reach into each other's internals.
   - Depends on: P1-03, P1-05
   - Done when: empty folders + a README per area; import rules enforced by ArchUnit (API) and ESLint (website).
+  - Done 2026-11-08: the feature packages already existed (P1-05). Added a `README.md` in each of the 15 areas under
+    `app.phumreader` (14 plus `seed`), a new ArchUnit rule (`webClassesAreNotUsedByOtherFeaturesServices`: other
+    features use a feature's `service` and `domain`; only another web layer or `config` may touch its `web`), and
+    ESLint `no-restricted-imports` rules in `eslint.config.mjs`: nothing imports `src/app`, nothing imports
+    `backend/` or `infra/`, `components/ui` cannot import PhumReader components or demo data, `src/data` cannot
+    import components. Not covered: the `demo-api` rule (it is loaded with dynamic `import()`, which this ESLint
+    rule does not see; demo mode is removed in P5-07).
   - Done 2026-11-08: API side: 15 feature packages, each with a `package-info.java` as its README, and the ArchUnit
     rules in `ArchitectureTest` (already in Step 1). Website side, new in `eslint.config.mjs`: (1) outside
     `src/lib/api/` nothing may call `fetch`, `window.fetch` or `XMLHttpRequest`; (2) components and pages may not
@@ -337,6 +371,8 @@ P1-03 (Next.js app) and P1-04 (web libraries + shadcn/ui) are done by T01–T06.
   - Depends on: —
   - Done when: the API connects to staging through the pooler; Flyway connects through the direct URL (or the
     session pooler if the network has no IPv6).
+  - Carried over from P1-02: also create the Upstash Redis database and the Cloudflare R2 buckets for staging, and run
+    `npm run services:check` against them (TLS Redis and signed bucket check are written but untested).
 
 - [ ] **Milestone M1**: both apps run locally, CI green.
 
@@ -382,6 +418,15 @@ Spring Boot owns every business rule; the website never talks to the database di
     return to the page the user came from.
   - Depends on: P3-02, A14
   - Done when: new and returning users can sign in with each provider on staging.
+  - Google verified locally 2026-11-08 (Google Cloud project with an External consent screen in Testing mode, Web client,
+    redirect URI `http://localhost:3000/api/v1/auth/oauth/google/callback`, keys in `backend/.env`): a new user signed in
+    (website `/login?social=done`, one `user_identities` row GOOGLE, user ACTIVE with `email_verified_at`), then a returning
+    sign-in changed nothing but `last_login_at` and added a session (still 1 identity, 1 user). Not yet checked: the
+    cancel screen and linking to an existing password account (covered by `SocialLoginTest` only). **Facebook skipped for
+    now (owner decision 2026-11-08):** the code is written and tested with a fake provider, but there is no Meta app, and
+    the login page keeps showing "not set up yet" for it. **The box stays open** until Google works on staging (P1-10) and
+    Facebook is either set up or dropped from the plan. Production needs its own redirect URI
+    and a published consent screen (P7-04).
 
 - [x] **P3-05 Roles and ownership**
   - Build: roles READER / CREATOR / ADMIN, `@PreAuthorize` rules, ownership checks on every creator write;
@@ -834,6 +879,68 @@ wiring them are fixed in P5-07.
 
 ---
 
+## V2.1 API additions (local, not in the plan doc)
+
+Added 2026-11-11 after the V2.1 redesign (docs/CHECKLIST.md F01–F27, T01–T42). These V2.1 features have no API yet,
+so in real mode they only save to the browser's local store (CHECKLIST Assumptions V2-8, V2-53 … V2-58): nothing
+reaches other devices or users. Each task builds the API and switches the real-mode frontend over to it. Same rules
+as the plan tasks (tests, `./gradlew check`, OpenAPI + `npm run api:gen`); commit as `V21-0N: …`. Needs the home PC
+(Gradle can't fetch the libraries on the office PC). Order: V21-01 first (key flow 4), the rest in any order.
+
+- [ ] **V21-01 Series review workflow** (key flow 4)
+  - Build: series states draft → in review → changes requested → published (reject → draft). Creator "Submit for
+    review" and "Resubmit"; admin queue with the auto-check flags, approve / request changes (reasons + note) /
+    reject, each in the audit log; the reviewer's items show on Manage series. Today Submit publishes at once.
+  - Depends on: P3-14, P3-18
+  - Done when: key flow 4 (create series → admin requests changes → creator fixes and resubmits → admin approves →
+    upload episode 1) passes in `e2e/real.spec.ts`.
+
+- [ ] **V21-02 Series and episode fields from the V2.1 forms**
+  - Build: second genre, age 16+ / 18+, language "both" (two versions), several update days, release time (ICT),
+    series-wide Fast Pass (on/off, 1–5 episodes ahead) and comments switch, story status with a break message, hide
+    and show one episode, delete a series (owner only; soft delete if anyone unlocked an episode).
+  - Depends on: P3-14
+  - Done when: everything Create series and Manage series save is still there after a reload in real mode.
+
+- [ ] **V21-03 In-app notifications inbox**
+  - Build: a `notifications` table fed by the same outbox events as P3-16 (new episode, comment reply, coins and
+    payments, report outcome); `GET /me/notifications` with the V2.1 tabs (all, unread, episodes, comments, coins)
+    and a cursor; mark read / unread, mark all read, remove (restorable for the 6 s Undo); unread count for the
+    header bell; alert settings (per type, quiet hours, daily digest).
+  - Depends on: P3-16, P3-17
+  - Done when: the bell count and the Notifications page match in two browsers signed in to the same account.
+
+- [ ] **V21-04 Blocking and report outcomes**
+  - Build: block / unblock / list blocked accounts (their comments are hidden for the blocker); the V2.1 report
+    reasons per type with a case number (R-xxxxx); the reporter's "Your reports" list with status; admin actions
+    remove / warn / suspend (timed) / no violation.
+  - Depends on: P3-13, P3-18
+  - Done when: key flow 3 (comment → report → admin removes → the reporter sees "Removed" in Settings) passes in
+    real mode, and a block still applies on a new device.
+
+- [ ] **V21-05 Creator earnings and public profile**
+  - Build: earnings from coins spent on the creator's Fast Pass episodes (per series and month, `[REVENUE SHARE]`
+    stays a placeholder); payout settings without real bank fields (`[PAYOUT PROVIDER FORM]`); a unique creator
+    handle for `/creators/<handle>` with bio and public series, plus the owner view.
+  - Depends on: P3-10, P3-14
+  - Done when: Earnings and the public profile show API data in real mode.
+
+- [ ] **V21-06 Admin payments: refund requests and stuck payments**
+  - Build: readers request a refund (receipt / Help); the admin list shows eligibility (`[REFUND WINDOW]`) and
+    approves or denies with a reason (ledger reversal, audit log); a "paid but no coins" list from the P3-11
+    reconciliation with "Add coins".
+  - Depends on: P3-11, P3-18
+  - Done when: a refund requested in real mode shows in /admin/payments, and approving it reverses the coins once.
+
+- [ ] **V21-07 Smaller V2.1 fields**
+  - Build: welcome picks (genres, story languages) saved as account preferences and used by Home; birth year at
+    sign-up (for 16+ / 18+); the Help contact form creates a ticket (T-xxxxx) sent to `[SUPPORT EMAIL]`; "Was this
+    helpful?" votes.
+  - Depends on: P3-02, P3-17
+  - Done when: each one is still there after a reload and on a new device in real mode.
+
+---
+
 ## Phase 6: Functional testing, accessibility and performance
 
 - [ ] **P6-01 Backend tests**
@@ -842,10 +949,28 @@ wiring them are fixed in P5-07.
   - Depends on: Phase 3
   - Done when: 80%+ line coverage on auth, coin and payment; all tests green in CI.
 
-- [ ] **P6-02 Frontend tests**
+- [x] **P6-02 Frontend tests**
   - Build: Vitest + Testing Library for patterns and forms, MSW for API mocks.
   - Depends on: Phase 4
   - Done when: every form's validation and every dialog's open / close is covered.
+  - Done 2026-11-08: `npm test` (Vitest 5, jsdom, Testing Library, MSW 3): 377 tests in 31 files next to the code
+    (`*.test.ts(x)`), about 5 s. They run in real-API mode: MSW answers `/api/v1/...`; `src/test/` holds the harness
+    (setup, MSW server, router and toast stand-ins, `renderUi` with the real English messages, Query client and a clean
+    store). Runs in CI inside the existing Website job (job names unchanged, the ruleset needs them).
+    **Forms** (validation, API errors, rate limits): login, sign up, forgot, reset, email code, account name / password /
+    email / delete, become creator, series, episode, search, 404 search, comment composer, checkout card (never has a card
+    field). **Dialogs and popovers** (open, close with Escape / X / Cancel, focus return, focus kept inside): unlock,
+    become creator, admin reason, episode preview, change password / email / delete account, demo reset, search (⌘K),
+    episode list, reading settings. Also: auth schemas, the unlock flow (idempotency key reused on retry), creator gate,
+    settings, admin lists, comments (post, like, delete, report), readers and their bars, messages (same keys in en and km).
+    Spot check: breaking the idempotency-key reuse made its test fail.
+    **Found and fixed while writing them:** the admin reason dialog, the become-creator dialog and the episode preview did
+    not return focus to the button that opened them (now use `useRestoreFocus`); the creator dashboard's empty-state button
+    used a message key that does not exist (`creator.startPublishing`, now `creator.start`).
+    **Note for P6-04:** the novel reader shows the chapter title as a level-1 heading twice (bar and page).
+    Not covered (no form or dialog): ImageUploadField / PanelUploader (upload progress), ChapterEditor on its own, the
+    Home, Series, Coins and Library pages, the end-of-episode cards (stubbed in the reader tests). No coverage figure was
+    measured. `npm run test:e2e` needs port 3000 free: a dev server in real mode there is reused and fails the demo tests.
 
 - [ ] **P6-03 End-to-end tests**
   - Build: Playwright for the six key flows on desktop Chrome, emulated Android (Pixel 7) and iPhone, against
@@ -1126,7 +1251,9 @@ All 74 plan tasks, and where each one lives.
     series that exists only in the API would 404 until P5-07 moves these to `BACKEND_URL`. The API's own 404
     answers are handled in the browser (`notFound()`); `?demo=` flags do nothing with the real API.
 49. **Locked episodes with the real API:** the reader asks the API; 402 `episode_locked` sends it to the series
-    page with the unlock dialog. Until Step 5 part 4 the unlock itself is still the demo (the local store), so
-    with the real API a Fast Pass episode stays locked after the demo "unlock" and the reader comes back to the
-    dialog; lock icons in the lists also still follow the local store.
-50. **Continue reading on Home** is empty with the real API until Step 5 part 3 (`/me/history`).
+    page with the unlock dialog. The unlock calls `POST /series/{slug}/episodes/{n}/unlock` and updates the wallet
+    and the viewer's unlocked list (done in P5-07).
+50. **Continue reading on Home** reads `/me/history` for a signed-in reader (done in P5-07).
+51. **Genre pages (after P5-07):** the genre chips, the 404 check and the page title use `GET /genres`
+    (`fetchGenreNamesServer`); a name the Khmer messages do not know is shown as the API sends it.
+    `generateStaticParams` still lists the seeded genres and series so the build needs no API.

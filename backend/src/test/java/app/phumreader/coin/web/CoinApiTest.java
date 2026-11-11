@@ -61,7 +61,7 @@ class CoinApiTest {
 
     @Test
     void theWalletShowsTheBalanceAndTheFirstPurchaseOffer() throws Exception {
-        UUID demoReader = sessions.userId("reader@toonwave.app");
+        UUID demoReader = sessions.userId("reader@phumireader.app");
         mvc.perform(get("/api/v1/me/coins").with(sessions.as(demoReader)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.balance").value(3))
@@ -119,7 +119,7 @@ class CoinApiTest {
 
     @Test
     void withTooFewCoinsNothingChanges() throws Exception {
-        UUID demoReader = sessions.userId("reader@toonwave.app");
+        UUID demoReader = sessions.userId("reader@phumireader.app");
         unlock(demoReader, EPISODE_66, "key-0000003")
                 .andExpect(status().isPaymentRequired())
                 .andExpect(jsonPath("$.error.code").value("not_enough_coins"))

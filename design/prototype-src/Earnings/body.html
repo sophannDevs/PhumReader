@@ -1,0 +1,72 @@
+<div class="v2">
+<!--HEADER-->
+<!--CNAV-->
+  <main class="wrap col" style="gap: 24px; padding-top: 24px; padding-bottom: 64px">
+    <div class="sec-head">
+      <div class="col" style="gap: 4px"><h1 class="h2">Earnings</h1><p class="small muted">You earn when readers spend coins on Fast Pass episodes of your series.</p></div>
+      <div class="tabs-list" role="group" aria-label="Period"><sc-for list="{{ periods }}" as="p" hint-placeholder-count="3"><button type="button" class="tabs-trigger {{ p.cls }}" aria-pressed="{{ p.on }}" onClick="{{ p.pick }}">{{ p.label }}</button></sc-for></div>
+    </div>
+    <sc-if value="{{ noMethod }}" hint-placeholder-val="{{ false }}">
+      <div class="alert warn"><span>[[i:alert]]</span><div class="col grow"><span class="alert-title">Add a payout method to get paid</span><span class="alert-desc">Your earnings are safe. We’ll hold them until you add where to send them.</span></div><button type="button" class="btn btn-primary btn-sm" onClick="{{ openMethod }}">Add payout method</button></div>
+    </sc-if>
+    <div class="cr-stats">
+      <sc-for list="{{ stats }}" as="x" hint-placeholder-count="4"><div class="card stat"><span class="small muted">{{ x.label }}</span><span class="v tnum {{ x.vCls }}">{{ x.v }}</span><span class="xs {{ x.dCls }}">{{ x.d }}</span></div></sc-for>
+    </div>
+
+    <div class="er2-grid">
+      <div class="col" style="gap: 24px; min-width: 0">
+        <section class="card" aria-labelledby="ch-h">
+          <div class="card-head"><div class="row" style="justify-content: space-between; gap: 12px"><h2 id="ch-h" class="h3">Coins earned</h2><button type="button" class="btn btn-ghost btn-sm" onClick="{{ toggleTable }}" aria-pressed="{{ asTable }}">{{ tableLabel }}</button></div></div>
+          <div class="card-body">
+            <sc-if value="{{ asChart }}" hint-placeholder-val="{{ true }}">
+              <div class="er2-chart" style="--n: {{ barN }}" role="img" aria-label="{{ chartAria }}"><sc-for list="{{ bars }}" as="b" hint-placeholder-count="6"><div class="er2-bar {{ b.cls }}"><strong class="xs tnum">{{ b.v }}</strong><span style="height: {{ b.h }}"></span><em>{{ b.m }}</em></div></sc-for></div>
+            </sc-if>
+            <sc-if value="{{ asTable }}" hint-placeholder-val="{{ false }}">
+              <div class="tbl2" role="table" aria-label="Coins earned by month"><div class="tr2 th2" role="row"><span role="columnheader">Month</span><span role="columnheader" style="text-align: right">Coins</span><span role="columnheader" style="text-align: right">Unlocks</span></div><sc-for list="{{ bars }}" as="b" hint-placeholder-count="6"><div class="tr2" role="row"><span role="cell">{{ b.mLong }}</span><span role="cell" class="tnum" style="text-align: right">{{ b.v }}</span><span role="cell" class="tnum" style="text-align: right">{{ b.u }}</span></div></sc-for></div>
+            </sc-if>
+          </div>
+        </section>
+        <section class="card" aria-labelledby="bs-h">
+          <div class="card-head"><h2 id="bs-h" class="h3">By series</h2></div>
+          <div class="card-body col" style="gap: 14px">
+            <sc-for list="{{ bySeries }}" as="s" hint-placeholder-count="2">
+              <div class="col" style="gap: 6px"><div class="row" style="justify-content: space-between; gap: 12px"><span class="row small" style="gap: 10px; font-weight: 600; min-width: 0"><img src="{{ s.cover }}" alt="" style="width: 28px; height: 36px; border-radius: 4px; object-fit: cover">{{ s.title }}</span><span class="small tnum">{{ s.coins }} coins · {{ s.pct }}</span></div><div class="progress" aria-hidden="true"><span style="width: {{ s.pct }}"></span></div><span class="xs muted">{{ s.meta }}</span></div>
+            </sc-for>
+          </div>
+        </section>
+      </div>
+      <div class="col" style="gap: 24px; min-width: 0">
+        <section class="card" aria-labelledby="po-h">
+          <div class="card-head"><h2 id="po-h" class="h3">Payouts</h2></div>
+          <div class="card-body col" style="gap: 14px">
+            <div class="er2-box"><span class="xs muted">Available to withdraw</span><span class="h2">[USD AMOUNT]</span><span class="xs muted">From {{ availCoins }} coins at [REVENUE SHARE]%</span></div>
+            <sc-if value="{{ hasMethod }}" hint-placeholder-val="{{ true }}">
+              <div class="st-rowc"><span class="row" style="gap: 10px"><span class="pm-ic2">ABA</span><span class="col"><span class="small" style="font-weight: 600">ABA Bank</span><span class="xs muted">[PAYOUT ACCOUNT]</span></span></span><button type="button" class="btn btn-ghost btn-sm" onClick="{{ openMethod }}">Change</button></div>
+              <span class="xs muted">Next payout: [PAYOUT DATE] · Minimum [MIN PAYOUT]</span>
+            </sc-if>
+            <sc-if value="{{ noMethod }}" hint-placeholder-val="{{ false }}"><button type="button" class="btn btn-primary btn-block" onClick="{{ openMethod }}">Add payout method</button></sc-if>
+          </div>
+        </section>
+        <section class="card" aria-labelledby="ph-h">
+          <div class="card-head"><h2 id="ph-h" class="h3">Payout history</h2></div>
+          <ul class="card-body er2-hist"><sc-for list="{{ history }}" as="h" hint-placeholder-count="3"><li><span class="col"><span class="small" style="font-weight: 600">{{ h.date }}</span><span class="xs muted">{{ h.coins }} coins</span></span><span class="col" style="align-items: flex-end"><span class="small">[USD AMOUNT]</span><span class="badge {{ h.cls }}">{{ h.status }}</span></span></li></sc-for></ul>
+        </section>
+        <p class="xs muted">Prototype: money amounts, revenue share and payout rules are placeholders until the creator agreement is final.</p>
+      </div>
+    </div>
+  </main>
+  <sc-if value="{{ methodOpen }}" hint-placeholder-val="{{ false }}">
+    <div class="overlay" onClick="{{ closeMethod }}"></div>
+    <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="pm-h" style="top: {{ dlgTop }}">
+      <button type="button" class="btn btn-ghost btn-icon btn-sm dialog-x" onClick="{{ closeMethod }}" aria-label="Close">[[i:x]]</button>
+      <h2 id="pm-h" class="h3">Payout method</h2>
+      <p class="small muted">Where should we send your earnings? Bank details are collected by the payout provider.</p>
+      <div class="col" style="gap: 8px" role="radiogroup" aria-label="Payout method"><sc-for list="{{ methods }}" as="m" hint-placeholder-count="2"><button type="button" role="radio" aria-checked="{{ m.on }}" class="cs-opt {{ m.cls }}" onClick="{{ m.pick }}"><span class="cs-dot"></span><span class="col" style="gap: 2px; text-align: left"><span class="small" style="font-weight: 600">{{ m.label }}</span><span class="xs muted">{{ m.desc }}</span></span></button></sc-for></div>
+      <div class="placeholder2">[PAYOUT PROVIDER FORM]</div>
+      <button type="button" class="btn btn-primary btn-block" onClick="{{ saveMethod }}">Save payout method</button>
+    </div>
+  </sc-if>
+<!--FOOTER-->
+<!--MOBNAV-->
+<!--LAYERS-->
+</div>

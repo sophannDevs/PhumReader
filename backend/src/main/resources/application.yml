@@ -28,6 +28,14 @@ server:
 
 phumreader:
   frontend-url: ${FRONTEND_URL:}
+  payments:
+    # ABA PayWay (plan A4). Empty merchant id = no PayWay (the dev profile uses the simulator).
+    payway:
+      merchant-id: ${PAYWAY_MERCHANT_ID:}
+      api-key: ${PAYWAY_API_KEY:}
+      base-url: ${PAYWAY_BASE_URL:https://checkout-sandbox.payway.com.kh}
+      callback-url: ${PAYWAY_CALLBACK_URL:}
+      hosted-checkout: ${PAYWAY_HOSTED_CHECKOUT:false}
 
 management:
   endpoints:

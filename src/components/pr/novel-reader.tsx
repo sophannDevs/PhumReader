@@ -5,35 +5,59 @@ import { useTranslations } from "next-intl"
 import { EpisodeListPopover } from "@/components/layout/episode-list-popover"
 import { NovelReaderBar } from "@/components/layout/reader-bar"
 import { ReadingSettingsPopover } from "@/components/layout/reading-settings"
-import { NovelEndSection } from "@/components/pr/novel-end-section"
 import { EmptyState } from "@/components/pr/empty-state"
 import { ErrorState } from "@/components/pr/error-state"
+import { FastPassLockCard } from "@/components/pr/fast-pass-lock-card"
+import { NovelEndSection } from "@/components/pr/novel-end-section"
+import { novelVars, useNovelSettings } from "@/components/pr/reader-theme"
+import { ResumeChip } from "@/components/pr/resume-chip"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
-import type { NovelBlock } from "@/data"
+import { fastPassPrice, type Episode, type NovelBlock, type NovelChapter, type Series } from "@/data"
 import { Link } from "@/i18n/navigation"
+import { inlineMarks } from "@/lib/inline-marks"
+import { useLocalize } from "@/lib/localize"
 import { useChapter } from "@/lib/queries"
 import { seriesHref } from "@/lib/routes"
-import { inlineMarks } from "@/lib/inline-marks"
-import { useAppStore } from "@/lib/store"
-import { useLockedRedirect } from "@/lib/use-locked-redirect"
+import { type NovelSettings, useUser } from "@/lib/store"
+import { useLockedEpisode, useReloadWhenUnlocked } from "@/lib/use-locked-redirect"
 import { useReaderNav } from "@/lib/use-reader-nav"
+import { useReadingPosition } from "@/lib/use-reading-position"
 import { cn } from "@/lib/utils"
-import { useLocalize } from "@/lib/localize"
+
+/** The reader root: theme tokens (`data-reader-theme` + the prototype's `.nr.sepia` / `.nr.dark`), text size and spacing. */
+function NovelRoot({ settings, children, ...props }: { settings: NovelSettings; children: React.ReactNode } & React.ComponentProps<"div">) {
+  return (
+    <div
+      data-reader-theme={settings.theme}
+      style={
+        {
+          ...novelVars(settings.theme),
+          "--novel-size": `${settings.size}px`,
+          "--novel-leading": settings.wide ? 1.85 : 1.6,
+        } as React.CSSProperties
+      }
+      className="flex flex-1 flex-col bg-reader-page text-reader-text"
+      {...props}
+    >
+      {children}
+    </div>
+  )
+}
 
 export function NovelSkeleton() {
-  const theme = useAppStore((s) => s.novelSettings.theme)
+  const { settings } = useNovelSettings()
   return (
-    <div className="flex flex-1 flex-col bg-reader-page" data-reader-theme={theme} aria-hidden>
-      <Skeleton className="h-14 rounded-none" />
-      <div className="mx-auto flex w-full max-w-[720px] flex-col gap-3 px-4 py-12">
-        <Skeleton className="h-3 w-20" />
-        <Skeleton className="h-10 w-2/3" />
+    <NovelRoot settings={settings} aria-hidden>
+      <Skeleton className="h-14 rounded-none bg-accent" />
+      <div className="mx-auto flex w-full max-w-[720px] flex-col gap-3 px-6 py-10 max-md:px-[18px] max-md:py-6">
+        <Skeleton className="h-3 w-20 bg-accent" />
+        <Skeleton className="h-9 w-2/3 bg-accent" />
         {Array.from({ length: 9 }, (_, i) => (
-          <Skeleton key={i} className={cn("h-4", i % 4 === 3 ? "w-3/5" : "w-full")} />
+          <Skeleton key={i} className={cn("h-4 bg-accent", i % 4 === 3 ? "w-3/5" : "w-full")} />
         ))}
       </div>
-    </div>
+    </NovelRoot>
   )
 }
 
@@ -43,87 +67,135 @@ export function NovelSkeleton() {
  */
 export function readMinutes(blocks: NovelBlock[]): number {
   const text = blocks.map((b) => ("text" in b ? b.text : "")).join(" ")
-  const khmer = (text.match(/[\u1780-\u17FF]/g) ?? []).length
-  const words = text.replace(/[\u1780-\u17FF]+/g, " ").split(/\s+/).filter(Boolean).length
+  const khmer = (text.match(/[ក-៿]/g) ?? []).length
+  const words = text.replace(/[ក-៿]+/g, " ").split(/\s+/).filter(Boolean).length
   return Math.max(1, Math.ceil(words / 200 + khmer / 1000))
 }
 
-/** Chapter body: paragraphs, headings, italic quotes with a green rule, centred "* * *" scene breaks; **bold** and *italic* marks. */
+/** Chapter body (prototype `.nr-text`): paragraphs, headings, italic quotes with a green rule, "* * *" scene breaks; **bold** and *italic* marks. */
 export function NovelBody({ blocks }: { blocks: NovelBlock[] }) {
   return (
-    <div className="flex flex-col gap-[1.1em]">
+    <>
       {blocks.map((b, i) =>
         b.type === "scene-break" ? (
-          <p key={i} aria-hidden className="py-2 text-center tracking-[1em] text-reader-quiet">
+          <div key={i} role="separator" className="my-[1.6em] text-center tracking-[0.6em] text-reader-quiet">
             * * *
-          </p>
+          </div>
         ) : b.type === "heading" ? (
-          <h2 key={i} className="pt-2 text-[1.25em] leading-snug font-semibold">
+          <h2 key={i} className="mb-[0.6em] text-[1.25em] leading-snug font-semibold">
             {inlineMarks(b.text)}
           </h2>
         ) : b.type === "quote" ? (
-          <blockquote key={i} className="border-l-[3px] border-primary pl-4 italic">
+          <blockquote key={i} className="mb-[1.15em] border-l-[3px] border-primary pl-4 italic">
             {inlineMarks(b.text)}
           </blockquote>
         ) : (
-          <p key={i}>{inlineMarks(b.text)}</p>
+          <p key={i} className="mb-[1.15em]">
+            {inlineMarks(b.text)}
+          </p>
         )
       )}
-    </div>
+    </>
   )
 }
 
-/** Novel reader: themed page (settings from the store), 720 px column, chapter bar and navigation. */
+/**
+ * Novel reader (spec §4, prototype Novel): themed page (light / sepia / dark, size, font, spacing; first visit from
+ * Settings), bar with reading progress, resume chip, the chapter and its end, ← / → between chapters, and the Fast
+ * Pass lock screen (two teaser paragraphs fading out, then the unlock card) for a locked chapter.
+ */
 export function NovelReader({ slug, n }: { slug: string; n: number }) {
   const query = useChapter(slug, n)
-  const settings = useAppStore((s) => s.novelSettings)
+  const { settings } = useNovelSettings()
   const t = useTranslations("reader")
-  // Real API: a locked chapter (402) goes to the series page with the unlock dialog.
-  const locked = useLockedRedirect(slug, n, query.error)
+  const lock = useLockedEpisode(slug, n, query.error)
 
-  if (query.isPending || locked) return <NovelSkeleton />
+  if (query.isPending || (lock.locked && lock.pending)) return <NovelSkeleton />
+  if (lock.locked && lock.series && lock.episode)
+    return (
+      <NovelRoot settings={settings}>
+        <NovelReaderBody
+          key={`${slug}:${n}`}
+          series={lock.series}
+          chapter={summaryChapter(lock.episode)}
+          total={lock.total}
+          font={settings.font}
+          lockedByApi
+          refetch={query.refetch}
+        />
+      </NovelRoot>
+    )
   if (query.isError)
     return (
-      <div data-reader-theme={settings.theme} className="flex flex-1 flex-col bg-reader-page text-reader-text">
+      <NovelRoot settings={settings}>
         <ErrorState
           className="flex-1 justify-center [&_p]:text-reader-quiet"
           onRetry={() => void query.refetch()}
           extra={
-            <Button asChild variant="ghost">
+            <Button asChild variant="ghost" className="text-reader-text hover:bg-accent hover:text-reader-text">
               <Link href={`/series/${slug}`}>{t("backToSeries")}</Link>
             </Button>
           }
         />
-      </div>
+      </NovelRoot>
     )
   if (!query.data) notFound()
 
   const { series, chapter, total } = query.data
   return (
-    <div
-      data-reader-theme={settings.theme}
-      style={
-        {
-          "--novel-size": `${settings.size}px`,
-          "--novel-leading": settings.wide ? 1.85 : 1.6,
-        } as React.CSSProperties
-      }
-      className="flex flex-1 flex-col bg-reader-page text-reader-text"
-    >
-      <NovelReaderBody series={series} chapter={chapter} total={total} font={settings.font} />
-    </div>
+    <NovelRoot settings={settings}>
+      <NovelReaderBody key={`${slug}:${n}`} series={series} chapter={chapter} total={total} font={settings.font} refetch={query.refetch} />
+    </NovelRoot>
   )
 }
 
-type Loaded = NonNullable<ReturnType<typeof useChapter>["data"]>
+/** Real API, locked chapter (402): the chapter as the list knows it, without its text. */
+const summaryChapter = (e: Episode): NovelChapter => ({
+  n: e.n,
+  title: e.title,
+  name: e.title.replace(/^Chapter \d+:\s*/, ""),
+  date: e.date,
+  blocks: [],
+  creatorNote: "",
+  likes: e.likes,
+})
 
-function NovelReaderBody({ series, chapter, total, font }: Loaded & { font: "sans" | "serif" }) {
+type BodyProps = {
+  series: Series
+  chapter: NovelChapter
+  total: number
+  font: NovelSettings["font"]
+  lockedByApi?: boolean
+  refetch: () => unknown
+}
+
+function NovelReaderBody(props: BodyProps) {
+  const { series, chapter, total, lockedByApi = false, refetch } = props
+  const nav = useReaderNav(series, chapter.n, total, { lockedByApi })
+  useReloadWhenUnlocked(series, chapter.n, lockedByApi, refetch)
+  if (nav.gated) return <NovelSkeleton />
+  return <NovelReaderView {...props} nav={nav} />
+}
+
+type Nav = ReturnType<typeof useReaderNav>
+
+const h1 = "mt-1.5 text-[30px] leading-[38px] font-bold tracking-[-0.02em] max-md:text-2xl max-md:leading-[30px]"
+
+/** Mounted once the store and the chapter list are known (the saved place is read on mount). */
+function NovelReaderView({ series, chapter, total, font, nav }: BodyProps & { nav: Nav }) {
   const t = useTranslations("reader")
   const loc = useLocalize()
+  const user = useUser()
+  const { settings } = useNovelSettings()
   const n = chapter.n
-  const { go, list, listEpisodes, isLocked, coins, dialog, gated, finishRef } = useReaderNav(series, n, total)
-  if (gated) return <NovelSkeleton />
+  const price = fastPassPrice()
+  const { go, list, listEpisodes, isLocked, coins, request, handOff, dialog, locked, finishRef } = nav
   const nextEpisode = list.find((e) => e.n === n + 1)
+  const here = list.find((e) => e.n === n)
+  const position = useReadingPosition({ seriesId: series.id, n, savePos: !locked })
+  const bundle = list.filter((e) => isLocked(e)).length
+  const textClass = cn("type-novel", font === "serif" && "font-novel")
+  const btn = "text-reader-text hover:bg-accent hover:text-reader-text focus-visible:ring-offset-reader-page"
 
   return (
     <>
@@ -131,39 +203,84 @@ function NovelReaderBody({ series, chapter, total, font }: Loaded & { font: "san
         backHref={seriesHref(series)}
         seriesTitle={series.title}
         itemTitle={chapter.name}
-        progress={n / total}
-        prevDisabled={n <= 1}
-        nextDisabled={n >= total}
-        onPrev={() => go(n - 1)}
-        onNext={() => go(n + 1)}
-        listSlot={<EpisodeListPopover tone="themed" kind="chapter" episodes={listEpisodes} current={n} coins={coins} onSelect={go} />}
-        trailingSlot={<ReadingSettingsPopover />}
+        progress={locked ? 0 : position.pct}
+        listSlot={
+          <EpisodeListPopover
+            readerTheme={settings.theme}
+            episodes={listEpisodes}
+            current={n}
+            coins={coins}
+            price={price}
+            onSelect={go}
+            triggerClassName={btn}
+          />
+        }
+        settingsSlot={<ReadingSettingsPopover triggerClassName={btn} />}
       />
-      <article className="mx-auto w-full max-w-[720px] px-4 pt-12 pb-16">
-        <header className="mb-8 flex flex-col gap-2">
-          <p className="type-eyebrow">{t("chapterEyebrow", { n })}</p>
-          <h1 className="type-h1">{chapter.name}</h1>
-          <p className="type-small font-normal text-reader-quiet">
-            {series.creator} · {loc.date(chapter.date)} · {t("minRead", { count: readMinutes(chapter.blocks) })}
-          </p>
-        </header>
-        {chapter.blocks.length === 0 ? (
-          <EmptyState title={t("noText")} description={t("noTextDesc")} />
-        ) : (
-          <div className={cn("type-novel", font === "serif" && "font-novel")}>
-            <NovelBody blocks={chapter.blocks} />
-          </div>
-        )}
-        <NovelEndSection
-          finishRef={finishRef}
-          series={series}
-          chapter={chapter}
-          total={total}
-          nextLocked={!!nextEpisode && isLocked(nextEpisode)}
-          onPrev={() => go(n - 1)}
-          onNext={() => go(n + 1)}
+
+      {!locked && position.resumeAt > 0 ? (
+        <ResumeChip
+          pct={position.resumeAt}
+          onContinue={position.resume}
+          onStartOver={position.startOver}
+          className="border-border bg-background text-reader-text shadow-[0_10px_30px_rgba(0,0,0,0.12)]"
         />
-      </article>
+      ) : null}
+
+      <div className="mx-auto flex w-full max-w-[720px] flex-col gap-4 px-6 pt-[51px] pb-20 max-md:px-[18px] max-md:pt-9 max-md:pb-16">
+        {locked ? (
+          <>
+            <article aria-label={t("lockPreview", { title: chapter.name })} className={cn(textClass, "relative max-h-[420px] overflow-hidden")}>
+              <p className="type-eyebrow">{t("chapterEyebrow", { n })}</p>
+              <h1 className={h1}>{chapter.name}</h1>
+              <NovelBody blocks={chapter.blocks.filter((b) => b.type === "paragraph").slice(0, 2)} />
+              <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-40 bg-linear-to-b from-transparent to-reader-page" />
+            </article>
+            <FastPassLockCard
+              kind="chapter"
+              className="-mt-5"
+              title={chapter.name}
+              n={n}
+              freeDate={here?.date ?? chapter.date}
+              price={price}
+              coins={coins}
+              loggedIn={!!user}
+              bundle={bundle > 1 ? { count: bundle } : null}
+              onLogin={() => here && handOff("login", here)}
+              onUnlock={() => here && request(here, "one")}
+              onGetCoins={() => here && handOff("coins", here)}
+              onUnlockAll={() => here && request(here, "all")}
+              onBack={() => go(n - 1)}
+              canGoBack={n > 1}
+            />
+          </>
+        ) : (
+          <>
+            <article className={textClass}>
+              <p className="type-eyebrow">{t("chapterEyebrow", { n })}</p>
+              <h1 className={h1}>{chapter.name}</h1>
+              <p className="mb-7 text-xs leading-4 text-reader-quiet">
+                {series.creator} · {loc.date(chapter.date)} · {t("minRead", { count: readMinutes(chapter.blocks) })}
+              </p>
+              {chapter.blocks.length === 0 ? (
+                <EmptyState title={t("noText")} description={t("noTextDesc")} className="[&_p]:text-reader-quiet" />
+              ) : (
+                <NovelBody blocks={chapter.blocks} />
+              )}
+            </article>
+            <NovelEndSection
+              finishRef={finishRef}
+              series={series}
+              chapter={chapter}
+              total={total}
+              price={price}
+              nextLocked={!!nextEpisode && isLocked(nextEpisode)}
+              onPrev={() => go(n - 1)}
+              onNext={() => go(n + 1)}
+            />
+          </>
+        )}
+      </div>
       {dialog}
     </>
   )

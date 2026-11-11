@@ -5,11 +5,8 @@ import { DEMO_MODE } from "@/lib/api/config"
 import * as real from "@/lib/api/creator"
 import { useAccountEmail } from "@/lib/me"
 
-/** Query keys of the creator pages; "creator" is also the dashboard's prefix, so one invalidation refreshes both. */
-export const creatorKeys = {
-  all: ["creator"] as const,
-  series: (email: string, filter: real.MySeriesFilter) => ["creator", "series", email, filter.q, filter.visibility] as const,
-}
+import { creatorKeys } from "@/lib/api/keys"
+export { creatorKeys }
 
 /** My series with the text and visibility filters (real API; creators only). */
 export function useMySeries(filter: real.MySeriesFilter, enabled: boolean) {
@@ -35,7 +32,7 @@ export function useBecomeCreator() {
 export function useSeriesEdit(id: string) {
   const email = useAccountEmail()
   return useQuery({
-    queryKey: ["creator", "series-edit", email ?? "", id] as const,
+    queryKey: creatorKeys.seriesEdit(email ?? "", id),
     queryFn: () => real.fetchSeriesEdit(id),
     enabled: !DEMO_MODE && !!email,
     retry: false,
@@ -46,7 +43,7 @@ export function useSeriesEdit(id: string) {
 export function useMyEpisodes(seriesId: string, enabled = true) {
   const email = useAccountEmail()
   return useQuery({
-    queryKey: ["creator", "episodes", email ?? "", seriesId] as const,
+    queryKey: creatorKeys.episodes(email ?? "", seriesId),
     queryFn: () => real.fetchMyEpisodes(seriesId),
     enabled: !DEMO_MODE && !!email && enabled,
     retry: false,
@@ -57,7 +54,7 @@ export function useMyEpisodes(seriesId: string, enabled = true) {
 export function useEpisodeEdit(seriesId: string, n: number) {
   const email = useAccountEmail()
   return useQuery({
-    queryKey: ["creator", "episode-edit", email ?? "", seriesId, n] as const,
+    queryKey: creatorKeys.episodeEdit(email ?? "", seriesId, n),
     queryFn: () => real.fetchEpisodeEdit(seriesId, n),
     enabled: !DEMO_MODE && !!email,
     retry: false,

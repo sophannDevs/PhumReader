@@ -1,0 +1,83 @@
+<div class="v2">
+<!--HEADER-->
+  <main class="wrap cm-wrap col" style="gap: 18px; padding-top: 24px; padding-bottom: 64px">
+    <nav class="row xs muted" aria-label="Breadcrumb" style="gap: 6px; flex-wrap: wrap"><a href="{{ seriesHref }}">{{ s.title }}</a>[[i:chevron-right:12]]<span aria-current="page" style="color: var(--foreground)">{{ scopeLabel }}</span></nav>
+    <header class="cm-head">
+      <img src="{{ s.cover }}" alt="">
+      <div class="col grow" style="gap: 2px; min-width: 0"><h1 class="h2">Comments <span class="muted" style="font-weight: 500">{{ total }}</span></h1><span class="small muted trunc">{{ s.title }} · {{ scopeLabel }}</span></div>
+      <a class="btn btn-outline btn-sm" href="{{ readHref }}" onClick="{{ toRead }}">[[i:book:14]]{{ readLabel }}</a>
+    </header>
+
+    <section class="card cm-compose" aria-label="Write a comment">
+      <sc-if value="{{ loggedIn }}" hint-placeholder-val="{{ true }}">
+        <div class="row" style="gap: 10px; align-items: flex-start"><span class="avatar brand">{{ userInitials }}</span>
+          <div class="col grow" style="gap: 8px; min-width: 0">
+            <label class="sr-only" for="cm-new">Your comment</label>
+            <textarea id="cm-new" class="textarea" rows="3" maxlength="500" value="{{ draft }}" onChange="{{ onDraft }}" placeholder="What did you think? Be kind."></textarea>
+            <div class="cm-tools">
+              <label class="cm-check"><button type="button" role="checkbox" class="checkbox {{ spoilerCls }}" aria-checked="{{ spoiler }}" onClick="{{ toggleSpoiler }}">[[i:check:12]]</button><span class="small">Contains spoilers</span></label>
+              <span class="xs muted tnum" style="margin-left: auto">{{ draftCount }}/500</span>
+              <button type="button" class="btn btn-primary btn-sm" onClick="{{ post }}" disabled="{{ cantPost }}">Post</button>
+            </div>
+            <span class="xs muted">Follow the <a class="ink" href="{{ legalHref }}" onClick="{{ rpLegal }}" style="text-decoration: underline">community guidelines</a>. Spoilers are hidden until readers tap them.</span>
+          </div>
+        </div>
+      </sc-if>
+      <sc-if value="{{ loggedOut }}" hint-placeholder-val="{{ false }}"><div class="row" style="gap: 12px; justify-content: space-between; flex-wrap: wrap"><span class="small">Log in to join the conversation.</span><a class="btn btn-primary btn-sm" href="{{ authHref }}" onClick="{{ toAuth }}">Log in</a></div></sc-if>
+    </section>
+
+    <div class="cm-bar">
+      <div class="tabs-list" role="group" aria-label="Sort comments"><sc-for list="{{ sorts }}" as="o" hint-placeholder-count="2"><button type="button" class="tabs-trigger {{ o.cls }}" aria-pressed="{{ o.on }}" onClick="{{ o.pick }}">{{ o.label }}</button></sc-for></div>
+      <label class="cm-check"><button type="button" role="checkbox" class="checkbox {{ creatorOnlyCls }}" aria-checked="{{ creatorOnly }}" onClick="{{ toggleCreatorOnly }}">[[i:check:12]]</button><span class="small">Only threads with a creator reply</span></label>
+    </div>
+
+    <ul class="cm-list" aria-label="Comments">
+      <sc-for list="{{ threads }}" as="c" hint-placeholder-count="4">
+        <li class="cm-item {{ c.cls }}">
+          <sc-if value="{{ c.pinned }}" hint-placeholder-val="{{ false }}"><span class="xs cm-pin">[[i:bookmark:12]]Pinned by the creator</span></sc-if>
+          <div class="cm-row">
+            <span class="avatar {{ c.avCls }}">{{ c.ini }}</span>
+            <div class="col grow" style="gap: 4px; min-width: 0">
+              <span class="row small" style="gap: 6px; flex-wrap: wrap"><strong>{{ c.name }}</strong><sc-if value="{{ c.isCreator }}" hint-placeholder-val="{{ false }}"><span class="badge badge-brand">Creator</span></sc-if><sc-if value="{{ c.isMine }}" hint-placeholder-val="{{ false }}"><span class="badge badge-secondary">You</span></sc-if><span class="muted">· {{ c.when }}</span><sc-if value="{{ c.edited }}" hint-placeholder-val="{{ false }}"><span class="xs muted">(edited)</span></sc-if></span>
+              <sc-if value="{{ c.hideText }}" hint-placeholder-val="{{ false }}"><button type="button" class="cm-spoiler" onClick="{{ c.reveal }}">Spoiler hidden · Tap to show</button></sc-if>
+              <sc-if value="{{ c.showText }}" hint-placeholder-val="{{ true }}"><p class="cm-text">{{ c.text }}</p></sc-if>
+              <sc-if value="{{ c.editing }}" hint-placeholder-val="{{ false }}"><div class="col" style="gap: 6px"><label class="sr-only" for="{{ c.edId }}">Edit your comment</label><textarea id="{{ c.edId }}" class="textarea" rows="2" maxlength="500" value="{{ c.edText }}" onChange="{{ c.onEd }}"></textarea><div class="row" style="gap: 6px"><button type="button" class="btn btn-primary btn-sm" onClick="{{ c.saveEd }}">Save</button><button type="button" class="btn btn-ghost btn-sm" onClick="{{ c.cancelEd }}">Cancel</button></div></div></sc-if>
+              <div class="cm-acts">
+                <button type="button" class="btn btn-ghost btn-sm" onClick="{{ c.like }}" aria-pressed="{{ c.liked }}" aria-label="{{ c.likeAria }}">[[i:thumbs-up:14]]{{ c.likes }}</button>
+                <button type="button" class="btn btn-ghost btn-sm" onClick="{{ c.reply }}">Reply</button>
+                <sc-if value="{{ c.notMine }}" hint-placeholder-val="{{ true }}"><button type="button" class="btn btn-ghost btn-sm more-btn" onClick="{{ c.report }}" aria-label="Report comment by {{ c.name }}">Report</button><button type="button" class="btn btn-ghost btn-sm more-btn" onClick="{{ c.block }}" aria-label="Block {{ c.name }}">Block</button></sc-if>
+                <sc-if value="{{ c.isMine }}" hint-placeholder-val="{{ false }}"><button type="button" class="btn btn-ghost btn-sm more-btn" onClick="{{ c.edit }}">Edit</button><button type="button" class="btn btn-ghost btn-sm more-btn" onClick="{{ c.del }}">Delete</button></sc-if>
+              </div>
+            </div>
+          </div>
+          <sc-if value="{{ c.hasReplies }}" hint-placeholder-val="{{ true }}">
+            <button type="button" class="cm-more" onClick="{{ c.toggleReplies }}" aria-expanded="{{ c.open }}">{{ c.repliesLabel }}</button>
+          </sc-if>
+          <sc-if value="{{ c.open }}" hint-placeholder-val="{{ false }}">
+            <ul class="cm-replies">
+              <sc-for list="{{ c.replies }}" as="r" hint-placeholder-count="2">
+                <li class="cm-row">
+                  <span class="avatar {{ r.avCls }}" style="width: 28px; height: 28px; font-size: 11px">{{ r.ini }}</span>
+                  <div class="col grow" style="gap: 3px; min-width: 0">
+                    <span class="row small" style="gap: 6px; flex-wrap: wrap"><strong>{{ r.name }}</strong><sc-if value="{{ r.isCreator }}" hint-placeholder-val="{{ false }}"><span class="badge badge-brand">Creator</span></sc-if><span class="muted">· {{ r.when }}</span></span>
+                    <p class="cm-text">{{ r.text }}</p>
+                    <div class="cm-acts"><button type="button" class="btn btn-ghost btn-sm" onClick="{{ r.like }}" aria-pressed="{{ r.liked }}">[[i:thumbs-up:14]]{{ r.likes }}</button><sc-if value="{{ r.notMine }}" hint-placeholder-val="{{ true }}"><button type="button" class="btn btn-ghost btn-sm more-btn" onClick="{{ r.report }}">Report</button></sc-if></div>
+                  </div>
+                </li>
+              </sc-for>
+            </ul>
+          </sc-if>
+          <sc-if value="{{ c.replying }}" hint-placeholder-val="{{ false }}">
+            <form class="cm-replyform" onSubmit="{{ c.sendReply }}"><label class="sr-only" for="{{ c.rpId }}">Reply to {{ c.name }}</label><input id="{{ c.rpId }}" class="input" value="{{ c.rpDraft }}" onChange="{{ c.onRp }}" placeholder="Reply to {{ c.name }}…" maxlength="300"><button type="submit" class="btn btn-primary btn-sm">Reply</button><button type="button" class="btn btn-ghost btn-sm" onClick="{{ c.cancelReply }}">Cancel</button></form>
+          </sc-if>
+        </li>
+      </sc-for>
+    </ul>
+    <sc-if value="{{ hasHidden }}" hint-placeholder-val="{{ false }}"><div class="row xs muted" style="gap: 8px; padding: 10px 12px; border-radius: 8px; background: var(--muted)">{{ hiddenLine }}<button type="button" class="btn btn-link btn-sm" style="padding: 0; height: auto" onClick="{{ toggleHidden }}">{{ hiddenBtn }}</button></div></sc-if>
+    <sc-if value="{{ isEmpty }}" hint-placeholder-val="{{ false }}"><div class="card col" style="align-items: center; text-align: center; gap: 8px; padding: 32px 20px"><h2 class="h4">No comments match</h2><p class="small muted">Turn off the creator filter to see every comment.</p></div></sc-if>
+    <sc-if value="{{ hasMore }}" hint-placeholder-val="{{ true }}"><button type="button" class="btn btn-outline" style="align-self: center" onClick="{{ more }}">Show more comments</button></sc-if>
+  </main>
+<!--FOOTER-->
+<!--MOBNAV-->
+<!--LAYERS-->
+</div>

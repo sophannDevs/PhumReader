@@ -1,0 +1,10 @@
+{
+  "read": "Read",
+  "unlocked": "Unlocked",
+  "upNext": "Up next",
+  "likes": "{count} likes",
+  "coins": "{count, plural, one {# coin} other {# coins}}",
+  "freeOnShort": "Free {date}",
+  "freeIn": "{days, plural, =0 {Free today} =1 {Free tomorrow} other {Free in # days}}",
+  "fastPass": "Fast Pass,"
+}

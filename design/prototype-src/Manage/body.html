@@ -1,0 +1,121 @@
+<div class="v2">
+<!--HEADER-->
+<!--CNAV-->
+  <main class="wrap col" style="gap: 20px; padding-top: 20px; padding-bottom: 64px">
+    <nav class="row xs muted" aria-label="Breadcrumb" style="gap: 6px"><a href="{{ creatorHref }}">Dashboard</a>[[i:chevron-right:12]]<span aria-current="page" style="color: var(--foreground)">{{ w.title }}</span></nav>
+    <section class="mg-head">
+      <img src="{{ w.cover }}" alt="">
+      <div class="col grow" style="gap: 6px; min-width: 0">
+        <div class="row" style="gap: 6px; flex-wrap: wrap"><span class="badge {{ statusCls }}">{{ statusLabel }}</span><span class="badge badge-outline">{{ formatLabel }}</span><span class="badge badge-outline">{{ w.genre }}</span><span class="badge badge-outline">{{ runLabel }}</span></div>
+        <h1 class="h2">{{ w.title }}</h1>
+        <span class="small muted">{{ headMeta }}</span>
+      </div>
+      <div class="row mg-hacts" style="gap: 8px"><a class="btn btn-outline" href="{{ seriesHref }}" onClick="{{ viewAsReader }}">View as reader</a><sc-if value="{{ isLive }}" hint-placeholder-val="{{ true }}"><a class="btn btn-primary" href="{{ uploadHref }}" onClick="{{ toUpload }}">[[i:external:16]]Upload {{ unitLower }}</a></sc-if></div>
+    </section>
+
+    <sc-if value="{{ isChanges }}" hint-placeholder-val="{{ false }}">
+      <section class="alert bad mg-review" aria-labelledby="rv-h">
+        <span>[[i:alert]]</span>
+        <div class="col grow" style="gap: 10px">
+          <div class="col" style="gap: 2px"><span id="rv-h" class="alert-title">Changes needed before this series can go live</span><span class="alert-desc">Reviewed by the PhumiReader team. Fix these {{ fixTotal }} things, then resubmit. You won’t lose your place in the queue.</span></div>
+          <ul class="mg-fixes"><sc-for list="{{ fixes }}" as="f" hint-placeholder-count="2"><li class="{{ f.cls }}"><span class="cs-tick">{{ f.ic }}</span><span class="col grow" style="gap: 1px"><span class="small" style="font-weight: 600">{{ f.t }}</span><span class="xs">{{ f.d }}</span></span><sc-if value="{{ f.todo }}" hint-placeholder-val="{{ true }}"><button type="button" class="btn btn-outline btn-sm" onClick="{{ f.go }}">{{ fixBtn }}</button></sc-if></li></sc-for></ul>
+          <div class="row" style="gap: 8px; flex-wrap: wrap"><button type="button" class="btn btn-primary btn-sm" onClick="{{ resubmit }}" disabled="{{ cantResubmit }}">Resubmit for review</button><span class="xs">{{ fixLine }}</span></div>
+        </div>
+      </section>
+    </sc-if>
+    <sc-if value="{{ isResubmitted }}" hint-placeholder-val="{{ false }}"><div class="alert warn" role="status"><span>[[i:clock]]</span><span class="alert-desc">Resubmitted. We’ll review your changes within 1–2 days and send you a notification.</span></div></sc-if>
+
+    <div class="line-tabs" role="tablist" aria-label="Manage series"><sc-for list="{{ tabs }}" as="t" hint-placeholder-count="4"><button type="button" role="tab" class="line-tab {{ t.cls }}" aria-selected="{{ t.on }}" onClick="{{ t.pick }}">{{ t.label }}<sc-if value="{{ t.hasCount }}" hint-placeholder-val="{{ false }}"><span class="badge badge-secondary">{{ t.count }}</span></sc-if></button></sc-for></div>
+
+    <sc-if value="{{ tabEps }}" hint-placeholder-val="{{ true }}">
+      <div class="mg-tools">
+        <div class="row" style="gap: 6px; flex-wrap: wrap" role="group" aria-label="Filter"><sc-for list="{{ filters }}" as="f" hint-placeholder-count="4"><button type="button" class="chip {{ f.cls }}" aria-pressed="{{ f.on }}" onClick="{{ f.pick }}">{{ f.label }} <span class="gn-count2">{{ f.count }}</span></button></sc-for></div>
+        <button type="button" class="btn btn-ghost btn-sm" onClick="{{ toggleSort }}">[[i:sort:14]]{{ sortLabel }}</button>
+      </div>
+      <sc-if value="{{ hasEps }}" hint-placeholder-val="{{ true }}">
+      <ul class="mg-list">
+        <sc-for list="{{ eps }}" as="e" hint-placeholder-count="6">
+          <li class="mg-ep {{ e.rowCls }}">
+            <img class="mg-th" src="{{ e.thumb }}" alt="">
+            <div class="col grow" style="gap: 4px; min-width: 0">
+              <span class="small trunc" style="font-weight: 600">{{ e.label }}</span>
+              <div class="row" style="gap: 6px; flex-wrap: wrap"><span class="badge {{ e.stCls }}">{{ e.stLabel }}</span><span class="xs muted">{{ e.when }}</span></div>
+            </div>
+            <sc-if value="{{ e.hasStats }}" hint-placeholder-val="{{ true }}"><div class="mg-stats only-desk"><span><strong class="tnum">{{ e.views }}</strong> views</span><span><strong class="tnum">{{ e.likes }}</strong> likes</span><span><strong class="tnum">{{ e.cms }}</strong> comments</span></div></sc-if>
+            <div class="mg-acts">
+              <button type="button" class="btn btn-outline btn-sm" onClick="{{ e.edit }}" aria-label="Edit {{ e.label }}">Edit</button>
+              <sc-if value="{{ e.canHide }}" hint-placeholder-val="{{ true }}"><button type="button" class="btn btn-ghost btn-sm" onClick="{{ e.hide }}" aria-label="{{ e.hideAria }}">{{ e.hideLabel }}</button></sc-if>
+              <sc-if value="{{ e.isDraft }}" hint-placeholder-val="{{ false }}"><button type="button" class="btn btn-ghost btn-sm mg-del" onClick="{{ e.del }}" aria-label="Delete draft {{ e.label }}">Delete</button></sc-if>
+            </div>
+          </li>
+        </sc-for>
+      </ul>
+      </sc-if>
+      <sc-if value="{{ noEps }}" hint-placeholder-val="{{ false }}"><div class="card col" style="align-items: center; text-align: center; gap: 8px; padding: 36px 20px"><h2 class="h4">{{ emptyTitle }}</h2><p class="small muted">{{ emptyBody }}</p></div></sc-if>
+      <sc-if value="{{ hasMore }}" hint-placeholder-val="{{ true }}"><div class="row" style="justify-content: center; gap: 12px"><span class="small muted">Showing {{ shownCount }} of {{ totalCount }}</span><button type="button" class="btn btn-outline btn-sm" onClick="{{ more }}">Show more</button></div></sc-if>
+    </sc-if>
+
+    <sc-if value="{{ tabDetails }}" hint-placeholder-val="{{ false }}">
+      <form class="card" onSubmit="{{ saveDetails }}" novalidate="true">
+        <div class="card-body col" style="gap: 18px">
+          <div class="field"><label class="label" for="md-title">Title</label><input id="md-title" class="input {{ titleCls }}" value="{{ f.title }}" onChange="{{ onTitle }}" maxlength="60"><span class="{{ titleHintCls }}">{{ titleHint }}</span></div>
+          <div class="field"><label class="label" for="md-sum">Summary</label><textarea id="md-sum" class="textarea {{ sumCls }}" rows="4" maxlength="500" value="{{ f.summary }}" onChange="{{ onSum }}"></textarea><div class="row" style="justify-content: space-between"><span class="{{ sumHintCls }}">{{ sumHint }}</span><span class="xs muted tnum">{{ sumCount }}/500</span></div></div>
+          <div class="field-row">
+            <div class="field"><label class="label" for="md-genre">Main genre</label><select id="md-genre" class="select" value="{{ f.genre }}" onChange="{{ onGenre }}"><sc-for list="{{ genres }}" as="g" hint-placeholder-count="8"><option value="{{ g.v }}">{{ g.v }}</option></sc-for></select></div>
+            <div class="field"><span class="label" id="md-run">Status</span><div class="tabs-list" role="radiogroup" aria-labelledby="md-run" style="width: 100%"><sc-for list="{{ runs }}" as="r" hint-placeholder-count="3"><button type="button" role="radio" aria-checked="{{ r.on }}" class="tabs-trigger {{ r.cls }}" style="flex: 1 1 0; justify-content: center" onClick="{{ r.pick }}">{{ r.label }}</button></sc-for></div><span class="hint">{{ runHint }}</span></div>
+          </div>
+          <sc-if value="{{ isHiatus }}" hint-placeholder-val="{{ false }}"><div class="field"><label class="label" for="md-note">Message to readers</label><input id="md-note" class="input" value="{{ f.note }}" onChange="{{ onNote }}" maxlength="120" placeholder="e.g. Back on Dec 6 with season 2!"><span class="hint">Shown on the series page while you’re on a break.</span></div></sc-if>
+          <div class="field"><span class="label" id="md-days">Update days</span><div class="row" style="gap: 6px; flex-wrap: wrap" role="group" aria-labelledby="md-days"><sc-for list="{{ days }}" as="x" hint-placeholder-count="7"><button type="button" class="chip {{ x.cls }}" aria-pressed="{{ x.on }}" onClick="{{ x.toggle }}">{{ x.label }}</button></sc-for></div></div>
+          <div class="field"><span class="label">Cover</span><div class="row" style="gap: 14px; align-items: flex-end"><img class="mg-cover {{ coverCls }}" src="{{ f.cover }}" alt="Current cover"><div class="col" style="gap: 6px"><button type="button" class="btn btn-outline btn-sm" onClick="{{ replaceCover }}">Replace cover</button><span class="{{ coverHintCls }}">{{ coverHint }}</span></div></div></div>
+        </div>
+        <div class="card-foot" style="border-top: 1px solid var(--border); padding-top: 16px; justify-content: flex-end"><button type="button" class="btn btn-ghost" onClick="{{ discard }}" disabled="{{ clean }}">Discard</button><button type="submit" class="btn btn-primary" disabled="{{ clean }}">Save changes</button></div>
+      </form>
+    </sc-if>
+
+    <sc-if value="{{ tabFp }}" hint-placeholder-val="{{ false }}">
+      <section class="card card-body col" style="gap: 18px">
+        <div class="st-rowc"><span class="col" style="gap: 2px"><span class="h4" id="fp2-l">Fast Pass</span><span class="small muted">Readers pay 5 coins to read the newest {{ unitLower }}s early. Each one is free for everyone 7 days after release.</span></span><button type="button" role="switch" class="switch {{ fpCls }}" aria-checked="{{ fp.on }}" aria-labelledby="fp2-l" onClick="{{ toggleFp }}"></button></div>
+        <sc-if value="{{ fpOn }}" hint-placeholder-val="{{ true }}">
+          <div class="field"><label class="label" for="fp-n">How many {{ unitLower }}s ahead</label><select id="fp-n" class="select" style="max-width: 240px" value="{{ fpN }}" onChange="{{ onFpN }}"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option></select><span class="hint">{{ fpHint }}</span></div>
+          <div class="col" style="gap: 8px"><span class="label">Right now</span><ul class="st-mini2"><sc-for list="{{ fpQueue }}" as="q" hint-placeholder-count="3"><li><span class="small">{{ q.t }}</span><span class="xs muted">{{ q.d }}</span></li></sc-for></ul></div>
+        </sc-if>
+        <sc-if value="{{ fpOff }}" hint-placeholder-val="{{ false }}"><div class="alert"><span class="muted">[[i:info]]</span><span class="alert-desc">All {{ unitLower }}s are free when released. Readers who already unlocked episodes keep them. You won’t earn coins from this series until you turn Fast Pass back on.</span></div></sc-if>
+        <div class="row" style="gap: 8px"><button type="button" class="btn btn-primary btn-sm" onClick="{{ saveFp }}" disabled="{{ fpClean }}">Save Fast Pass settings</button></div>
+      </section>
+    </sc-if>
+
+    <sc-if value="{{ tabSettings }}" hint-placeholder-val="{{ false }}">
+      <section class="card card-body col" style="gap: 16px">
+        <div class="st-rowc"><span class="col" style="gap: 2px"><span class="small" style="font-weight: 600" id="cm2-l">Allow comments</span><span class="xs muted">Turn off to hide the comment box on all {{ unitLower }}s</span></span><button type="button" role="switch" class="switch {{ cmCls }}" aria-checked="{{ comments }}" aria-labelledby="cm2-l" onClick="{{ toggleCm }}"></button></div>
+        <div class="sep"></div>
+        <div class="st-rowc"><span class="col" style="gap: 2px"><span class="small" style="font-weight: 600">{{ unpubTitle }}</span><span class="xs muted">{{ unpubDesc }}</span></span><button type="button" class="btn btn-outline btn-sm" onClick="{{ openUnpub }}">{{ unpubBtn }}</button></div>
+        <div class="sep"></div>
+        <div class="st-rowc"><span class="col" style="gap: 2px"><span class="small" style="font-weight: 600">Delete series</span><span class="xs muted">{{ delDesc }}</span></span><button type="button" class="btn btn-destructive btn-sm" disabled="{{ cantDelete }}" onClick="{{ delSeries }}">Delete series</button></div>
+      </section>
+    </sc-if>
+  </main>
+
+  <sc-if value="{{ dlgEdit }}" hint-placeholder-val="{{ false }}">
+    <div class="overlay" onClick="{{ closeDlg }}"></div>
+    <form class="dialog" role="dialog" aria-modal="true" aria-labelledby="ed-h" style="top: {{ dlgTop }}" onSubmit="{{ saveEp }}">
+      <button type="button" class="btn btn-ghost btn-icon btn-sm dialog-x" onClick="{{ closeDlg }}" aria-label="Close">[[i:x]]</button>
+      <h2 id="ed-h" class="h3">Edit {{ ed.label }}</h2>
+      <div class="field"><label class="label" for="ed-t">Title</label><input id="ed-t" class="input {{ edBadCls }}" value="{{ ed.title }}" onChange="{{ onEdTitle }}" maxlength="60"><sc-if value="{{ edBad }}" hint-placeholder-val="{{ false }}"><span class="err">Enter a title.</span></sc-if></div>
+      <sc-if value="{{ ed.isScheduled }}" hint-placeholder-val="{{ false }}"><div class="field"><label class="label" for="ed-d">Release</label><select id="ed-d" class="select" value="{{ ed.slot }}" onChange="{{ onEdSlot }}"><option value="a">Sat, Nov 14 · 6:00 PM</option><option value="b">Sat, Nov 14 · 8:00 PM</option><option value="c">Sun, Nov 15 · 6:00 PM</option><option value="d">Sat, Nov 21 · 6:00 PM</option></select></div></sc-if>
+      <sc-if value="{{ ed.isPublished }}" hint-placeholder-val="{{ false }}"><p class="xs muted">To change the images, upload a new version. Readers keep their likes and comments.</p><button type="button" class="btn btn-outline btn-sm" style="align-self: flex-start" onClick="{{ replaceImgs }}">Replace images</button></sc-if>
+      <div class="row" style="gap: 8px; justify-content: flex-end"><button type="button" class="btn btn-ghost" onClick="{{ closeDlg }}">Cancel</button><button type="submit" class="btn btn-primary">Save</button></div>
+    </form>
+  </sc-if>
+  <sc-if value="{{ dlgConfirm }}" hint-placeholder-val="{{ false }}">
+    <div class="overlay" onClick="{{ closeDlg }}"></div>
+    <div class="dialog" role="alertdialog" aria-modal="true" aria-labelledby="cf-h" style="top: {{ dlgTop }}">
+      <h2 id="cf-h" class="h3">{{ cf.title }}</h2>
+      <p class="small muted">{{ cf.body }}</p>
+      <sc-if value="{{ cf.typeIt }}" hint-placeholder-val="{{ false }}"><div class="field"><label class="label" for="cf-in">Type the series title to confirm</label><input id="cf-in" class="input" value="{{ cfText }}" onChange="{{ onCfText }}" autocomplete="off"></div></sc-if>
+      <div class="row" style="gap: 8px; justify-content: flex-end"><button type="button" class="btn btn-ghost" onClick="{{ closeDlg }}">Cancel</button><button type="button" class="btn {{ cf.btnCls }}" onClick="{{ confirmGo }}" disabled="{{ cfBlocked }}">{{ cf.btn }}</button></div>
+    </div>
+  </sc-if>
+<!--FOOTER-->
+<!--MOBNAV-->
+<!--LAYERS-->
+</div>

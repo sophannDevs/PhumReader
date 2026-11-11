@@ -1,0 +1,53 @@
+{
+  "language": "Language",
+  "codes": {
+    "notFound": "Error 404",
+    "server": "Error 500",
+    "offline": "No connection",
+    "maintenance": "Scheduled maintenance",
+    "comingSoon": "Coming soon"
+  },
+  "home": "Go to Home",
+  "library": "My library",
+  "retry": "Try again",
+  "trying": "Trying…",
+  "needHelp": "Need help?",
+  "helpCenter": "Help center",
+  "statusPage": "Service status",
+  "popular": "Popular right now",
+  "browseAll": "Browse all",
+  "server": {
+    "title": "Something went wrong on our side",
+    "body": "This isn’t your fault. Please try again in a moment. Your coins, unlocked episodes and library are safe.",
+    "still": "Still not working. We’ve been notified and are on it. Try again in a minute.",
+    "ok": "Fixed. Taking you back…",
+    "ref": "Reference",
+    "copy": "Copy reference",
+    "copied": "Reference copied",
+    "copyFailed": "Couldn’t copy. The reference is {ref}."
+  },
+  "offline": {
+    "title": "You’re offline",
+    "body": "Check your Wi-Fi or mobile data. We’ll reconnect as soon as you’re back online.",
+    "still": "Still offline. Check your connection and try again.",
+    "ok": "You’re back online. Taking you back…",
+    "tips": [
+      "Turn airplane mode off",
+      "Turn Wi-Fi or mobile data off and on again",
+      "Move closer to your router, or try another network"
+    ],
+    "simulate": "Simulate back online (demo)"
+  },
+  "maintenance": {
+    "title": "PhumiReader is getting an update",
+    "body": "We’re making reading faster. We’ll be back soon, and your coins, unlocked episodes and library are safe.",
+    "started": "Started",
+    "backBy": "Expected back",
+    "start": "[MAINTENANCE START]",
+    "end": "[MAINTENANCE END] (ICT)",
+    "notify": "Notify me when it’s back",
+    "notifyOn": "We’ll notify you",
+    "notifyToast": "We’ll notify you when PhumiReader is back.",
+    "notifyOff": "Notification turned off"
+  }
+}
