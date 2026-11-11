@@ -1,7 +1,6 @@
 import { expect, test } from "@playwright/test"
-import { SOKHA, seed, visible } from "./helpers"
+import { ADMIN, SOKHA, seed, visible } from "./helpers"
 
-const ADMIN = { name: "Dara M.", email: "admin@phumireader.app", roles: ["READER", "CREATOR", "ADMIN"] }
 const noSidewaysScroll = async (page: import("@playwright/test").Page) =>
   expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(0)
 

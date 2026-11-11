@@ -9,14 +9,12 @@ import comingSoon from "./comingSoon.json"
 import comments from "./comments.json"
 import common from "./common.json"
 import creator from "./creator.json"
-import creatorSeries from "./creatorSeries.json"
 import data from "./data.json"
 import earnings from "./earnings.json"
 import episodeForm from "./episodeForm.json"
 import episodes from "./episodes.json"
 import errors from "./errors.json"
 import footer from "./footer.json"
-import foundations from "./foundations.json"
 import genresPage from "./genresPage.json"
 import help from "./help.json"
 import home from "./home.json"
@@ -52,14 +50,12 @@ const messages = {
   "comments": comments,
   "common": common,
   "creator": creator,
-  "creatorSeries": creatorSeries,
   "data": data,
   "earnings": earnings,
   "episodeForm": episodeForm,
   "episodes": episodes,
   "errors": errors,
   "footer": footer,
-  "foundations": foundations,
   "genresPage": genresPage,
   "help": help,
   "home": home,

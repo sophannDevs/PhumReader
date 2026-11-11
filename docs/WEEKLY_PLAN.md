@@ -11,8 +11,8 @@ Started: 2026-11-10. Look at this file every Sunday (30 minutes, see "Weekly rev
 
 | Track | Open | Done | Source |
 |---|---|---|---|
-| Website V2.1 redesign | 68 | 1 | `docs/CHECKLIST.md` (work order at the top) |
-| Backend + launch (Phase 2) | 25 | 47 | `docs/BACKEND_CHECKLIST.md` |
+| Website V2.1 redesign | 3 | 69 | `docs/CHECKLIST.md` (F01–F27, T01–T42 done; follow-ups T43–T45) |
+| Backend + launch (Phase 2) | 28 | 41 | `docs/BACKEND_CHECKLIST.md` (includes the 7 new "V2.1 API additions") |
 | Story: episodes ready before launch | 0 / 10 | 0 | `docs/STORY_CHECKLIST.md` |
 | Launch blockers outside code | 7 | 0 | Section 4 below |
 
@@ -84,13 +84,17 @@ Firebase for push notifications (P3-16).
 
 ## 5. Order of the big pieces
 
-1. **Now: save your work.** The V2.1 upgrade on branch `v2.1-redesign` has about 89 changed files that are not
-   committed yet. Commit them before the next task.
-2. **Website V2.1** (`docs/CHECKLIST.md`, follow the work order F01 → … → T42). Demo data is fine for this.
-3. **Backend leftovers that need accounts** (P3-04, P3-08, P3-11, P3-16, P1-10). Do each one as soon as its
-   Friday task (section 4) is done.
-4. **Quality gates** (Phase 6: tests, accessibility, speed, security).
-5. **Deployment and go-live** (Phase 7), only when every row in section 4 is done.
+1. ~~**Save your work.**~~ Done 2026-11-11: everything is committed on `v2.1-redesign` (pull request #5; merge it
+   once its checks are green).
+2. ~~**Website V2.1**~~ Done 2026-11-11 (F01–F27, T01–T42). Follow-ups in `docs/CHECKLIST.md`: T43 badge size (office
+   PC), T44 Khmer review and digits (needs the reviewer), T45 real-API e2e (home PC).
+3. **V2.1 API additions** (`docs/BACKEND_CHECKLIST.md`, V21-01 … V21-07, home PC): the V2.1 features that only save on
+   the device today. V21-01 (series review) first.
+4. **Backend leftovers that need accounts** (P1-10, P3-04, P3-08, P3-11, P3-16). Do each one as soon as its Friday
+   task (section 4) is done. P1-01 and P1-02 are done (2026-11-08); P3-04 has Google working locally, while Facebook
+   and staging wait for the domain and the provider apps.
+5. **Quality gates** (Phase 6: tests, accessibility, speed, security). P6-02 (377 frontend tests) is done.
+6. **Deployment and go-live** (Phase 7), only when every row in section 4 is done.
 
 Story runs beside all of this: the goal is **10 episodes of your first series ready before launch day**.
 

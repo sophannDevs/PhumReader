@@ -79,8 +79,6 @@
   "likes": "{count} likes",
   "subscribe": "Subscribe",
   "subscribed": "Subscribed",
-  "subscribeAria": "Subscribe to {title}",
-  "unsubscribeAria": "Unsubscribe from {title}",
   "showing": "Showing {shown} of {total}",
   "showMore": "Show more results",
   "noResults": "No results found",

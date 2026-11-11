@@ -13,7 +13,8 @@ One task at a time, in order. Each task: build → `npm run lint && npm run type
 - Both frontend modes must keep working: demo (`NEXT_PUBLIC_DEMO=1`) and real (the API in `backend/`).
 
 **Work order:** F01–F04 → T14 → F05–F09 → T13 → F10 → T16 → F11 → T18 → F12 → F13 → T21 → F14–F19 → F20–F23 →
-T32 → T33 → T34 → F24–F27 → T39–T42. A V2.1 task marked "→ Fnn" is ticked when that Fix task is done.
+T32 → T33 → T34 → F24–F27 → T39–T42 (all done 2026-11-11) → T43 → T44 → T45. A V2.1 task marked "→ Fnn" is ticked
+when that Fix task is done.
 
 ## Fix: finished V1 work that differs from V2.1
 
@@ -28,7 +29,7 @@ T32 → T33 → T34 → F24–F27 → T39–T42. A V2.1 task marked "→ Fnn" is
   red unread count, avatar menu (My library, Notifications, Get coins, Creator dashboard, Settings, Log out); header
   nav Home / Rankings / Genres / Web novels (Genres with format=novel); footer columns Read / Create / Help and the
   language switch; tab bar Home / Search / Library / Coins / Me; ≤420 px gaps. Screens 01-home-*. → T05
-- [ ] F04 Shared patterns: restyle SeriesCard, ContinueCard, RankRow, EpisodeRow, EmptyState, ErrorState to V2.1; add
+- [x] F04 Shared patterns: restyle SeriesCard, ContinueCard, RankRow, EpisodeRow, EmptyState, ErrorState to V2.1; add
   OptionCard, StepsBar, StatCard, Timeline, UndoBar, SaveBar, ListRowActions, ResumeChip, FastPassLockCard. → T06
 - [x] F05 Home: spotlight (main hero + "Featured this week", no autoplay), genre picker → "Recommended for you",
   Daily updates (day tabs with counts, type filter, "New today", 6 cards + "Show all N"), Trending (top 3 larger),
@@ -70,12 +71,12 @@ T32 → T33 → T34 → F24–F27 → T39–T42. A V2.1 task marked "→ Fnn" is
   offline (tips, auto return), `/maintenance`, series unavailable; illustration, code badge, en/km toggle. Spec §9 · Screens 09. → T27
 - [x] F20 Creator layout (CreatorNav) + dashboard: stat cards, 14-day chart, My series filters with status-based
   actions, to-do, new comments with reply and like, new-creator 3-step guide. Spec §14 · Screens 14. → T28
-- [ ] F21 Create series on `/creator/new`: 4 steps, error summary, autosave draft, tags, cover checklist, publishing,
+- [x] F21 Create series on `/creator/new`: 4 steps, error summary, autosave draft, tags, cover checklist, publishing,
   submit → in review (`myWorks`, admin queue). Spec §15 · Screens 15. → T29
-- [ ] F22 Upload episode on `/creator/upload?series=`: image list (progress, reorder, remove, size errors), novel text
+- [x] F22 Upload episode on `/creator/upload?series=`: image list (progress, reorder, remove, size errors), novel text
   with word count, release now / scheduled (ICT), Fast Pass, comments, creator's note, checklist, phone preview,
   sticky bar, success. Spec §16 · Screens 16. → T30
-- [ ] F23 Manage series `/creator/series/[id]` with tabs (episodes, details, fast-pass, settings), edit / hide /
+- [x] F23 Manage series `/creator/series/[id]` with tabs (episodes, details, fast-pass, settings), edit / hide /
   delete, changes requested list + resubmit. Spec §21 · Screens 21. → T31
 - [x] F24 AdminShell (dark top bar, side menu with counts) + overview; admin demo login only. Spec §22 · Screens 22-admin-overview. → T35
 - [x] F25 Admin series review (queue, flags, checklist, approve / request changes / reject, `reviewNotes`, undo). Screens 22-admin-series-review. → T36
@@ -88,7 +89,7 @@ T32 → T33 → T34 → F24–F27 → T39–T42. A V2.1 task marked "→ Fnn" is
 - [x] T03 Data layer: typed demo-data helpers, `demo-api.ts` (delay + ?demo flags), zustand store with every key in Spec §0 "Simulated state" (prefix `phumireader.`) → F01
 - [x] T04 i18n: generate messages/km.json from design/i18n/km-dictionary.json (`npm run i18n:km`, done in the upgrade), plus a language switch that saves to the store; Khmer date and time formatters (ICT) → F02
 - [x] T05 Layout: SiteHeader (search trigger, language button, coin chip, bell, avatar menu, logo), SiteFooter, MobileTabBar, ⌘K search dialog, toasts. Check the header at 390 px logged in. Screens 01-home-search-open, 01-home-account-menu → F03
-- [ ] T06 Shared patterns: SeriesCard, ContinueCard, RankRow, EpisodeRow, OptionCard, StepsBar, StatCard, Timeline, EmptyState, ErrorState, UndoBar, SaveBar → F04
+- [x] T06 Shared patterns: SeriesCard, ContinueCard, RankRow, EpisodeRow, OptionCard, StepsBar, StatCard, Timeline, EmptyState, ErrorState, UndoBar, SaveBar → F04
 
 ## Phase B – Reading
 - [x] T07 Home (all rows, genre picker, daily updates, states). Spec §1 · Screens 01 → F05
@@ -119,9 +120,9 @@ T32 → T33 → T34 → F24–F27 → T39–T42. A V2.1 task marked "→ Fnn" is
 
 ## Phase E – Creators
 - [x] T28 Creator layout (CreatorNav) + dashboard (stats, chart, My series with status-based actions, to-do, comments, new-creator state). Spec §14 · Screens 14 → F20
-- [ ] T29 Create series wizard (4 steps, validation, tags, cover, autosave draft, submit → review). Spec §15 · Screens 15 → F21
-- [ ] T30 Upload episode (image list with progress, reorder, size errors; novel text; schedule; Fast Pass; checklist; preview). Spec §16 · Screens 16 → F22
-- [ ] T31 Manage series (episodes, details, Fast Pass, settings, changes requested + resubmit). Spec §21 · Screens 21 → F23
+- [x] T29 Create series wizard (4 steps, validation, tags, cover, autosave draft, submit → review). Spec §15 · Screens 15 → F21
+- [x] T30 Upload episode (image list with progress, reorder, size errors; novel text; schedule; Fast Pass; checklist; preview). Spec §16 · Screens 16 → F22
+- [x] T31 Manage series (episodes, details, Fast Pass, settings, changes requested + resubmit). Spec §21 · Screens 21 → F23
 - [x] T32 Creator public profile (reader and owner views, edit, follow, report/block). Spec §17 · Screens 17
 - [x] T33 Earnings (period, stats, chart/table, by series, payouts, add method dialog). Spec §18 · Screens 18
 - [x] T34 Become a creator landing + calculator. Spec §26 · Screens 26
@@ -133,10 +134,22 @@ T32 → T33 → T34 → F24–F27 → T39–T42. A V2.1 task marked "→ Fnn" is
 - [x] T38 Admin payments (refunds, paid-but-no-coins). Screens 22-admin-payments → F27
 
 ## Phase G – Quality
-- [ ] T39 Khmer pass: every page in km at 390/768/1440; no clipped text; `lang="km"`; fix long strings
-- [ ] T40 Accessibility pass (keyboard, focus, dialogs, labels, contrast) and reduced motion
-- [ ] T41 Playwright e2e for the 6 key flows in Spec "Key flows to test end to end" (and update the V1 tests for the new routes)
-- [ ] T42 Final review: no "Toonwave"/"PhumReader" left in the UI, placeholders visible, all ?demo states work, README for running the demo
+- [x] T39 Khmer pass: every page in km at 390/768/1440; no clipped text; `lang="km"`; fix long strings
+- [x] T40 Accessibility pass (keyboard, focus, dialogs, labels, contrast) and reduced motion
+- [x] T41 Playwright e2e for the 6 key flows in Spec "Key flows to test end to end" (and update the V1 tests for the new routes)
+- [x] T42 Final review: no "Toonwave"/"PhumReader" left in the UI, placeholders visible, all ?demo states work, README for running the demo
+
+## After V2.1 (added 2026-11-11)
+Follow-ups found after T42. The API work for V2.1 features that only save on the device is in
+docs/BACKEND_CHECKLIST.md, "V2.1 API additions" (V21-01 … V21-07).
+- [ ] T43 Badges 22 px tall with 8 px side padding, like the prototype's `.badge` (ours: 20 px, 6 px). Check the rows
+  and cards that line badges up with text at 390 and 1440 px.
+- [ ] T44 Khmer: native review of every `km` string (launch blocker A12), and decide the digits: numbers filled into
+  messages print Latin digits, while the dictionary's fixed strings use Khmer digits (V2-61). Apply the decision
+  everywhere (one formatter, not per page).
+- [ ] T45 Real-API e2e for the V2.1 screens: `e2e/real.spec.ts` still describes V1 in places (V2-63). Porting started in
+  c8b3193 ("Port the real-API tests to the redesigned components"), now merged with V2.1. Needs the backend running
+  (home PC). Key flows 3 and 4 also need V21-04 and V21-01. → P6-03
 
 ## Assumptions (V2.1)
 (V1 assumptions 1–110 are in docs/CHECKLIST-v1.md. Anything guessed for V2.1 goes here, with the task ID.)
@@ -295,3 +308,45 @@ T32 → T33 → T34 → F24–F27 → T39–T42. A V2.1 task marked "→ Fnn" is
 - V2-55 (F27) **Payments**: demo rows come from the prototype (`src/lib/admin.ts`); Add coins adds to this device's wallet
   (one device plays reader and admin). Real mode lists paid orders with eligibility and refunds after a reason;
   "Paid but no coins" is hidden (no such API list).
+- V2-56 (F21) **Create series** on `/creator/new` (V1 `/creator/series/new` redirects, keeping the query): the draft
+  autosaves to store `draftSeries` ("new" or the work id; `?draft=C3` continues the dashboard draft). Demo: the cover
+  is a sample cover from the catalogue ("Demo: a sample cover was added"); Submit adds the work to `myWorks` with status
+  "review". Real mode: Save draft creates/updates the series as a draft, Submit publishes it (the API has no review
+  step) and the cover is a real upload; the second genre, 16+ vs 18+, "Both" languages, more than one update day, the
+  release time and Fast Pass stay in the local draft (no API fields).
+- V2-57 (F22) **Upload episode** on `/creator/upload?series=<id>` (`&ep=<n>` edits; V1 episode routes redirect). Demo: the
+  series list is `myWorks` minus drafts; images are the creator's own files with a simulated upload (the real width is
+  checked: 690–1600 px); publishing adds one to the work's episode count; Save draft only marks it saved. Real mode
+  sends the panels, or the novel text as blocks (blank line = paragraph, "# " heading, "> " quote, "* * *" scene
+  break). Fast Pass is 5 coins and free for everyone 7 days after release (prototype Manage > Fast Pass).
+- V2-58 (F23) **Manage series** `/creator/series/[id]` with `?tab=episodes|details|fast-pass|settings` (V1 `…/edit` redirects
+  to the details tab). Demo: the episode list is generated from the work (`demoEpisodes`); the changes come from
+  `reviewNotes[id]` (each with "Mark fixed"), else the two automatic-check items; Resubmit sets the status back to
+  "review". Episode edits, story status, break message, extra update days, Fast Pass, comments and hiding the series
+  last for the visit. Real mode: GET/PUT the series and episodes, DELETE drafts, hiding the series unpublishes it; the
+  API can't hide one episode or delete a series (not shown) and doesn't store the series-wide Fast Pass or comments.
+- V2-59 (F23) On phones the prototype's flex-wrap pushes the cover above long Fast Pass rows; we keep the cover beside
+  the title on every row (same content, steadier layout).
+- V2-60 (F04) **ListRowActions** is built into each list's rows (admin queue, upload image list, Manage episodes, Library
+  edit mode) with the shared tokens, rather than as one component; every other pattern in F04 is a shared component.
+- V2-61 (T39) **Khmer pass**: every page in km at 390 / 768 / 1440 checked by script for sideways scroll, clipped text and
+  `lang="km"` (also Khmer text inside English pages): no problems. The only boxes that overflow are decorative (series
+  header backdrop, Home spotlight cover, the cover fan on Log in at 768 px). Numbers filled into messages print in Latin
+  digits in Khmer (the CLDR default for km), while the dictionary's fixed strings use Khmer digits ("៣០ ថ្ងៃ"): left for
+  the native review to decide.
+- V2-62 (T40) **Accessibility pass**: axe-core (WCAG 2.0/2.1 A + AA) on every page at 1440 and 390 px (en) and 1440 px
+  (km), plus a keyboard check of the dialogs (focus moves in, Tab stays inside, Escape returns focus). Fixed: the
+  accessible name now contains the visible text on Search, both language switches (which also had the wrong `lang`),
+  comment likes, Subscribe/Add and Fast Pass episode rows; Library tabs always have a panel; warning text is #92400e
+  (prototype `.alert.warn`, was 80 % and 4.4:1). Left as is: axe's experimental label-in-name rule still flags the
+  avatar initials and the ⌘K hint (both aria-hidden) and Khmer labels (it matches whole words; Khmer has no spaces).
+- V2-63 (T41) **e2e**: the 6 key flows are in e2e/flows.spec.ts (1, 2, 5, 6) and e2e/admin-flows.spec.ts (3, 4); the V1
+  demo tests are rewritten for the V2.1 routes. e2e/real.spec.ts (real API, not run in CI) still describes V1 screens;
+  updating it needs the backend running, which this office PC can't do.
+- V2-64 (T42) **Final review**: no "Toonwave"/"PhumReader" in the UI (the generated API types quote backend setting
+  names, which keep the old spelling); the service worker cache is now `phumireader-offline-v2`, so returning visitors
+  get the V2.1 offline page. Every placeholder in foundations §8 is on screen. `?demo=empty|error|slow` checked on every
+  data page. Settings and Help read only local data in the demo, so the flags change their writes: Save changes and
+  the password change now go through the fake API (delay, `?demo=error` fails them). Unused V1 leftovers removed
+  (password-rules, image-upload-field, empty message namespaces); unused shadcn/ui primitives stay as the kit. README
+  has a "Try the demo" section.

@@ -344,8 +344,7 @@ function Podium({ entry: e, statLabel }: { entry: Entry; statLabel: string }) {
         series={s}
         filled
         labels={[t("subscribe"), t("subscribed")]}
-        ariaOn={t("unsubscribeAria", { title: s.title })}
-        ariaOff={t("subscribeAria", { title: s.title })}
+        title={s.title}
         className="col-start-2 justify-self-start max-lg:col-start-auto max-lg:self-center max-md:col-start-2"
       />
     </li>
@@ -392,8 +391,7 @@ function Row({ entry: e, statLabel }: { entry: Entry; statLabel: string }) {
         series={s}
         filled
         labels={[t("add"), t("added")]}
-        ariaOn={t("unsubscribeAria", { title: s.title })}
-        ariaOff={t("subscribeAria", { title: s.title })}
+        title={s.title}
         className="w-[104px] max-md:w-auto max-md:px-2.5"
       />
     </li>

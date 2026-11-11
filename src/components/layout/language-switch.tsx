@@ -97,8 +97,6 @@ export function LanguageButton({ className }: { className?: string }) {
   return (
     <button
       type="button"
-      lang={other}
-      aria-label={t("switchLanguage", { language: labels[other] })}
       onClick={() => {
         useAppStore.getState().setLang(other)
         router.replace(`${pathname}${window.location.search}`, { locale: other })
@@ -109,7 +107,9 @@ export function LanguageButton({ className }: { className?: string }) {
         className
       )}
     >
-      {other === "en" ? "EN" : labels.km}
+      {/* Name: "Switch to ខ្មែរ" / "ប្ដូរទៅ EN", in the page's language; only the visible word carries the other lang. */}
+      <span className="sr-only">{t("switchTo")} </span>
+      <span lang={other}>{other === "en" ? "EN" : labels.km}</span>
     </button>
   )
 }
@@ -125,7 +125,6 @@ export function LanguageToggleLink({ className }: { className?: string }) {
   return (
     <button
       type="button"
-      aria-label={t("switchLanguage", { language: labels[other] })}
       onClick={() => {
         useAppStore.getState().setLang(other)
         router.replace(`${pathname}${window.location.search}`, { locale: other })
@@ -136,8 +135,12 @@ export function LanguageToggleLink({ className }: { className?: string }) {
       )}
     >
       <GlobeIcon className="size-3.5" aria-hidden />
+      {/* The name starts with the visible text (WCAG 2.5.3 label in name), then says what pressing it does. */}
       <span>
-        English · <span lang="km">ខ្មែរ</span>
+        <span lang="en">English</span> · <span lang="km">ខ្មែរ</span>
+        <span className="sr-only">
+          , {t("switchTo")} <span lang={other}>{labels[other]}</span>
+        </span>
       </span>
     </button>
   )

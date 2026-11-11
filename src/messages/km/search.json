@@ -79,8 +79,6 @@
   "likes": "ចូលចិត្ត {count}",
   "subscribe": "តាមដាន",
   "subscribed": "កំពុងតាមដាន",
-  "subscribeAria": "តាមដាន {title}",
-  "unsubscribeAria": "ឈប់តាមដាន {title}",
   "showing": "កំពុងបង្ហាញ {shown} ក្នុងចំណោម {total}",
   "showMore": "បង្ហាញលទ្ធផលបន្ថែម",
   "noResults": "រកមិនឃើញលទ្ធផលទេ",

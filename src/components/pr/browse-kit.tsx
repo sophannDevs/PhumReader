@@ -92,17 +92,15 @@ export function LineTabs<T extends string>({
 export function SubscribeButton({
   series,
   labels,
-  ariaOn,
-  ariaOff,
+  title,
   filled = false,
   className,
 }: {
   series: Series
   /** [not subscribed, subscribed] */
   labels: [string, string]
-  /** aria-labels: "Unsubscribe from …" / "Subscribe to …" */
-  ariaOn: string
-  ariaOff: string
+  /** The series title, read after the visible label ("Subscribe Pocket Seasons"); aria-pressed gives the state. */
+  title: string
   /** Subscribed rows use the grey `secondary` button (Rankings) instead of the outline one (Search). */
   filled?: boolean
   className?: string
@@ -118,12 +116,12 @@ export function SubscribeButton({
       size="sm"
       variant={subscribed && filled ? "secondary" : "outline"}
       aria-pressed={subscribed}
-      aria-label={subscribed ? ariaOn : ariaOff}
       onClick={() => (user ? void toggle() : askToLogin())}
       className={cn("shrink-0", className)}
     >
       {subscribed ? <CheckIcon className="size-3.5" aria-hidden /> : <PlusIcon className="size-3.5" aria-hidden />}
       {subscribed ? labels[1] : labels[0]}
+      <span className="sr-only"> {title}</span>
     </Button>
   )
 }

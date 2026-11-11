@@ -71,7 +71,8 @@ describe("EpisodeRow", () => {
   it("a locked row is a button with the price, not a link, and tells screen readers the price", async () => {
     const { user, onLockedClick } = setup("locked", { price: 8 })
     expect(screen.queryByRole("link")).not.toBeInTheDocument()
-    const button = screen.getByRole("button", { name: /The Door, Fast Pass, 8 coins, free on/ })
+    // The name is the row's visible text, with "Fast Pass," first for screen readers (label in name, WCAG 2.5.3).
+    const button = screen.getByRole("button", { name: /^Fast Pass, The Door .*8 coins/ })
     expect(button).toHaveTextContent("8 coins")
     await user.click(button)
     expect(onLockedClick).toHaveBeenCalledWith(expect.objectContaining({ n: 4 }))
@@ -87,6 +88,6 @@ describe("EpisodeRow", () => {
 
   it("uses the default price of 5 coins", () => {
     setup("locked")
-    expect(screen.getByRole("button", { name: /Fast Pass, 5 coins/ })).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: /^Fast Pass, .*5 coins/ })).toBeInTheDocument()
   })
 })

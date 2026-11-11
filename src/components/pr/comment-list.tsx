@@ -89,11 +89,11 @@ export function CommentList({
                   variant="ghost"
                   size="sm"
                   aria-pressed={!!c.liked}
-                  aria-label={t(c.liked ? "unlikeBy" : "likeBy", { name: c.name, count })}
                   className={cn("tabular-nums", ghost, c.liked && (dark ? "text-primary" : "text-brand-ink"))}
                   onClick={() => onToggleLike(c.id)}
                 >
-                  <ThumbsUpIcon className={cn("size-3.5", c.liked && "fill-primary")} />
+                  <ThumbsUpIcon className={cn("size-3.5", c.liked && "fill-primary")} aria-hidden />
+                  <span className="sr-only">{t("likeSr", { name: c.name })} </span>
                   {formatCount(count)}
                 </Button>
                 <Button variant="ghost" size="sm" className={ghost} onClick={() => onReply(c.name)}>

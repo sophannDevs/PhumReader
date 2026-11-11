@@ -3,7 +3,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { AlertCircleIcon, ArrowDownIcon, ArrowUpIcon, LayersIcon, PlusIcon, RotateCcwIcon, XIcon } from "lucide-react"
 import { useSearchParams } from "next/navigation"
-import { useLocale, useTranslations } from "next-intl"
+import { useTranslations } from "next-intl"
 import { useEffect, useRef, useState } from "react"
 import { toast } from "sonner"
 import { CreatorNav } from "@/components/layout/creator-nav"
@@ -281,7 +281,6 @@ function UploadForm({
   edit?: EditData
 }) {
   const t = useTranslations("episodeForm")
-  const locale = useLocale()
   const qc = useQueryClient()
   const fail = useFailToast()
   const dayDate = useDayDate()

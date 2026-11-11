@@ -588,8 +588,7 @@ function ResultRow({ series: s, k }: { series: Series; k: string }) {
       <SubscribeButton
         series={s}
         labels={[t("subscribe"), t("subscribed")]}
-        ariaOn={t("unsubscribeAria", { title: s.title })}
-        ariaOff={t("subscribeAria", { title: s.title })}
+        title={s.title}
         className="max-md:px-2.5"
       />
     </li>

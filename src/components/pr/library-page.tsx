@@ -454,51 +454,58 @@ export function LibraryPage() {
 
         {undoBar.current ? <UndoBar text={undoBar.current.text} onUndo={undoBar.undo} /> : null}
 
+        {/* Loading, error and empty sit in the current tab's panel too, so the tab's aria-controls always points at one. */}
         {isPending ? (
-          <div
-            className="grid grid-cols-3 gap-x-3 gap-y-4 md:grid-cols-4 md:gap-x-5 md:gap-y-6 lg:grid-cols-6"
-            aria-busy="true"
-            aria-label={t("loading")}
-          >
-            {Array.from({ length: 6 }, (_, i) => (
-              <div key={i} className="flex flex-col gap-2">
-                <Skeleton className="aspect-[3/4] rounded-[10px]" />
-                <Skeleton className="h-3 w-3/4" />
-                <Skeleton className="h-2.5 w-1/2" />
-              </div>
-            ))}
-          </div>
+          <TabsContent value={tab} className="mt-0">
+            <div
+              className="grid grid-cols-3 gap-x-3 gap-y-4 md:grid-cols-4 md:gap-x-5 md:gap-y-6 lg:grid-cols-6"
+              aria-busy="true"
+              aria-label={t("loading")}
+            >
+              {Array.from({ length: 6 }, (_, i) => (
+                <div key={i} className="flex flex-col gap-2">
+                  <Skeleton className="aspect-[3/4] rounded-[10px]" />
+                  <Skeleton className="h-3 w-3/4" />
+                  <Skeleton className="h-2.5 w-1/2" />
+                </div>
+              ))}
+            </div>
+          </TabsContent>
         ) : isError ? (
-          <StateBox
-            icon={AlertCircleIcon}
-            tone="bad"
-            title={t("errorTitle")}
-            text={t("errorText")}
-            action={
-              <Button variant="outline" size="sm" onClick={refetch}>
-                <RefreshCwIcon className="size-3.5" />
-                {t("tryAgain")}
-              </Button>
-            }
-          />
+          <TabsContent value={tab} className="mt-0">
+            <StateBox
+              icon={AlertCircleIcon}
+              tone="bad"
+              title={t("errorTitle")}
+              text={t("errorText")}
+              action={
+                <Button variant="outline" size="sm" onClick={refetch}>
+                  <RefreshCwIcon className="size-3.5" />
+                  {t("tryAgain")}
+                </Button>
+              }
+            />
+          </TabsContent>
         ) : tabItems.length === 0 ? (
-          <StateBox
-            icon={LibraryIcon}
-            title={emptyFilter ? t("emptyNewTitle") : empties[tab][0]}
-            text={emptyFilter ? t("emptyNewText") : empties[tab][1]}
-            className="[&>p:nth-of-type(2)]:max-w-[46ch]"
-            action={
-              emptyFilter ? (
-                <Button variant="outline" size="sm" onClick={() => setNewOnly(false)}>
-                  {t("showAllSubs")}
-                </Button>
-              ) : (
-                <Button asChild variant="brand" size="sm">
-                  <Link href="/">{t("browse")}</Link>
-                </Button>
-              )
-            }
-          />
+          <TabsContent value={tab} className="mt-0">
+            <StateBox
+              icon={LibraryIcon}
+              title={emptyFilter ? t("emptyNewTitle") : empties[tab][0]}
+              text={emptyFilter ? t("emptyNewText") : empties[tab][1]}
+              className="[&>p:nth-of-type(2)]:max-w-[46ch]"
+              action={
+                emptyFilter ? (
+                  <Button variant="outline" size="sm" onClick={() => setNewOnly(false)}>
+                    {t("showAllSubs")}
+                  </Button>
+                ) : (
+                  <Button asChild variant="brand" size="sm">
+                    <Link href="/">{t("browse")}</Link>
+                  </Button>
+                )
+              }
+            />
+          </TabsContent>
         ) : (
           <>
             <TabsContent value="subs" className="mt-0">

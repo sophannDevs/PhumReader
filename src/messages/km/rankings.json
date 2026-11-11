@@ -41,8 +41,6 @@
   "subscribed": "កំពុងតាមដាន",
   "add": "បន្ថែម",
   "added": "បានបន្ថែម",
-  "subscribeAria": "តាមដាន {title}",
-  "unsubscribeAria": "ឈប់តាមដាន {title}",
   "emptyTitle": "មិនទាន់មានចំណាត់ថ្នាក់នៅទីនេះទេ",
   "emptyText": "គ្មាន{what}ក្នុង {genre} ត្រូវនឹងចំណាត់ថ្នាក់នេះទេ។ សូមសាកប្រភេទ ឬទម្រង់ផ្សេង។",
   "emptyWhat": {

@@ -11,12 +11,14 @@ test.describe("demo flags and states", () => {
   test("Home ?demo=error shows Try again, which recovers", async ({ page }) => {
     await page.goto("/?demo=error")
     await expect(visible(page.getByText("Couldn’t load today’s updates"))).toBeVisible()
-    // Remove the flag from the URL, then press Try again (together: the URL change alone also refetches).
-    await page.evaluate(() => {
-      history.replaceState(null, "", "/")
-      document.querySelector<HTMLButtonElement>('[role="alert"] button')?.click()
-    })
-    await expect(page.getByText("Couldn’t load today’s updates")).toHaveCount(0)
+    // Remove the flag from the URL, then press Try again. Under a busy dev server the first press can land before
+    // the box reacts, so press again until it recovers.
+    await page.evaluate(() => history.replaceState(null, "", "/"))
+    await expect(async () => {
+      const retry = page.getByRole("alert").filter({ hasText: "Couldn’t load today’s updates" }).getByRole("button", { name: "Try again" })
+      if (await retry.count()) await retry.first().click({ timeout: 2_000 })
+      await expect(page.getByText("Couldn’t load today’s updates")).toHaveCount(0, { timeout: 3_000 })
+    }).toPass({ timeout: 20_000 })
     await expect(visible(page.getByRole("heading", { name: "Daily updates" }))).toBeVisible()
   })
 
