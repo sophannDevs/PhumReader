@@ -9,7 +9,6 @@ import comingSoon from "./comingSoon.json"
 import comments from "./comments.json"
 import common from "./common.json"
 import creator from "./creator.json"
-import creatorSeries from "./creatorSeries.json"
 import data from "./data.json"
 import earnings from "./earnings.json"
 import episodeForm from "./episodeForm.json"
@@ -52,7 +51,6 @@ const messages = {
   "comments": comments,
   "common": common,
   "creator": creator,
-  "creatorSeries": creatorSeries,
   "data": data,
   "earnings": earnings,
   "episodeForm": episodeForm,

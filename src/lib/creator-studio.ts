@@ -34,8 +34,8 @@ export const PANEL_MAX_WIDTH = 1600
 export const FAST_PASS_COINS = 5
 /** Fast Pass episodes ready ahead of the free one (the default; Manage > Fast Pass offers 1–5). */
 export const FAST_PASS_AHEAD = 3
-/** A weekly series with 3 Fast Pass episodes ahead: each one becomes free 3 weeks after it comes out. */
-export const FREE_AFTER_DAYS = 7 * FAST_PASS_AHEAD
+/** Each Fast Pass episode is free for everyone 7 days after release (prototype Manage > Fast Pass). */
+export const FREE_AFTER_DAYS = 7
 
 /** Days in week order without repeats. */
 export const sortDays = (days: readonly Weekday[]) => WEEK.filter((d) => days.includes(d))

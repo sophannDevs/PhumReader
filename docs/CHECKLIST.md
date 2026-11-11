@@ -70,12 +70,12 @@ T32 → T33 → T34 → F24–F27 → T39–T42. A V2.1 task marked "→ Fnn" is
   offline (tips, auto return), `/maintenance`, series unavailable; illustration, code badge, en/km toggle. Spec §9 · Screens 09. → T27
 - [x] F20 Creator layout (CreatorNav) + dashboard: stat cards, 14-day chart, My series filters with status-based
   actions, to-do, new comments with reply and like, new-creator 3-step guide. Spec §14 · Screens 14. → T28
-- [ ] F21 Create series on `/creator/new`: 4 steps, error summary, autosave draft, tags, cover checklist, publishing,
+- [x] F21 Create series on `/creator/new`: 4 steps, error summary, autosave draft, tags, cover checklist, publishing,
   submit → in review (`myWorks`, admin queue). Spec §15 · Screens 15. → T29
-- [ ] F22 Upload episode on `/creator/upload?series=`: image list (progress, reorder, remove, size errors), novel text
+- [x] F22 Upload episode on `/creator/upload?series=`: image list (progress, reorder, remove, size errors), novel text
   with word count, release now / scheduled (ICT), Fast Pass, comments, creator's note, checklist, phone preview,
   sticky bar, success. Spec §16 · Screens 16. → T30
-- [ ] F23 Manage series `/creator/series/[id]` with tabs (episodes, details, fast-pass, settings), edit / hide /
+- [x] F23 Manage series `/creator/series/[id]` with tabs (episodes, details, fast-pass, settings), edit / hide /
   delete, changes requested list + resubmit. Spec §21 · Screens 21. → T31
 - [x] F24 AdminShell (dark top bar, side menu with counts) + overview; admin demo login only. Spec §22 · Screens 22-admin-overview. → T35
 - [x] F25 Admin series review (queue, flags, checklist, approve / request changes / reject, `reviewNotes`, undo). Screens 22-admin-series-review. → T36
@@ -119,9 +119,9 @@ T32 → T33 → T34 → F24–F27 → T39–T42. A V2.1 task marked "→ Fnn" is
 
 ## Phase E – Creators
 - [x] T28 Creator layout (CreatorNav) + dashboard (stats, chart, My series with status-based actions, to-do, comments, new-creator state). Spec §14 · Screens 14 → F20
-- [ ] T29 Create series wizard (4 steps, validation, tags, cover, autosave draft, submit → review). Spec §15 · Screens 15 → F21
-- [ ] T30 Upload episode (image list with progress, reorder, size errors; novel text; schedule; Fast Pass; checklist; preview). Spec §16 · Screens 16 → F22
-- [ ] T31 Manage series (episodes, details, Fast Pass, settings, changes requested + resubmit). Spec §21 · Screens 21 → F23
+- [x] T29 Create series wizard (4 steps, validation, tags, cover, autosave draft, submit → review). Spec §15 · Screens 15 → F21
+- [x] T30 Upload episode (image list with progress, reorder, size errors; novel text; schedule; Fast Pass; checklist; preview). Spec §16 · Screens 16 → F22
+- [x] T31 Manage series (episodes, details, Fast Pass, settings, changes requested + resubmit). Spec §21 · Screens 21 → F23
 - [x] T32 Creator public profile (reader and owner views, edit, follow, report/block). Spec §17 · Screens 17
 - [x] T33 Earnings (period, stats, chart/table, by series, payouts, add method dialog). Spec §18 · Screens 18
 - [x] T34 Become a creator landing + calculator. Spec §26 · Screens 26
@@ -295,3 +295,22 @@ T32 → T33 → T34 → F24–F27 → T39–T42. A V2.1 task marked "→ Fnn" is
 - V2-55 (F27) **Payments**: demo rows come from the prototype (`src/lib/admin.ts`); Add coins adds to this device's wallet
   (one device plays reader and admin). Real mode lists paid orders with eligibility and refunds after a reason;
   "Paid but no coins" is hidden (no such API list).
+- V2-56 (F21) **Create series** on `/creator/new` (V1 `/creator/series/new` redirects, keeping the query): the draft
+  autosaves to store `draftSeries` ("new" or the work id; `?draft=C3` continues the dashboard draft). Demo: the cover
+  is a sample cover from the catalogue ("Demo: a sample cover was added"); Submit adds the work to `myWorks` with status
+  "review". Real mode: Save draft creates/updates the series as a draft, Submit publishes it (the API has no review
+  step) and the cover is a real upload; the second genre, 16+ vs 18+, "Both" languages, more than one update day, the
+  release time and Fast Pass stay in the local draft (no API fields).
+- V2-57 (F22) **Upload episode** on `/creator/upload?series=<id>` (`&ep=<n>` edits; V1 episode routes redirect). Demo: the
+  series list is `myWorks` minus drafts; images are the creator's own files with a simulated upload (the real width is
+  checked: 690–1600 px); publishing adds one to the work's episode count; Save draft only marks it saved. Real mode
+  sends the panels, or the novel text as blocks (blank line = paragraph, "# " heading, "> " quote, "* * *" scene
+  break). Fast Pass is 5 coins and free for everyone 7 days after release (prototype Manage > Fast Pass).
+- V2-58 (F23) **Manage series** `/creator/series/[id]` with `?tab=episodes|details|fast-pass|settings` (V1 `…/edit` redirects
+  to the details tab). Demo: the episode list is generated from the work (`demoEpisodes`); the changes come from
+  `reviewNotes[id]` (each with "Mark fixed"), else the two automatic-check items; Resubmit sets the status back to
+  "review". Episode edits, story status, break message, extra update days, Fast Pass, comments and hiding the series
+  last for the visit. Real mode: GET/PUT the series and episodes, DELETE drafts, hiding the series unpublishes it; the
+  API can't hide one episode or delete a series (not shown) and doesn't store the series-wide Fast Pass or comments.
+- V2-59 (F23) On phones the prototype's flex-wrap pushes the cover above long Fast Pass rows; we keep the cover beside
+  the title on every row (same content, steadier layout).
