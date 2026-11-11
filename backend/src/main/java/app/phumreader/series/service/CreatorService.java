@@ -2,21 +2,28 @@ package app.phumreader.series.service;
 
 import app.phumreader.common.error.ApiException;
 import app.phumreader.common.security.CurrentUser;
+import app.phumreader.series.domain.ReviewDecision;
+import app.phumreader.series.domain.ReviewItem;
 import app.phumreader.series.repository.CreatorQueries;
 import app.phumreader.series.repository.CreatorQueries.EditRow;
+import app.phumreader.series.repository.CreatorQueries.ReviewRow;
 import app.phumreader.series.repository.CreatorQueries.SeriesNumbers;
 import app.phumreader.series.service.CatalogViews.SeriesCard;
 import app.phumreader.series.service.CreatorViews.CreatorDashboard;
 import app.phumreader.series.service.CreatorViews.CreatorSeries;
 import app.phumreader.series.service.CreatorViews.CreatorTotals;
+import app.phumreader.series.service.CreatorViews.RequestedChange;
 import app.phumreader.series.service.CreatorViews.SeriesEdit;
+import app.phumreader.series.service.CreatorViews.SeriesReview;
 import app.phumreader.user.service.UserService;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -86,7 +93,8 @@ public class CreatorService {
                 r.updateDay() == null ? null : Weekday.of(r.updateDay()),
                 r.coverUrl(),
                 r.bannerUrl(),
-                r.tags());
+                r.tags(),
+                review(queries.latestReview(r.id()).orElse(null)));
     }
 
     /** Same rule for writes that need the series' row. */
@@ -102,6 +110,11 @@ public class CreatorService {
         return row;
     }
 
+    /** The series' latest submission for review (V21-01), if it was ever submitted. */
+    Optional<ReviewRow> latestReview(UUID seriesId) {
+        return queries.latestReview(seriesId);
+    }
+
     public CreatorDashboard dashboard(UUID userId) {
         Optional<String> penName = queries.penName(userId);
         if (penName.isEmpty()) {
@@ -110,10 +123,12 @@ public class CreatorService {
         Map<UUID, SeriesNumbers> numbers =
                 queries.seriesNumbers(userId).stream()
                         .collect(Collectors.toMap(SeriesNumbers::seriesId, Function.identity()));
+        Map<UUID, ReviewRow> reviews = queries.latestReviews(userId);
         List<CreatorSeries> series =
                 catalog.creatorCards(userId).stream()
                         .filter(card -> numbers.containsKey(card.id()))
-                        .map(card -> row(card, numbers.get(card.id())))
+                        .map(card ->
+                                row(card, numbers.get(card.id()), review(reviews.get(card.id()))))
                         .toList();
         CreatorTotals totals =
                 new CreatorTotals(
@@ -127,8 +142,32 @@ public class CreatorService {
         return new CreatorDashboard(true, penName.get(), totals, series);
     }
 
-    private static CreatorSeries row(SeriesCard card, SeriesNumbers n) {
+    private static CreatorSeries row(
+            SeriesCard card, SeriesNumbers n, @Nullable SeriesReview review) {
         return new CreatorSeries(
-                card, n.visibility(), n.subscribers(), n.comments(), n.unlocks(), n.earnedCoins());
+                card,
+                n.visibility(),
+                n.subscribers(),
+                n.comments(),
+                n.unlocks(),
+                n.earnedCoins(),
+                review);
+    }
+
+    /**
+     * The latest submission for review as the creator sees it; the items in the admin page's order.
+     */
+    private static @Nullable SeriesReview review(@Nullable ReviewRow r) {
+        if (r == null) {
+            return null;
+        }
+        return new SeriesReview(
+                r.submittedAt().toInstant(),
+                r.decision() == null ? null : ReviewDecision.valueOf(r.decision()),
+                r.note(),
+                r.items().stream()
+                        .map(i -> new RequestedChange(ReviewItem.ofKey(i.item()), i.fixed()))
+                        .sorted(Comparator.comparing(RequestedChange::item))
+                        .toList());
     }
 }

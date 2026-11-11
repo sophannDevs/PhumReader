@@ -75,7 +75,7 @@ One package per feature. Inside a feature: `web` (controllers + request/response
 | Area | Tables |
 |---|---|
 | Accounts | users, user_roles, user_identities (Google, Facebook), refresh_tokens (hashed, one family per device), user_settings, creator_profiles, creator_follows |
-| Content | genres, series, series_tags, episodes (number, title, status draft / scheduled / published, published_at, free_at + price for Fast Pass, comments on/off), episode_images (order, width, height, storage key), chapter_texts (blocks as JSON), featured_slides (home hero), rankings |
+| Content | genres, series, series_tags, series_reviews + series_review_items (V21-01: one row per submission for review, the admin's decision and the requested changes), episodes (number, title, status draft / scheduled / published, published_at, free_at + price for Fast Pass, comments on/off), episode_images (order, width, height, storage key), chapter_texts (blocks as JSON), featured_slides (home hero), rankings |
 | Reading | subscriptions, reading_progress (last episode, progress, highest episode opened), episode_likes, episode_bookmarks |
 | Money | coin_packs, coin_wallets (the locked row; balance = sum of the ledger), payment_orders, coin_ledger (append-only, one row per top-up, bonus, unlock, refund), unlocks, creator_earnings, idempotency_keys |
 | Community | comments, comment_likes, reports |

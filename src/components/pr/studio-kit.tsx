@@ -8,8 +8,8 @@ import { toast } from "sonner"
 import { SmallSwitch } from "@/components/pr/settings-ui"
 import { Chip } from "@/components/pr/v2-primitives"
 import type { Weekday } from "@/data"
-import { errorCode, retryAfterSeconds } from "@/lib/api/errors"
-import { WEEK } from "@/lib/creator-studio"
+import { errorCode, fieldErrors, retryAfterSeconds } from "@/lib/api/errors"
+import { REVIEW_ITEMS, WEEK, type ReviewItem } from "@/lib/creator-studio"
 import { formatShortDate, formatTime, weekdayOf } from "@/lib/format"
 import { useWaitText } from "@/lib/use-wait-text"
 import { cn } from "@/lib/utils"
@@ -232,17 +232,50 @@ export function DoneCard({ title, body, children }: { title: string; body: React
   )
 }
 
-/** A failed save as one toast: too many tries (with the wait), PhumiReader hid the series, or "Something went wrong". */
+/** API error codes of the series review (V21-01) → their message in the "manage" messages. */
+const REVIEW_ERRORS = {
+  already_in_review: "errorAlreadyInReview",
+  already_published: "errorAlreadyPublished",
+  changes_not_fixed: "errorChangesNotFixed",
+  review_required: "errorReviewRequired",
+  changes_requested: "errorChangesRequested",
+  no_changes_requested: "errorReviewChanged",
+  item_not_requested: "errorReviewChanged",
+} as const
+
+/**
+ * A failed save as one toast: too many tries (with the wait), PhumiReader hid the series, a series review answer
+ * (already in review, changes not fixed, …; a missing summary or cover on submit), or "Something went wrong".
+ */
 export function useFailToast() {
   const ts = useTranslations("states")
   const tauth = useTranslations("auth")
   const tm = useTranslations("manage")
+  const tf = useTranslations("seriesForm")
   const waitText = useWaitText()
   return (error: unknown) => {
-    if (errorCode(error) === "hidden_by_admin") return void toast.error(tm("hiddenByAdmin"))
+    const code = errorCode(error)
+    if (code === "hidden_by_admin") return void toast.error(tm("hiddenByAdmin"))
+    if (code && Object.hasOwn(REVIEW_ERRORS, code)) return void toast.error(tm(REVIEW_ERRORS[code as keyof typeof REVIEW_ERRORS]))
+    // Submit for review needs a summary and a cover (400 required on summary / coverUploadId).
+    const fields = fieldErrors(error)
+    if (fields.coverUploadId === "required") return void toast.error(tf("errCover"))
+    if (fields.summary === "required") return void toast.error(tf("errSummary"))
     const wait = retryAfterSeconds(error)
     if (wait !== undefined) toast.error(tauth("tooManyTitle"), { description: waitText(wait), duration: 5000 })
     else toast.error(ts("errorTitle"), { description: ts("errorDescription"), duration: 5000 })
+  }
+}
+
+/**
+ * A requested change in the current language: a key ("contact", "cover", …) → the admin page's reason label. Requests
+ * saved by an older demo version kept the label itself, which shows as it is.
+ */
+export function useReviewItemLabel() {
+  const t = useTranslations("admin")
+  return (item: string) => {
+    const i = REVIEW_ITEMS.indexOf(item as ReviewItem)
+    return i < 0 ? item : t(`change_${i}` as "change_0")
   }
 }
 

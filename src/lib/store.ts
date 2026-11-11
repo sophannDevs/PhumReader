@@ -92,6 +92,10 @@ export type StoredReport = {
   status: ReportStatus
 }
 
+/**
+ * Demo "Request changes": the reasons as keys (`REVIEW_ITEMS`: "contact", "cover", …; Manage series translates them;
+ * saves from before V21-01 hold the admin's label instead, shown as it is) and the admin's note.
+ */
 export type ReviewNote = { items: string[]; note: string }
 export type HelpPrefill = { topic: string; order: string; msg: string }
 /** `handle`: the profile it belongs to (/creators/[handle]); older saves without one belong to the signed-in creator. */

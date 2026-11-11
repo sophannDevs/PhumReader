@@ -79,7 +79,13 @@ class AdminApiTest {
         UUID creator = sessions.newReader("Creator");
         for (String path :
                 new String[] {
-                    "/overview", "/users", "/content?type=series", "/reports", "/orders", "/audit"
+                    "/overview",
+                    "/users",
+                    "/content?type=series",
+                    "/reports",
+                    "/orders",
+                    "/audit",
+                    "/series-review"
                 }) {
             mvc.perform(get(ADMIN + path).with(sessions.guest()))
                     .andExpect(status().isUnauthorized());

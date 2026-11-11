@@ -7,7 +7,7 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import { adminKeys } from "@/lib/api/keys";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
   demoData,
   type AdminReportItem,
@@ -16,9 +16,11 @@ import {
 } from "@/data";
 import { DEMO_MODE } from "@/lib/api/config";
 import * as real from "@/lib/api/admin";
+import { GENRES } from "@/lib/creator-studio";
 import { withDemo } from "@/lib/demo-api";
 import { useAccountEmail } from "@/lib/me";
 import { useDemoFlag } from "@/lib/queries";
+import { genreFromSlug } from "@/lib/routes";
 import { useAppStore } from "@/lib/store";
 
 /** Query keys of the admin pages; every key starts with "admin" so one invalidation refreshes them all. */
@@ -68,6 +70,9 @@ export const useOrders = (f: real.ListFilter) =>
   usePaged("orders", [f.q, f.status], (c) => real.fetchOrders(f, c));
 export const useAudit = (action: string | undefined) =>
   usePaged("audit", [action], (c) => real.fetchAudit(action, c));
+/** Real mode: the series waiting for review (V21-01), oldest first. */
+export const useSeriesReview = () =>
+  usePaged("series-review", [], (c) => real.fetchSeriesReview(c));
 
 /** Every admin action changes counts, lists and the audit log: refresh them all afterwards. */
 export function useAdminAction<V, R>(run: (v: V) => Promise<R>) {
@@ -81,10 +86,11 @@ export function useAdminAction<V, R>(run: (v: V) => Promise<R>) {
 export const actions = real;
 
 // ------------------------------------------------------------------------------------------------
-// V2.1 queues (spec §22). The series review queue, refund requests and "Paid but no coins" have no API yet: they
-// run on demo data (demo-data.json `adminSeriesQueue`, the prototype's payment rows) plus the local store in both
-// modes. The report queue uses `adminReportQueue` + the reader's own reports in demo mode, and GET /admin/reports in
-// real mode. Handled demo items are remembered in the store's `adminLog` (id = "<queue item>:<id>").
+// V2.1 queues (spec §22). Refund requests and "Paid but no coins" have no API yet: they run on demo data (the
+// prototype's payment rows) plus the local store in both modes. The series review queue uses `adminSeriesQueue` + the
+// creator's own series in demo mode, and GET /admin/series-review in real mode (V21-01). The report queue uses
+// `adminReportQueue` + the reader's own reports in demo mode, and GET /admin/reports in real mode. Decisions made here
+// are remembered in the store's `adminLog` (id = "<queue item>:<id>"), so a decided item leaves the list at once.
 
 /** The admin screens' "today" (screens 22-*: "Tuesday, Nov 10"); the demo queues' ages are relative to it. */
 export const ADMIN_TODAY = "2026-11-10";
@@ -95,13 +101,16 @@ export type Flag = { kind: FlagKind; detail?: string; text?: string };
 
 export type QueueSeries = {
   id: string;
+  /** The adminLog id of a decision on it; real mode adds the submission time, so a resubmitted series is a new item */
+  key: string;
   title: string;
   creator: string;
   format: "comic" | "novel";
   genre: string;
   /** "All ages", "13+", … */
   age: string;
-  lang: "en" | "km";
+  /** The series' languages (both for a series in two versions) */
+  langs: ("en" | "km")[];
   eps: number;
   /** Epoch ms of the submission, or null for "just now" */
   submittedAt: number | null;
@@ -109,8 +118,19 @@ export type QueueSeries = {
   cover: string;
   summary: string;
   flags: Flag[];
-  /** In the store's `myWorks`: decisions change its status there */
+  /** In the store's `myWorks` (demo): decisions change its status there */
   own: boolean;
+};
+
+/** Loading state of the series queue: the demo data in demo mode, the API's pages in real mode. */
+export type SeriesQueueState = {
+  isPending: boolean;
+  isError: boolean;
+  refetch: () => void;
+  /** Real mode: more pages wait */
+  hasMore: boolean;
+  loadingMore: boolean;
+  loadMore: () => void;
 };
 
 export type ReportKind = "comment" | "series" | "episode" | "user";
@@ -353,12 +373,13 @@ const sentence = (s: string) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s)
 function fromSeriesItem(q: AdminSeriesItem, own: boolean): QueueSeries {
   return {
     id: q.id,
+    key: decisionKey("series", q.id),
     title: q.title,
     creator: q.creator,
     format: /novel/i.test(q.format) ? "novel" : "comic",
     genre: q.genre,
     age: q.age,
-    lang: q.lang === "English" ? "en" : "km",
+    langs: [q.lang === "English" ? "en" : "km"],
     eps: Number.parseInt(q.eps, 10) || 0,
     submittedAt: parseWhen(q.when),
     hours: q.hours,
@@ -369,10 +390,41 @@ function fromSeriesItem(q: AdminSeriesItem, own: boolean): QueueSeries {
   };
 }
 
+/** The API's age ratings as the queue shows them ("mature" is the form's 16+ and 18+; the edit form reads it as 18+). */
+const API_AGE: Record<real.ReviewQueueItem["ageRating"], string> = {
+  all: "All ages",
+  teen: "13+",
+  mature: "18+",
+};
+
+/** API review queue item → queue row (real mode). */
+export function fromApiReview(q: real.ReviewQueueItem, now: number): QueueSeries {
+  const submittedAt = Date.parse(q.submittedAt);
+  return {
+    id: q.id,
+    key: decisionKey("series", `${q.id}@${q.submittedAt}`),
+    title: q.title,
+    creator: q.creator,
+    format: q.type,
+    genre: genreFromSlug(q.genre, GENRES) ?? q.genre,
+    age: API_AGE[q.ageRating] ?? q.ageRating,
+    langs: q.languages.filter((l): l is "en" | "km" => l === "en" || l === "km"),
+    eps: q.episodeCount,
+    submittedAt,
+    hours: hoursSince(submittedAt, now),
+    cover: q.coverUrl ?? "",
+    summary: q.summary,
+    flags: q.flags.map((f) => ({ kind: f.kind, detail: f.detail ?? undefined })),
+    own: false,
+  };
+}
+
 /**
- * The V2.1 queues from demo data and the store: series waiting for review (demo queue + the creator's own series with
- * status "review"), reports (demo queue + the reader's own reports "In review"), refund requests and "Paid but no
- * coins". `query` carries the loading and error state (demo-api delay and ?demo= flags).
+ * The V2.1 queues: series waiting for review (demo: demo queue + the creator's own series with status "review"; real
+ * mode: GET /admin/series-review), reports (demo queue + the reader's own reports "In review"), refund requests and
+ * "Paid but no coins" (demo data and the store in both modes). `query` carries the loading and error state of the demo
+ * data (demo-api delay and ?demo= flags), `seriesQuery` the one of the series queue. `seriesTotal` is how many series
+ * wait (real mode: the overview's count when more pages wait), `oldestHours` how long the oldest one has waited.
  */
 export function useAdminQueues() {
   const flag = useDemoFlag();
@@ -381,6 +433,9 @@ export function useAdminQueues() {
     queryFn: fetchAdminDemo,
     staleTime: Infinity,
   });
+  const review = useSeriesReview();
+  const overview = useOverview();
+  const [now] = useState(() => Date.now());
   const myWorks = useAppStore((s) => s.myWorks);
   const reports = useAppStore((s) => s.reports);
   const log = useAppStore((s) => s.adminLog);
@@ -406,12 +461,13 @@ export function useAdminQueues() {
           .filter((w) => w.status === "review" && !data.series.some((q) => q.id === w.id))
           .map((w) => ({
             id: w.id,
+            key: decisionKey("series", w.id),
             title: w.title,
             creator,
             format: w.format,
             genre: w.genre,
             age: "All ages",
-            lang: "km" as const,
+            langs: ["km" as const],
             eps: w.eps,
             submittedAt: null,
             hours: 0,
@@ -453,7 +509,57 @@ export function useAdminQueues() {
     };
   }, [data, myWorks, reports, log, profileName]);
 
-  return { query, ...lists };
+  // Real mode: the API's queue without the series decided here (their call waits out the Undo, then the queue reloads).
+  const reviewPages = review.data?.pages;
+  const apiSeries = useMemo(
+    () => (reviewPages ?? []).flatMap((p) => p.items).map((q) => fromApiReview(q, now)),
+    [reviewPages, now],
+  );
+  const realSeries = useMemo(() => {
+    const handled = new Set(log.map((d) => d.id));
+    return apiSeries.filter((q) => !handled.has(q.key));
+  }, [apiSeries, log]);
+
+  if (DEMO_MODE) {
+    const seriesQuery: SeriesQueueState = {
+      isPending: query.isPending,
+      isError: query.isError,
+      refetch: () => void query.refetch(),
+      hasMore: false,
+      loadingMore: false,
+      loadMore: () => undefined,
+    };
+    return {
+      query,
+      ...lists,
+      seriesQuery,
+      seriesTotal: data ? lists.series.length : undefined,
+      oldestHours: lists.series.reduce((m, q) => Math.max(m, q.hours), 0),
+    };
+  }
+
+  const seriesQuery: SeriesQueueState = {
+    isPending: review.isPending,
+    isError: review.isError,
+    refetch: () => void review.refetch(),
+    hasMore: !!review.hasNextPage,
+    loadingMore: review.isFetchingNextPage,
+    loadMore: () => void review.fetchNextPage(),
+  };
+  const waiting = overview.data?.seriesInReview;
+  const seriesTotal = !reviewPages
+    ? undefined
+    : review.hasNextPage && waiting !== undefined
+      ? Math.max(realSeries.length, waiting - (apiSeries.length - realSeries.length))
+      : realSeries.length;
+  // Oldest first: the first loaded series has waited longest; the overview knows it too when the list is empty here.
+  const oldestAt = overview.data?.oldestReviewAt;
+  const oldestHours = realSeries.length
+    ? realSeries.reduce((m, q) => Math.max(m, q.hours), 0)
+    : seriesTotal && oldestAt
+      ? hoursSince(Date.parse(oldestAt), now)
+      : 0;
+  return { query, ...lists, series: realSeries, seriesQuery, seriesTotal, oldestHours };
 }
 
 export type AdminQueues = ReturnType<typeof useAdminQueues>;

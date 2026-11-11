@@ -30,8 +30,9 @@ import { cn } from "@/lib/utils"
  * 14-day views chart, My series with filters and a status-based main button per row, To do, new comments with an
  * inline reply and like, and the 3-step guide for a creator without series.
  * Demo: the series are the store's `myWorks` (?demo=empty shows the new-creator state). Real API: the series come
- * from GET /creator/series and the totals from GET /creator/dashboard. The chart, the to-do list's comment item and
- * the comments are demo data in both modes (the API has none of them yet); replies and likes last for the visit.
+ * from GET /creator/series (their status from `visibility`: in review and changes requested too, the submission date
+ * from `review`) and the totals from GET /creator/dashboard. The chart, the to-do list's comment item and the comments
+ * are demo data in both modes (the API has none of them yet); replies and likes last for the visit.
  */
 
 type Status = "published" | "review" | "changes" | "draft" | "hidden"
@@ -47,6 +48,8 @@ type Row = {
   subs: string
   day?: Weekday | null
   summary: string
+  /** ISO date it was submitted for review (real API); demo shows yesterday */
+  submitted?: string | null
 }
 type Filter = "all" | "live" | "wip"
 type Talk = { replied: Record<string, string>; liked: Record<string, boolean> }
@@ -110,7 +113,7 @@ function Dashboard() {
     ? flag === "empty"
       ? []
       : storeWorks
-    : (real.data ?? []).map(({ series: s, visibility, subscribers }) => ({
+    : (real.data ?? []).map(({ series: s, visibility, subscribers, review }) => ({
         id: s.id,
         title: s.title,
         cover: s.cover,
@@ -122,6 +125,7 @@ function Dashboard() {
         subs: formatCount(subscribers),
         day: s.updateDay,
         summary: "",
+        submitted: review ? ictDate(Date.parse(review.submittedAt)) : null,
       }))
   const subsTotal = DEMO_MODE ? 0 : (real.data ?? []).reduce((n, s) => n + s.subscribers, 0)
 
@@ -491,7 +495,7 @@ function TodoCard({ works, base, time, dayName, unreplied }: { works: Row[]; bas
         icon: "…",
         tone: "wait",
         title: t("todoReview", { title: w.title }),
-        desc: t("todoReviewDesc", { date: formatShortDate(addDays(base, -1), locale) }),
+        desc: t("todoReviewDesc", { date: formatShortDate(w.submitted ?? addDays(base, -1), locale) }),
       })
     } else if (w.status === "changes") {
       items.push({ key: w.id, icon: "!", tone: "plain", title: t("todoChanges", { title: w.title }), desc: t("todoChangesDesc") })

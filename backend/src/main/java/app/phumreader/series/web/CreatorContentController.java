@@ -42,6 +42,8 @@ import org.springframework.web.bind.annotation.RestController;
 @Tag(name = "creator")
 class CreatorContentController {
 
+    private static final String ITEM = "contact, cover, title, age or images";
+
     private final CreatorContentService content;
     private final CreatorService creators;
 
@@ -55,7 +57,10 @@ class CreatorContentController {
     @GetMapping
     @Operation(
             summary = "My series, with a text filter and a visibility filter",
-            description = "q matches the title; visibility is draft, published or hidden.")
+            description =
+                    "q matches the title; visibility is draft, review, changes, published or"
+                            + " hidden. review is the latest submission for review (null when the"
+                            + " series was never submitted).")
     List<CreatorSeries> list(
             @Parameter(hidden = true) @AuthenticationPrincipal CurrentUser user,
             @RequestParam(required = false) String q,
@@ -66,7 +71,9 @@ class CreatorContentController {
                 wanted = SeriesVisibility.valueOf(visibility.trim().toUpperCase(Locale.ROOT));
             } catch (IllegalArgumentException e) {
                 throw ApiException.invalidField(
-                        "visibility", "invalid", "Use draft, published or hidden.");
+                        "visibility",
+                        "invalid",
+                        "Use draft, review, changes, published or hidden.");
             }
         }
         SeriesVisibility filter = wanted;
@@ -105,8 +112,13 @@ class CreatorContentController {
 
     @PostMapping("/{id}/publish")
     @Operation(
-            summary = "Put the series live",
-            description = "Needs a summary and a cover. 403 hidden_by_admin when an admin hid it.")
+            summary = "Put a series live again that an admin approved before",
+            description =
+                    "Only for a series that went live once and was taken off (unpublish): a new"
+                            + " series answers 409 review_required and goes through POST"
+                            + " /{id}/submit. Needs a summary and a cover. 403 hidden_by_admin"
+                            + " when an admin hid it; 409 already_in_review while it waits for a"
+                            + " review, changes_requested while the admin's changes are open.")
     SeriesEdit publish(
             @Parameter(hidden = true) @AuthenticationPrincipal CurrentUser user,
             @PathVariable UUID id) {
@@ -114,11 +126,64 @@ class CreatorContentController {
     }
 
     @PostMapping("/{id}/unpublish")
-    @Operation(summary = "Take the series back to a draft")
+    @Operation(
+            summary = "Take the series back to a draft",
+            description =
+                    "403 hidden_by_admin when an admin hid it; 409 already_in_review while it"
+                            + " waits for a review, changes_requested while the admin's changes"
+                            + " are open.")
     SeriesEdit unpublish(
             @Parameter(hidden = true) @AuthenticationPrincipal CurrentUser user,
             @PathVariable UUID id) {
         return content.unpublishSeries(user, id);
+    }
+
+    // ---------- review ----------
+
+    @PostMapping("/{id}/submit")
+    @Operation(
+            summary = "Submit the series for review (Submit for review / Resubmit)",
+            description =
+                    "draft or changes -> review: the series joins the admins' queue and goes live"
+                            + " when an admin approves it. Needs a summary and a cover (400 with"
+                            + " fields.summary / fields.coverUploadId = required). From changes,"
+                            + " every requested change must be marked fixed first (409"
+                            + " changes_not_fixed). 409 already_in_review when it already waits,"
+                            + " already_published when it is live; 403 hidden_by_admin when an"
+                            + " admin hid it.")
+    SeriesEdit submit(
+            @Parameter(hidden = true) @AuthenticationPrincipal CurrentUser user,
+            @PathVariable UUID id) {
+        return content.submitSeries(user, id);
+    }
+
+    @PutMapping("/{id}/review/items/{item}")
+    @Operation(
+            summary = "Mark a requested change fixed",
+            description =
+                    "Saved, so it shows on every device; marking it again keeps the first time."
+                            + " 409 no_changes_requested unless the series waits for changes"
+                            + " (visibility changes), 404 item_not_requested when the admin did"
+                            + " not ask for this item, 400 invalid_item for an unknown key.")
+    SeriesEdit markFixed(
+            @Parameter(hidden = true) @AuthenticationPrincipal CurrentUser user,
+            @PathVariable UUID id,
+            @PathVariable @Parameter(description = ITEM) String item) {
+        return content.markFixed(user, id, item);
+    }
+
+    @DeleteMapping("/{id}/review/items/{item}")
+    @Operation(
+            summary = "Undo Mark fixed",
+            description =
+                    "409 no_changes_requested unless the series waits for changes (visibility"
+                            + " changes), 404 item_not_requested when the admin did not ask for"
+                            + " this item, 400 invalid_item for an unknown key.")
+    SeriesEdit markNotFixed(
+            @Parameter(hidden = true) @AuthenticationPrincipal CurrentUser user,
+            @PathVariable UUID id,
+            @PathVariable @Parameter(description = ITEM) String item) {
+        return content.markNotFixed(user, id, item);
     }
 
     // ---------- episodes ----------

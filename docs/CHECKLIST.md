@@ -306,10 +306,12 @@ docs/BACKEND_CHECKLIST.md, "V2.1 API additions" (V21-01 … V21-07).
 - V2-52 (F24) **Admin decisions**: every decision goes into store `adminLog` with a 6 s Undo bar and a toast; real-mode
   API calls are sent when the Undo window closes (closing the tab within 6 s loses the decision). V1 Users, Content,
   All orders and Audit log stay as extra real-mode menu items (no Undo); demo hides them.
-- V2-53 (F25) **Series review**: queue = `adminSeriesQueue` + `myWorks` with status "review" (demo data and store in both
-  modes). Series submitted on this device are auto-checked for contact details and similar titles (not watermarks).
-  Approve → "published" (clears notes); Request changes → "changes" + `reviewNotes[id]` (items as text in the admin's
-  language); Reject → "draft" (prototype).
+- V2-53 (F25) **Series review**: demo queue = `adminSeriesQueue` + `myWorks` with status "review". Series submitted on
+  this device are auto-checked for contact details and similar titles (not watermarks). Approve → "published" (clears
+  notes); Request changes → "changes" + `reviewNotes[id]` (the reason keys, translated on Manage series); Reject →
+  "draft" (prototype). Real mode (V21-01): the queue is GET /admin/series-review (the API's auto-check flags, Load
+  more); each decision calls approve / request-changes (keys + note) / reject after the Undo window; when another admin
+  decided first (409 not_in_review) the decision is undone and the queue reloads.
 - V2-54 (F26) **Reports**: demo queue = `adminReportQueue` + the reader's own "In review" reports (their content isn't
   stored, so it shows "(Content as reported)"). Real mode maps remove / warn / suspend to the API's settle "hide" (or
   "resolve") with the action as the note, and No violation to "dismiss"; the API has no timed suspension.
@@ -319,8 +321,8 @@ docs/BACKEND_CHECKLIST.md, "V2.1 API additions" (V21-01 … V21-07).
 - V2-56 (F21) **Create series** on `/creator/new` (V1 `/creator/series/new` redirects, keeping the query): the draft
   autosaves to store `draftSeries` ("new" or the work id; `?draft=C3` continues the dashboard draft). Demo: the cover
   is a sample cover from the catalogue ("Demo: a sample cover was added"); Submit adds the work to `myWorks` with status
-  "review". Real mode: Save draft creates/updates the series as a draft, Submit publishes it (the API has no review
-  step) and the cover is a real upload; the second genre, 16+ vs 18+, "Both" languages, more than one update day, the
+  "review". Real mode: Save draft creates/updates the series as a draft, Submit saves it and submits it for review
+  (V21-01; the same "in review" screen) and the cover is a real upload; the second genre, 16+ vs 18+, "Both" languages, more than one update day, the
   release time and Fast Pass stay in the local draft (no API fields).
 - V2-57 (F22) **Upload episode** on `/creator/upload?series=<id>` (`&ep=<n>` edits; V1 episode routes redirect). Demo: the
   series list is `myWorks` minus drafts; images are the creator's own files with a simulated upload (the real width is
@@ -332,7 +334,8 @@ docs/BACKEND_CHECKLIST.md, "V2.1 API additions" (V21-01 … V21-07).
   `reviewNotes[id]` (each with "Mark fixed"), else the two automatic-check items; Resubmit sets the status back to
   "review". Episode edits, story status, break message, extra update days, Fast Pass, comments and hiding the series
   last for the visit. Real mode: GET/PUT the series and episodes, DELETE drafts, hiding the series unpublishes it; the
-  API can't hide one episode or delete a series (not shown) and doesn't store the series-wide Fast Pass or comments.
+  reviewer's changes and note come from the API and Mark fixed / Undo / Resubmit are saved there (V21-01); the API
+  can't hide one episode or delete a series (not shown) and doesn't store the series-wide Fast Pass or comments.
 - V2-59 (F23) On phones the prototype's flex-wrap pushes the cover above long Fast Pass rows; we keep the cover beside
   the title on every row (same content, steadier layout).
 - V2-60 (F04) **ListRowActions** is built into each list's rows (admin queue, upload image list, Manage episodes, Library

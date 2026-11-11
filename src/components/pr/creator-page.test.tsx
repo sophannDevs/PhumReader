@@ -86,6 +86,33 @@ describe("CreatorPage: a creator", () => {
     expect(screen.queryByText("Sea Light")).not.toBeInTheDocument()
   })
 
+  it("shows the review states from the API: in review with the submitted date, and changes requested linking to Manage", async () => {
+    signIn()
+    serve(dashboard(), [
+      {
+        series: card("r", "River Lantern"),
+        visibility: "review",
+        subscribers: 0,
+        comments: 0,
+        review: { submittedAt: "2026-11-08T03:00:00Z", decision: null, note: null, items: [] },
+      },
+      {
+        series: card("c", "Glass Compass"),
+        visibility: "changes",
+        subscribers: 0,
+        comments: 0,
+        review: { submittedAt: "2026-11-07T03:00:00Z", decision: "changes", note: null, items: [{ item: "contact", fixed: false }] },
+      },
+    ])
+    renderUi(<CreatorPage />)
+    expect(await screen.findByText("River Lantern is in review")).toBeInTheDocument()
+    expect(screen.getByText("Submitted Nov 8 · usually 1–2 days")).toBeInTheDocument()
+    expect(screen.getByText("In review")).toBeInTheDocument()
+    expect(screen.getByText("Glass Compass needs changes")).toBeInTheDocument()
+    expect(screen.getByText("Changes requested")).toBeInTheDocument()
+    expect(screen.getByRole("link", { name: "Fix and resubmit" })).toHaveAttribute("href", "/creator/series/c")
+  })
+
   it("greets the creator by name", async () => {
     signIn()
     serve(dashboard())

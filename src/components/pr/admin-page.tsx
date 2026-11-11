@@ -41,10 +41,18 @@ import { useAppStore, useUser } from "@/lib/store";
 
 type Line = { text: string; meta: string; at: number };
 
+/** The audit actions of a series review (V21-01) → the decision log's wording. */
+const SERIES_AUDIT = new Map<string, "approve" | "changes" | "reject">([
+  ["series.approve", "approve"],
+  ["series.changes", "changes"],
+  ["series.reject", "reject"],
+]);
+
 /**
  * /admin (spec §22 Overview, screens 22-admin-overview): "Today" with the targets, four counts that open each queue,
- * "Waiting longest" and recent decisions. Demo: the V2.1 queues and the decision log; real mode: the API's open
- * reports and refunded orders, suspended users and the audit log (series review stays on demo data).
+ * "Waiting longest" and recent decisions. Demo: the V2.1 queues and the decision log; real mode: the API's series
+ * review queue (its count and oldest submission), open reports and refunded orders, suspended users, and the audit log
+ * for recent decisions (series decisions made here reach it once their Undo window closes).
  */
 export function AdminPage() {
   const t = useTranslations("admin");
@@ -65,15 +73,20 @@ export function AdminPage() {
   const todayIso = DEMO_MODE ? ADMIN_TODAY : ictDate(now);
   const dateLabel = `${td(`dayFull.${weekdayOf(todayIso)}`)}${locale === "km" ? " " : ", "}${formatShortDate(todayIso, locale)}`;
 
-  const loading = queues.query.isPending || (!DEMO_MODE && overview.isPending);
-  const failed = queues.query.isError || (!DEMO_MODE && overview.isError);
+  const loading =
+    queues.query.isPending ||
+    (!DEMO_MODE && (overview.isPending || queues.seriesQuery.isPending));
+  const failed =
+    queues.query.isError ||
+    (!DEMO_MODE && (overview.isError || queues.seriesQuery.isError));
 
   const series = queues.series;
   const reports: QueueReport[] = DEMO_MODE
     ? queues.reports
     : sortReports(realReports.items.map((r) => fromApiReport(r, now)));
   const urgent = reports.filter((r) => priorityOf(r.reason) === "urgent").length;
-  const oldest = series.reduce((m, q) => Math.max(m, q.hours), 0);
+  const oldest = queues.oldestHours;
+  const seriesWaiting = queues.seriesTotal ?? series.length;
   const stuckLeft = queues.stuck.filter((s) => !s.done).length;
 
   const head = <AdminHead title={t("today")} line={t("todayLine", { date: dateLabel })} />;
@@ -100,7 +113,10 @@ export function AdminPage() {
         <AdminError
           onRetry={() => {
             void queues.query.refetch();
-            if (!DEMO_MODE) void overview.refetch();
+            if (!DEMO_MODE) {
+              void overview.refetch();
+              queues.seriesQuery.refetch();
+            }
           }}
         />
       </>
@@ -142,8 +158,8 @@ export function AdminPage() {
     : [
         {
           label: t("kpi_series"),
-          value: series.length,
-          change: series.length ? t("kpi_oldest", { age: age(oldest) }) : t("kpi_allDone"),
+          value: seriesWaiting,
+          change: seriesWaiting ? t("kpi_oldest", { age: age(oldest) }) : t("kpi_allDone"),
           tone: "muted" as const,
           href: "/admin/series",
         },
@@ -193,10 +209,10 @@ export function AdminPage() {
     })),
   ];
 
-  // Recent decisions: the ones made here (newest first), then the demo team's (demo) or the audit log (real mode).
+  // Recent decisions: demo – the ones made here (newest first), then the demo team's; real mode – the audit log, which
+  // has every decision made through the API (series reviews included).
   const realToday = ictDate(now);
-  const own: Line[] = decisions
-    .filter((d) => DEMO_MODE || d.queue === "series")
+  const own: Line[] = (DEMO_MODE ? decisions : [])
     .map((d) => ({
       text: t(`log_${d.action}` as "log_approve", { label: d.label }),
       meta: t("decisionMeta", { name: user?.name ?? "", time: when(d.at, realToday) }),
@@ -211,8 +227,16 @@ export function AdminPage() {
     : audit.items.slice(0, 6).map((e: AuditEntry) => {
         const at = Date.parse(e.createdAt);
         const k = `audit_${e.action.replace(".", "_")}`;
+        // A series review names the series, like the decisions made here: "Approved “Lantern Ferry”".
+        const review = SERIES_AUDIT.get(e.action);
+        const title = e.details.title;
         return {
-          text: t.has(k as "audit_user_ban") ? t(k as "audit_user_ban") : e.action,
+          text:
+            review && typeof title === "string" && title
+              ? t(`log_${review}`, { label: title })
+              : t.has(k as "audit_user_ban")
+                ? t(k as "audit_user_ban")
+                : e.action,
           meta: t("decisionMeta", { name: e.actorName ?? "–", time: when(at, realToday) }),
           at,
         };

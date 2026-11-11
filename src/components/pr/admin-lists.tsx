@@ -40,6 +40,8 @@ const STATE_BADGE: Record<string, Variant> = {
   open: "warn",
   pending: "warn",
   scheduled: "warn",
+  review: "warn",
+  changes: "warn",
   hidden: "danger",
   banned: "danger",
   failed: "danger",

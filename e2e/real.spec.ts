@@ -318,8 +318,8 @@ test("8. become a creator in the dialog; the dashboard lists the series with the
     visible(page.getByRole("link", { name: "Create your first series" })),
   ).toHaveAttribute("href", /\/creator\/new$/);
 
-  // Two series written through the API: one live, one draft. Going live needs a cover, so an upload, which
-  // needs S3 storage; a backend without it (memory: upload addresses) gets two drafts.
+  // Two drafts written through the API, one with a cover (an upload, so only with S3 storage). Going live
+  // needs an admin's review since V21-01: that path is key flow 4 (test 15).
   const headers = await apiHeaders();
   const ticket = await (
     await page.request.post("/api/v1/creator/uploads", {
@@ -364,14 +364,6 @@ test("8. become a creator in the dialog; the dashboard lists the series with the
     ).id as string;
   const alpha = await create(`E2E Alpha ${stamp}`, live);
   const beta = await create(`E2E Beta ${stamp}`, false);
-  if (live)
-    expect(
-      (
-        await page.request.post(`/api/v1/creator/series/${alpha}/publish`, {
-          headers,
-        })
-      ).status(),
-    ).toBe(200);
 
   // The dashboard lists both, with their state, and opens each one's Manage page.
   await page.reload();
@@ -384,15 +376,6 @@ test("8. become a creator in the dialog; the dashboard lists the series with the
     visible(page.locator(`a[href$="/creator/series/${beta}"]`)),
   ).toBeVisible();
 
-  // Keep the dev data clean: the live series goes back to a draft.
-  if (live)
-    expect(
-      (
-        await page.request.post(`/api/v1/creator/series/${alpha}/unpublish`, {
-          headers,
-        })
-      ).status(),
-    ).toBe(200);
 });
 
 test("9. Create and edit a series in the form: validation, uploads with rules, draft, publish, unpublish", async () => {
@@ -1356,7 +1339,136 @@ test("14. admin: only ADMIN gets in; remove a reported comment, suspend a user, 
   }
 });
 
-test("15. delete the account: signed out everywhere, wrong password refused first", async () => {
+test("15. key flow 4: create series -> admin requests changes -> creator fixes and resubmits -> admin approves -> upload episode 1", async ({
+  browser,
+}) => {
+  test.setTimeout(240_000);
+  const title = `E2E Lanterns ${stamp}`;
+  const headers = await apiHeaders();
+
+  // The draft: basics and a summary with a Telegram link (the "contact" flag), then a cover. With S3 storage
+  // the cover is a real upload; without it (memory: upload addresses) the draft gets a cover address directly.
+  const id = (
+    await (
+      await page.request.post("/api/v1/creator/series", {
+        headers,
+        data: {
+          title,
+          type: "comic",
+          genre: "fantasy",
+          languages: ["en"],
+          summary:
+            "A ferry girl on the Kampot river finds a lantern that shows the way home. Updates on t.me/lanterns_kh",
+          tags: [],
+          ageRating: "all",
+          status: "ongoing",
+        },
+      })
+    ).json()
+  ).id as string;
+  const ticket = await (
+    await page.request.post("/api/v1/creator/uploads", {
+      headers,
+      data: { kind: "COVER", contentType: "image/png", size: png(600, 800).length },
+    })
+  ).json();
+  const storage = hasStorage(ticket.uploadUrl);
+  if (storage) {
+    await page.request.put(ticket.uploadUrl, { headers: ticket.headers, data: png(600, 800) });
+    await page.request.post(`/api/v1/creator/uploads/${ticket.id}/complete`, { headers });
+    const current = await (await page.request.get(`/api/v1/creator/series/${id}`)).json();
+    await page.request.put(`/api/v1/creator/series/${id}`, {
+      headers,
+      data: { ...current, languages: current.languages, coverUploadId: ticket.id },
+    });
+  } else {
+    sql(`update series set cover_url = '/covers/02eac6b05156d01f88c4919f72b5bbfc.svg' where id = '${id}'`);
+  }
+
+  // Create series (V2.1 wizard): continue the draft, then Submit for review.
+  await page.goto(`/creator/new?draft=${id}`);
+  // A continued draft opens at its first unfinished step (here: Publishing).
+  const publishing = visible(page.getByRole("heading", { level: 2, name: "Publishing" }));
+  const next = visible(page.getByRole("button", { name: "Continue" }));
+  await expect(publishing.or(next)).toBeVisible();
+  for (let step = 0; step < 3 && !(await publishing.isVisible()); step++) await next.click();
+  const submit = visible(page.getByRole("button", { name: "Submit for review" }));
+  await visible(page.getByRole("group", { name: /Update days/ }).getByRole("button", { name: "Sat" })).click();
+  const original = visible(page.getByRole("checkbox", { name: /original work/ }));
+  if (!(await original.isChecked())) await original.click();
+  await submit.click();
+  await expect(visible(page.getByRole("heading", { name: `${title} is in review` }))).toBeVisible();
+
+  // An admin (this account gets the role, as in test 14) requests changes; the contact flag pre-ticks its reason.
+  sql(
+    `insert into user_roles (user_id, role) select id, 'ADMIN' from users where email = '${EMAIL}' on conflict do nothing`,
+  );
+  const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+  const ap = await ctx.newPage();
+  try {
+    await logIn(ap, NEW_PASSWORD);
+    await ap.goto(`/admin/series?id=${id}`);
+    await expect(visible(ap.getByRole("heading", { level: 2, name: title }))).toBeVisible();
+    await expect(visible(ap.getByText(/Summary may contain a social handle/))).toBeVisible();
+    await visible(ap.getByRole("button", { name: "Request changes" })).click();
+    await expect(
+      visible(ap.getByRole("checkbox", { name: "Remove contact details or links from the summary" })),
+    ).toBeChecked();
+    const changesSent = ap.waitForResponse(
+      (r) => r.url().includes(`/admin/series/${id}/request-changes`) && r.status() === 204,
+      { timeout: 20_000 },
+    );
+    await visible(ap.getByRole("button", { name: "Send to creator" })).click();
+    await expect(visible(ap.getByText("Sent to the creator"))).toBeVisible();
+    await changesSent; // after the 6-second Undo window
+
+    // The creator sees the change in Manage series, marks it fixed and resubmits.
+    await page.goto(`/creator/series/${id}`);
+    await expect(visible(page.getByText("Changes needed before this series can go live"))).toBeVisible();
+    await visible(page.getByRole("button", { name: "Mark fixed" })).click();
+    await visible(page.getByRole("button", { name: "Resubmit for review" })).click();
+    await expect(visible(page.getByText(/^Resubmitted\. /))).toBeVisible();
+    const afterResubmit = await (await page.request.get(`/api/v1/creator/series/${id}`)).json();
+    expect(afterResubmit.visibility).toBe("review");
+
+    // The admin approves (every check ticked); the series goes live.
+    await ap.goto(`/admin/series?id=${id}`);
+    await expect(visible(ap.getByRole("heading", { level: 2, name: title }))).toBeVisible();
+    const checklist = visible(ap.getByRole("group", { name: "Checklist" }));
+    for (const box of await checklist.getByRole("checkbox").all()) await box.check();
+    const approved = ap.waitForResponse(
+      (r) => r.url().includes(`/admin/series/${id}/approve`) && r.status() === 204,
+      { timeout: 20_000 },
+    );
+    await visible(ap.getByRole("button", { name: "Approve" })).click();
+    await expect(visible(ap.getByText("Approved. The creator was notified."))).toBeVisible();
+    await approved;
+  } finally {
+    await ctx.close();
+  }
+  const live = await (await page.request.get(`/api/v1/creator/series/${id}`)).json();
+  expect(live.visibility).toBe("published");
+  await page.goto(`/series/${live.slug}`);
+  await expect(visible(page.getByRole("heading", { level: 1, name: title }))).toBeVisible();
+
+  // Upload episode 1: panels are uploads, so only with S3 storage.
+  if (storage) {
+    await page.goto(`/creator/upload?series=${id}`);
+    await visible(page.getByRole("textbox", { name: /^Episode title/ })).fill("The First Light");
+    await page.locator('input[type="file"]').first().setInputFiles([
+      { name: "ep01_01.png", mimeType: "image/png", buffer: png(800, 1200) },
+      { name: "ep01_02.png", mimeType: "image/png", buffer: png(800, 1200) },
+    ]);
+    await expect(visible(page.locator("li", { hasText: "Images ready (2/2) (done)" }))).toBeVisible({ timeout: 30_000 });
+    await visible(page.getByRole("button", { name: /^Schedule for / })).click();
+    await expect(visible(page.getByRole("heading", { name: /Episode 1 is scheduled/ }))).toBeVisible();
+  }
+
+  // Keep the dev catalog clean: the series goes back to a draft (it went live once, so no new review is needed).
+  expect((await page.request.post(`/api/v1/creator/series/${id}/unpublish`, { headers })).status()).toBe(200);
+});
+
+test("16. delete the account: signed out everywhere, wrong password refused first", async () => {
   await page.goto("/settings");
   await visible(page.getByRole("button", { name: "Delete account" })).click();
   // V2.1: type DELETE first; the button stays disabled until then.

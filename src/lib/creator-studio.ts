@@ -58,6 +58,14 @@ export function ictAt(iso: string, hour: number, minute = 0): number {
   return Date.UTC(y, m - 1, d, hour - 7, minute)
 }
 
+/**
+ * The changes a reviewer can ask for (admin "Request changes"), in the order of the admin page's labels `change_0` …
+ * `change_4`. The API (V21-01) and the demo store save these keys; the website translates them when it shows them.
+ */
+export const REVIEW_ITEMS = ["contact", "cover", "title", "age", "images"] as const
+export type ReviewItem = (typeof REVIEW_ITEMS)[number]
+export const isReviewItem = (value: string): value is ReviewItem => (REVIEW_ITEMS as readonly string[]).includes(value)
+
 /** Social handles, links and phone numbers: summaries can't include them (spec §21, admin flag "contact"). */
 export const hasContactDetails = (text: string) => /(@\w|t\.me\/|telegram|facebook\.com|https?:\/\/|www\.|\b0\d{8,9}\b)/i.test(text)
 

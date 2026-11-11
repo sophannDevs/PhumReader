@@ -83,7 +83,7 @@ class CreatorContentApiTest {
     // ================================================================ series
 
     @Test
-    void aDraftSeriesIsInvisibleUntilPublishedAndSlugsAreUnique() throws Exception {
+    void aDraftSeriesIsInvisibleUntilApprovedAndSlugsAreUnique() throws Exception {
         String cover = upload("COVER", 600, 800);
         String id = createSeries("Tide of Glass", "comic", cover);
 
@@ -102,19 +102,30 @@ class CreatorContentApiTest {
         mvc.perform(get(SERIES + "/" + second).with(me))
                 .andExpect(jsonPath("$.slug").value("tide-of-glass-2"));
 
+        // A new series goes live through a review (V21-01), not by publishing.
         mvc.perform(post(SERIES + "/" + id + "/publish").with(me))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.error.code").value("review_required"));
+        mvc.perform(post(SERIES + "/" + id + "/submit").with(me))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.visibility").value("published"));
+                .andExpect(jsonPath("$.visibility").value("review"));
+        mvc.perform(get("/api/v1/series/tide-of-glass")).andExpect(status().isNotFound());
+        approve(id);
         mvc.perform(get("/api/v1/series/tide-of-glass")).andExpect(status().isOk());
 
         mvc.perform(post(SERIES + "/" + id + "/unpublish").with(me)).andExpect(status().isOk());
         mvc.perform(get("/api/v1/series/tide-of-glass")).andExpect(status().isNotFound());
+        // Approved once, it goes live again without a new review.
+        mvc.perform(post(SERIES + "/" + id + "/publish").with(me))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.visibility").value("published"));
+        mvc.perform(get("/api/v1/series/tide-of-glass")).andExpect(status().isOk());
     }
 
     @Test
-    void publishingNeedsASummaryAndACover() throws Exception {
+    void submittingForReviewNeedsASummaryAndACover() throws Exception {
         String noCover = createSeries("No Cover", "comic", null);
-        mvc.perform(post(SERIES + "/" + noCover + "/publish").with(me))
+        mvc.perform(post(SERIES + "/" + noCover + "/submit").with(me))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.error.fields.coverUploadId").value("required"));
 
@@ -128,7 +139,7 @@ class CreatorContentApiTest {
                                         .with(me)
                                         .contentType(MediaType.APPLICATION_JSON)
                                         .content(body)));
-        mvc.perform(post(SERIES + "/" + noSummary + "/publish").with(me))
+        mvc.perform(post(SERIES + "/" + noSummary + "/submit").with(me))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.error.fields.summary").value("required"));
     }
@@ -585,6 +596,8 @@ class CreatorContentApiTest {
                 .andExpect(status().isForbidden());
         mvc.perform(post(SERIES + "/" + id + "/publish").with(them))
                 .andExpect(status().isForbidden());
+        mvc.perform(post(SERIES + "/" + id + "/submit").with(them))
+                .andExpect(status().isForbidden());
         mvc.perform(post(SERIES + "/" + id + "/unpublish").with(them))
                 .andExpect(status().isForbidden());
         mvc.perform(get(SERIES + "/" + id + "/episodes").with(them))
@@ -640,11 +653,24 @@ class CreatorContentApiTest {
         return id;
     }
 
-    /** A published series with a cover and a summary. */
+    /** A published series with a cover and a summary: submitted for review and approved. */
     private String livingSeries(String title, String type) throws Exception {
         String id = createSeries(title, type, upload("COVER", 600, 800));
-        mvc.perform(post(SERIES + "/" + id + "/publish").with(me)).andExpect(status().isOk());
+        mvc.perform(post(SERIES + "/" + id + "/submit").with(me)).andExpect(status().isOk());
+        approve(id);
         return id;
+    }
+
+    /** An admin approves the series in review (V21-01): it goes live. */
+    private void approve(String seriesId) throws Exception {
+        UUID admin = sessions.newReader("Admin");
+        jdbc.sql("insert into user_roles (user_id, role) values (:id, 'ADMIN')")
+                .param("id", admin)
+                .update();
+        mvc.perform(
+                        post("/api/v1/admin/series/" + seriesId + "/approve")
+                                .with(sessions.as(admin, "ADMIN")))
+                .andExpect(status().isNoContent());
     }
 
     private String createSeries(String title, String type, String coverUploadId) throws Exception {

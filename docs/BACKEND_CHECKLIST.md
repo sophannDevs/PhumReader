@@ -894,6 +894,57 @@ as the plan tasks (tests, `./gradlew check`, OpenAPI + `npm run api:gen`); commi
   - Depends on: P3-14, P3-18
   - Done when: key flow 4 (create series → admin requests changes → creator fixes and resubmits → admin approves →
     upload episode 1) passes in `e2e/real.spec.ts`.
+  - Design (approved by the owner 2026-11-11):
+    - **States.** `series.visibility` gains `REVIEW` and `CHANGES` (JSON `review`, `changes`, the frontend's
+      `workStatusSchema` plus `hidden`). Readers only ever see `PUBLISHED`, as today.
+      `DRAFT → REVIEW` (submit) · `REVIEW → PUBLISHED` (approve; sets `launched_at` the first time) ·
+      `REVIEW → CHANGES` (request changes) · `CHANGES → REVIEW` (resubmit) · `REVIEW → DRAFT` (reject).
+    - **Migration V9.** The new visibility values; `series_reviews` (one row per submission: `submitted_at`,
+      `decided_at`, `decided_by`, `decision` APPROVED / CHANGES / REJECTED, `note` up to 300 characters) and
+      `series_review_items` (the requested changes of a review: `item`, `fixed_at`).
+    - **Requested changes are keys**, not translated text (the store saves the admin's labels today):
+      `contact` (contact details or links in the summary), `cover`, `title`, `age`, `images` — the five reasons the
+      admin page has (`change_0` … `change_4`). The website translates them.
+    - **Creator endpoints.**
+      `POST /creator/series/{id}/submit`: draft or changes → review; needs a summary and a cover (the publish
+      checks); from `changes` every requested item must be marked fixed first (409 `changes_not_fixed`).
+      `PUT` / `DELETE /creator/series/{id}/review/items/{item}`: Mark fixed / undo (Manage series; saved, so it shows
+      on every device). `SeriesEdit` and the creator list carry `review: { submittedAt, decision, note,
+      items: [{ item, fixed }] } | null`.
+    - **Publish needs a review once.** `POST …/publish` on a series that never went live answers 409
+      `review_required`. A series that was approved before (`launched_at` set) and was taken off (Hide series /
+      unpublish) can go live again without a new review, as today.
+    - **Admin endpoints** (role ADMIN, every decision in the audit log as `series.approve`, `series.changes`,
+      `series.reject`): `GET /admin/series-review` (the queue, oldest first, cursor paging: id, slug, title,
+      creator, type, genre, age rating, languages, episode count, cover, summary, `submittedAt`, `flags`);
+      `POST /admin/series/{id}/approve`; `POST /admin/series/{id}/request-changes` `{ items: [1–5 keys], note? }`;
+      `POST /admin/series/{id}/reject` `{ note? }`. A decision on a series that is no longer in review answers
+      409 `not_in_review` (double clicks, two admins). The overview adds `seriesInReview` and `oldestReviewAt`.
+    - **Auto-check flags**, worked out by the API when the queue is read: `contact` (the frontend's regex: @handles,
+      URLs, `www.`, `t.me/`, 9–10 digit phone numbers in the summary) and `similar` (title equal to, inside or
+      containing another live series' title, 4+ characters, case and spacing ignored). `watermark` stays in the
+      API's flag list but is never set: nothing can detect it yet.
+    - **Undo** stays in the website: the admin page already waits out its 6-second Undo before it calls the API
+      (`useDecide` `commit`), so no undo endpoint.
+    - **Website (real mode).** Create series: Submit → submit → the "in review" screen. Manage series: the review
+      from the API, Mark fixed and Resubmit call the endpoints. Creator dashboard and Upload episode: the status from
+      the API. Admin: the series queue and its counts from the API (the demo queue stays for demo mode).
+    - **Not in V21-01:** the "quick review" after a title change of a live series (only the wording exists today;
+      it needs a pending-title field: later), and detecting watermarks.
+    - **This PC:** the API part and its tests can be built and checked here with `./gradlew check --offline`; key flow
+      4 in `e2e/real.spec.ts` uploads a cover and an episode, so it runs only where S3 storage is set up (home PC).
+  - Built 2026-11-11 (box stays open): migration V9 (`series_reviews`, `series_review_items`), the creator endpoints
+    `submit` and `review/items/{item}`, `publish` → 409 `review_required` for a series that never went live (publish /
+    unpublish also refuse a series in review or with changes requested), the admin queue `GET /admin/series-review`
+    with the `contact` and `similar` flags, approve / request-changes / reject (204, 409 `not_in_review`, audit
+    `series.approve` / `series.changes` / `series.reject`), and `seriesInReview` / `oldestReviewAt` on the overview.
+    Tests: `SeriesReviewApiTest` (key flow 4 through the API, validation, access, paging, overview, audit) and
+    `ReviewChecksTest`; `./gradlew check --offline` 260 tests green. Website (real mode): Create series submits for
+    review; Manage series shows the requested changes with Mark fixed / Undo / Resubmit; the dashboard, To do and
+    Upload episode follow the review states; the admin queue, its counts and decisions use the API after the Undo
+    window. `e2e/real.spec.ts` test 15 (key flow 4) passes on the office PC up to the approval and the live series
+    page; its "upload episode 1" step runs only with S3 storage. Tick once that step has passed at home. Vitest tests
+    for the new screens are written but not run here (no Vitest on this PC).
 
 - [ ] **V21-02 Series and episode fields from the V2.1 forms**
   - Build: second genre, age 16+ / 18+, language "both" (two versions), several update days, release time (ICT),

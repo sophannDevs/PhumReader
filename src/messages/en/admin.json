@@ -61,6 +61,9 @@
   "audit_report_dismiss": "Closed a report, no violation",
   "audit_report_resolve": "Resolved a report",
   "audit_order_refund": "Refunded an order",
+  "audit_series_approve": "Approved a series",
+  "audit_series_changes": "Asked for changes to a series",
+  "audit_series_reject": "Rejected a series",
   "undone": "Undone",
   "age_now": "just now",
   "age_h": "{h}h ago",
@@ -70,7 +73,6 @@
   "sr_emptyTitle": "Queue is empty",
   "sr_emptyText": "Every new series has been reviewed.",
   "sr_queue": "Series waiting",
-  "sr_realNote": "The API has no review queue yet: this list uses demo data and the series submitted on this device.",
   "autoChecks": "{count, plural, one {# auto-check} other {# auto-checks}}",
   "format_comic": "Comic",
   "format_novel": "Web novel",
@@ -224,6 +226,8 @@
   "state_cancelled": "Cancelled",
   "state_expired": "Expired",
   "state_refunded": "Refunded",
+  "state_review": "In review",
+  "state_changes": "Changes requested",
   "emptyTitle": "Nothing here yet",
   "emptyDesc": "Items will show up here.",
   "noMatchTitle": "No matches",
@@ -267,5 +271,6 @@
   "error_cannot_ban_admin": "An admin account cannot be suspended here.",
   "error_not_hideable": "Only live content can be hidden.",
   "error_not_hidden": "This item is not hidden.",
-  "error_report_closed": "Another admin already settled this report."
+  "error_report_closed": "Another admin already settled this report.",
+  "error_not_in_review": "Another admin already decided on this series."
 }

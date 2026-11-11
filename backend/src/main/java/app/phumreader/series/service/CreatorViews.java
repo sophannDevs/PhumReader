@@ -1,6 +1,8 @@
 package app.phumreader.series.service;
 
 import app.phumreader.series.domain.AgeRating;
+import app.phumreader.series.domain.ReviewDecision;
+import app.phumreader.series.domain.ReviewItem;
 import app.phumreader.series.domain.SeriesStatus;
 import app.phumreader.series.domain.SeriesType;
 import app.phumreader.series.domain.SeriesVisibility;
@@ -46,10 +48,12 @@ public final class CreatorViews {
      * One series with its numbers.
      *
      * @param series the series card (views, likes and episode counts are in it)
-     * @param visibility draft, published or hidden
+     * @param visibility draft, review (waiting for an admin), changes (the admin asked for
+     *     changes), published or hidden (taken down by an admin)
      * @param comments visible comments on the series page and its episodes
      * @param unlocks Fast Pass episodes bought with coins
      * @param earnedCoins coins earned from those unlocks
+     * @param review the latest submission for review; {@code null} when it was never submitted
      */
     public record CreatorSeries(
             SeriesCard series,
@@ -57,9 +61,16 @@ public final class CreatorViews {
             long subscribers,
             long comments,
             long unlocks,
-            long earnedCoins) {}
+            long earnedCoins,
+            @Nullable SeriesReview review) {}
 
-    /** A series as its creator edits it (GET /creator/series/{id}). */
+    /**
+     * A series as its creator edits it (GET /creator/series/{id}).
+     *
+     * @param visibility draft, review (waiting for an admin), changes (the admin asked for
+     *     changes), published or hidden (taken down by an admin)
+     * @param review the latest submission for review; {@code null} when it was never submitted
+     */
     public record SeriesEdit(
             UUID id,
             String slug,
@@ -74,7 +85,30 @@ public final class CreatorViews {
             @Nullable Weekday updateDay,
             @Nullable String coverUrl,
             @Nullable String bannerUrl,
-            List<String> tags) {}
+            List<String> tags,
+            @Nullable SeriesReview review) {}
+
+    /**
+     * The latest submission of a series for review (V21-01), as Manage series shows it.
+     *
+     * @param submittedAt when the creator submitted it
+     * @param decision {@code null} while it waits for an admin
+     * @param note the admin's note to the creator
+     * @param items what the admin asked to change (decision {@code changes}), each with whether the
+     *     creator marked it fixed; empty otherwise
+     */
+    public record SeriesReview(
+            Instant submittedAt,
+            @Nullable ReviewDecision decision,
+            @Nullable String note,
+            List<RequestedChange> items) {}
+
+    /**
+     * A change the admin asked for.
+     *
+     * @param fixed the creator marked it fixed
+     */
+    public record RequestedChange(ReviewItem item, boolean fixed) {}
 
     /** One row of a creator's episode list, any status. */
     public record CreatorEpisode(

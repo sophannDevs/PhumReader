@@ -90,13 +90,45 @@ public class AdminQueries {
     /** A report still waiting for an admin, with its target. */
     public record OpenReport(UUID id, ContentType targetType, UUID targetId, String status) {}
 
+    /**
+     * @param seriesInReview series waiting for a review decision
+     * @param oldestReviewAt when the longest-waiting of them was submitted
+     */
     public record Counts(
             long openReports,
             long bannedUsers,
             long hiddenSeries,
             long hiddenEpisodes,
             long hiddenComments,
-            long refundedOrders) {}
+            long refundedOrders,
+            long seriesInReview,
+            @Nullable OffsetDateTime oldestReviewAt) {}
+
+    /**
+     * A series waiting for review, as the queue lists it (V21-01).
+     *
+     * @param creator the creator's pen name
+     * @param episodeCount episodes of any status
+     */
+    public record QueueRow(
+            UUID id,
+            String slug,
+            String title,
+            String creator,
+            String type,
+            String genre,
+            String ageRating,
+            List<String> languages,
+            int episodeCount,
+            @Nullable String coverUrl,
+            String summary,
+            OffsetDateTime submittedAt) {}
+
+    /** A live series' title (the "similar title" check). */
+    public record LiveTitle(UUID id, String title) {}
+
+    /** A series an admin is deciding on, locked until the transaction ends. */
+    public record ReviewTarget(String visibility, String title) {}
 
     private final JdbcClient jdbc;
 
@@ -263,6 +295,102 @@ public class AdminQueries {
                         .param("to", to)
                         .update()
                 == 1;
+    }
+
+    // ---------- series review (V21-01) ----------
+
+    /** Series waiting for review, oldest submission first; pages by (submitted_at, id). */
+    public List<QueueRow> reviewQueue(@Nullable Key after, int limit) {
+        String sql =
+                "select s.id, s.slug, s.title, cp.pen_name, s.type, g.slug as genre, s.age_rating,"
+                        + " s.languages, s.cover_url, s.summary, r.submitted_at,"
+                        + " (select count(*) from episodes e where e.series_id = s.id) as episodes"
+                        + " from series_reviews r join series s on s.id = r.series_id"
+                        + " join creator_profiles cp on cp.user_id = s.creator_id"
+                        + " join genres g on g.id = s.genre_id"
+                        + " where r.decided_at is null and s.visibility = 'REVIEW'"
+                        + (after == null ? "" : " and (r.submitted_at, s.id) > (:t, :id)")
+                        + " order by r.submitted_at, s.id limit :limit";
+        return page(jdbc.sql(sql), null, null, after, limit)
+                .query((rs, n) ->
+                        new QueueRow(
+                                rs.getObject("id", UUID.class),
+                                rs.getString("slug"),
+                                rs.getString("title"),
+                                rs.getString("pen_name"),
+                                rs.getString("type"),
+                                rs.getString("genre"),
+                                rs.getString("age_rating"),
+                                strings(rs.getArray("languages")),
+                                rs.getInt("episodes"),
+                                rs.getString("cover_url"),
+                                rs.getString("summary"),
+                                rs.getObject("submitted_at", OffsetDateTime.class)))
+                .list();
+    }
+
+    /** Every live series' title, the best known first. */
+    public List<LiveTitle> liveTitles() {
+        return jdbc.sql(
+                        "select id, title from series where visibility = 'PUBLISHED'"
+                                + " order by view_count desc, id")
+                .query((rs, n) ->
+                        new LiveTitle(rs.getObject("id", UUID.class), rs.getString("title")))
+                .list();
+    }
+
+    /**
+     * The series' state and title, locked until the transaction ends; empty when it does not exist.
+     */
+    public Optional<ReviewTarget> lockSeries(UUID id) {
+        return jdbc.sql("select visibility, title from series where id = :id for update")
+                .param("id", id)
+                .query((rs, n) ->
+                        new ReviewTarget(rs.getString("visibility"), rs.getString("title")))
+                .optional();
+    }
+
+    /**
+     * Records the decision on the series' open submission.
+     *
+     * @return the submission's id; empty when none was open
+     */
+    public Optional<Long> closeReview(
+            UUID seriesId, String decision, UUID admin, @Nullable String note, OffsetDateTime now) {
+        return jdbc.sql(
+                        "update series_reviews set decision = :decision, decided_at = :now,"
+                                + " decided_by = :admin, note = :note"
+                                + " where series_id = :id and decided_at is null returning id")
+                .param("decision", decision)
+                .param("now", now)
+                .param("admin", admin)
+                .param("note", note, Types.VARCHAR)
+                .param("id", seriesId)
+                .query(Long.class)
+                .optional();
+    }
+
+    /** The changes a submission asks for (keys, e.g. {@code contact}). */
+    public void addReviewItems(long reviewId, List<String> items) {
+        for (String item : items) {
+            jdbc.sql("insert into series_review_items (review_id, item) values (:r, :item)")
+                    .param("r", reviewId)
+                    .param("item", item)
+                    .update();
+        }
+    }
+
+    /** Moves a series out of review; going live sets the launch date the first time. */
+    public void leaveReview(UUID seriesId, String to, OffsetDateTime now) {
+        jdbc.sql(
+                        "update series set visibility = :to, updated_at = now(),"
+                                + " launched_at = case when :to = 'PUBLISHED'"
+                                + " then coalesce(launched_at, :now) else launched_at end"
+                                + " where id = :id and visibility = 'REVIEW'")
+                .param("to", to)
+                .param("now", now)
+                .param("id", seriesId)
+                .update();
     }
 
     // ---------- reports ----------
@@ -459,7 +587,10 @@ public class AdminQueries {
                                 + " (select count(*) from episodes where status = 'HIDDEN') as e,"
                                 + " (select count(*) from comments where status = 'HIDDEN') as c,"
                                 + " (select count(*) from payment_orders where status = 'REFUNDED')"
-                                + " as refunds")
+                                + " as refunds, q.waiting, q.oldest"
+                                + " from (select count(*) as waiting, min(r.submitted_at) as oldest"
+                                + " from series_reviews r join series s on s.id = r.series_id"
+                                + " where r.decided_at is null and s.visibility = 'REVIEW') q")
                 .query((rs, n) ->
                         new Counts(
                                 rs.getLong("reports"),
@@ -467,7 +598,9 @@ public class AdminQueries {
                                 rs.getLong("s"),
                                 rs.getLong("e"),
                                 rs.getLong("c"),
-                                rs.getLong("refunds")))
+                                rs.getLong("refunds"),
+                                rs.getLong("waiting"),
+                                rs.getObject("oldest", OffsetDateTime.class)))
                 .single();
     }
 

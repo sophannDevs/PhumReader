@@ -164,6 +164,62 @@ public class CreatorWrites {
                 .update();
     }
 
+    // ---------- review (V21-01) ----------
+
+    /**
+     * Moves the series from {@code from} to {@code to}; {@code false} when it was no longer in
+     * {@code from} (another request changed it first).
+     */
+    public boolean moveSeries(UUID id, String from, String to) {
+        return jdbc.sql(
+                                "update series set visibility = :to, updated_at = now()"
+                                        + " where id = :id and visibility = :from")
+                        .param("id", id)
+                        .param("from", from)
+                        .param("to", to)
+                        .update()
+                == 1;
+    }
+
+    /** Opens a new submission for review. */
+    public void insertReview(UUID seriesId, Instant submittedAt) {
+        jdbc.sql("insert into series_reviews (series_id, submitted_at) values (:id, :at)")
+                .param("id", seriesId)
+                .param("at", java.sql.Timestamp.from(submittedAt))
+                .update();
+    }
+
+    /**
+     * Marks a requested change of a review fixed (an item fixed before keeps its time).
+     *
+     * @return {@code false} when the review did not ask for this item
+     */
+    public boolean markFixed(long reviewId, String item, Instant at) {
+        return jdbc.sql(
+                                "update series_review_items set fixed_at = coalesce(fixed_at, :at)"
+                                        + " where review_id = :review and item = :item")
+                        .param("review", reviewId)
+                        .param("item", item)
+                        .param("at", java.sql.Timestamp.from(at))
+                        .update()
+                == 1;
+    }
+
+    /**
+     * Marks a requested change of a review not fixed again.
+     *
+     * @return {@code false} when the review did not ask for this item
+     */
+    public boolean markNotFixed(long reviewId, String item) {
+        return jdbc.sql(
+                                "update series_review_items set fixed_at = null"
+                                        + " where review_id = :review and item = :item")
+                        .param("review", reviewId)
+                        .param("item", item)
+                        .update()
+                == 1;
+    }
+
     // ---------- episodes ----------
 
     public int nextNumber(UUID seriesId) {

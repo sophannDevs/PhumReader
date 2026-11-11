@@ -5,9 +5,12 @@ import app.phumreader.admin.repository.AdminQueries;
 import app.phumreader.admin.repository.AdminQueries.AuditRow;
 import app.phumreader.admin.repository.AdminQueries.ContentRow;
 import app.phumreader.admin.repository.AdminQueries.Key;
+import app.phumreader.admin.repository.AdminQueries.LiveTitle;
 import app.phumreader.admin.repository.AdminQueries.OpenReport;
 import app.phumreader.admin.repository.AdminQueries.OrderRow;
+import app.phumreader.admin.repository.AdminQueries.QueueRow;
 import app.phumreader.admin.repository.AdminQueries.ReportRow;
+import app.phumreader.admin.repository.AdminQueries.ReviewTarget;
 import app.phumreader.admin.repository.AdminQueries.UserRow;
 import app.phumreader.admin.service.AdminViews.AdminContent;
 import app.phumreader.admin.service.AdminViews.AdminOrder;
@@ -17,6 +20,7 @@ import app.phumreader.admin.service.AdminViews.AuditEntry;
 import app.phumreader.admin.service.AdminViews.Overview;
 import app.phumreader.admin.service.AdminViews.RefundResult;
 import app.phumreader.admin.service.AdminViews.ReportTarget;
+import app.phumreader.admin.service.AdminViews.ReviewQueueItem;
 import app.phumreader.auth.service.TokenService;
 import app.phumreader.common.error.ApiException;
 import app.phumreader.common.paging.CursorPage;
@@ -25,6 +29,11 @@ import app.phumreader.common.security.CurrentUser;
 import app.phumreader.payment.service.PaymentService;
 import app.phumreader.payment.service.PaymentService.Refund;
 import app.phumreader.search.service.SearchEvents;
+import app.phumreader.series.domain.AgeRating;
+import app.phumreader.series.domain.ReviewDecision;
+import app.phumreader.series.domain.ReviewItem;
+import app.phumreader.series.domain.SeriesType;
+import app.phumreader.series.domain.SeriesVisibility;
 import app.phumreader.series.service.CatalogService;
 import app.phumreader.user.domain.Role;
 import app.phumreader.user.service.UserService;
@@ -32,6 +41,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.Clock;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -45,14 +55,16 @@ import tools.jackson.core.JacksonException;
 import tools.jackson.databind.json.JsonMapper;
 
 /**
- * The admin area (plan P3-18, A8 and A9): users, content, the report queue and orders. Every change
- * writes its audit row in the same transaction. The controller lets only the ADMIN role in.
+ * The admin area (plan P3-18, A8 and A9): users, content, the report queue, orders and the series
+ * review queue (V21-01). Every change writes its audit row in the same transaction. The controller
+ * lets only the ADMIN role in.
  */
 @Service
 @Transactional(readOnly = true)
 public class AdminService {
 
     private static final String OPEN = "OPEN";
+    private static final String SERIES = ContentType.SERIES.name();
     private static final String RESOLVED = "RESOLVED";
     private static final String DISMISSED = "DISMISSED";
 
@@ -97,7 +109,9 @@ public class AdminService {
                 c.hiddenSeries(),
                 c.hiddenEpisodes(),
                 c.hiddenComments(),
-                c.refundedOrders());
+                c.refundedOrders(),
+                c.seriesInReview(),
+                c.oldestReviewAt() == null ? null : c.oldestReviewAt().toInstant());
     }
 
     // ---------- users ----------
@@ -226,6 +240,99 @@ public class AdminService {
         queries.seriesOf(type, id)
                 .ifPresent(series -> searchEvents.seriesChanged("CHANGED", List.of(series)));
         catalog.refreshHome();
+    }
+
+    // ---------- series review (V21-01) ----------
+
+    /** Series waiting for review, oldest first, with the automatic checks' flags. */
+    public CursorPage<ReviewQueueItem> reviewQueue(
+            @Nullable String cursor, @Nullable Integer limit) {
+        int size = Cursors.limit(limit);
+        List<QueueRow> rows = queries.reviewQueue(key(cursor), size + 1);
+        List<LiveTitle> live = rows.isEmpty() ? List.of() : queries.liveTitles();
+        return page(rows, size, QueueRow::submittedAt, QueueRow::id, r -> view(r, live));
+    }
+
+    /** The series goes live, like a creator's publish (search, home feed, launch date). */
+    @Transactional
+    public void approve(CurrentUser admin, UUID seriesId) {
+        String title = decide(admin, seriesId, ReviewDecision.APPROVED, List.of(), null);
+        audit.record(
+                admin.id(), "series.approve", SERIES, seriesId.toString(), details("title", title));
+        searchEvents.seriesChanged("CHANGED", List.of(seriesId));
+        catalog.refreshHome();
+    }
+
+    /** Sends the series back to its creator, who fixes the items and submits it again. */
+    @Transactional
+    public void requestChanges(
+            CurrentUser admin, UUID seriesId, List<ReviewItem> items, @Nullable String note) {
+        if (new HashSet<>(items).size() != items.size()) {
+            throw ApiException.invalidField(
+                    "items", "duplicate_item", "Choose each change only once.");
+        }
+        List<String> keys = items.stream().map(ReviewItem::key).toList();
+        String clean = text(note);
+        String title = decide(admin, seriesId, ReviewDecision.CHANGES, keys, clean);
+        audit.record(
+                admin.id(),
+                "series.changes",
+                SERIES,
+                seriesId.toString(),
+                details("title", title, "items", keys, "note", clean));
+    }
+
+    /** Turns the series down: it goes back to a draft. */
+    @Transactional
+    public void reject(CurrentUser admin, UUID seriesId, @Nullable String note) {
+        String clean = text(note);
+        String title = decide(admin, seriesId, ReviewDecision.REJECTED, List.of(), clean);
+        audit.record(
+                admin.id(),
+                "series.reject",
+                SERIES,
+                seriesId.toString(),
+                details("title", title, "note", clean));
+    }
+
+    /**
+     * Settles the series' open submission and moves the series on; 404 when it does not exist, 409
+     * {@code not_in_review} when it no longer waits (another admin decided, or a double click).
+     *
+     * @return the series' title, for the audit log
+     */
+    private String decide(
+            CurrentUser admin,
+            UUID seriesId,
+            ReviewDecision decision,
+            List<String> items,
+            @Nullable String note) {
+        ReviewTarget target =
+                queries.lockSeries(seriesId)
+                        .orElseThrow(
+                                () -> ApiException.notFound("series_not_found", "No such series."));
+        SeriesVisibility to =
+                switch (decision) {
+                    case APPROVED -> SeriesVisibility.PUBLISHED;
+                    case CHANGES -> SeriesVisibility.CHANGES;
+                    case REJECTED -> SeriesVisibility.DRAFT;
+                };
+        if (!target.visibility().equals(SeriesVisibility.REVIEW.name())) {
+            throw notInReview();
+        }
+        long review =
+                queries.closeReview(seriesId, decision.name(), admin.id(), note, now())
+                        .orElseThrow(AdminService::notInReview);
+        queries.addReviewItems(review, items);
+        // The series row is locked, so it is still in review.
+        queries.leaveReview(seriesId, to.name(), now());
+        return target.title();
+    }
+
+    private static ApiException notInReview() {
+        return ApiException.conflict(
+                "not_in_review",
+                "This series is no longer waiting for a review; another admin may have decided.");
     }
 
     // ---------- reports ----------
@@ -459,6 +566,23 @@ public class AdminService {
                 r.roles(),
                 r.createdAt().toInstant(),
                 r.lastLoginAt() == null ? null : r.lastLoginAt().toInstant());
+    }
+
+    private static ReviewQueueItem view(QueueRow r, List<LiveTitle> live) {
+        return new ReviewQueueItem(
+                r.id(),
+                r.slug(),
+                r.title(),
+                r.creator(),
+                SeriesType.valueOf(r.type()),
+                r.genre(),
+                AgeRating.valueOf(r.ageRating()),
+                r.languages(),
+                r.episodeCount(),
+                r.coverUrl(),
+                r.summary(),
+                r.submittedAt().toInstant(),
+                ReviewChecks.flags(r.id(), r.title(), r.summary(), live));
     }
 
     private static AdminReport view(ReportRow r) {

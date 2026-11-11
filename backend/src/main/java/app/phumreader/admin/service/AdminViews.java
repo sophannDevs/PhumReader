@@ -1,6 +1,9 @@
 package app.phumreader.admin.service;
 
 import app.phumreader.admin.domain.ContentType;
+import app.phumreader.admin.domain.FlagKind;
+import app.phumreader.series.domain.AgeRating;
+import app.phumreader.series.domain.SeriesType;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -30,8 +33,8 @@ public final class AdminViews {
      *
      * @param title series or episode title, or the start of the comment
      * @param owner the series' creator, the episode's series, or the comment's author
-     * @param status series: draft, published, hidden; episode: draft, scheduled, published, hidden;
-     *     comment: visible, hidden, deleted
+     * @param status series: draft, review, changes, published, hidden; episode: draft, scheduled,
+     *     published, hidden; comment: visible, hidden, deleted
      * @param seriesSlug for the link to the public page
      * @param episodeNumber set for episodes and for comments on an episode
      * @param openReports reports still waiting for an admin
@@ -106,13 +109,54 @@ public final class AdminViews {
             @Nullable String requestId,
             Instant createdAt) {}
 
+    /**
+     * @param seriesInReview series waiting for a review decision
+     * @param oldestReviewAt when the longest-waiting of them was submitted; {@code null} when none
+     *     waits
+     */
     public record Overview(
             long openReports,
             long bannedUsers,
             long hiddenSeries,
             long hiddenEpisodes,
             long hiddenComments,
-            long refundedOrders) {}
+            long refundedOrders,
+            long seriesInReview,
+            @Nullable Instant oldestReviewAt) {}
+
+    /**
+     * A series waiting for review (the admin's series queue, V21-01).
+     *
+     * @param creator the creator's pen name
+     * @param genre genre slug
+     * @param languages "en" and / or "km"
+     * @param episodeCount the series' episodes, drafts included
+     * @param submittedAt when the creator submitted it (the queue is oldest first)
+     * @param flags what the automatic checks found; empty when nothing
+     */
+    public record ReviewQueueItem(
+            UUID id,
+            String slug,
+            String title,
+            String creator,
+            SeriesType type,
+            String genre,
+            AgeRating ageRating,
+            List<String> languages,
+            int episodeCount,
+            @Nullable String coverUrl,
+            String summary,
+            Instant submittedAt,
+            List<ReviewFlag> flags) {}
+
+    /**
+     * An automatic-check finding.
+     *
+     * @param kind contact (contact details or links in the summary), similar (the title is like a
+     *     live series' title) or watermark (not detected yet: never set)
+     * @param detail contact: what was found; similar: the live series' title
+     */
+    public record ReviewFlag(FlagKind kind, @Nullable String detail) {}
 
     /**
      * @param refundedCoins coins taken back from the wallet

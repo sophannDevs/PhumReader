@@ -28,21 +28,26 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { DEMO_MODE } from "@/lib/api/config"
-import { decisionKey, useAdminQueues, type QueueSeries } from "@/lib/admin"
+import { actions, useAdminQueues, type QueueSeries } from "@/lib/admin"
+import { REVIEW_ITEMS } from "@/lib/creator-studio"
 import { useLocalize } from "@/lib/localize"
-import { useAppStore } from "@/lib/store"
+import { useAppStore, type ReviewNote } from "@/lib/store"
 
 const CHECKS = 4
-const CHANGES = 5
+const CHANGES = REVIEW_ITEMS.length
 /** Which "Request changes" reason each automatic check pre-ticks (prototype `askChanges`). */
 const PRETICK = { contact: 0, watermark: 1, similar: 2 } as const
 
 /**
  * /admin/series (spec §22 Series review, screens 22-admin-series-review): the queue with waiting time and auto-check
  * flags, and the selected series with a 4-item checklist. Approve stays disabled until every check is ticked;
- * "Request changes" pre-ticks reasons from the flags, adds a note, saves `reviewNotes[id]` and sets the creator's
- * series to "changes" (Manage shows it); Approve publishes it; Reject sends it back to draft. The API has no review
- * queue, so this screen runs on demo data and the store in both modes.
+ * "Request changes" pre-ticks reasons from the flags and adds a note; Approve publishes the series; Reject sends it back
+ * to draft. Every decision has a 6-second Undo.
+ * - Demo: demo data plus the creator's own series (store `myWorks`): a decision sets that series' status, and
+ *   "Request changes" saves the reasons (keys, translated where they show) and the note in `reviewNotes[id]` for Manage.
+ * - Real API (V21-01): GET /admin/series-review (oldest first, Load more); after the Undo window the decision calls
+ *   POST /admin/series/{id}/approve, /request-changes (the reason keys and the note) or /reject. When another admin
+ *   decided first (409 not_in_review) the decision is undone, a message says so and the queue reloads.
  */
 export function AdminSeriesReview() {
   const t = useTranslations("admin")
@@ -54,23 +59,18 @@ export function AdminSeriesReview() {
   const detailRef = useRef<HTMLElement>(null)
 
   const list = queues.series
+  const state = queues.seriesQuery
+  const total = queues.seriesTotal
   const sel = list.find((q) => q.id === selId) ?? list[0]
   const head = (
     <AdminHead
       title={t("nav_series")}
-      line={!queues.query.data ? undefined : list.length ? t("sr_line", { count: list.length }) : t("sr_nothing")}
-      aside={
-        DEMO_MODE ? null : (
-          <Badge variant="warn" title={t("sr_realNote")}>
-            {t("badgeDemo")}
-          </Badge>
-        )
-      }
+      line={total === undefined ? undefined : total ? t("sr_line", { count: total }) : t("sr_nothing")}
     />
   )
 
-  if (queues.query.isPending) return <>{head}<SplitSkeleton /></>
-  if (queues.query.isError) return <>{head}<AdminError onRetry={() => void queues.query.refetch()} /></>
+  if (state.isPending) return <>{head}<SplitSkeleton /></>
+  if (state.isError) return <>{head}<AdminError onRetry={state.refetch} /></>
   if (!sel) return <>{head}<DoneCard title={t("sr_emptyTitle")} text={t("sr_emptyText")} /></>
 
   const pick = (id: string) => {
@@ -82,24 +82,41 @@ export function AdminSeriesReview() {
   return (
     <>
       {head}
-      {DEMO_MODE ? null : <p className="-mt-3 text-xs leading-4 text-muted-foreground">{t("sr_realNote")}</p>}
       <SplitView>
-        <QueueList label={t("sr_queue")}>
-          {list.map((q) => (
-            <QueueRow key={q.id} selected={q.id === sel.id} onPick={() => pick(q.id)}>
-              <Image src={q.cover} alt="" width={72} height={96} className="h-12 w-9 shrink-0 rounded-[6px] object-cover" />
-              <span className="flex min-w-0 grow flex-col gap-0.5">
-                <span className="truncate text-[13px] leading-[18px] font-semibold">{q.title}</span>
-                <span className="truncate text-xs leading-4 text-muted-foreground">
-                  {q.creator} · {age(q.hours)}
+        <div className="flex min-w-0 flex-col gap-3">
+          <QueueList label={t("sr_queue")}>
+            {list.map((q) => (
+              <QueueRow key={q.id} selected={q.id === sel.id} onPick={() => pick(q.id)}>
+                {q.cover ? (
+                  <Image
+                    src={q.cover}
+                    alt=""
+                    width={72}
+                    height={96}
+                    unoptimized={!DEMO_MODE}
+                    className="h-12 w-9 shrink-0 rounded-[6px] object-cover"
+                  />
+                ) : (
+                  <span aria-hidden className="h-12 w-9 shrink-0 rounded-[6px] bg-muted" />
+                )}
+                <span className="flex min-w-0 grow flex-col gap-0.5">
+                  <span className="truncate text-[13px] leading-[18px] font-semibold">{q.title}</span>
+                  <span className="truncate text-xs leading-4 text-muted-foreground">
+                    {q.creator} · {age(q.hours)}
+                  </span>
+                  {q.flags.length ? (
+                    <span className="text-xs leading-4 font-semibold text-warning">{t("autoChecks", { count: q.flags.length })}</span>
+                  ) : null}
                 </span>
-                {q.flags.length ? (
-                  <span className="text-xs leading-4 font-semibold text-warning">{t("autoChecks", { count: q.flags.length })}</span>
-                ) : null}
-              </span>
-            </QueueRow>
-          ))}
-        </QueueList>
+              </QueueRow>
+            ))}
+          </QueueList>
+          {state.hasMore ? (
+            <Button variant="outline" size="sm" className="self-center" loading={state.loadingMore} onClick={state.loadMore}>
+              {t("loadMore")}
+            </Button>
+          ) : null}
+        </div>
         <SeriesDetail
           key={sel.id}
           item={sel}
@@ -143,28 +160,33 @@ function SeriesDetail({
   const allChecked = Array.from({ length: CHECKS }, (_, i) => !!checks[i]).every(Boolean)
   const headingId = `${id}-h`
 
-  // Store changes for the creator's own series (Manage reads the status and reviewNotes); demo-only rows just leave
-  // the queue through the decision log.
+  // Demo: store changes for the creator's own series (Manage reads the status and reviewNotes); other demo rows just
+  // leave the queue through the decision log. Real mode: the API call (`commit`) runs once the Undo window closes.
   const store = () => useAppStore.getState()
   const setStatus = (status: "published" | "changes" | "draft" | "review") => {
     if (item.own) store().setWorkStatus(item.id, status)
   }
-  const base = { key: decisionKey("series", item.id), queue: "series" as const, label: item.title }
+  const saveNote = (value: ReviewNote | null) => {
+    if (item.own) store().setReviewNote(item.id, value)
+  }
+  const savedNote = () => store().reviewNotes[item.id] ?? null
+  const base = { key: item.key, queue: "series" as const, label: item.title }
 
   const approve = () => {
     if (!allChecked) return
-    const prevNote = store().reviewNotes[item.id] ?? null
+    const prevNote = savedNote()
     decide({
       ...base,
       action: "approve",
       apply: () => {
         setStatus("published")
-        store().setReviewNote(item.id, null)
+        saveNote(null)
       },
       revert: () => {
         setStatus("review")
-        store().setReviewNote(item.id, prevNote)
+        saveNote(prevNote)
       },
+      commit: DEMO_MODE ? undefined : () => actions.approveSeries(item.id),
       toast: t("toast_approved"),
     })
   }
@@ -179,25 +201,26 @@ function SeriesDetail({
   }
 
   const sendChanges = () => {
-    const items = Array.from({ length: CHANGES }, (_, i) => i)
-      .filter((i) => changes[i])
-      .map((i) => t(`change_${i}` as "change_0"))
+    // Keys ("contact", "cover", …), not labels: the creator's page shows them in the creator's language.
+    const items = REVIEW_ITEMS.filter((_, i) => changes[i])
     if (!items.length) {
       setAskErr(true)
       return
     }
-    const prevNote = store().reviewNotes[item.id] ?? null
+    const text = note.trim()
+    const prevNote = savedNote()
     decide({
       ...base,
       action: "changes",
       apply: () => {
         setStatus("changes")
-        store().setReviewNote(item.id, { items, note: note.trim() })
+        saveNote({ items, note: text })
       },
       revert: () => {
         setStatus("review")
-        store().setReviewNote(item.id, prevNote)
+        saveNote(prevNote)
       },
+      commit: DEMO_MODE ? undefined : () => actions.requestSeriesChanges(item.id, items, text),
       toast: t("toast_changes"),
     })
     setAsking(false)
@@ -209,6 +232,7 @@ function SeriesDetail({
       action: "reject",
       apply: () => setStatus("draft"),
       revert: () => setStatus("review"),
+      commit: DEMO_MODE ? undefined : () => actions.rejectSeries(item.id),
       toast: t("toast_rejected"),
     })
 
@@ -218,21 +242,28 @@ function SeriesDetail({
   return (
     <DetailCard labelledBy={headingId} innerRef={innerRef}>
       <div className="flex items-start gap-3.5">
-        <Image
-          src={item.cover}
-          alt={t("coverAlt", { title: item.title })}
-          width={192}
-          height={256}
-          className="aspect-[3/4] w-24 shrink-0 rounded-[10px] border object-cover"
-        />
+        {item.cover ? (
+          <Image
+            src={item.cover}
+            alt={t("coverAlt", { title: item.title })}
+            width={192}
+            height={256}
+            unoptimized={!DEMO_MODE}
+            className="aspect-[3/4] w-24 shrink-0 rounded-[10px] border object-cover"
+          />
+        ) : (
+          <span aria-hidden className="aspect-[3/4] w-24 shrink-0 rounded-[10px] border bg-muted" />
+        )}
         <div className="flex min-w-0 grow flex-col gap-1.5">
           <div className="flex flex-wrap gap-1.5">
             <Badge variant="outline">{t(item.format === "novel" ? "format_novel" : "format_comic")}</Badge>
             <Badge variant="outline">{localize.genre(item.genre)}</Badge>
             <Badge variant="outline">{item.age === "All ages" ? t("age_all") : item.age}</Badge>
-            <Badge variant="outline" lang={item.lang}>
-              {t(item.lang === "en" ? "lang_en" : "lang_km")}
-            </Badge>
+            {item.langs.map((lang) => (
+              <Badge key={lang} variant="outline" lang={lang}>
+                {t(lang === "en" ? "lang_en" : "lang_km")}
+              </Badge>
+            ))}
           </div>
           <h2 id={headingId} className="type-h3">
             {item.title}

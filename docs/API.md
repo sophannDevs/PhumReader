@@ -1,6 +1,6 @@
 # PhumiReader API reference
 
-The REST API of the Spring Boot backend in `backend/` (Phase 2): version **v1**, **103 endpoints**.
+The REST API of the Spring Boot backend in `backend/` (Phase 2): version **v1**, **110 endpoints**.
 
 > **Where this comes from.** Written from the controllers in `backend/src/main/java/app/phumreader/*/web/`
 > and the generated contract `backend/openapi/openapi.json` (2026-11-11, commit `da199ea`). The OpenAPI file is
@@ -290,7 +290,10 @@ Paths below are relative to `/api/v1`. "CSRF" applies to every write (see [CSRF]
 | POST | `/creator/series` | Creator | Create a series (draft) |
 | GET | `/creator/series/{id}` | Creator | One series for the edit form |
 | PUT | `/creator/series/{id}` | Creator | Edit a series |
-| POST | `/creator/series/{id}/publish` | Creator | Put the series live |
+| POST | `/creator/series/{id}/submit` | Creator | Submit for review / Resubmit |
+| PUT | `/creator/series/{id}/review/items/{item}` | Creator | Mark a requested change fixed |
+| DELETE | `/creator/series/{id}/review/items/{item}` | Creator | Undo Mark fixed |
+| POST | `/creator/series/{id}/publish` | Creator | Put an approved series live again |
 | POST | `/creator/series/{id}/unpublish` | Creator | Back to draft |
 | GET | `/creator/series/{id}/episodes` | Creator | All episodes, drafts too |
 | POST | `/creator/series/{id}/episodes` | Creator | Add an episode or chapter |
@@ -311,6 +314,10 @@ Paths below are relative to `/api/v1`. "CSRF" applies to every write (see [CSRF]
 | POST | `/admin/content/{type}/{id}/restore` | Admin | Put it back |
 | GET | `/admin/reports` | Admin | Report queue |
 | POST | `/admin/reports/{id}/settle` | Admin | Dismiss, resolve or hide |
+| GET | `/admin/series-review` | Admin | Series waiting for review |
+| POST | `/admin/series/{id}/approve` | Admin | Approve: the series goes live |
+| POST | `/admin/series/{id}/request-changes` | Admin | Send it back with changes to make |
+| POST | `/admin/series/{id}/reject` | Admin | Reject: back to a draft |
 | GET | `/admin/orders` | Admin | Coin orders |
 | POST | `/admin/orders/{id}/refund` | Admin | Refund a paid order |
 | GET | `/admin/audit` | Admin | Audit log |
@@ -856,6 +863,11 @@ reconciles open orders.
 
 Readers become creators by accepting the Creator terms. Series are addressed by `id` here, episodes by `number`.
 
+**Series states** (`visibility`, V21-01): `draft` → `review` (the creator submits) → `published` (an admin
+approves; this sets the launch date) or `changes` (the admin asks for changes; the creator marks them fixed and
+resubmits → `review`) or `draft` (rejected). `hidden`: an admin took it down. Readers only see `published`. A series
+that was live once can be taken off (`unpublish`) and put live again (`publish`) without a new review.
+
 #### `POST /api/v1/creator`
 
 Accepts the Creator terms and adds the `CREATOR` role. **Signed in.**
@@ -875,8 +887,8 @@ series (the page's empty state). **200** → [CreatorDashboard](#creatordashboar
 
 #### `GET /api/v1/creator/series`
 
-My series. **Creator.** `q` filters by title; `visibility`: `draft`, `published` or `hidden`.
-**200** → [CreatorSeries](#creatorseries)`[]` (not paged).
+My series. **Creator.** `q` filters by title; `visibility`: `draft`, `review`, `changes`, `published` or `hidden`.
+**200** → [CreatorSeries](#creatorseries)`[]` (not paged); each row carries the latest `review`.
 
 #### `POST /api/v1/creator/series`
 
@@ -904,19 +916,20 @@ Creates a series as a draft. **Creator.** The slug is made from the title and ne
 | `genre` | required, a genre slug |
 | `languages` | required, each `en` or `km` |
 | `type` | `comic` or `novel`; cannot change later (`400 type_fixed`) |
-| `summary` | up to 2000 characters (needed to publish) |
+| `summary` | up to 2000 characters (needed to submit and publish) |
 | `tags` | up to 10 |
 | `ageRating` | `all`, `teen`, `mature` |
 | `status` | `ongoing`, `completed`, `hiatus` |
 | `updateDay` | `Mon` … `Sun`, or `null` |
-| `coverUploadId`, `bannerUploadId` | finished uploads of kind `COVER` / `BANNER` (a cover is needed to publish) |
+| `coverUploadId`, `bannerUploadId` | finished uploads of kind `COVER` / `BANNER` (a cover is needed to submit and publish) |
 
 **201** → [SeriesEdit](#seriesedit). **Errors:** `400 unknown_genre` · `400 upload_invalid` / `upload_not_ready` ·
 `403 not_a_creator`.
 
 #### `GET /api/v1/creator/series/{id}`
 
-One of my series, as the edit form shows it. **Creator.** **200** → [SeriesEdit](#seriesedit).
+One of my series, as the edit form shows it, with its latest submission for review (`review`, `null` when it
+was never submitted). **Creator.** **200** → [SeriesEdit](#seriesedit).
 **Errors:** `403 not_your_series` · `404 series_not_found`.
 
 #### `PUT /api/v1/creator/series/{id}`
@@ -924,14 +937,34 @@ One of my series, as the edit form shows it. **Creator.** **200** → [SeriesEdi
 Edits a series. **Creator.** Same body as create; leave the upload ids out to keep the current cover and banner.
 **200** → [SeriesEdit](#seriesedit). **Errors:** as create and get, plus `400 type_fixed`.
 
+#### `POST /api/v1/creator/series/{id}/submit`
+
+Submit for review (from `draft`) or Resubmit (from `changes`): the series moves to `review` and joins the admins'
+queue; it goes live when an admin approves it. Needs a summary and a cover, like publishing. From `changes`, every
+requested change must be marked fixed first. **Creator.** No body. **200** → [SeriesEdit](#seriesedit) (a new
+`review` with `decision: null`).
+**Errors:** `400 required` (field `summary` or `coverUploadId`) · `403 hidden_by_admin` · `409 changes_not_fixed` ·
+`409 already_in_review` · `409 already_published`.
+
+#### `PUT /api/v1/creator/series/{id}/review/items/{item}` · `DELETE …/review/items/{item}`
+
+Mark fixed / undo, on Manage series (saved, so it shows on every device). `item`: `contact`, `cover`, `title`, `age`
+or `images`. Marking an item fixed again keeps the first time. **Creator.** No body. **200** →
+[SeriesEdit](#seriesedit).
+**Errors:** `400 invalid_item` (unknown key) · `404 item_not_requested` (the admin did not ask for it) ·
+`409 no_changes_requested` (the series is not waiting for changes).
+
 #### `POST /api/v1/creator/series/{id}/publish`
 
-Puts the series live (needs a summary and a cover). **Creator.** **200** → [SeriesEdit](#seriesedit).
-**Errors:** `400 required` (field `summary` or `coverUploadId`) · `403 hidden_by_admin`.
+Puts a series live again that an admin approved before and that was taken off (`unpublish`); a new series goes
+through `submit` instead. Needs a summary and a cover. **Creator.** **200** → [SeriesEdit](#seriesedit).
+**Errors:** `409 review_required` (it never went live) · `400 required` (field `summary` or `coverUploadId`) ·
+`403 hidden_by_admin` · `409 already_in_review` · `409 changes_requested`.
 
 #### `POST /api/v1/creator/series/{id}/unpublish`
 
-Takes the series back to a draft. **Creator.** **200** → [SeriesEdit](#seriesedit). **Errors:** `403 hidden_by_admin`.
+Takes the series back to a draft. **Creator.** **200** → [SeriesEdit](#seriesedit).
+**Errors:** `403 hidden_by_admin` · `409 already_in_review` · `409 changes_requested`.
 
 #### `GET /api/v1/creator/series/{id}/episodes`
 
@@ -1043,8 +1076,8 @@ the request id. Lists are newest first and [paged](#5-lists-and-pagination).
 
 #### `GET /api/v1/admin/overview`
 
-Counts for the admin start page (open reports, banned users, hidden content, refunded orders).
-**200** → [Overview](#overview).
+Counts for the admin start page (open reports, banned users, hidden content, refunded orders, series waiting for
+review and when the longest-waiting one was submitted). **200** → [Overview](#overview).
 
 #### `GET /api/v1/admin/users`
 
@@ -1070,7 +1103,7 @@ Series, episodes or comments.
 |---|---|
 | `type` | required: `series`, `episode` or `comment` |
 | `q` | text search (optional) |
-| `status` | a state of that type, e.g. `published` or `hidden` (optional) |
+| `status` | a state of that type, e.g. `published` or `hidden`; series also `draft`, `review`, `changes` (optional) |
 | `cursor`, `limit` | paging |
 
 **200** → page of [AdminContent](#admincontent).
@@ -1101,6 +1134,40 @@ Settles a report.
 `action`: `dismiss`, `resolve` or `hide` (also hides the reported content). `note`: optional, up to 1000 characters.
 **200** → [AdminReport](#adminreport).
 **Errors:** `404 report_not_found` · `409 report_closed` (another admin settled it) · `400 missing_target`.
+
+#### `GET /api/v1/admin/series-review`
+
+The series review queue (V21-01): series waiting for a decision, **oldest submission first**, with paging.
+**200** → page of [ReviewQueueItem](#reviewqueueitem). The automatic checks run when the queue is read:
+
+| Flag `kind` | When | `detail` |
+|---|---|---|
+| `contact` | the summary has a @handle, an http(s) link, `www.`, `t.me/` or a 9-10 digit phone number | the first one found |
+| `similar` | the title equals, contains or is inside a live series' title (case and spacing ignored, both 4+ characters) | that title |
+| `watermark` | never set yet (nothing detects it) | |
+
+#### `POST /api/v1/admin/series/{id}/approve`
+
+The series goes live (search, home feed and launch date as for a publish). No body. **204.** Audit: `series.approve`.
+**Errors:** `404 series_not_found` · `409 not_in_review` (it no longer waits: another admin decided, a double click).
+
+#### `POST /api/v1/admin/series/{id}/request-changes`
+
+Sends the series back to its creator (`changes`), who marks each item fixed and resubmits.
+
+```json
+{ "items": ["contact", "cover"], "note": "Please remove the Telegram link." }
+```
+
+`items`: 1 to 5 different keys of `contact`, `cover`, `title`, `age`, `images` (the website translates them).
+`note`: optional, up to 300 characters. **204.** Audit: `series.changes` (title, items, note).
+**Errors:** `400 validation_failed` (no items, more than 5, note too long) · `400 duplicate_item` ·
+`400 malformed_request` (unknown key) · `404 series_not_found` · `409 not_in_review`.
+
+#### `POST /api/v1/admin/series/{id}/reject`
+
+The series goes back to a draft. Body (optional): `{ "note": "…" }` (up to 300 characters). **204.** Audit:
+`series.reject` (title, note). **Errors:** `400 validation_failed` · `404 series_not_found` · `409 not_in_review`.
 
 #### `GET /api/v1/admin/orders`
 
@@ -1289,6 +1356,15 @@ interface ChangePasswordRequest {
 }
 ```
 
+### ChangesRequest
+
+```ts
+interface ChangesRequest {
+  items: ("contact" | "cover" | "title" | "age" | "images")[]; // 1-5 items
+  note?: string | null;                      // max 300 chars
+}
+```
+
 ### Checkout
 
 ```ts
@@ -1421,8 +1497,9 @@ interface CreatorSeries {
   earnedCoins: number;
   series: SeriesCard;
   subscribers: number;
+  review?: SeriesReview;                     // null when it was never submitted
   unlocks: number;
-  visibility: "draft" | "published" | "hidden";
+  visibility: "draft" | "review" | "changes" | "published" | "hidden";
 }
 ```
 
@@ -1437,6 +1514,14 @@ interface CreatorTotals {
   subscribers: number;
   unlocks: number;
   views: number;
+}
+```
+
+### DecisionNoteRequest
+
+```ts
+interface DecisionNoteRequest {
+  note?: string | null;                      // max 300 chars
 }
 ```
 
@@ -1816,8 +1901,10 @@ interface Overview {
   hiddenComments: number;
   hiddenEpisodes: number;
   hiddenSeries: number;
+  oldestReviewAt?: string | null;            // ISO 8601 instant
   openReports: number;
   refundedOrders: number;
+  seriesInReview: number;
 }
 ```
 
@@ -2004,6 +2091,15 @@ interface ReportTarget {
 }
 ```
 
+### RequestedChange
+
+```ts
+interface RequestedChange {
+  fixed: boolean;
+  item: "contact" | "cover" | "title" | "age" | "images";
+}
+```
+
 ### ResetPasswordRequest
 
 ```ts
@@ -2026,6 +2122,35 @@ interface RestoreHistoryRequest {
 ```ts
 interface RestoreSubscriptionsRequest {
   items: RemovedSubscription[];              // max 100 items
+}
+```
+
+### ReviewFlag
+
+```ts
+interface ReviewFlag {
+  detail?: string | null;
+  kind: "contact" | "watermark" | "similar";
+}
+```
+
+### ReviewQueueItem
+
+```ts
+interface ReviewQueueItem {
+  ageRating: "all" | "teen" | "mature";
+  coverUrl?: string | null;
+  creator: string;                           // pen name
+  episodeCount: number;                      // drafts included
+  flags: ReviewFlag[];
+  genre: string;
+  id: string;                                // uuid
+  languages: string[];
+  slug: string;
+  submittedAt: string;                       // ISO 8601 instant
+  summary: string;
+  title: string;
+  type: "comic" | "novel";
 }
 ```
 
@@ -2090,8 +2215,9 @@ interface SeriesEdit {
   tags: string[];
   title: string;
   type: "comic" | "novel";
+  review?: SeriesReview;                     // null when it was never submitted
   updateDay?: "Mon" | "Tue" | "Wed" | "Thu" | "Fri" | "Sat" | "Sun" | null;
-  visibility: "draft" | "published" | "hidden";
+  visibility: "draft" | "review" | "changes" | "published" | "hidden";
 }
 ```
 
@@ -2110,6 +2236,17 @@ interface SeriesInput {
   title: string;                             // max 120 chars
   type?: "comic" | "novel" | null;
   updateDay?: "Mon" | "Tue" | "Wed" | "Thu" | "Fri" | "Sat" | "Sun" | null;
+}
+```
+
+### SeriesReview
+
+```ts
+interface SeriesReview {
+  decision?: "approved" | "changes" | "rejected" | null; // null while it waits
+  items: RequestedChange[];                  // the requested changes (decision "changes")
+  note?: string | null;                      // the admin's note
+  submittedAt: string;                       // ISO 8601 instant
 }
 ```
 

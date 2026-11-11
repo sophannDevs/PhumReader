@@ -10,8 +10,10 @@ import app.phumreader.admin.service.AdminViews.AdminUser;
 import app.phumreader.admin.service.AdminViews.AuditEntry;
 import app.phumreader.admin.service.AdminViews.Overview;
 import app.phumreader.admin.service.AdminViews.RefundResult;
+import app.phumreader.admin.service.AdminViews.ReviewQueueItem;
 import app.phumreader.common.paging.CursorPage;
 import app.phumreader.common.security.CurrentUser;
+import app.phumreader.series.domain.ReviewItem;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -19,6 +21,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import java.util.List;
 import java.util.UUID;
 import org.jspecify.annotations.Nullable;
 import org.springframework.http.HttpStatus;
@@ -33,8 +36,9 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * The admin area (plan P3-18; A8 and A9): users, content, the report queue, orders and refunds, and
- * the audit log. Only the ADMIN role gets in (SecurityConfig); every change is audited.
+ * The admin area (plan P3-18; A8 and A9): users, content, the report queue, orders and refunds, the
+ * series review queue (V21-01) and the audit log. Only the ADMIN role gets in (SecurityConfig);
+ * every change is audited.
  */
 @RestController
 @RequestMapping("/api/v1/admin")
@@ -66,6 +70,20 @@ class AdminController {
      */
     public record SettleRequest(
             @NotNull ReportAction action, @Nullable @Size(max = 1000) String note) {}
+
+    /**
+     * @param items what the creator must change: 1 to 5 different keys (contact, cover, title, age,
+     *     images)
+     * @param note optional note to the creator, at most 300 characters
+     */
+    public record ChangesRequest(
+            @NotNull @Size(min = 1, max = 5) List<@NotNull ReviewItem> items,
+            @Nullable @Size(max = 300) String note) {}
+
+    /**
+     * @param note optional note to the creator, at most 300 characters
+     */
+    public record DecisionNoteRequest(@Nullable @Size(max = 300) String note) {}
 
     @GetMapping("/overview")
     @Operation(summary = "Counts for the admin start page")
@@ -168,6 +186,69 @@ class AdminController {
             @Valid @RequestBody SettleRequest body,
             @Parameter(hidden = true) @AuthenticationPrincipal CurrentUser user) {
         return admin.settle(user, id, body.action(), body.note());
+    }
+
+    // ---------- series review ----------
+
+    @GetMapping("/series-review")
+    @Operation(
+            summary = "Series waiting for review, oldest first, with the automatic checks",
+            description =
+                    "flags: contact (contact details or links in the summary: @handles, URLs, www.,"
+                            + " t.me/, 9-10 digit phone numbers; detail is the first one found)"
+                            + " and similar (the title equals, contains or is inside a live"
+                            + " series' title, case and spacing ignored, 4+ characters; detail is"
+                            + " that title). watermark is never set yet.")
+    CursorPage<ReviewQueueItem> seriesReview(
+            @RequestParam(required = false) @Parameter(description = CURSOR)
+                    @Nullable String cursor,
+            @RequestParam(required = false) @Parameter(description = LIMIT)
+                    @Nullable Integer limit) {
+        return admin.reviewQueue(cursor, limit);
+    }
+
+    @PostMapping("/series/{id}/approve")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @Operation(
+            summary = "Approve a series in review: it goes live",
+            description =
+                    "Sets its launch date the first time. 409 not_in_review when it no longer"
+                            + " waits for a review (another admin decided); 404 series_not_found.")
+    void approve(
+            @PathVariable UUID id,
+            @Parameter(hidden = true) @AuthenticationPrincipal CurrentUser user) {
+        admin.approve(user, id);
+    }
+
+    @PostMapping("/series/{id}/request-changes")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @Operation(
+            summary = "Send a series in review back with the changes to make",
+            description =
+                    "The creator marks each item fixed and submits again. 400 validation_failed"
+                            + " for no items, more than 5 or a note over 300 characters,"
+                            + " duplicate_item for a key given twice, malformed_request for an"
+                            + " unknown key; 409 not_in_review when it no longer waits for a"
+                            + " review; 404 series_not_found.")
+    void requestChanges(
+            @PathVariable UUID id,
+            @Valid @RequestBody ChangesRequest body,
+            @Parameter(hidden = true) @AuthenticationPrincipal CurrentUser user) {
+        admin.requestChanges(user, id, body.items(), body.note());
+    }
+
+    @PostMapping("/series/{id}/reject")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @Operation(
+            summary = "Reject a series in review: it goes back to a draft",
+            description =
+                    "409 not_in_review when it no longer waits for a review; 404"
+                            + " series_not_found.")
+    void reject(
+            @PathVariable UUID id,
+            @Valid @RequestBody(required = false) @Nullable DecisionNoteRequest body,
+            @Parameter(hidden = true) @AuthenticationPrincipal CurrentUser user) {
+        admin.reject(user, id, body == null ? null : body.note());
     }
 
     // ---------- orders ----------

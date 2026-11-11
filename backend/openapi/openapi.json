@@ -480,6 +480,169 @@
         "tags" : [ "admin" ]
       }
     },
+    "/api/v1/admin/series-review" : {
+      "get" : {
+        "description" : "flags: contact (contact details or links in the summary: @handles, URLs, www., t.me/, 9-10 digit phone numbers; detail is the first one found) and similar (the title equals, contains or is inside a live series' title, case and spacing ignored, 4+ characters; detail is that title). watermark is never set yet.",
+        "operationId" : "seriesReview",
+        "parameters" : [ {
+          "description" : "nextCursor of the previous page; omit for the first page",
+          "in" : "query",
+          "name" : "cursor",
+          "required" : false,
+          "schema" : {
+            "type" : [ "string", "null" ]
+          }
+        }, {
+          "description" : "Page size, 1-100 (default 20)",
+          "in" : "query",
+          "name" : "limit",
+          "required" : false,
+          "schema" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int32"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CursorPageReviewQueueItem"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Series waiting for review, oldest first, with the automatic checks",
+        "tags" : [ "admin" ]
+      }
+    },
+    "/api/v1/admin/series/{id}/approve" : {
+      "post" : {
+        "description" : "Sets its launch date the first time. 409 not_in_review when it no longer waits for a review (another admin decided); 404 series_not_found.",
+        "operationId" : "approve",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "No Content"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Approve a series in review: it goes live",
+        "tags" : [ "admin" ]
+      }
+    },
+    "/api/v1/admin/series/{id}/reject" : {
+      "post" : {
+        "description" : "409 not_in_review when it no longer waits for a review; 404 series_not_found.",
+        "operationId" : "reject",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/DecisionNoteRequest"
+              }
+            }
+          }
+        },
+        "responses" : {
+          "204" : {
+            "description" : "No Content"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Reject a series in review: it goes back to a draft",
+        "tags" : [ "admin" ]
+      }
+    },
+    "/api/v1/admin/series/{id}/request-changes" : {
+      "post" : {
+        "description" : "The creator marks each item fixed and submits again. 400 validation_failed for no items, more than 5 or a note over 300 characters, duplicate_item for a key given twice, malformed_request for an unknown key; 409 not_in_review when it no longer waits for a review; 404 series_not_found.",
+        "operationId" : "requestChanges",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ChangesRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "204" : {
+            "description" : "No Content"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Send a series in review back with the changes to make",
+        "tags" : [ "admin" ]
+      }
+    },
     "/api/v1/admin/users" : {
       "get" : {
         "operationId" : "users",
@@ -1672,7 +1835,7 @@
     },
     "/api/v1/creator/series" : {
       "get" : {
-        "description" : "q matches the title; visibility is draft, published or hidden.",
+        "description" : "q matches the title; visibility is draft, review, changes, published or hidden. review is the latest submission for review (null when the series was never submitted).",
         "operationId" : "list",
         "parameters" : [ {
           "in" : "query",
@@ -2071,7 +2234,7 @@
     },
     "/api/v1/creator/series/{id}/publish" : {
       "post" : {
-        "description" : "Needs a summary and a cover. 403 hidden_by_admin when an admin hid it.",
+        "description" : "Only for a series that went live once and was taken off (unpublish): a new series answers 409 review_required and goes through POST /{id}/submit. Needs a summary and a cover. 403 hidden_by_admin when an admin hid it; 409 already_in_review while it waits for a review, changes_requested while the admin's changes are open.",
         "operationId" : "publish",
         "parameters" : [ {
           "in" : "path",
@@ -2104,12 +2267,144 @@
             "description" : "Error"
           }
         },
-        "summary" : "Put the series live",
+        "summary" : "Put a series live again that an admin approved before",
+        "tags" : [ "creator" ]
+      }
+    },
+    "/api/v1/creator/series/{id}/review/items/{item}" : {
+      "delete" : {
+        "description" : "409 no_changes_requested unless the series waits for changes (visibility changes), 404 item_not_requested when the admin did not ask for this item, 400 invalid_item for an unknown key.",
+        "operationId" : "markNotFixed",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }, {
+          "description" : "contact, cover, title, age or images",
+          "in" : "path",
+          "name" : "item",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SeriesEdit"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Undo Mark fixed",
+        "tags" : [ "creator" ]
+      },
+      "put" : {
+        "description" : "Saved, so it shows on every device; marking it again keeps the first time. 409 no_changes_requested unless the series waits for changes (visibility changes), 404 item_not_requested when the admin did not ask for this item, 400 invalid_item for an unknown key.",
+        "operationId" : "markFixed",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }, {
+          "description" : "contact, cover, title, age or images",
+          "in" : "path",
+          "name" : "item",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SeriesEdit"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Mark a requested change fixed",
+        "tags" : [ "creator" ]
+      }
+    },
+    "/api/v1/creator/series/{id}/submit" : {
+      "post" : {
+        "description" : "draft or changes -> review: the series joins the admins' queue and goes live when an admin approves it. Needs a summary and a cover (400 with fields.summary / fields.coverUploadId = required). From changes, every requested change must be marked fixed first (409 changes_not_fixed). 409 already_in_review when it already waits, already_published when it is live; 403 hidden_by_admin when an admin hid it.",
+        "operationId" : "submit",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SeriesEdit"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Submit the series for review (Submit for review / Resubmit)",
         "tags" : [ "creator" ]
       }
     },
     "/api/v1/creator/series/{id}/unpublish" : {
       "post" : {
+        "description" : "403 hidden_by_admin when an admin hid it; 409 already_in_review while it waits for a review, changes_requested while the admin's changes are open.",
         "operationId" : "unpublish",
         "parameters" : [ {
           "in" : "path",
@@ -4631,6 +4926,26 @@
         },
         "required" : [ "currentPassword", "newPassword" ]
       },
+      "ChangesRequest" : {
+        "type" : "object",
+        "properties" : {
+          "items" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string",
+              "enum" : [ "contact", "cover", "title", "age", "images" ]
+            },
+            "maxItems" : 5,
+            "minItems" : 1
+          },
+          "note" : {
+            "type" : [ "string", "null" ],
+            "maxLength" : 300,
+            "minLength" : 0
+          }
+        },
+        "required" : [ "items" ]
+      },
       "Checkout" : {
         "type" : "object",
         "properties" : {
@@ -4886,6 +5201,9 @@
             "type" : "integer",
             "format" : "int64"
           },
+          "review" : {
+            "$ref" : "#/components/schemas/SeriesReview"
+          },
           "series" : {
             "$ref" : "#/components/schemas/SeriesCard"
           },
@@ -4899,7 +5217,7 @@
           },
           "visibility" : {
             "type" : "string",
-            "enum" : [ "draft", "published", "hidden" ]
+            "enum" : [ "draft", "review", "changes", "published", "hidden" ]
           }
         },
         "required" : [ "comments", "earnedCoins", "series", "subscribers", "unlocks", "visibility" ]
@@ -5118,6 +5436,21 @@
         },
         "required" : [ "items" ]
       },
+      "CursorPageReviewQueueItem" : {
+        "type" : "object",
+        "properties" : {
+          "items" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/ReviewQueueItem"
+            }
+          },
+          "nextCursor" : {
+            "type" : [ "string", "null" ]
+          }
+        },
+        "required" : [ "items" ]
+      },
       "CursorPageSeriesCard" : {
         "type" : "object",
         "properties" : {
@@ -5162,6 +5495,16 @@
           }
         },
         "required" : [ "items" ]
+      },
+      "DecisionNoteRequest" : {
+        "type" : "object",
+        "properties" : {
+          "note" : {
+            "type" : [ "string", "null" ],
+            "maxLength" : 300,
+            "minLength" : 0
+          }
+        }
       },
       "DeletionResponse" : {
         "type" : "object",
@@ -5943,6 +6286,10 @@
             "type" : "integer",
             "format" : "int64"
           },
+          "oldestReviewAt" : {
+            "type" : [ "string", "null" ],
+            "format" : "date-time"
+          },
           "openReports" : {
             "type" : "integer",
             "format" : "int64"
@@ -5950,9 +6297,13 @@
           "refundedOrders" : {
             "type" : "integer",
             "format" : "int64"
+          },
+          "seriesInReview" : {
+            "type" : "integer",
+            "format" : "int64"
           }
         },
-        "required" : [ "bannedUsers", "hiddenComments", "hiddenEpisodes", "hiddenSeries", "openReports", "refundedOrders" ]
+        "required" : [ "bannedUsers", "hiddenComments", "hiddenEpisodes", "hiddenSeries", "openReports", "refundedOrders", "seriesInReview" ]
       },
       "Panel" : {
         "type" : "object",
@@ -6274,6 +6625,19 @@
         },
         "required" : [ "id", "type" ]
       },
+      "RequestedChange" : {
+        "type" : "object",
+        "properties" : {
+          "fixed" : {
+            "type" : "boolean"
+          },
+          "item" : {
+            "type" : "string",
+            "enum" : [ "contact", "cover", "title", "age", "images" ]
+          }
+        },
+        "required" : [ "fixed", "item" ]
+      },
       "ResetPasswordRequest" : {
         "type" : "object",
         "properties" : {
@@ -6317,6 +6681,75 @@
           }
         },
         "required" : [ "items" ]
+      },
+      "ReviewFlag" : {
+        "type" : "object",
+        "properties" : {
+          "detail" : {
+            "type" : [ "string", "null" ]
+          },
+          "kind" : {
+            "type" : "string",
+            "enum" : [ "contact", "watermark", "similar" ]
+          }
+        },
+        "required" : [ "kind" ]
+      },
+      "ReviewQueueItem" : {
+        "type" : "object",
+        "properties" : {
+          "ageRating" : {
+            "type" : "string",
+            "enum" : [ "all", "teen", "mature" ]
+          },
+          "coverUrl" : {
+            "type" : [ "string", "null" ]
+          },
+          "creator" : {
+            "type" : "string"
+          },
+          "episodeCount" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "flags" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/ReviewFlag"
+            }
+          },
+          "genre" : {
+            "type" : "string"
+          },
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "languages" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "slug" : {
+            "type" : "string"
+          },
+          "submittedAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "summary" : {
+            "type" : "string"
+          },
+          "title" : {
+            "type" : "string"
+          },
+          "type" : {
+            "type" : "string",
+            "enum" : [ "comic", "novel" ]
+          }
+        },
+        "required" : [ "ageRating", "creator", "episodeCount", "flags", "genre", "id", "languages", "slug", "submittedAt", "summary", "title", "type" ]
       },
       "SearchResults" : {
         "type" : "object",
@@ -6455,6 +6888,9 @@
               "type" : "string"
             }
           },
+          "review" : {
+            "$ref" : "#/components/schemas/SeriesReview"
+          },
           "slug" : {
             "type" : "string"
           },
@@ -6484,7 +6920,7 @@
           },
           "visibility" : {
             "type" : "string",
-            "enum" : [ "draft", "published", "hidden" ]
+            "enum" : [ "draft", "review", "changes", "published", "hidden" ]
           }
         },
         "required" : [ "ageRating", "genre", "id", "languages", "slug", "status", "summary", "tags", "title", "type", "visibility" ]
@@ -6550,6 +6986,29 @@
           }
         },
         "required" : [ "genre", "languages", "title" ]
+      },
+      "SeriesReview" : {
+        "type" : "object",
+        "properties" : {
+          "decision" : {
+            "type" : [ "string", "null" ],
+            "enum" : [ "approved", "changes", "rejected", null ]
+          },
+          "items" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/RequestedChange"
+            }
+          },
+          "note" : {
+            "type" : [ "string", "null" ]
+          },
+          "submittedAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          }
+        },
+        "required" : [ "items", "submittedAt" ]
       },
       "SeriesStats" : {
         "type" : "object",

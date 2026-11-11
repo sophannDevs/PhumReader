@@ -155,7 +155,10 @@ function AccessCard({ denied, email }: { denied: boolean; email: string }) {
 
 type NavItem = { href: string; label: string; count?: number; urgent?: boolean }
 
-/** Side menu counts: series and payments from the demo queues, reports from the API in real mode. */
+/**
+ * Side menu counts: demo – the demo queues; real mode – the series to review and the open reports from the API
+ * (payments have no API queue yet).
+ */
 function useNavCounts() {
   const queues = useAdminQueues()
   const overview = useOverview()
@@ -170,7 +173,7 @@ function useNavCounts() {
     }
   }
   return {
-    series: loaded ? queues.series.length : undefined,
+    series: queues.seriesTotal ?? overview.data?.seriesInReview,
     reports: overview.data?.openReports,
     urgent: realReports.items.some((r) => priorityOf(r.reason) === "urgent"),
     payments: undefined,

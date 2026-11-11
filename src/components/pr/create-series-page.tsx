@@ -74,10 +74,11 @@ import { cn } from "@/lib/utils"
  * - Demo: the draft autosaves to the store's `draftSeries` (keyed "new" or by the work id, so `?draft=C3` continues the
  *   dashboard's draft); Submit puts the work in `myWorks` with status "review", where the admin series queue finds it.
  *   A cover is a sample cover from the demo catalogue (the prototype's "Cover uploaded").
- * - Real API: Save draft creates or updates the series as a draft (POST/PUT /creator/series), Submit also publishes it
- *   (the API has no review step yet), and the cover is a real upload. `?draft=<id>` continues one of the creator's
- *   series. The second genre, 16+ vs 18+, both languages as separate versions, more than one update day, the release
- *   time and Fast Pass stay in the local draft only (the API has no fields for them).
+ * - Real API: Save draft creates or updates the series as a draft (POST/PUT /creator/series); Submit saves it too and
+ *   then submits it for review (POST …/submit, V21-01): the same "in review" screen, and an admin approves it in the
+ *   series queue. The cover is a real upload. `?draft=<id>` continues one of the creator's series. The second genre,
+ *   16+ vs 18+, both languages as separate versions, more than one update day, the release time and Fast Pass stay in
+ *   the local draft only (the API has no fields for them).
  */
 
 type Format = "comic" | "novel"
@@ -432,10 +433,13 @@ function Wizard({ workId, seed }: { workId: string | null; seed: Partial<Draft> 
       } else {
         let s = savedId ? await api.updateSeries(savedId, toInput(d)) : await api.createSeries(toInput(d))
         setSavedId(s.id)
-        if (s.visibility !== "published") s = await api.publishSeries(s.id)
+        // The cover is saved now: a second try (after a failed submit) keeps it instead of sending the upload again.
+        setD((x) => ({ ...x, coverUploadId: null }))
+        // A draft (or one with changes requested) goes to review; one an admin hid answers 403 hidden_by_admin.
+        if (s.visibility !== "review" && s.visibility !== "published") s = await api.submitSeries(s.id)
         await qc.invalidateQueries({ queryKey: creatorKeys.all })
         clearLocal()
-        setDone({ id: s.id, title: s.title, live: true, format: s.type })
+        setDone({ id: s.id, title: s.title, live: s.visibility === "published", format: s.type })
       }
       window.scrollTo({ top: 0 })
     } catch (error) {

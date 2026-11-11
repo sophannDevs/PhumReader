@@ -23,6 +23,7 @@ import {
   useDayDate,
   useFailToast,
   useHourLabel,
+  useReviewItemLabel,
 } from "@/components/pr/studio-kit"
 import { Chip, Segmented, StateBox } from "@/components/pr/v2-primitives"
 import { Badge } from "@/components/ui/badge"
@@ -36,6 +37,7 @@ import { Link, useRouter } from "@/i18n/navigation"
 import { ApiError } from "@/lib/api/client"
 import { DEMO_MODE } from "@/lib/api/config"
 import * as api from "@/lib/api/creator"
+import { errorCode } from "@/lib/api/errors"
 import { UploadError, uploadImage } from "@/lib/api/uploads"
 import { creatorKeys, useMyEpisodes, useMySeries, useSeriesEdit } from "@/lib/creator"
 import {
@@ -50,6 +52,7 @@ import {
   demoEpisodes,
   hasContactDetails,
   ictAt,
+  isReviewItem,
   nextSampleCover,
   sortDays,
   submittedOn,
@@ -62,7 +65,7 @@ import { addDays, formatCount, formatShortDate, ictDate, today } from "@/lib/for
 import { useLocalize } from "@/lib/localize"
 import { useDemoFlag } from "@/lib/queries"
 import { genreFromSlug, genreSlug } from "@/lib/routes"
-import { useAppStore, type ReviewNote } from "@/lib/store"
+import { useAppStore } from "@/lib/store"
 import { cn } from "@/lib/utils"
 
 /**
@@ -70,12 +73,15 @@ import { cn } from "@/lib/utils"
  * changes with Fix / Mark fixed and Resubmit; tabs (in the address as ?tab=episodes|details|fast-pass|settings) for the
  * episode list (filters, sort, Show more, edit, hide, delete drafts), series details, Fast Pass and settings.
  * - Demo: the series is one of the store's `myWorks` with a generated episode list (`demoEpisodes`); the changes come
- *   from `reviewNotes[id]` (admin "Request changes"), else the two automatic-check items of the demo review. Resubmit
- *   sets the status back to "review" (the admin queue lists it again). Episode edits, the story status, the break
- *   message, more than one update day, Fast Pass, comments and hiding the series last for the visit.
+ *   from `reviewNotes[id]` (admin "Request changes": keys, translated here), else the two automatic-check items of the
+ *   demo review. Resubmit sets the status back to "review" (the admin queue lists it again). Mark fixed, episode edits,
+ *   the story status, the break message, more than one update day, Fast Pass, comments and hiding the series last for
+ *   the visit.
  * - Real API: GET/PUT /creator/series/{id}, the episode list, PUT …/episodes/{n} (title, release slot) and DELETE for
- *   drafts; hiding the series unpublishes it. The API can't hide one episode or delete a series yet (not shown), and the
- *   series-wide Fast Pass and comments settings are not saved.
+ *   drafts; hiding the series unpublishes it. The status is the series' visibility; the reviewer's changes, note and
+ *   submission date come from its `review` (V21-01): Mark fixed / Undo call PUT / DELETE …/review/items/{item} and
+ *   Resubmit POST …/submit. The API can't hide one episode or delete a series yet (not shown), and the series-wide Fast
+ *   Pass and comments settings are not saved.
  */
 
 type Format = "comic" | "novel"
@@ -100,7 +106,9 @@ type Model = {
   /** "View as reader": the public series page, or the creator's profile in demo mode */
   readerHref: string
   episodes: StudioEpisode[]
-  review: ReviewNote | null
+  /** The reviewer's requested changes (keys; an older demo save keeps the label) and note, while changes are requested */
+  review: { items: { item: string; fixed: boolean }[]; note: string } | null
+  /** ISO date the series was submitted for review */
   submitted: string | null
 }
 
@@ -113,13 +121,17 @@ type Actions = {
   setVisible: (visible: boolean) => Promise<void>
   /** null: deleting a series is not available */
   deleteSeries: (() => Promise<void>) | null
-  resubmit: () => void
+  /** Mark a requested change fixed or not fixed (demo: for the visit) */
+  markFixed: (item: string, fixed: boolean) => Promise<void>
+  resubmit: () => Promise<void>
   /** Uploads a new cover: demo picks a sample; real mode asks for a file first (null = cancelled) */
   pickCover: (current: string) => Promise<{ url: string; uploadId: string | null } | null>
 }
 
 const TABS: Tab[] = ["episodes", "details", "fast-pass", "settings"]
 const PAGE = 8
+/** Review answers that mean this page shows an old state of the review (real API). */
+const STALE_REVIEW = new Set(["no_changes_requested", "item_not_requested", "already_in_review", "already_published", "changes_not_fixed"])
 
 export function ManageSeriesPage({ id }: { id: string }) {
   const t = useTranslations("manage")
@@ -204,7 +216,7 @@ function DemoManage({ id }: { id: string }) {
     views: work.views,
     readerHref: handle ? `/creators/${handle}` : "/creator",
     episodes: query.data ? demoEpisodes(work, today) : [],
-    review,
+    review: review ? { items: review.items.map((item) => ({ item, fixed: false })), note: review.note } : null,
     submitted: submittedOn(work.id),
   }
   const store = () => useAppStore.getState()
@@ -231,7 +243,8 @@ function DemoManage({ id }: { id: string }) {
       toast.success(t("seriesDeleted"))
       router.push("/creator")
     },
-    resubmit: () => store().setWorkStatus(id, "review"),
+    markFixed: async () => undefined,
+    resubmit: async () => store().setWorkStatus(id, "review"),
     pickCover: async (cur) => ({ url: nextSampleCover(cur, 6), uploadId: null }),
   }
   return <ManageView key={`${id}:${!!query.data}`} model={model} actions={actions} />
@@ -253,6 +266,7 @@ function RealManage({ id }: { id: string }) {
   if (edit.isError || eps.isError) return <Problem onRetry={() => void Promise.all([edit.refetch(), eps.refetch()])} />
 
   const s = edit.data
+  const review = s.review ?? null
   const row = mine.data?.find((r) => r.series.id === id)
   const episodes: StudioEpisode[] = eps.data
     .map((e): StudioEpisode => {
@@ -286,10 +300,21 @@ function RealManage({ id }: { id: string }) {
     views: row?.series.views ?? "0",
     readerHref: `/series/${s.slug}`,
     episodes,
-    review: null,
-    submitted: null,
+    review:
+      s.visibility === "changes"
+        ? { items: (review?.items ?? []).map((x) => ({ item: x.item, fixed: x.fixed })), note: review?.note ?? "" }
+        : null,
+    submitted: review ? ictDate(Date.parse(review.submittedAt)) : null,
   }
   const refresh = () => qc.invalidateQueries({ queryKey: creatorKeys.all })
+  // Mark fixed and Resubmit only mark the cached series stale: reloading it now would reset the page (e.g. the
+  // "Resubmitted" note); the next visit loads it again. When the review moved on meanwhile (another device resubmitted,
+  // an admin decided), the error says so and the page reloads the latest.
+  const later = () => void qc.invalidateQueries({ queryKey: creatorKeys.all, refetchType: "none" })
+  const reloadWhenStale = (error: unknown) => {
+    if (STALE_REVIEW.has(errorCode(error) ?? "")) void refresh()
+    return error
+  }
   const input = (d: Details): api.SeriesInput => ({
     title: d.title.trim(),
     genre: genreSlug(d.genre),
@@ -336,7 +361,23 @@ function RealManage({ id }: { id: string }) {
       await refresh()
     },
     deleteSeries: null,
-    resubmit: () => undefined,
+    markFixed: async (item, fixed) => {
+      if (!isReviewItem(item)) return
+      try {
+        await (fixed ? api.markReviewItemFixed(id, item) : api.unmarkReviewItemFixed(id, item))
+      } catch (error) {
+        throw reloadWhenStale(error)
+      }
+      later()
+    },
+    resubmit: async () => {
+      try {
+        await api.submitSeries(id)
+      } catch (error) {
+        throw reloadWhenStale(error)
+      }
+      later()
+    },
     pickCover: () =>
       new Promise((resolve, reject) => {
         filePick.current = (file) => {
@@ -395,9 +436,11 @@ function ManageView({ model, actions }: { model: Model; actions: Actions }) {
   const t = useTranslations("manage")
   const tf = useTranslations("seriesForm")
   const td = useTranslations("data")
+  const ts = useTranslations("states")
   const locale = useLocale()
   const loc = useLocalize()
   const fail = useFailToast()
+  const reviewLabel = useReviewItemLabel()
   const dayDate = useDayDate()
   const hourLabel = useHourLabel()
   const router = useRouter()
@@ -429,7 +472,11 @@ function ManageView({ model, actions }: { model: Model; actions: Actions }) {
   const [coverError, setCoverError] = useState<string | null>(null)
   // Demo review: the cover counts as fixed once a new one is saved.
   const [coverFixed, setCoverFixed] = useState(model.status !== "changes")
-  const [manualFixed, setManualFixed] = useState<Record<number, boolean>>({})
+  const [manualFixed, setManualFixed] = useState<Record<number, boolean>>(() =>
+    Object.fromEntries((model.review?.items ?? []).map((x, i) => [i, x.fixed]))
+  )
+  const [fixing, setFixing] = useState<number | null>(null)
+  const [resubmitting, setResubmitting] = useState(false)
   const [resubmitted, setResubmitted] = useState(false)
   const [fp, setFp] = useState({ on: model.status === "published", n: 3 })
   const [fpSaved, setFpSaved] = useState(fp)
@@ -490,13 +537,14 @@ function ManageView({ model, actions }: { model: Model; actions: Actions }) {
 
   // ---- review items
   const contact = hasContactDetails(saved.summary)
-  type Fix = { title: string; desc: string; ok: boolean; manual?: number }
+  type Fix = { title: string; desc: string; ok: boolean; manual?: number; item?: string }
   const fixes: Fix[] = model.review
-    ? model.review.items.map((item, i) => ({
-        title: item,
+    ? model.review.items.map((x, i) => ({
+        title: reviewLabel(x.item),
         desc: i === 0 && model.review?.note ? t("reviewerNote", { note: model.review.note }) : t("markFixedHint"),
         ok: !!manualFixed[i],
         manual: i,
+        item: x.item,
       }))
     : [
         { title: t("fixContactTitle"), desc: t("fixContactDesc"), ok: !contact },
@@ -504,11 +552,33 @@ function ManageView({ model, actions }: { model: Model; actions: Actions }) {
       ]
   const fixed = fixes.filter((x) => x.ok).length
 
-  function resubmit() {
-    if (fixed < fixes.length) return
-    actions.resubmit()
-    setResubmitted(true)
-    toast.success(t("resubmittedToast"))
+  async function setFixed(x: Fix, on: boolean) {
+    const i = x.manual
+    if (i === undefined || x.item === undefined || fixing !== null) return
+    setFixing(i)
+    setManualFixed((m) => ({ ...m, [i]: on }))
+    try {
+      await actions.markFixed(x.item, on)
+    } catch (error) {
+      setManualFixed((m) => ({ ...m, [i]: !on }))
+      fail(error)
+    } finally {
+      setFixing(null)
+    }
+  }
+
+  async function resubmit() {
+    if (fixed < fixes.length || fixing !== null || resubmitting) return
+    setResubmitting(true)
+    try {
+      await actions.resubmit()
+      setResubmitted(true)
+      toast.success(t("resubmittedToast"))
+    } catch (error) {
+      fail(error)
+    } finally {
+      setResubmitting(false)
+    }
   }
 
   // ---- details
@@ -685,7 +755,7 @@ function ManageView({ model, actions }: { model: Model; actions: Actions }) {
                 {t("upload", { unit })}
               </Link>
             </Button>
-          ) : status === "draft" && DEMO_MODE ? (
+          ) : status === "draft" ? (
             <Button asChild variant="brand">
               <Link href={`/creator/new?draft=${encodeURIComponent(model.id)}`}>{t("continueSetup")}</Link>
             </Button>
@@ -726,16 +796,38 @@ function ManageView({ model, actions }: { model: Model; actions: Actions }) {
                       variant="outline"
                       size="sm"
                       className="shrink-0"
-                      onClick={() => (x.manual !== undefined ? setManualFixed((m) => ({ ...m, [x.manual!]: true })) : pickTab("details"))}
+                      loading={fixing !== null && fixing === x.manual}
+                      disabled={fixing !== null}
+                      onClick={() => (x.manual !== undefined ? void setFixed(x, true) : pickTab("details"))}
                     >
                       {x.manual !== undefined ? t("markFixed") : t("fix")}
+                    </Button>
+                  ) : x.manual !== undefined ? (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="shrink-0"
+                      loading={fixing === x.manual}
+                      disabled={fixing !== null}
+                      aria-label={t("undoFixedLabel", { item: x.title })}
+                      onClick={() => void setFixed(x, false)}
+                    >
+                      {ts("undo")}
                     </Button>
                   ) : null}
                 </li>
               ))}
             </ul>
             <div className="flex flex-wrap items-center gap-2">
-              <Button type="button" variant="brand" size="sm" disabled={fixed < fixes.length} onClick={resubmit}>
+              <Button
+                type="button"
+                variant="brand"
+                size="sm"
+                loading={resubmitting}
+                disabled={fixed < fixes.length || fixing !== null}
+                onClick={() => void resubmit()}
+              >
                 {t("resubmit")}
               </Button>
               <span className="text-xs leading-4">

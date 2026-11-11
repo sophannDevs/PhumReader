@@ -12,6 +12,7 @@ import { StateBox } from "@/components/pr/v2-primitives"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import type { Flag, Priority, QueueReport } from "@/lib/admin"
+import { ApiError } from "@/lib/api/client"
 import { useLocalize } from "@/lib/localize"
 import { formatDate, formatShortDate, formatTime, ictDate } from "@/lib/format"
 import { useAppStore, type AdminDecision } from "@/lib/store"
@@ -78,6 +79,8 @@ export function AdminDecisions({ children }: { children: React.ReactNode }) {
       (err: unknown) => {
         p.revert()
         toast.error(helpers.current.errorText(err))
+        // 409: another admin decided first (not_in_review, report_closed): reload the queues so the item leaves them.
+        if (err instanceof ApiError && err.status === 409) void helpers.current.qc.invalidateQueries({ queryKey: ["admin"] })
       }
     )
   }, [])

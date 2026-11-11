@@ -9,10 +9,13 @@ import app.phumreader.media.service.MediaService.ReadyImage;
 import app.phumreader.notification.service.NotificationEvents;
 import app.phumreader.search.service.SearchEvents;
 import app.phumreader.series.domain.AgeRating;
+import app.phumreader.series.domain.ReviewDecision;
+import app.phumreader.series.domain.ReviewItem;
 import app.phumreader.series.domain.SeriesStatus;
 import app.phumreader.series.domain.SeriesType;
 import app.phumreader.series.domain.SeriesVisibility;
 import app.phumreader.series.repository.CreatorQueries.EditRow;
+import app.phumreader.series.repository.CreatorQueries.ReviewRow;
 import app.phumreader.series.repository.CreatorWrites;
 import app.phumreader.series.repository.CreatorWrites.EpisodeRow;
 import app.phumreader.series.repository.CreatorWrites.EpisodeValues;
@@ -37,6 +40,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 import java.util.UUID;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -130,22 +134,21 @@ public class CreatorContentService {
         return creators.ownedSeries(user, id);
     }
 
-    /** Puts the series live. Needs a summary and a cover; 403 when an admin hid it. */
+    /**
+     * Puts a series live again that an admin approved before (V21-01): a series that never went
+     * live answers 409 {@code review_required} and goes through {@link #submitSeries} instead.
+     * Needs a summary and a cover; 403 when an admin hid it.
+     */
     @Transactional
     public SeriesEdit publishSeries(CurrentUser user, UUID id) {
         EditRow row = creators.requireOwnedSeries(user, id);
-        if (row.visibility() == SeriesVisibility.HIDDEN) {
-            throw ApiException.forbidden(
-                    "hidden_by_admin", "This series was hidden by PhumReader. Contact support.");
+        requireNotHiddenOrInReview(row);
+        if (!row.launched()) {
+            throw ApiException.conflict(
+                    "review_required",
+                    "A new series goes live after a review. Submit it for review instead.");
         }
-        if (row.summary().isBlank()) {
-            throw ApiException.invalidField(
-                    "summary", "required", "Write a summary before publishing.");
-        }
-        if (row.coverUrl() == null) {
-            throw ApiException.invalidField(
-                    "coverUploadId", "required", "Add a cover before publishing.");
-        }
+        requireSummaryAndCover(row, "publishing");
         writes.setVisibility(id, SeriesVisibility.PUBLISHED.name(), clock.instant());
         changed(id);
         return creators.ownedSeries(user, id);
@@ -155,13 +158,116 @@ public class CreatorContentService {
     @Transactional
     public SeriesEdit unpublishSeries(CurrentUser user, UUID id) {
         EditRow row = creators.requireOwnedSeries(user, id);
-        if (row.visibility() == SeriesVisibility.HIDDEN) {
-            throw ApiException.forbidden(
-                    "hidden_by_admin", "This series was hidden by PhumReader. Contact support.");
-        }
+        requireNotHiddenOrInReview(row);
         writes.setVisibility(id, SeriesVisibility.DRAFT.name(), clock.instant());
         changed(id);
         return creators.ownedSeries(user, id);
+    }
+
+    // ================================================================ review (V21-01)
+
+    /**
+     * Sends the series to the admins' review queue: a draft (Submit for review) or a series the
+     * admin sent back, once every requested change is marked fixed (Resubmit). Needs a summary and
+     * a cover, like publishing.
+     */
+    @Transactional
+    public SeriesEdit submitSeries(CurrentUser user, UUID id) {
+        EditRow row = creators.requireOwnedSeries(user, id);
+        if (row.visibility() == SeriesVisibility.PUBLISHED) {
+            throw ApiException.conflict("already_published", "This series is already live.");
+        }
+        if (row.visibility() != SeriesVisibility.CHANGES) {
+            requireNotHiddenOrInReview(row);
+        }
+        requireSummaryAndCover(row, "submitting it for review");
+        if (row.visibility() == SeriesVisibility.CHANGES
+                && openChanges(row).items().stream().anyMatch(i -> !i.fixed())) {
+            throw ApiException.conflict(
+                    "changes_not_fixed",
+                    "Mark every requested change fixed before submitting the series again.");
+        }
+        if (!writes.moveSeries(id, row.visibility().name(), SeriesVisibility.REVIEW.name())) {
+            throw ApiException.conflict(
+                    "already_in_review", "This series is already waiting for a review.");
+        }
+        writes.insertReview(id, clock.instant());
+        return creators.ownedSeries(user, id);
+    }
+
+    /** Mark fixed (Manage series): one change the admin asked for is done. */
+    @Transactional
+    public SeriesEdit markFixed(CurrentUser user, UUID id, String item) {
+        EditRow row = creators.requireOwnedSeries(user, id);
+        ReviewItem change = ReviewItem.parse(item);
+        if (!writes.markFixed(openChanges(row).id(), change.key(), clock.instant())) {
+            throw notRequested();
+        }
+        return creators.ownedSeries(user, id);
+    }
+
+    /** Undoes Mark fixed. */
+    @Transactional
+    public SeriesEdit markNotFixed(CurrentUser user, UUID id, String item) {
+        EditRow row = creators.requireOwnedSeries(user, id);
+        ReviewItem change = ReviewItem.parse(item);
+        if (!writes.markNotFixed(openChanges(row).id(), change.key())) {
+            throw notRequested();
+        }
+        return creators.ownedSeries(user, id);
+    }
+
+    /**
+     * The review that asked for changes, while the series waits for them; 409 {@code
+     * no_changes_requested} otherwise.
+     */
+    private ReviewRow openChanges(EditRow series) {
+        return Optional.of(series)
+                .filter(s -> s.visibility() == SeriesVisibility.CHANGES)
+                .flatMap(s -> creators.latestReview(s.id()))
+                .filter(r -> ReviewDecision.CHANGES.name().equals(r.decision()))
+                .orElseThrow(() ->
+                        ApiException.conflict(
+                                "no_changes_requested",
+                                "No changes are waiting to be made on this series."));
+    }
+
+    private static ApiException notRequested() {
+        return ApiException.notFound(
+                "item_not_requested", "The reviewer did not ask to change this.");
+    }
+
+    /**
+     * 403 {@code hidden_by_admin} for a series an admin took down; 409 {@code already_in_review}
+     * while it waits for a review and {@code changes_requested} while the admin's changes are open:
+     * only the admin's decision or a resubmit moves it on.
+     */
+    private static void requireNotHiddenOrInReview(EditRow row) {
+        switch (row.visibility()) {
+            case HIDDEN ->
+                    throw ApiException.forbidden(
+                            "hidden_by_admin",
+                            "This series was hidden by PhumReader. Contact support.");
+            case REVIEW ->
+                    throw ApiException.conflict(
+                            "already_in_review", "This series is already waiting for a review.");
+            case CHANGES ->
+                    throw ApiException.conflict(
+                            "changes_requested",
+                            "Changes were requested: fix them and submit the series again.");
+            case DRAFT, PUBLISHED -> {}
+        }
+    }
+
+    private static void requireSummaryAndCover(EditRow row, String before) {
+        if (row.summary().isBlank()) {
+            throw ApiException.invalidField(
+                    "summary", "required", "Write a summary before " + before + ".");
+        }
+        if (row.coverUrl() == null) {
+            throw ApiException.invalidField(
+                    "coverUploadId", "required", "Add a cover before " + before + ".");
+        }
     }
 
     private SeriesValues seriesValues(

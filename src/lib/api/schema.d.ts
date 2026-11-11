@@ -157,6 +157,86 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/series-review": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Series waiting for review, oldest first, with the automatic checks
+         * @description flags: contact (contact details or links in the summary: @handles, URLs, www., t.me/, 9-10 digit phone numbers; detail is the first one found) and similar (the title equals, contains or is inside a live series' title, case and spacing ignored, 4+ characters; detail is that title). watermark is never set yet.
+         */
+        get: operations["seriesReview"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/series/{id}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Approve a series in review: it goes live
+         * @description Sets its launch date the first time. 409 not_in_review when it no longer waits for a review (another admin decided); 404 series_not_found.
+         */
+        post: operations["approve"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/series/{id}/reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Reject a series in review: it goes back to a draft
+         * @description 409 not_in_review when it no longer waits for a review; 404 series_not_found.
+         */
+        post: operations["reject"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/series/{id}/request-changes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Send a series in review back with the changes to make
+         * @description The creator marks each item fixed and submits again. 400 validation_failed for no items, more than 5 or a note over 300 characters, duplicate_item for a key given twice, malformed_request for an unknown key; 409 not_in_review when it no longer waits for a review; 404 series_not_found.
+         */
+        post: operations["requestChanges"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/users": {
         parameters: {
             query?: never;
@@ -742,7 +822,7 @@ export interface paths {
         };
         /**
          * My series, with a text filter and a visibility filter
-         * @description q matches the title; visibility is draft, published or hidden.
+         * @description q matches the title; visibility is draft, review, changes, published or hidden. review is the latest submission for review (null when the series was never submitted).
          */
         get: operations["list"];
         put?: never;
@@ -837,10 +917,54 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Put the series live
-         * @description Needs a summary and a cover. 403 hidden_by_admin when an admin hid it.
+         * Put a series live again that an admin approved before
+         * @description Only for a series that went live once and was taken off (unpublish): a new series answers 409 review_required and goes through POST /{id}/submit. Needs a summary and a cover. 403 hidden_by_admin when an admin hid it; 409 already_in_review while it waits for a review, changes_requested while the admin's changes are open.
          */
         post: operations["publish"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/creator/series/{id}/review/items/{item}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Mark a requested change fixed
+         * @description Saved, so it shows on every device; marking it again keeps the first time. 409 no_changes_requested unless the series waits for changes (visibility changes), 404 item_not_requested when the admin did not ask for this item, 400 invalid_item for an unknown key.
+         */
+        put: operations["markFixed"];
+        post?: never;
+        /**
+         * Undo Mark fixed
+         * @description 409 no_changes_requested unless the series waits for changes (visibility changes), 404 item_not_requested when the admin did not ask for this item, 400 invalid_item for an unknown key.
+         */
+        delete: operations["markNotFixed"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/creator/series/{id}/submit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Submit the series for review (Submit for review / Resubmit)
+         * @description draft or changes -> review: the series joins the admins' queue and goes live when an admin approves it. Needs a summary and a cover (400 with fields.summary / fields.coverUploadId = required). From changes, every requested change must be marked fixed first (409 changes_not_fixed). 409 already_in_review when it already waits, already_published when it is live; 403 hidden_by_admin when an admin hid it.
+         */
+        post: operations["submit"];
         delete?: never;
         options?: never;
         head?: never;
@@ -856,7 +980,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Take the series back to a draft */
+        /**
+         * Take the series back to a draft
+         * @description 403 hidden_by_admin when an admin hid it; 409 already_in_review while it waits for a review, changes_requested while the admin's changes are open.
+         */
         post: operations["unpublish"];
         delete?: never;
         options?: never;
@@ -1727,6 +1854,10 @@ export interface components {
             currentPassword: string;
             newPassword: string;
         };
+        ChangesRequest: {
+            items: ("contact" | "cover" | "title" | "age" | "images")[];
+            note?: string | null;
+        };
         Checkout: {
             abaDeeplink?: string | null;
             formAction?: string | null;
@@ -1822,13 +1953,14 @@ export interface components {
             comments: number;
             /** Format: int64 */
             earnedCoins: number;
+            review?: components["schemas"]["SeriesReview"];
             series: components["schemas"]["SeriesCard"];
             /** Format: int64 */
             subscribers: number;
             /** Format: int64 */
             unlocks: number;
             /** @enum {string} */
-            visibility: "draft" | "published" | "hidden";
+            visibility: "draft" | "review" | "changes" | "published" | "hidden";
         };
         CreatorTotals: {
             /** Format: int64 */
@@ -1894,6 +2026,10 @@ export interface components {
             items: components["schemas"]["RankingEntry"][];
             nextCursor?: string | null;
         };
+        CursorPageReviewQueueItem: {
+            items: components["schemas"]["ReviewQueueItem"][];
+            nextCursor?: string | null;
+        };
         CursorPageSeriesCard: {
             items: components["schemas"]["SeriesCard"][];
             nextCursor?: string | null;
@@ -1905,6 +2041,9 @@ export interface components {
         CursorPageUnlockedEntry: {
             items: components["schemas"]["UnlockedEntry"][];
             nextCursor?: string | null;
+        };
+        DecisionNoteRequest: {
+            note?: string | null;
         };
         DeletionResponse: {
             /** Format: date-time */
@@ -2192,10 +2331,14 @@ export interface components {
             hiddenEpisodes: number;
             /** Format: int64 */
             hiddenSeries: number;
+            /** Format: date-time */
+            oldestReviewAt?: string | null;
             /** Format: int64 */
             openReports: number;
             /** Format: int64 */
             refundedOrders: number;
+            /** Format: int64 */
+            seriesInReview: number;
         };
         Panel: {
             alt: string;
@@ -2313,6 +2456,11 @@ export interface components {
             /** @enum {string} */
             type: "series" | "episode" | "comment";
         };
+        RequestedChange: {
+            fixed: boolean;
+            /** @enum {string} */
+            item: "contact" | "cover" | "title" | "age" | "images";
+        };
         ResetPasswordRequest: {
             password: string;
             token: string;
@@ -2322,6 +2470,31 @@ export interface components {
         };
         RestoreSubscriptionsRequest: {
             items: components["schemas"]["RemovedSubscription"][];
+        };
+        ReviewFlag: {
+            detail?: string | null;
+            /** @enum {string} */
+            kind: "contact" | "watermark" | "similar";
+        };
+        ReviewQueueItem: {
+            /** @enum {string} */
+            ageRating: "all" | "teen" | "mature";
+            coverUrl?: string | null;
+            creator: string;
+            /** Format: int32 */
+            episodeCount: number;
+            flags: components["schemas"]["ReviewFlag"][];
+            genre: string;
+            /** Format: uuid */
+            id: string;
+            languages: string[];
+            slug: string;
+            /** Format: date-time */
+            submittedAt: string;
+            summary: string;
+            title: string;
+            /** @enum {string} */
+            type: "comic" | "novel";
         };
         SearchResults: {
             items: components["schemas"]["SeriesCard"][];
@@ -2374,6 +2547,7 @@ export interface components {
             /** Format: uuid */
             id: string;
             languages: string[];
+            review?: components["schemas"]["SeriesReview"];
             slug: string;
             /** @enum {string} */
             status: "ongoing" | "completed" | "hiatus";
@@ -2385,7 +2559,7 @@ export interface components {
             /** @enum {string|null} */
             updateDay?: "Mon" | "Tue" | "Wed" | "Thu" | "Fri" | "Sat" | "Sun" | null;
             /** @enum {string} */
-            visibility: "draft" | "published" | "hidden";
+            visibility: "draft" | "review" | "changes" | "published" | "hidden";
         };
         SeriesInput: {
             /** @enum {string|null} */
@@ -2405,6 +2579,14 @@ export interface components {
             type?: "comic" | "novel" | null;
             /** @enum {string|null} */
             updateDay?: "Mon" | "Tue" | "Wed" | "Thu" | "Fri" | "Sat" | "Sun" | null;
+        };
+        SeriesReview: {
+            /** @enum {string|null} */
+            decision?: "approved" | "changes" | "rejected" | null;
+            items: components["schemas"]["RequestedChange"][];
+            note?: string | null;
+            /** Format: date-time */
+            submittedAt: string;
         };
         SeriesStats: {
             /** Format: int64 */
@@ -2840,6 +3022,135 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["AdminReport"];
                 };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    seriesReview: {
+        parameters: {
+            query?: {
+                /** @description nextCursor of the previous page; omit for the first page */
+                cursor?: string | null;
+                /** @description Page size, 1-100 (default 20) */
+                limit?: number | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CursorPageReviewQueueItem"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    approve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    reject: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["DecisionNoteRequest"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    requestChanges: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChangesRequest"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Error */
             default: {
@@ -4157,6 +4468,103 @@ export interface operations {
         };
     };
     publish: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SeriesEdit"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    markFixed: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                /** @description contact, cover, title, age or images */
+                item: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SeriesEdit"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    markNotFixed: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                /** @description contact, cover, title, age or images */
+                item: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SeriesEdit"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    submit: {
         parameters: {
             query?: never;
             header?: never;

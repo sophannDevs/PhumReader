@@ -68,6 +68,7 @@ import { cn } from "@/lib/utils"
  *   upload; publishing adds one to the work's episode count. Save draft only marks the draft as saved.
  * - Real API: POST/PUT /creator/series/{id}/episodes(/{n}) with the uploaded panels (or the text as blocks: empty lines
  *   split paragraphs, "# " starts a heading, "> " a quote, "* * *" a scene break). Fast Pass is 5 coins, free after 7 days.
+ *   A series in review or with changes requested is marked "in review" in the series list, like in demo mode.
  */
 
 type Format = "comic" | "novel"
@@ -116,7 +117,14 @@ function useUploadSeries() {
   }
   const list: UploadSeries[] = (real.data ?? [])
     .filter((r) => r.visibility !== "hidden")
-    .map((r) => ({ id: r.series.id, title: r.series.title, format: r.series.type, day: r.series.updateDay, inReview: false, draft: r.visibility === "draft" }))
+    .map((r) => ({
+      id: r.series.id,
+      title: r.series.title,
+      format: r.series.type,
+      day: r.series.updateDay,
+      inReview: r.visibility === "review" || r.visibility === "changes",
+      draft: r.visibility === "draft",
+    }))
   return { list, pending: real.isPending, error: real.isError, retry: () => void real.refetch() }
 }
 
