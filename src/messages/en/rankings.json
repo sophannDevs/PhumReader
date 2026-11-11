@@ -41,8 +41,6 @@
   "subscribed": "Subscribed",
   "add": "Add",
   "added": "Added",
-  "subscribeAria": "Subscribe to {title}",
-  "unsubscribeAria": "Unsubscribe from {title}",
   "emptyTitle": "Nothing ranked here yet",
   "emptyText": "No {what} in {genre} match this ranking. Try another genre or format.",
   "emptyWhat": {

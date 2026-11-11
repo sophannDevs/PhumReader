@@ -28,7 +28,7 @@ T32 → T33 → T34 → F24–F27 → T39–T42. A V2.1 task marked "→ Fnn" is
   red unread count, avatar menu (My library, Notifications, Get coins, Creator dashboard, Settings, Log out); header
   nav Home / Rankings / Genres / Web novels (Genres with format=novel); footer columns Read / Create / Help and the
   language switch; tab bar Home / Search / Library / Coins / Me; ≤420 px gaps. Screens 01-home-*. → T05
-- [ ] F04 Shared patterns: restyle SeriesCard, ContinueCard, RankRow, EpisodeRow, EmptyState, ErrorState to V2.1; add
+- [x] F04 Shared patterns: restyle SeriesCard, ContinueCard, RankRow, EpisodeRow, EmptyState, ErrorState to V2.1; add
   OptionCard, StepsBar, StatCard, Timeline, UndoBar, SaveBar, ListRowActions, ResumeChip, FastPassLockCard. → T06
 - [x] F05 Home: spotlight (main hero + "Featured this week", no autoplay), genre picker → "Recommended for you",
   Daily updates (day tabs with counts, type filter, "New today", 6 cards + "Show all N"), Trending (top 3 larger),
@@ -88,7 +88,7 @@ T32 → T33 → T34 → F24–F27 → T39–T42. A V2.1 task marked "→ Fnn" is
 - [x] T03 Data layer: typed demo-data helpers, `demo-api.ts` (delay + ?demo flags), zustand store with every key in Spec §0 "Simulated state" (prefix `phumireader.`) → F01
 - [x] T04 i18n: generate messages/km.json from design/i18n/km-dictionary.json (`npm run i18n:km`, done in the upgrade), plus a language switch that saves to the store; Khmer date and time formatters (ICT) → F02
 - [x] T05 Layout: SiteHeader (search trigger, language button, coin chip, bell, avatar menu, logo), SiteFooter, MobileTabBar, ⌘K search dialog, toasts. Check the header at 390 px logged in. Screens 01-home-search-open, 01-home-account-menu → F03
-- [ ] T06 Shared patterns: SeriesCard, ContinueCard, RankRow, EpisodeRow, OptionCard, StepsBar, StatCard, Timeline, EmptyState, ErrorState, UndoBar, SaveBar → F04
+- [x] T06 Shared patterns: SeriesCard, ContinueCard, RankRow, EpisodeRow, OptionCard, StepsBar, StatCard, Timeline, EmptyState, ErrorState, UndoBar, SaveBar → F04
 
 ## Phase B – Reading
 - [x] T07 Home (all rows, genre picker, daily updates, states). Spec §1 · Screens 01 → F05
@@ -133,9 +133,9 @@ T32 → T33 → T34 → F24–F27 → T39–T42. A V2.1 task marked "→ Fnn" is
 - [x] T38 Admin payments (refunds, paid-but-no-coins). Screens 22-admin-payments → F27
 
 ## Phase G – Quality
-- [ ] T39 Khmer pass: every page in km at 390/768/1440; no clipped text; `lang="km"`; fix long strings
-- [ ] T40 Accessibility pass (keyboard, focus, dialogs, labels, contrast) and reduced motion
-- [ ] T41 Playwright e2e for the 6 key flows in Spec "Key flows to test end to end" (and update the V1 tests for the new routes)
+- [x] T39 Khmer pass: every page in km at 390/768/1440; no clipped text; `lang="km"`; fix long strings
+- [x] T40 Accessibility pass (keyboard, focus, dialogs, labels, contrast) and reduced motion
+- [x] T41 Playwright e2e for the 6 key flows in Spec "Key flows to test end to end" (and update the V1 tests for the new routes)
 - [ ] T42 Final review: no "Toonwave"/"PhumReader" left in the UI, placeholders visible, all ?demo states work, README for running the demo
 
 ## Assumptions (V2.1)
@@ -314,3 +314,19 @@ T32 → T33 → T34 → F24–F27 → T39–T42. A V2.1 task marked "→ Fnn" is
   API can't hide one episode or delete a series (not shown) and doesn't store the series-wide Fast Pass or comments.
 - V2-59 (F23) On phones the prototype's flex-wrap pushes the cover above long Fast Pass rows; we keep the cover beside
   the title on every row (same content, steadier layout).
+- V2-60 (F04) **ListRowActions** is built into each list's rows (admin queue, upload image list, Manage episodes, Library
+  edit mode) with the shared tokens, rather than as one component; every other pattern in F04 is a shared component.
+- V2-61 (T39) **Khmer pass**: every page in km at 390 / 768 / 1440 checked by script for sideways scroll, clipped text and
+  `lang="km"` (also Khmer text inside English pages): no problems. The only boxes that overflow are decorative (series
+  header backdrop, Home spotlight cover, the cover fan on Log in at 768 px). Numbers filled into messages print in Latin
+  digits in Khmer (the CLDR default for km), while the dictionary's fixed strings use Khmer digits ("៣០ ថ្ងៃ"): left for
+  the native review to decide.
+- V2-62 (T40) **Accessibility pass**: axe-core (WCAG 2.0/2.1 A + AA) on every page at 1440 and 390 px (en) and 1440 px
+  (km), plus a keyboard check of the dialogs (focus moves in, Tab stays inside, Escape returns focus). Fixed: the
+  accessible name now contains the visible text on Search, both language switches (which also had the wrong `lang`),
+  comment likes, Subscribe/Add and Fast Pass episode rows; Library tabs always have a panel; warning text is #92400e
+  (prototype `.alert.warn`, was 80 % and 4.4:1). Left as is: axe's experimental label-in-name rule still flags the
+  avatar initials and the ⌘K hint (both aria-hidden) and Khmer labels (it matches whole words; Khmer has no spaces).
+- V2-63 (T41) **e2e**: the 6 key flows are in e2e/flows.spec.ts (1, 2, 5, 6) and e2e/admin-flows.spec.ts (3, 4); the V1
+  demo tests are rewritten for the V2.1 routes. e2e/real.spec.ts (real API, not run in CI) still describes V1 screens;
+  updating it needs the backend running, which this office PC can't do.

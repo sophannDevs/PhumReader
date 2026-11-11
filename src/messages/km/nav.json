@@ -22,5 +22,5 @@
   "admin": "អ្នកគ្រប់គ្រង",
   "notifications": "ការជូនដំណឹង",
   "bellUnread": "ការជូនដំណឹង មិនទាន់អាន {count}",
-  "switchLanguage": "ប្ដូរទៅ {language}"
+  "switchTo": "ប្ដូរទៅ"
 }

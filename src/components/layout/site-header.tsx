@@ -101,7 +101,8 @@ export function SiteHeader({
           <button
             type="button"
             onClick={onSearchOpen}
-            aria-label={t("search")}
+            aria-label={t("searchPlaceholder")}
+            aria-keyshortcuts="Control+K Meta+K"
             className={cn("hidden h-9 w-9 items-center justify-center gap-2 rounded-control border bg-muted text-sm text-muted-foreground transition-colors outline-none hover:bg-[#ececee] focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background md:flex", wide.box)}
           >
             <SearchIcon className="size-4 shrink-0" aria-hidden />

@@ -34,8 +34,6 @@
   "edited": "(edited)",
   "top": "Top",
   "spoilerHidden": "Spoiler hidden · Tap to show",
-  "likeBy": "Like comment by {name}, {count, plural, one {# like} other {# likes}}",
-  "unlikeBy": "Unlike comment by {name}, {count, plural, one {# like} other {# likes}}",
   "reply": "Reply",
   "replyTo": "Reply to {name}",
   "replyToPh": "Reply to {name}…",
@@ -66,5 +64,6 @@
   "errorText": "Check your connection and try again.",
   "tryAgain": "Try again",
   "now": "now",
-  "justNow": "Just now"
+  "justNow": "Just now",
+  "likeSr": "Like comment by {name}, likes:"
 }

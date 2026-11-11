@@ -97,6 +97,7 @@ export function EpisodeRow({
         {locked ? (
           <span className="absolute inset-0 flex items-center justify-center text-white">
             <LockIcon className="size-3.5" aria-hidden />
+            <span className="sr-only">{t("fastPass")}</span>
           </span>
         ) : null}
       </span>
@@ -145,7 +146,6 @@ export function EpisodeRow({
         <button
           type="button"
           className={cls}
-          aria-label={t("lockedAria", { title, count: price, date: loc.date(episode.date) })}
           onClick={() => onLockedClick?.(episode)}
         >
           {body}
