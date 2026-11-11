@@ -8,7 +8,7 @@ import { phoneSwipeRow, SectionHead, Segmented, StateBox } from "@/components/pr
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import type { Series, Weekday } from "@/data"
-import { today, weekdayOf } from "@/lib/format"
+import { realWeekdayIct } from "@/lib/format"
 import { cn } from "@/lib/utils"
 import { Num } from "@/i18n/num"
 
@@ -32,7 +32,7 @@ export function DailyUpdatesSection({
   onRetry: () => void
 }) {
   const t = useTranslations("home")
-  const todayDay = weekdayOf(today)
+  const todayDay = realWeekdayIct()
   const [day, setDay] = useState<Weekday>(todayDay)
   const [kind, setKind] = useState<Kind>("all")
   const [showAll, setShowAll] = useState(false)

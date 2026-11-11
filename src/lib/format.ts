@@ -37,6 +37,10 @@ export function formatDate(iso: string, locale: string = "en"): string {
 const WEEKDAYS: Weekday[] = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
 export const weekdayOf = (iso: string): Weekday => WEEKDAYS[new Date(toUtc(iso)).getUTCDay()]
 
+/** The real weekday in Cambodia (ICT, UTC+7), whatever the device's time zone is. */
+export const realWeekdayIct = (now: number = Date.now()): Weekday =>
+  WEEKDAYS[new Date(now + 7 * 3_600_000).getUTCDay()]
+
 /** "1.8M" -> 1_800_000, "871K" -> 871_000, "52" -> 52. */
 export function parseCount(text: string): number {
   const m = /^([\d.,]+)\s*([KMB])?$/i.exec(text.trim())
