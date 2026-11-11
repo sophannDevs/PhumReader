@@ -22,6 +22,7 @@ import { Num } from "@/i18n/num"
  * new comments live in component state (prepended with the reader's name and "now").
  * Other people's comments have Report / Block; blocked people's comments are hidden behind a "Show" line.
  * On the series page the list is a preview with "See all 2.4K comments" → the Comments page (`seeAllHref`).
+ * `closed` (real API, V21-02): the creator turned comments off, so there is no comment box, only a note.
  */
 export function CommentsSection({
   kind,
@@ -29,6 +30,7 @@ export function CommentsSection({
   variant = "page",
   count,
   seeAllHref,
+  closed = false,
 }: {
   kind: "series" | "episode"
   slug: string
@@ -38,6 +40,8 @@ export function CommentsSection({
   count?: string
   /** Comments page link ("See all N comments"). */
   seeAllHref?: string
+  /** The creator turned comments off (series or episode switch): no composer. */
+  closed?: boolean
 }) {
   const t = useTranslations("comments")
   const tr = useTranslations("reader")
@@ -84,26 +88,30 @@ export function CommentsSection({
           </h2>
           <span className={cn("type-caption", themed ? "text-reader-quiet" : "text-surface-quiet")}>{tr("topComments")}</span>
         </div>
-        <form
-          className="flex gap-2"
-          onSubmit={(e) => {
-            e.preventDefault()
-            if (draft.trim()) void submit()
-          }}
-        >
-          <Input
-            ref={inputRef}
-            value={draft}
-            maxLength={500}
-            onChange={(e) => setDraft(e.target.value)}
-            placeholder={user ? tr("addComment") : tr("loginToComment")}
-            aria-label={tr("addComment")}
-            className={cn(themed ? "border-reader-border bg-transparent text-reader-text placeholder:text-reader-quiet focus-visible:ring-offset-reader-page" : "border-surface-border-strong bg-surface text-surface-foreground placeholder:text-surface-quiet focus-visible:ring-offset-surface-panel")}
-          />
-          <Button type="submit" variant="brand" disabled={!draft.trim()}>
-            {tr("post")}
-          </Button>
-        </form>
+        {closed ? (
+          <p className={cn("text-[13px] leading-[18px]", themed ? "text-reader-quiet" : "text-surface-quiet")}>{t("closed")}</p>
+        ) : (
+          <form
+            className="flex gap-2"
+            onSubmit={(e) => {
+              e.preventDefault()
+              if (draft.trim()) void submit()
+            }}
+          >
+            <Input
+              ref={inputRef}
+              value={draft}
+              maxLength={500}
+              onChange={(e) => setDraft(e.target.value)}
+              placeholder={user ? tr("addComment") : tr("loginToComment")}
+              aria-label={tr("addComment")}
+              className={cn(themed ? "border-reader-border bg-transparent text-reader-text placeholder:text-reader-quiet focus-visible:ring-offset-reader-page" : "border-surface-border-strong bg-surface text-surface-foreground placeholder:text-surface-quiet focus-visible:ring-offset-surface-panel")}
+            />
+            <Button type="submit" variant="brand" disabled={!draft.trim()}>
+              {tr("post")}
+            </Button>
+          </form>
+        )}
         {query.isPending ? (
           <div className="flex flex-col gap-3" aria-hidden>
             {Array.from({ length: 3 }, (_, i) => (
@@ -128,7 +136,11 @@ export function CommentsSection({
 
   return (
     <div className="flex flex-col gap-4">
-      <CommentComposer value={draft} onChange={setDraft} onSubmit={() => void submit()} textareaRef={composerRef} />
+      {closed ? (
+        <p className="rounded-card border bg-card p-4 text-[13px] leading-[18px] text-muted-foreground shadow-xs">{t("closed")}</p>
+      ) : (
+        <CommentComposer value={draft} onChange={setDraft} onSubmit={() => void submit()} textareaRef={composerRef} />
+      )}
 
       {query.isPending ? (
         <div className="flex flex-col gap-5" aria-hidden>
@@ -155,7 +167,7 @@ export function CommentsSection({
           }
         />
       ) : comments.length === 0 ? (
-        <StateBox icon={MessageSquareIcon} title={t("empty")} text={t("emptyDesc")} />
+        closed ? null : <StateBox icon={MessageSquareIcon} title={t("empty")} text={t("emptyDesc")} />
       ) : (
         <>
           {list("light")}

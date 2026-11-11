@@ -55,6 +55,12 @@ export type SeriesDetail = {
   creatorSeriesCount: number
   /** Real API: creator account UUID for following. */
   creatorId?: string
+  /** Real API (V21-02): the second genre, or null. */
+  secondGenre?: Genre | null
+  /** Real API (V21-02): the creator's "On break" message while the status is hiatus, or null. */
+  breakMessage?: string | null
+  /** Real API (V21-02): false when the creator turned comments off for the whole series (no comment box). */
+  commentsEnabled?: boolean
 }
 
 export type ReaderMarks = {
@@ -69,6 +75,8 @@ export type EpisodeData = {
   panels: Panel[]
   /** Real API: user reactions for this episode. */
   viewer?: ReaderMarks
+  /** Real API: false when the episode's or the series' comments switch is off (no comment box). */
+  commentsEnabled?: boolean
 }
 
 export type ChapterData = {
@@ -76,6 +84,8 @@ export type ChapterData = {
   chapter: NovelChapter
   total: number
   viewer?: ReaderMarks
+  /** Real API: false when the chapter's or the series' comments switch is off. */
+  commentsEnabled?: boolean
 }
 
 export type CoinsPageData = {

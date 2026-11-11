@@ -215,7 +215,7 @@ public class DemoSeeder {
                         "{" + String.join(",", s.language()) + "}",
                         s.ageRating().toUpperCase(Locale.ROOT),
                         s.status().toUpperCase(Locale.ROOT),
-                        DemoRules.weekday(s.updateDay()),
+                        "{" + DemoRules.weekday(s.updateDay()) + "}",
                         s.cover(),
                         DemoRules.parseCount(s.views()),
                         likes,
@@ -227,10 +227,10 @@ public class DemoSeeder {
         }
         batch(
                 "insert into series (id, slug, creator_id, type, title, summary, genre_id, languages,"
-                        + " age_rating, status, visibility, update_day, cover_url, view_count,"
+                        + " age_rating, status, visibility, update_days, cover_url, view_count,"
                         + " like_count, subscriber_count, launched_at, created_at, updated_at)"
-                        + " values (?, ?, ?, ?, ?, ?, ?, cast(? as text[]), ?, ?, 'PUBLISHED', ?, ?,"
-                        + " ?, ?, ?, ?, ?, ?) on conflict do nothing",
+                        + " values (?, ?, ?, ?, ?, ?, ?, cast(? as text[]), ?, ?, 'PUBLISHED',"
+                        + " cast(? as text[]), ?, ?, ?, ?, ?, ?, ?) on conflict do nothing",
                 new int[] {
                     UUID_T,
                     TEXT,

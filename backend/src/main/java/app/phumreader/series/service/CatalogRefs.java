@@ -19,6 +19,7 @@ public final class CatalogRefs {
      * A published series.
      *
      * @param latestFreeNumber the newest episode anyone can read now
+     * @param commentsEnabled the series' comments switch (V21-02)
      */
     public record SeriesRef(
             UUID id,
@@ -27,9 +28,10 @@ public final class CatalogRefs {
             SeriesType type,
             UUID creatorId,
             SeriesCard card,
-            @Nullable Integer latestFreeNumber) {}
+            @Nullable Integer latestFreeNumber,
+            boolean commentsEnabled) {}
 
-    /** A released episode, with its access as of now. */
+    /** A released episode (not hidden by its creator), with its access as of now. */
     public record EpisodeRef(
             UUID id,
             UUID seriesId,

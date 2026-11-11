@@ -24,7 +24,7 @@ export const getSeriesBySlug = (slug: string): Series | undefined =>
   demoData.series.find((s) => s.slug === slug)
 export const getSeriesById = (id: string): Series | undefined => demoData.series.find((s) => s.id === id)
 export const seriesByGenre = (genre: Genre): Series[] => demoData.series.filter((s) => s.genre === genre)
-export const seriesByDay = (day: Weekday): Series[] => demoData.series.filter((s) => s.updateDay === day)
+export const seriesByDay = (day: Weekday): Series[] => demoData.series.filter((s) => s.updateDays.includes(day))
 export const novels = (): Series[] => demoData.series.filter((s) => s.type === "novel")
 export const genres = (): Genre[] => demoData.genres
 

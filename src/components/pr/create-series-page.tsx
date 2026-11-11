@@ -76,9 +76,11 @@ import { cn } from "@/lib/utils"
  *   A cover is a sample cover from the demo catalogue (the prototype's "Cover uploaded").
  * - Real API: Save draft creates or updates the series as a draft (POST/PUT /creator/series); Submit saves it too and
  *   then submits it for review (POST …/submit, V21-01): the same "in review" screen, and an admin approves it in the
- *   series queue. The cover is a real upload. `?draft=<id>` continues one of the creator's series. The second genre,
- *   16+ vs 18+, both languages as separate versions, more than one update day, the release time and Fast Pass stay in
- *   the local draft only (the API has no fields for them).
+ *   series queue. The cover is a real upload. `?draft=<id>` continues one of the creator's series. Every field is saved
+ *   (V21-02): second genre, 13+ / 16+ / 18+, every update day, the release time and the Fast Pass switch. PUT replaces
+ *   the whole series, so the settings this form doesn't show (Fast Pass episodes ahead, comments, the break message)
+ *   are carried over from the saved series. Both languages are one series in two languages (["en", "km"]); separate
+ *   versions of each episode have no design yet.
  */
 
 type Format = "comic" | "novel"
@@ -100,6 +102,10 @@ type Draft = {
   agree: boolean
   /** Real API: the story status of a series being continued */
   run: "ongoing" | "completed" | "hiatus"
+  /** Real API: settings Manage series changes, kept as they are (PUT replaces the whole series) */
+  ahead: number
+  comments: boolean
+  breakMessage: string | null
 }
 type Step = "basics" | "story" | "cover" | "publishing"
 type Field = "title" | "genre" | "summary" | "cover" | "days" | "agree"
@@ -107,7 +113,8 @@ type Problem = { field: Field; text: string }
 
 const STEPS: Step[] = ["basics", "story", "cover", "publishing"]
 const TAG_IDEAS = ["khmer", "slowburn", "foundfamily", "magic", "schoollife"]
-const AGE_API = { all: "all", "13": "teen", "16": "mature", "18": "mature" } as const
+const AGE_API = { all: "all", "13": "teen", "16": "teen16", "18": "mature" } as const
+const AGE_FORM: Record<api.SeriesEdit["ageRating"], Age> = { all: "all", teen: "13", teen16: "16", mature: "18" }
 const LANG_API: Record<Lang, string[]> = { km: ["km"], en: ["en"], both: ["en", "km"] }
 
 const blank = (): Draft => ({
@@ -123,9 +130,13 @@ const blank = (): Draft => ({
   coverUploadId: null,
   days: [],
   time: DEFAULT_HOUR,
-  fastPass: false,
+  // The prototype starts with Fast Pass off; the API's default for a new series is on (V21-02).
+  fastPass: !DEMO_MODE && api.DEFAULT_SERIES_FAST_PASS.on,
   agree: false,
   run: "ongoing",
+  ahead: api.DEFAULT_SERIES_FAST_PASS.ahead,
+  comments: true,
+  breakMessage: null,
 })
 
 /** A saved draft from the store, keeping only well-formed fields. */
@@ -147,7 +158,7 @@ function readDraft(value: unknown): Partial<Draft> {
   if (str("cover") !== undefined) out.cover = str("cover")
   if (typeof v.coverUploadId === "string") out.coverUploadId = v.coverUploadId
   if (Array.isArray(v.days)) out.days = sortDays(v.days.filter((x): x is Weekday => (WEEK as unknown[]).includes(x)))
-  if ((RELEASE_HOURS as readonly unknown[]).includes(v.time)) out.time = v.time as number
+  if (typeof v.time === "number" && Number.isInteger(v.time) && v.time >= 0 && v.time <= 23) out.time = v.time
   if (typeof v.fastPass === "boolean") out.fastPass = v.fastPass
   if (typeof v.agree === "boolean") out.agree = v.agree
   return out
@@ -198,17 +209,24 @@ function RealDraft({ id }: { id: string }) {
     )
   }
   const s = query.data
+  const fastPass = s.fastPass ?? api.DEFAULT_SERIES_FAST_PASS
   const seed: Partial<Draft> = {
     format: s.type,
     title: s.title,
     genre: genreFromSlug(s.genre, GENRES) ?? "",
+    genre2: (s.secondGenre && genreFromSlug(s.secondGenre, GENRES)) || "",
     lang: s.languages.includes("km") && s.languages.includes("en") ? "both" : s.languages.includes("en") ? "en" : "km",
     summary: s.summary,
     tags: s.tags.slice(0, MAX_TAGS),
-    age: s.ageRating === "teen" ? "13" : s.ageRating === "mature" ? "18" : "all",
+    age: AGE_FORM[s.ageRating] ?? "all",
     cover: s.coverUrl ?? "",
-    days: s.updateDay ? [s.updateDay] : [],
+    days: sortDays(s.updateDays ?? []),
+    time: s.releaseHour ?? DEFAULT_HOUR,
+    fastPass: fastPass.on,
     run: s.status,
+    ahead: fastPass.ahead,
+    comments: s.commentsEnabled ?? true,
+    breakMessage: s.breakMessage ?? null,
   }
   return <Wizard key={s.id} workId={s.id} seed={seed} />
 }
@@ -351,16 +369,22 @@ function Wizard({ workId, seed }: { workId: string | null; seed: Partial<Draft> 
   }
 
   // ---- saving
+  /** The whole series (PUT replaces it: a field left out would take its default). */
   function toInput(v: Draft): api.SeriesInput {
     return {
       title: v.title.trim(),
       type: savedId ? undefined : v.format,
       genre: v.genre ? genreSlug(v.genre) : "",
+      secondGenre: v.genre2 && v.genre2 !== v.genre ? genreSlug(v.genre2) : null,
       languages: LANG_API[v.lang],
       summary: v.summary.trim(),
       ageRating: AGE_API[v.age],
-      updateDay: sortDays(v.days)[0] ?? null,
+      updateDays: sortDays(v.days),
+      releaseHour: v.time,
+      fastPass: { on: v.fastPass, ahead: v.ahead },
+      commentsEnabled: v.comments,
       status: v.run,
+      breakMessage: v.run === "hiatus" ? v.breakMessage : null,
       tags: v.tags,
       coverUploadId: v.coverUploadId,
       bannerUploadId: null,
@@ -870,7 +894,7 @@ function Wizard({ workId, seed }: { workId: string | null; seed: Partial<Draft> 
                     <div className={fieldCol}>
                       <FieldLabel htmlFor="cs-time">{t("releaseTime")}</FieldLabel>
                       <NativeSelect id="cs-time" value={String(d.time)} aria-describedby="cs-time-h" onChange={(e) => update({ time: Number(e.target.value) })}>
-                        {RELEASE_HOURS.map((h) => (
+                        {(RELEASE_HOURS as readonly number[]).concat(RELEASE_HOURS.includes(d.time as never) ? [] : [d.time]).map((h) => (
                           <option key={h} value={h}>
                             {hourLabel(h)}
                           </option>

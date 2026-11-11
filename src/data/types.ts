@@ -19,7 +19,8 @@ export const genreSchema = z.enum([
   "Sci-fi",
 ]);
 export const weekdaySchema = z.enum(["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]);
-export const seriesStatusSchema = z.enum(["ongoing", "completed"]);
+/** "hiatus" (On break) comes from the real API only (V21-02); the demo series are ongoing or completed. */
+export const seriesStatusSchema = z.enum(["ongoing", "completed", "hiatus"]);
 export const episodeAccessSchema = z.enum(["free", "fastpass"]);
 export const paymentMethodIdSchema = z.enum(["khqr", "aba", "card"]);
 export const purchaseStatusSchema = z.enum(["Paid", "Failed", "Cancelled"]);
@@ -53,15 +54,19 @@ export const seriesSchema = z.strictObject({
   freeEpisodes: positiveInt,
   fastPassEpisodes: nonNegativeInt,
   totalEpisodes: positiveInt,
-  /** null for a series without a schedule (the real API); demo series always have one */
+  /** The first update day (`updateDays[0]`); null for a series without a schedule (the real API) */
   updateDay: weekdaySchema.nullable(),
-  /** Human schedule such as "Every Sun"; "" without a schedule */
+  /** Human schedule such as "Every Sun" or "Every Mon and Thu"; "" without a schedule */
   schedule: z.string(),
   badges: z.strictObject({ up: z.boolean(), isNew: z.boolean() }),
   status: seriesStatusSchema,
   language: z.array(localeSchema).min(1),
+  /** all, teen (13+), teen16 (16+) or mature (18+) */
   ageRating: z.string(),
-});
+})
+  // Every update day in week order (V21-02: a series can come out on several days). The demo data has one per
+  // series, so the list is that day; the real API sends the whole list (src/lib/api/catalog.ts).
+  .transform((s) => ({ ...s, updateDays: s.updateDay ? [s.updateDay] : [] }));
 
 export const heroSlideSchema = z.strictObject({
   /** Series slug */

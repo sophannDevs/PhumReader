@@ -58,10 +58,10 @@ function newCount(s: Series): number {
   return m ? (Number(m[1]) % 3) + 1 : 1
 }
 
-/** Days since the series' update day (0 = today), for "Recently updated". */
+/** Days since the series' latest update day (0 = today), for "Recently updated". */
 function daysSinceUpdate(s: Series): number {
-  if (!s.updateDay) return 7
-  return (WEEK.indexOf(weekdayOf(today)) - WEEK.indexOf(s.updateDay) + 7) % 7
+  if (!s.updateDays.length) return 7
+  return Math.min(...s.updateDays.map((d) => (WEEK.indexOf(weekdayOf(today)) - WEEK.indexOf(d) + 7) % 7))
 }
 
 /** "Nov 26, 2026" (episode display date) → "2026-11-26", or undefined. */
@@ -568,7 +568,7 @@ export function LibraryPage() {
                               ? t(`readOf.${unit}`, { n: last, total: s.freeEpisodes })
                               : t("notStarted", { total: s.freeEpisodes })}
                           </p>
-                          <p className="truncate text-[13px] leading-[18px] text-muted-foreground max-md:text-xs">{loc.schedule(s.schedule)}</p>
+                          <p className="truncate text-[13px] leading-[18px] text-muted-foreground max-md:text-xs">{loc.schedule(s)}</p>
                         </div>
                       </Link>
                       {!editing ? (

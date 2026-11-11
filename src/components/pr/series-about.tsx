@@ -9,30 +9,36 @@ import { useAskToLogin } from "@/lib/me"
 import { useLocalize } from "@/lib/localize"
 import { useUser } from "@/lib/store"
 
+/** The API's age ratings as the number readers know (V21-02); "all" is "All ages". */
+const AGE_NUMBER: Record<string, number> = { teen: 13, teen16: 16, mature: 18 }
+
 /**
- * About tab (prototype Series `tabAbout`): synopsis + "New episodes every Sunday.", the details card, tags, and
+ * About tab (prototype Series `tabAbout`): synopsis + "New episodes every Sunday." (or "Monday and Thursday"), the
+ * details card (both genres, every update day, "On break", the age as 13+ / 16+ / 18+), tags, and
  * "Something wrong with this series? Report it" (app-wide Report dialog, series reasons; log in first).
  */
-export function SeriesAbout({ series, synopsis }: { series: Series; synopsis: string }) {
+export function SeriesAbout({ series, synopsis, secondGenre }: { series: Series; synopsis: string; secondGenre?: string | null }) {
   const t = useTranslations("series")
-  const th = useTranslations("home")
   const loc = useLocalize()
   const user = useUser()
   const askToLogin = useAskToLogin()
   const { openReport } = useReport()
   const novel = series.type === "novel"
+  const onBreak = series.status === "hiatus"
+  const age = AGE_NUMBER[series.ageRating]
 
   const details: [string, string][] = [
-    [t("genre"), loc.genre(series.genre)],
+    [t("genre"), [series.genre, secondGenre].flatMap((g) => (g ? [loc.genre(g)] : [])).join(", ")],
     [t("format"), t(novel ? "novel" : "verticalComic")],
-    [t("schedule"), series.schedule ? loc.schedule(series.schedule) : t("noSchedule")],
-    [t("status"), t(series.status === "completed" ? "completed" : "ongoing")],
+    [t("schedule"), series.schedule ? loc.schedule(series) : t("noSchedule")],
+    [t("status"), t(series.status === "completed" ? "completed" : onBreak ? "onBreak" : "ongoing")],
     [t("language"), series.language.map((l) => t(l === "km" ? "khmer" : "english")).join(", ")],
-    [t("ageRating"), series.ageRating === "all" ? t("allAges") : series.ageRating],
+    [t("ageRating"), series.ageRating === "all" ? t("allAges") : age ? t("agePlus", { age }) : series.ageRating],
   ]
   const tag = (s: string) => `#${s.toLowerCase().replace(/\s+/g, "")}`
   const tags = [
     tag(loc.genre(series.genre)),
+    ...(secondGenre ? [tag(loc.genre(secondGenre))] : []),
     tag(t(novel ? "novel" : "comic")),
     ...series.language.map((l) => tag(t(l === "km" ? "khmer" : "english"))),
   ]
@@ -41,7 +47,10 @@ export function SeriesAbout({ series, synopsis }: { series: Series; synopsis: st
     <div className="flex flex-col gap-4">
       <p className="text-[15px] leading-[26px]">
         {synopsis}
-        {series.updateDay ? ` ${t(novel ? "aboutNewChapters" : "aboutNew", { day: th(`dayFull.${series.updateDay}`) })}` : null}
+        {/* A series on a break has its schedule paused: no "New episodes every …". */}
+        {series.updateDays.length > 0 && !onBreak
+          ?` ${t(novel ? "aboutNewChapters" : "aboutNew", { day: loc.days(series.updateDays, "full") })}`
+          : null}
       </p>
 
       <dl className="divide-y rounded-card border bg-card text-sm shadow-xs">

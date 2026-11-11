@@ -828,7 +828,7 @@ export interface paths {
         put?: never;
         /**
          * Create a series as a draft
-         * @description cover / banner come from finished uploads (POST /creator/uploads). The slug is made from the title and never changes.
+         * @description cover / banner come from finished uploads (POST /creator/uploads). The slug is made from the title and never changes. secondGenre: another genre's slug or null (400 fields.secondGenre = unknown_genre / same_as_genre). ageRating: all, teen (13+), teen16 (16+) or mature (18+). updateDays: Mon ... Sun, each at most once (400 fields.updateDays = duplicate_day), sent back in week order. releaseHour: 0-23 in Asia/Phnom_Penh. fastPass: { on, ahead 1-5 }, default on with 3 ahead: the defaults for new episodes. commentsEnabled: default true. breakMessage: up to 120 characters, kept only while the status is hiatus.
          */
         post: operations["create_1"];
         delete?: never;
@@ -851,11 +851,15 @@ export interface paths {
         get: operations["series"];
         /**
          * Edit a series
-         * @description Leave the upload ids out to keep the current cover / banner.
+         * @description Send the whole series: a field left out or null takes its default. Leave the upload ids out to keep the current cover / banner. secondGenre: another genre's slug or null (400 fields.secondGenre = unknown_genre / same_as_genre). ageRating: all, teen (13+), teen16 (16+) or mature (18+). updateDays: Mon ... Sun, each at most once (400 fields.updateDays = duplicate_day), sent back in week order. releaseHour: 0-23 in Asia/Phnom_Penh. fastPass: { on, ahead 1-5 }, default on with 3 ahead: the defaults for new episodes. commentsEnabled: default true. breakMessage: up to 120 characters, kept only while the status is hiatus.
          */
         put: operations["update"];
         post?: never;
-        delete?: never;
+        /**
+         * Delete a series for good
+         * @description Only while none of its episodes was ever published (live, hidden, released or unlocked): drafts and scheduled episodes go with it. 409 has_published_episodes otherwise (such a series can only be hidden); 403 not_your_series for another creator's series.
+         */
+        delete: operations["deleteSeries"];
         options?: never;
         head?: never;
         patch?: never;
@@ -868,12 +872,15 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Every episode of the series, newest first, drafts and scheduled too */
+        /**
+         * Every episode of the series, newest first, drafts and scheduled too
+         * @description hiddenAt is set while the creator hides a published episode from readers; status hidden means an admin took it down.
+         */
         get: operations["episodes"];
         put?: never;
         /**
          * Add an episode (comic) or chapter (novel)
-         * @description publish.mode is DRAFT, NOW or SCHEDULED (with publish.at, an instant in the future). Comics send imageUploadIds in reading order (at most 100, 200 MB), novels send blocks. fastPass null means free; otherwise 3-10 coins and free after 1-90 days (defaults 5 and 7). number null takes the next free number.
+         * @description publish.mode is DRAFT, NOW or SCHEDULED (with publish.at, an instant in the future). Comics send imageUploadIds in reading order (at most 100, 200 MB), novels send blocks. fastPass null means free; otherwise 3-10 coins and free after 1-90 days (defaults 5 and 7). useSeriesFastPass true takes the series' Fast Pass instead (fastPass must be null, 400 fields.fastPass = not_with_series_fast_pass): on, 5 coins and free after ceil(ahead x 7 / max(1, update days)) days; off, free. number null takes the next free number.
          */
         post: operations["createEpisode"];
         delete?: never;
@@ -893,7 +900,7 @@ export interface paths {
         get: operations["episode"];
         /**
          * Edit an episode
-         * @description Send the whole episode. A published episode stays published (publish.mode NOW); drafts and scheduled episodes can change mode.
+         * @description Send the whole episode. A published episode stays published (publish.mode NOW); drafts and scheduled episodes can change mode. useSeriesFastPass true answers 400 fields.useSeriesFastPass = new_episodes_only. A hidden episode stays hidden.
          */
         put: operations["updateEpisode"];
         post?: never;
@@ -902,6 +909,46 @@ export interface paths {
          * @description 409 episode_published for a live episode.
          */
         delete: operations["deleteEpisode"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/creator/series/{id}/episodes/{number}/hide": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Hide a published episode from readers
+         * @description Readers no longer see it, also those who unlocked it (no refund), until it is shown again; numbers don't shift. Hiding it again keeps hiddenAt. 409 episode_not_published for drafts and scheduled episodes, episode_hidden when an admin took it down.
+         */
+        post: operations["hideEpisode"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/creator/series/{id}/episodes/{number}/show": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Show a hidden episode to readers again
+         * @description Showing a visible episode changes nothing. 409 episode_not_published for drafts and scheduled episodes, episode_hidden when an admin took it down (only an admin can put it back).
+         */
+        post: operations["showEpisode"];
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -1934,6 +1981,8 @@ export interface components {
             commentsEnabled: boolean;
             /** Format: date-time */
             freeAt?: string | null;
+            /** Format: date-time */
+            hiddenAt?: string | null;
             /** Format: int64 */
             likes: number;
             /** Format: int32 */
@@ -2098,6 +2147,8 @@ export interface components {
             freeAfterDays?: number | null;
             /** Format: date-time */
             freeAt?: string | null;
+            /** Format: date-time */
+            hiddenAt?: string | null;
             /** Format: int32 */
             number: number;
             panels: components["schemas"]["PanelView"][];
@@ -2123,6 +2174,7 @@ export interface components {
             /** Format: uuid */
             thumbnailUploadId?: string | null;
             title: string;
+            useSeriesFastPass?: boolean | null;
         };
         EpisodeLikeState: {
             liked: boolean;
@@ -2478,7 +2530,7 @@ export interface components {
         };
         ReviewQueueItem: {
             /** @enum {string} */
-            ageRating: "all" | "teen" | "mature";
+            ageRating: "all" | "teen" | "teen16" | "mature";
             coverUrl?: string | null;
             creator: string;
             /** Format: int32 */
@@ -2501,7 +2553,7 @@ export interface components {
         };
         SeriesCard: {
             /** @enum {string} */
-            ageRating: "all" | "teen" | "mature";
+            ageRating: "all" | "teen" | "teen16" | "mature";
             badges: components["schemas"]["Badges"];
             cover?: string | null;
             creator: string;
@@ -2525,29 +2577,39 @@ export interface components {
             type: "comic" | "novel";
             /** @enum {string|null} */
             updateDay?: "Mon" | "Tue" | "Wed" | "Thu" | "Fri" | "Sat" | "Sun" | null;
+            updateDays: ("Mon" | "Tue" | "Wed" | "Thu" | "Fri" | "Sat" | "Sun")[];
             /** Format: int64 */
             views: number;
         };
         SeriesDetail: {
+            breakMessage?: string | null;
+            commentsEnabled: boolean;
             /** Format: uuid */
             creatorId: string;
             /** Format: int32 */
             creatorSeriesCount: number;
             related: components["schemas"]["SeriesCard"][];
+            secondGenre?: string | null;
             series: components["schemas"]["SeriesCard"];
             stats: components["schemas"]["SeriesStats"];
             synopsis: string;
         };
         SeriesEdit: {
             /** @enum {string} */
-            ageRating: "all" | "teen" | "mature";
+            ageRating: "all" | "teen" | "teen16" | "mature";
             bannerUrl?: string | null;
+            breakMessage?: string | null;
+            commentsEnabled: boolean;
             coverUrl?: string | null;
+            fastPass: components["schemas"]["SeriesFastPass"];
             genre: string;
             /** Format: uuid */
             id: string;
             languages: string[];
+            /** Format: int32 */
+            releaseHour?: number | null;
             review?: components["schemas"]["SeriesReview"];
+            secondGenre?: string | null;
             slug: string;
             /** @enum {string} */
             status: "ongoing" | "completed" | "hiatus";
@@ -2556,20 +2618,30 @@ export interface components {
             title: string;
             /** @enum {string} */
             type: "comic" | "novel";
-            /** @enum {string|null} */
-            updateDay?: "Mon" | "Tue" | "Wed" | "Thu" | "Fri" | "Sat" | "Sun" | null;
+            updateDays: ("Mon" | "Tue" | "Wed" | "Thu" | "Fri" | "Sat" | "Sun")[];
             /** @enum {string} */
             visibility: "draft" | "review" | "changes" | "published" | "hidden";
         };
+        SeriesFastPass: {
+            /** Format: int32 */
+            ahead: number;
+            on: boolean;
+        };
         SeriesInput: {
             /** @enum {string|null} */
-            ageRating?: "all" | "teen" | "mature" | null;
+            ageRating?: "all" | "teen" | "teen16" | "mature" | null;
             /** Format: uuid */
             bannerUploadId?: string | null;
+            breakMessage?: string | null;
+            commentsEnabled?: boolean | null;
             /** Format: uuid */
             coverUploadId?: string | null;
+            fastPass?: components["schemas"]["SeriesFastPass"];
             genre: string;
             languages: string[];
+            /** Format: int32 */
+            releaseHour?: number | null;
+            secondGenre?: string | null;
             /** @enum {string|null} */
             status?: "ongoing" | "completed" | "hiatus" | null;
             summary?: string | null;
@@ -2577,8 +2649,7 @@ export interface components {
             title: string;
             /** @enum {string|null} */
             type?: "comic" | "novel" | null;
-            /** @enum {string|null} */
-            updateDay?: "Mon" | "Tue" | "Wed" | "Thu" | "Fri" | "Sat" | "Sun" | null;
+            updateDays?: ("Mon" | "Tue" | "Wed" | "Thu" | "Fri" | "Sat" | "Sun")[] | null;
         };
         SeriesReview: {
             /** @enum {string|null} */
@@ -4303,6 +4374,35 @@ export interface operations {
             };
         };
     };
+    deleteSeries: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
     episodes: {
         parameters: {
             query?: never;
@@ -4455,6 +4555,70 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    hideEpisode: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                number: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CreatorEpisode"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    showEpisode: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                number: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CreatorEpisode"];
+                };
             };
             /** @description Error */
             default: {

@@ -373,7 +373,7 @@ function Results({
   const net = search.isPending ? "loading" : search.isError ? "error" : "ready"
   const found = search.data ?? []
 
-  const filtered = found.filter((s) => (genre === "all" || s.genre === genre) && (day === "all" || s.updateDay === day))
+  const filtered = found.filter((s) => (genre === "all" || s.genre === genre) && (day === "all" || s.updateDays.includes(day)))
   const byTab = (list: Series[], tb: Tab) =>
     tb === "comic" ? list.filter((s) => s.type !== "novel") : tb === "novel" ? list.filter((s) => s.type === "novel") : list
   const sorted = [...byTab(filtered, tab)].sort((a, b) => {
@@ -583,7 +583,7 @@ function ResultRow({ series: s, k }: { series: Series; k: string }) {
             <span className="sr-only">{t("likes", { count: s.likes })}</span>
             <span aria-hidden><Num>{s.likes}</Num></span>
           </span>
-          {s.schedule ? <span>{loc.schedule(s.schedule)}</span> : null}
+          {s.schedule ? <span>{loc.schedule(s)}</span> : null}
         </span>
       </div>
       <SubscribeButton

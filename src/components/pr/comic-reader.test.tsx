@@ -6,9 +6,20 @@ import { API, apiError, http, HttpResponse, server } from "@/test/server"
 
 // The end card holds comments and discovery lists (their own features); the reader only hands it the next episode.
 vi.mock("@/components/pr/comic-end-section", () => ({
-  ComicEndSection: ({ next, nextLocked, onNext }: { next?: { n: number }; nextLocked: boolean; onNext: () => void }) => (
+  ComicEndSection: ({
+    next,
+    nextLocked,
+    onNext,
+    commentsEnabled = true,
+  }: {
+    next?: { n: number }
+    nextLocked: boolean
+    onNext: () => void
+    commentsEnabled?: boolean
+  }) => (
     <section aria-label="End of episode">
       {next ? <button onClick={onNext}>{nextLocked ? `Unlock next ${next.n}` : `Next ${next.n}`}</button> : <span>Last episode</span>}
+      <span>{commentsEnabled ? "Comment box" : "Comments off"}</span>
     </section>
   ),
 }))
@@ -29,6 +40,7 @@ const seriesCard = {
   totalEpisodes: 3,
   status: "ongoing",
   updateDay: null,
+  updateDays: [],
   language: ["en"],
   ageRating: "all",
   badges: { isNew: false, up: false },
@@ -47,6 +59,21 @@ const content = (n: number, panels = [{ src: "/panels/a.svg", alt: "Page one", w
 })
 const episodes = (...items: ReturnType<typeof summary>[]) => http.get(`${API}/series/${SLUG}/episodes`, () => HttpResponse.json({ items, nextCursor: null }))
 const episodeAt = (n: number, body: object = content(n)) => http.get(`${API}/series/${SLUG}/episodes/${n}`, () => HttpResponse.json(body))
+
+describe("ComicReader: the comments switch (V21-02)", () => {
+  it("hands the end of the episode the API's commentsEnabled (episode and series switches)", async () => {
+    server.use(episodes(summary(1), summary(2), summary(3)), episodeAt(2, { ...content(2), commentsEnabled: false }))
+    renderUi(<ComicReader slug={SLUG} n={2} />)
+    expect(await screen.findByText("Comments off")).toBeInTheDocument()
+    expect(screen.queryByText("Comment box")).not.toBeInTheDocument()
+  })
+
+  it("keeps the comment box when comments are on", async () => {
+    server.use(episodes(summary(1), summary(2), summary(3)), episodeAt(2))
+    renderUi(<ComicReader slug={SLUG} n={2} />)
+    expect(await screen.findByText("Comment box")).toBeInTheDocument()
+  })
+})
 
 describe("ComicReader: states", () => {
   it("shows a skeleton while it loads", () => {

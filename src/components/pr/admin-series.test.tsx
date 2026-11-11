@@ -60,6 +60,17 @@ describe("AdminSeriesReview: real API", () => {
     expect(screen.queryByText("Demo data")).not.toBeInTheDocument()
   })
 
+  it("shows the API's 16+ rating (teen16, V21-02)", async () => {
+    signIn()
+    server.use(
+      http.get(`${API}/admin/series-review`, () => page([item("a", { ageRating: "teen16" })])),
+      http.get(`${API}/admin/overview`, () => HttpResponse.json(overview(1))),
+    )
+    renderUi(view())
+    expect(await screen.findByRole("heading", { level: 2, name: "Series a" })).toBeInTheDocument()
+    expect(screen.getByText("16+")).toBeInTheDocument()
+  })
+
   it("Request changes sends the reason keys and the note once the Undo window closes", async () => {
     signIn()
     let body: unknown = null

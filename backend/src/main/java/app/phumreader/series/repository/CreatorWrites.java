@@ -16,15 +16,31 @@ import org.springframework.stereotype.Repository;
 @Repository
 public class CreatorWrites {
 
-    /** Values of a series row that the creator controls. */
+    /**
+     * Values of a series row that the creator controls.
+     *
+     * @param genreId the main genre
+     * @param secondGenreId an optional second genre, never the main one
+     * @param updateDays in week order, each day once
+     * @param releaseHour 0-23 in Asia/Phnom_Penh
+     * @param fastPass the series' Fast Pass switch (defaults for new episodes)
+     * @param fastPassAhead 1-5
+     * @param breakMessage only while the status is HIATUS
+     */
     public record SeriesValues(
             String title,
             String summary,
-            String genreSlug,
+            short genreId,
+            @Nullable Short secondGenreId,
             List<String> languages,
             AgeRating ageRating,
             SeriesStatus status,
-            @Nullable DayOfWeek updateDay,
+            List<DayOfWeek> updateDays,
+            @Nullable Integer releaseHour,
+            boolean fastPass,
+            int fastPassAhead,
+            boolean commentsEnabled,
+            @Nullable String breakMessage,
             @Nullable String coverUrl,
             @Nullable String bannerUrl,
             List<String> tags) {}
@@ -43,6 +59,7 @@ public class CreatorWrites {
             @Nullable String thumbnailUrl,
             @Nullable String creatorNote,
             boolean commentsEnabled,
+            @Nullable Instant hiddenAt,
             long views,
             long likes) {}
 
@@ -67,8 +84,8 @@ public class CreatorWrites {
 
     private static final String EPISODE =
             "select id, series_id, number, title, status, published_at, free_at, price_coins,"
-                    + " fast_pass_days, thumbnail_url, creator_note, comments_enabled, view_count,"
-                    + " like_count from episodes ";
+                    + " fast_pass_days, thumbnail_url, creator_note, comments_enabled, hidden_at,"
+                    + " view_count, like_count from episodes ";
 
     private final JdbcClient jdbc;
 
@@ -92,54 +109,61 @@ public class CreatorWrites {
                 .optional();
     }
 
-    public void insertSeries(
-            UUID id, UUID creator, String slug, SeriesType type, SeriesValues v, short genreId) {
+    public void insertSeries(UUID id, UUID creator, String slug, SeriesType type, SeriesValues v) {
         jdbc.sql(
                         """
                         insert into series (id, slug, creator_id, type, title, summary, genre_id,
-                                            languages, age_rating, status, update_day, cover_url,
-                                            banner_url)
-                        values (:id, :slug, :creator, :type, :title, :summary, :genre,
-                                :languages, :age, :status, :day, :cover, :banner)
+                                            second_genre_id, languages, age_rating, status,
+                                            update_days, release_hour, fast_pass, fast_pass_ahead,
+                                            comments_enabled, break_message, cover_url, banner_url)
+                        values (:id, :slug, :creator, :type, :title, :summary, :genre, :genre2,
+                                :languages, :age, :status, :days, :hour, :fastPass, :ahead,
+                                :comments, :breakMessage, :cover, :banner)
                         """)
                 .param("id", id)
                 .param("slug", slug)
                 .param("creator", creator)
                 .param("type", type.name())
-                .param("title", v.title())
-                .param("summary", v.summary())
-                .param("genre", genreId)
-                .param("languages", v.languages().toArray(String[]::new))
-                .param("age", v.ageRating().name())
-                .param("status", v.status().name())
-                .param("day", v.updateDay() == null ? null : v.updateDay().name())
-                .param("cover", v.coverUrl())
-                .param("banner", v.bannerUrl())
+                .params(seriesParams(v))
                 .update();
         replaceTags(id, v.tags());
     }
 
-    public void updateSeries(UUID id, SeriesValues v, short genreId) {
+    public void updateSeries(UUID id, SeriesValues v) {
         jdbc.sql(
                         """
                         update series set title = :title, summary = :summary, genre_id = :genre,
-                               languages = :languages, age_rating = :age, status = :status,
-                               update_day = :day, cover_url = :cover, banner_url = :banner,
-                               updated_at = now()
+                               second_genre_id = :genre2, languages = :languages, age_rating = :age,
+                               status = :status, update_days = :days, release_hour = :hour,
+                               fast_pass = :fastPass, fast_pass_ahead = :ahead,
+                               comments_enabled = :comments, break_message = :breakMessage,
+                               cover_url = :cover, banner_url = :banner, updated_at = now()
                         where id = :id
                         """)
                 .param("id", id)
-                .param("title", v.title())
-                .param("summary", v.summary())
-                .param("genre", genreId)
-                .param("languages", v.languages().toArray(String[]::new))
-                .param("age", v.ageRating().name())
-                .param("status", v.status().name())
-                .param("day", v.updateDay() == null ? null : v.updateDay().name())
-                .param("cover", v.coverUrl())
-                .param("banner", v.bannerUrl())
+                .params(seriesParams(v))
                 .update();
         replaceTags(id, v.tags());
+    }
+
+    private static java.util.Map<String, Object> seriesParams(SeriesValues v) {
+        java.util.Map<String, Object> m = new java.util.HashMap<>();
+        m.put("title", v.title());
+        m.put("summary", v.summary());
+        m.put("genre", v.genreId());
+        m.put("genre2", v.secondGenreId());
+        m.put("languages", v.languages().toArray(String[]::new));
+        m.put("age", v.ageRating().name());
+        m.put("status", v.status().name());
+        m.put("days", v.updateDays().stream().map(DayOfWeek::name).toArray(String[]::new));
+        m.put("hour", v.releaseHour());
+        m.put("fastPass", v.fastPass());
+        m.put("ahead", v.fastPassAhead());
+        m.put("comments", v.commentsEnabled());
+        m.put("breakMessage", v.breakMessage());
+        m.put("cover", v.coverUrl());
+        m.put("banner", v.bannerUrl());
+        return m;
     }
 
     private void replaceTags(UUID id, List<String> tags) {
@@ -162,6 +186,45 @@ public class CreatorWrites {
                 .param("v", visibility)
                 .param("now", java.sql.Timestamp.from(now))
                 .update();
+    }
+
+    /**
+     * Locks the series and its episodes (the publish job skips locked episodes) and tells whether
+     * any of its episodes was ever published: live, taken down by an admin, hidden by the creator,
+     * released by time, or unlocked by anyone.
+     */
+    public boolean lockAndCheckEverPublished(UUID seriesId, Instant now) {
+        jdbc.sql("select id from series where id = :id for update")
+                .param("id", seriesId)
+                .query(UUID.class)
+                .list();
+        jdbc.sql("select id from episodes where series_id = :id for update")
+                .param("id", seriesId)
+                .query(UUID.class)
+                .list();
+        return jdbc.sql(
+                        """
+                        select exists (select 1 from episodes e where e.series_id = :id
+                                       and (e.status in ('PUBLISHED', 'HIDDEN')
+                                            or e.hidden_at is not null or e.published_at <= :now))
+                            or exists (select 1 from unlocks u join episodes e on e.id = u.episode_id
+                                       where e.series_id = :id)
+                            or exists (select 1 from creator_earnings c
+                                       join episodes e on e.id = c.episode_id
+                                       where e.series_id = :id)
+                        """)
+                .param("id", seriesId)
+                .param("now", java.sql.Timestamp.from(now))
+                .query(Boolean.class)
+                .single();
+    }
+
+    /**
+     * Removes a series for good with its episodes, tags, reviews, subscriptions and comments (they
+     * cascade).
+     */
+    public void deleteSeries(UUID id) {
+        jdbc.sql("delete from series where id = :id").param("id", id).update();
     }
 
     // ---------- review (V21-01) ----------
@@ -249,6 +312,7 @@ public class CreatorWrites {
         java.time.OffsetDateTime published =
                 rs.getObject("published_at", java.time.OffsetDateTime.class);
         java.time.OffsetDateTime free = rs.getObject("free_at", java.time.OffsetDateTime.class);
+        java.time.OffsetDateTime hidden = rs.getObject("hidden_at", java.time.OffsetDateTime.class);
         return new EpisodeRow(
                 rs.getObject("id", UUID.class),
                 rs.getObject("series_id", UUID.class),
@@ -262,6 +326,7 @@ public class CreatorWrites {
                 rs.getString("thumbnail_url"),
                 rs.getString("creator_note"),
                 rs.getBoolean("comments_enabled"),
+                hidden == null ? null : hidden.toInstant(),
                 rs.getLong("view_count"),
                 rs.getLong("like_count"));
     }
@@ -315,6 +380,23 @@ public class CreatorWrites {
 
     public void deleteEpisode(UUID id) {
         jdbc.sql("delete from episodes where id = :id").param("id", id).update();
+    }
+
+    /** The creator hides a live episode from readers; hiding it again keeps the first time. */
+    public void hideEpisode(UUID id, Instant at) {
+        jdbc.sql(
+                        "update episodes set hidden_at = coalesce(hidden_at, :at), updated_at = now()"
+                                + " where id = :id")
+                .param("id", id)
+                .param("at", java.sql.Timestamp.from(at))
+                .update();
+    }
+
+    /** Readers see the episode again. */
+    public void showEpisode(UUID id) {
+        jdbc.sql("update episodes set hidden_at = null, updated_at = now() where id = :id")
+                .param("id", id)
+                .update();
     }
 
     // ---------- panels and chapter text ----------

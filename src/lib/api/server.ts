@@ -1,10 +1,9 @@
 import { BACKEND_URL, DEMO_MODE } from "@/lib/api/config"
-import { toEpisode, toRanking, toSeries, type SeriesDetail } from "@/lib/api/catalog"
+import { toEpisode, toRanking, toSeries, toSeriesDetail, type SeriesDetail } from "@/lib/api/catalog"
 import type { HeroSlideView, RankingEntry } from "@/data/selectors"
 import type { Episode, Genre, Series, Weekday } from "@/data/types"
 import type { HomeData } from "@/lib/api/types"
 import type { Schemas } from "@/lib/api/client"
-import { formatCount } from "@/lib/format"
 import { genreSlug } from "@/lib/routes"
 
 type Card = Schemas["SeriesCard"]
@@ -68,15 +67,8 @@ export async function fetchHomeServer(): Promise<HomeData> {
 export async function fetchSeriesServer(slug: string): Promise<SeriesDetail | null> {
   if (DEMO_MODE) return (await import("@/lib/demo-api")).fetchSeries(slug)
   const d = await serverGet<Schemas["SeriesDetail"]>(`/series/${slug}`, [`series-${slug}`, "series", "catalog"], 60)
-  if (!d) return null
-  return {
-    series: toSeries(d.series),
-    synopsis: d.synopsis,
-    stats: { subscribers: formatCount(d.stats.subscribers), comments: formatCount(d.stats.comments) },
-    related: d.related.map(toSeries),
-    creatorSeriesCount: d.creatorSeriesCount,
-    creatorId: d.creatorId,
-  }
+  // The same mapping as the browser's fetchSeries: second genre, "On break" message and comments switch too (V21-02).
+  return d ? toSeriesDetail(d) : null
 }
 
 export async function fetchEpisodesServer(slug: string): Promise<Episode[]> {

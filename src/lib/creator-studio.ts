@@ -128,6 +128,8 @@ export type StudioEpisode = {
   at?: number
   /** ISO date the creator hid it */
   hiddenSince?: string
+  /** Real API: an admin took it down (status "hidden"); only an admin can show it again */
+  takenDown?: boolean
   /** A draft that is ready for the series launch (series in review) */
   ready?: boolean
 }

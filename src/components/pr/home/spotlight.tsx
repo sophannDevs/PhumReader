@@ -125,7 +125,7 @@ function SpotlightMain({ slide }: { slide: HeroSlideView }) {
           {s.schedule ? (
             <span className="inline-flex items-center gap-1">
               <CalendarIcon className="size-3.5" aria-hidden />
-              {loc.schedule(s.schedule)}
+              {loc.schedule(s)}
             </span>
           ) : null}
         </div>

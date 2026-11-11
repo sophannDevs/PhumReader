@@ -78,10 +78,11 @@ export function CommentsPage({ slug }: { slug: string }) {
   if (query.isError) return <ErrorState className="container" onRetry={() => void query.refetch()} />
   if (!query.data) notFound()
 
-  return <CommentsBody series={query.data.series} seriesCount={query.data.stats.comments} ep={ep} />
+  // The series' comments switch (real API, V21-02): off closes the series thread and every episode's.
+  return <CommentsBody series={query.data.series} seriesCount={query.data.stats.comments} ep={ep} closed={query.data.commentsEnabled === false} />
 }
 
-function CommentsBody({ series, seriesCount, ep }: { series: Series; seriesCount: string; ep: number }) {
+function CommentsBody({ series, seriesCount, ep, closed }: { series: Series; seriesCount: string; ep: number; closed: boolean }) {
   const t = useTranslations("comments")
   const novel = series.type === "novel"
   const episodes = useEpisodes(series.slug)
@@ -143,13 +144,17 @@ function CommentsBody({ series, seriesCount, ep }: { series: Series; seriesCount
         </Button>
       </header>
 
-      <ThreadComposer
-        onPost={async (text, spoiler) => {
-          const ok = await data.post(text, spoiler)
-          if (ok) setSort("new")
-          return ok
-        }}
-      />
+      {closed ? (
+        <p className="rounded-card border bg-card p-4 text-[13px] leading-[18px] text-muted-foreground shadow-xs">{t("closed")}</p>
+      ) : (
+        <ThreadComposer
+          onPost={async (text, spoiler) => {
+            const ok = await data.post(text, spoiler)
+            if (ok) setSort("new")
+            return ok
+          }}
+        />
+      )}
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Segmented
@@ -182,7 +187,7 @@ function CommentsBody({ series, seriesCount, ep }: { series: Series; seriesCount
           }
         />
       ) : data.threads.length === 0 ? (
-        <StateBox icon={MessageSquareIcon} title={t("empty")} text={t("emptyDesc")} />
+        closed ? null : <StateBox icon={MessageSquareIcon} title={t("empty")} text={t("emptyDesc")} />
       ) : (
         <>
           {shownList.length > 0 ? (

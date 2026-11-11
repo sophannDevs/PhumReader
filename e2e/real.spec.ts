@@ -1101,7 +1101,7 @@ test("13. creator writes: draft series, publish, free and Fast Pass episodes, a 
     languages: ["en"],
     summary: "A sea made of glass.",
     ageRating: "all",
-    updateDay: "Fri",
+    updateDays: ["Fri"],
     status: "ongoing",
     tags: ["sea", "glass"],
     coverUploadId: cover,
@@ -1468,7 +1468,196 @@ test("15. key flow 4: create series -> admin requests changes -> creator fixes a
   expect((await page.request.post(`/api/v1/creator/series/${id}/unpublish`, { headers })).status()).toBe(200);
 });
 
-test("16. delete the account: signed out everywhere, wrong password refused first", async () => {
+test("16. V2.1 series fields survive a reload: Create series, Manage series (details, Fast Pass, comments), delete a draft", async () => {
+  test.setTimeout(240_000);
+  const title = `E2E Fields ${stamp}`;
+  const field = (id: string) => visible(page.locator(`#${id}`));
+
+  // Create series: basics with a second genre, 16+ and both languages; Save draft.
+  await page.goto("/creator/new");
+  await field("cs-title").fill(title);
+  await field("cs-genre").selectOption({ label: "Fantasy" });
+  await field("cs-genre2").selectOption({ label: "Romance" });
+  await visible(page.getByRole("radio", { name: "16+" }).or(page.getByRole("button", { name: "16+" }))).click();
+  await field("cs-lang").selectOption("both");
+  await visible(page.getByRole("button", { name: "Continue" })).click();
+  await field("cs-sum").fill(
+    "Two lighthouse keepers on Koh Rong trade letters through the tide, one in Khmer and one in English.",
+  );
+  const created = page.waitForResponse(
+    (r) => r.url().endsWith("/api/v1/creator/series") && r.request().method() === "POST",
+  );
+  await visible(page.getByRole("button", { name: "Save draft" })).click();
+  const id = (await (await created).json()).id as string;
+
+  // Publishing step: a cover is needed to get there (an upload; without S3 storage a stored address), then
+  // two update days, 8 PM and Fast Pass on; Save draft again.
+  sql(`update series set cover_url = '/covers/07d70e33d965c6d11510ca21795511fa.svg' where id = '${id}'`);
+  await page.goto(`/creator/new?draft=${id}`);
+  const publishing = visible(page.getByRole("heading", { level: 2, name: "Publishing" }));
+  const next = visible(page.getByRole("button", { name: "Continue" }));
+  await expect(publishing.or(next)).toBeVisible();
+  for (let step = 0; step < 3 && !(await publishing.isVisible()); step++) await next.click();
+  const days = visible(page.getByRole("group", { name: /Update days/ }));
+  for (const d of ["Mon", "Thu"]) {
+    const day = days.getByRole("button", { name: d });
+    if ((await day.getAttribute("aria-pressed")) !== "true") await day.click();
+  }
+  await visible(page.getByLabel("Release time")).selectOption({ label: "8:00 PM" });
+  const saved = page.waitForResponse(
+    (r) => r.url().endsWith(`/api/v1/creator/series/${id}`) && r.request().method() === "PUT",
+  );
+  await visible(page.getByRole("button", { name: "Save draft" })).click();
+  await saved;
+
+  // Reload: every field is still there.
+  const afterCreate = await (await page.request.get(`/api/v1/creator/series/${id}`)).json();
+  expect(afterCreate).toMatchObject({
+    secondGenre: "romance",
+    ageRating: "teen16",
+    languages: expect.arrayContaining(["en", "km"]),
+    updateDays: ["Mon", "Thu"],
+    releaseHour: 20,
+  });
+  await page.goto(`/creator/new?draft=${id}`);
+  await expect(publishing).toBeVisible();
+  await expect(days.getByRole("button", { name: "Mon" })).toHaveAttribute("aria-pressed", "true");
+  await expect(days.getByRole("button", { name: "Thu" })).toHaveAttribute("aria-pressed", "true");
+  await expect(visible(page.getByLabel("Release time"))).toHaveValue("20");
+  await visible(page.getByRole("button", { name: /^Basics/ })).click();
+  await expect(field("cs-genre2")).toHaveValue(/romance|Romance/);
+  await expect(field("cs-lang")).toHaveValue("both");
+
+  // Manage series, details: On break with a message.
+  await page.goto(`/creator/series/${id}?tab=details`);
+  await visible(page.getByRole("radiogroup", { name: "Status" }).getByRole("radio", { name: "On break" })).click();
+  await visible(page.getByLabel("Message to readers")).fill("Back after the Water Festival.");
+  await visible(page.getByRole("button", { name: "Save changes" })).click();
+  await expect.poll(async () => (await (await page.request.get(`/api/v1/creator/series/${id}`)).json()).breakMessage).toBe(
+    "Back after the Water Festival.",
+  );
+  await page.reload();
+  await expect(visible(page.getByLabel("Message to readers"))).toHaveValue("Back after the Water Festival.");
+
+  // Fast Pass tab: 2 episodes ahead; Settings: comments off. Both still there after a reload.
+  await page.goto(`/creator/series/${id}?tab=fast-pass`);
+  // Mon + Thu with 3 ahead: free after ceil(3 × 7 ÷ 2) = 11 days.
+  await expect(visible(page.getByText(/free for everyone 11 days after release/))).toBeVisible();
+  await visible(page.getByLabel("How many episodes ahead")).selectOption("2");
+  await visible(page.getByRole("button", { name: "Save Fast Pass settings" })).click();
+  await expect.poll(async () => (await (await page.request.get(`/api/v1/creator/series/${id}`)).json()).fastPass.ahead).toBe(2);
+  await page.reload();
+  await expect(visible(page.getByLabel("How many episodes ahead"))).toHaveValue("2");
+  await page.goto(`/creator/series/${id}?tab=settings`);
+  const comments = visible(page.getByRole("switch", { name: /comment/i }));
+  await expect(comments).toBeChecked();
+  await comments.click();
+  await expect.poll(async () => (await (await page.request.get(`/api/v1/creator/series/${id}`)).json()).commentsEnabled).toBe(false);
+  await page.reload();
+  await expect(visible(page.getByRole("switch", { name: /comment/i }))).not.toBeChecked();
+  const kept = await (await page.request.get(`/api/v1/creator/series/${id}`)).json();
+  expect(kept).toMatchObject({ secondGenre: "romance", ageRating: "teen16", updateDays: ["Mon", "Thu"], releaseHour: 20 });
+
+  // Delete series (Settings): a series with no published episode goes for good.
+  await visible(page.getByRole("button", { name: "Delete series" })).click();
+  const confirm = visible(page.getByRole("alertdialog"));
+  await expect(confirm.getByRole("heading", { name: `Delete ${title}?` })).toBeVisible();
+  await confirm.getByRole("button", { name: "Delete series" }).click();
+  await expect(page).toHaveURL(/\/creator$/);
+  expect((await page.request.get(`/api/v1/creator/series/${id}`)).status()).toBe(404);
+});
+
+test("17. readers see the V2.1 fields; hide and show a chapter; delete is blocked once one was published", async () => {
+  test.setTimeout(240_000);
+  const title = `E2E Break ${stamp}`;
+  let headers = await apiHeaders();
+  const input = {
+    title,
+    type: "novel",
+    genre: "fantasy",
+    secondGenre: "romance",
+    languages: ["en"],
+    summary: "A ferry captain keeps a logbook of every passenger who never reached the other side.",
+    tags: [],
+    ageRating: "teen16",
+    status: "hiatus",
+    updateDays: ["Mon", "Thu"],
+    releaseHour: 20,
+    fastPass: { on: false, ahead: 3 },
+    commentsEnabled: false,
+    breakMessage: "Back after the Water Festival.",
+  };
+  const id = (await (await page.request.post("/api/v1/creator/series", { headers, data: input })).json()).id as string;
+  sql(`update series set cover_url = '/covers/07d70e33d965c6d11510ca21795511fa.svg' where id = '${id}'`);
+  expect(
+    (
+      await page.request.post(`/api/v1/creator/series/${id}/episodes`, {
+        headers,
+        data: {
+          title: "The first crossing",
+          blocks: [{ type: "paragraph", text: "The river was quiet the night the logbook began." }],
+          publish: { mode: "now" },
+          fastPass: null,
+        },
+      })
+    ).status(),
+  ).toBe(201);
+
+  // Review: submit, then approve as an admin (this account gets the role, as in tests 14 and 15).
+  expect((await page.request.post(`/api/v1/creator/series/${id}/submit`, { headers })).status()).toBe(200);
+  sql(
+    `insert into user_roles (user_id, role) select id, 'ADMIN' from users where email = '${EMAIL}' on conflict do nothing`,
+  );
+  expect((await page.request.post("/api/v1/auth/refresh", { headers })).status()).toBe(200);
+  headers = await apiHeaders();
+  expect((await page.request.post(`/api/v1/admin/series/${id}/approve`, { headers })).status()).toBe(204);
+  const slug = (await (await page.request.get(`/api/v1/creator/series/${id}`)).json()).slug as string;
+
+  // The series page: On break with the message, 16+, the second genre, comments off.
+  await page.goto(`/series/${slug}`);
+  await expect(visible(page.getByRole("heading", { level: 1, name: title }))).toBeVisible();
+  await expect(visible(page.getByText("On break: Back after the Water Festival."))).toBeVisible();
+  await expect(visible(page.getByText("Romance"))).toBeVisible();
+  await expect(visible(page.getByText(/Every Mon and Thu/))).toBeVisible();
+  await visible(page.getByRole("tab", { name: "About" })).click();
+  await expect(visible(page.getByText("16+"))).toBeVisible();
+  await visible(page.getByRole("tab", { name: /Comments/ })).click();
+  await expect(visible(page.getByText("The creator turned off comments here."))).toBeVisible();
+
+  // Back from the break: every update day shows.
+  const current = await (await page.request.get(`/api/v1/creator/series/${id}`)).json();
+  expect(
+    (await page.request.put(`/api/v1/creator/series/${id}`, { headers, data: { ...input, status: "ongoing", breakMessage: null, coverUploadId: null, bannerUploadId: null, tags: current.tags } })).status(),
+  ).toBe(200);
+  await page.goto(`/series/${slug}`);
+  await expect(visible(page.getByText(/Every Mon and Thu/))).toBeVisible();
+
+  // Manage series: hide chapter 1 (readers lose it), then show it again.
+  await page.goto(`/novel/${slug}/1`);
+  await expect(visible(page.getByText("The river was quiet the night the logbook began."))).toBeVisible();
+  await page.goto(`/creator/series/${id}`);
+  await visible(page.getByRole("button", { name: /^Hide chapter 1/ })).click();
+  const hideDialog = page.getByRole("alertdialog").locator("visible=true");
+  if (await hideDialog.count()) await hideDialog.first().getByRole("button", { name: /^Hide/ }).click();
+  await expect.poll(async () => (await (await page.request.get(`/api/v1/creator/series/${id}/episodes`)).json())[0].hiddenAt).not.toBeNull();
+  expect((await page.request.get(`/api/v1/series/${slug}/episodes/1`)).status()).toBe(404);
+  await page.reload();
+  await visible(page.getByRole("button", { name: /^Show chapter 1/ })).click();
+  await expect.poll(async () => (await (await page.request.get(`/api/v1/creator/series/${id}/episodes`)).json())[0].hiddenAt).toBeNull();
+  expect((await page.request.get(`/api/v1/series/${slug}/episodes/1`)).status()).toBe(200);
+
+  // A chapter was published: Delete stays blocked, and the API refuses it too.
+  await page.goto(`/creator/series/${id}?tab=settings`);
+  await expect(visible(page.getByRole("button", { name: "Delete series" }))).toBeDisabled();
+  const refused = await page.request.delete(`/api/v1/creator/series/${id}`, { headers });
+  expect(refused.status()).toBe(409);
+  expect((await refused.json()).error.code).toBe("has_published_episodes");
+
+  // Keep the dev catalog clean.
+  expect((await page.request.post(`/api/v1/creator/series/${id}/unpublish`, { headers })).status()).toBe(200);
+});
+
+test("18. delete the account: signed out everywhere, wrong password refused first", async () => {
   await page.goto("/settings");
   await visible(page.getByRole("button", { name: "Delete account" })).click();
   // V2.1: type DELETE first; the button stays disabled until then.

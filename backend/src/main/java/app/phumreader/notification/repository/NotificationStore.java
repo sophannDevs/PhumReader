@@ -113,14 +113,15 @@ public class NotificationStore {
 
     // ---------- who and what ----------
 
-    /** The episode, when it and its series are live. */
+    /** The episode, when it and its series are live (and the creator did not hide it). */
     public @Nullable EpisodeInfo liveEpisode(UUID episodeId) {
         return jdbc.sql(
                         """
                         select e.id, s.id as series_id, s.slug, s.title as series_title, s.type, s.creator_id,
                                e.number, e.title
                         from episodes e join series s on s.id = e.series_id
-                        where e.id = :id and e.status = 'PUBLISHED' and s.visibility = 'PUBLISHED'
+                        where e.id = :id and e.status = 'PUBLISHED' and e.hidden_at is null
+                              and s.visibility = 'PUBLISHED'
                         """)
                 .param("id", episodeId)
                 .query((rs, n) ->

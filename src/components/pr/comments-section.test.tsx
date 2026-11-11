@@ -115,6 +115,30 @@ describe("CommentsSection (page)", () => {
   })
 })
 
+describe("CommentsSection: comments turned off (V21-02)", () => {
+  it("shows the comments without a comment box when the creator turned them off", async () => {
+    signIn()
+    server.use(thread(comment("1")))
+    renderUi(<CommentsSection kind="series" slug="ink-witch" closed />)
+    expect(await screen.findByText("Comment 1")).toBeInTheDocument()
+    expect(screen.getByText("The creator turned off comments here.")).toBeInTheDocument()
+    expect(screen.queryByLabelText("Add a comment")).not.toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: "Post" })).not.toBeInTheDocument()
+  })
+
+  it("a post the API refuses with 403 comments_disabled says comments are off and keeps the text", async () => {
+    signIn()
+    server.use(thread(), http.post(`${API}/series/ink-witch/comments`, () => apiError(403, "comments_disabled")))
+    const { user } = renderUi(<CommentsSection kind="series" slug="ink-witch" />)
+    await screen.findByText("Be the first to comment")
+    await user.type(screen.getByLabelText("Add a comment"), "Hello")
+    await user.click(screen.getByRole("button", { name: "Post" }))
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith("The creator turned off comments here."))
+    expect(toast.error).not.toHaveBeenCalledWith("Something went wrong. Please try again.")
+    expect(screen.getByLabelText("Add a comment")).toHaveValue("Hello")
+  })
+})
+
 // jsdom has no CSS, so the screen-reader text and the count join without a space ("likes:3"); a browser reads "likes: 3".
 describe("CommentsSection: likes, delete and report", () => {
   it("liking shows the change at once, sends PUT, and settles on the server's count", async () => {

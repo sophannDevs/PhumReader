@@ -82,7 +82,17 @@ export function ComicReader({ slug, n }: { slug: string; n: number }) {
     )
   if (!query.data) notFound()
   const d = query.data
-  return <ComicReaderBody key={`${slug}:${n}`} series={d.series} episode={d.episode} total={d.total} panels={d.panels} refetch={query.refetch} />
+  return (
+    <ComicReaderBody
+      key={`${slug}:${n}`}
+      series={d.series}
+      episode={d.episode}
+      total={d.total}
+      panels={d.panels}
+      commentsEnabled={d.commentsEnabled !== false}
+      refetch={query.refetch}
+    />
+  )
 }
 
 type BodyProps = {
@@ -91,6 +101,8 @@ type BodyProps = {
   total: number
   panels: Panel[]
   lockedByApi?: boolean
+  /** Real API (V21-02): false when the episode's or the series' comments switch is off (no comment box) */
+  commentsEnabled?: boolean
   refetch: () => unknown
 }
 
@@ -107,7 +119,7 @@ function ComicReaderBody(props: BodyProps) {
 type Nav = ReturnType<typeof useReaderNav>
 
 /** Mounted once the store and the episode list are known (the saved place is read on mount). */
-function ComicReaderView({ series, episode, total, panels, nav, pageMode }: BodyProps & { nav: Nav; pageMode: boolean }) {
+function ComicReaderView({ series, episode, total, panels, commentsEnabled = true, nav, pageMode }: BodyProps & { nav: Nav; pageMode: boolean }) {
   const t = useTranslations("reader")
   const loc = useLocalize()
   const user = useUser()
@@ -313,6 +325,7 @@ function ComicReaderView({ series, episode, total, panels, nav, pageMode }: Body
               toast(t("autoNextCancelled"))
             }}
             dark={bg === "dark"}
+            commentsEnabled={commentsEnabled}
           />
         </div>
       ) : null}

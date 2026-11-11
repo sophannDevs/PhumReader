@@ -9,7 +9,8 @@ import type { ReplyView, ThreadView } from "@/components/pr/comment-thread"
 import type { Series } from "@/data"
 import { DEMO_MODE } from "@/lib/api/config"
 import * as real from "@/lib/api/me"
-import { commentsKeys } from "@/lib/api/keys"
+import { errorCode } from "@/lib/api/errors"
+import { catalogKeys, commentsKeys } from "@/lib/api/keys"
 import { fetchCommentThreads } from "@/lib/demo-api"
 import { useAccountEmail, useAskToLogin, useFailed } from "@/lib/me"
 import { useComments, useDemoFlag } from "@/lib/queries"
@@ -23,6 +24,7 @@ import { likeKey, useAppStore, useUser } from "@/lib/store"
  */
 export function useCommentThread(kind: "series" | "episode", slug: string, justNow: string) {
   const tt = useTranslations("toasts")
+  const tc = useTranslations("comments")
   const user = useUser()
   const email = useAccountEmail()
   const qc = useQueryClient()
@@ -78,7 +80,7 @@ export function useCommentThread(kind: "series" | "episode", slug: string, justN
       qc.setQueryData<real.ApiComment[]>(key, (list) => (list && !list.some((c) => c.id === created.id) ? [created, ...list] : list))
       return true
     } catch (error) {
-      failed(error)
+      if (!commentsClosed(error, slug, qc, tc("closed"))) failed(error)
       return false
     }
   }
@@ -122,6 +124,20 @@ export function useCommentThread(kind: "series" | "episode", slug: string, justN
 
   // Delete exists in the real API only (the demo's posted comments are not deletable here).
   return { comments, query, post, toggleLike, remove: DEMO_MODE ? undefined : remove, reportSend: DEMO_MODE ? undefined : reportSend }
+}
+
+/**
+ * 403 `comments_disabled` (V21-02): the creator turned comments off (the episode's or the series' switch) after the
+ * page loaded. Says so, and loads the series and the open episode again so the comment box goes away. False for any
+ * other error.
+ */
+function commentsClosed(error: unknown, thread: string, qc: ReturnType<typeof useQueryClient>, message: string): boolean {
+  if (errorCode(error) !== "comments_disabled") return false
+  toast.error(message)
+  const slug = thread.split(":")[0]
+  void qc.invalidateQueries({ queryKey: catalogKeys.series(slug).slice(0, 2) })
+  void qc.invalidateQueries({ queryKey: catalogKeys.episode(slug, 0).slice(0, 2) })
+  return true
 }
 
 // ---------------------------------------------------------------- V2.1 Comments page threads
@@ -242,7 +258,7 @@ export function useCommentThreads(series: Pick<Series, "creator"> | undefined, t
       toast.success(t("posted"))
       return true
     } catch (error) {
-      failed(error)
+      if (!commentsClosed(error, thread, qc, t("closed"))) failed(error)
       return false
     }
   }

@@ -51,10 +51,16 @@ export function SeriesHero({
   series,
   synopsis,
   stats,
+  secondGenre,
+  breakMessage,
 }: {
   series: Series
   synopsis: string
   stats: { subscribers: string; comments: string }
+  /** Real API (V21-02): the second genre, shown as a badge after the main one */
+  secondGenre?: string | null
+  /** Real API (V21-02): the creator's message while the series is on a break */
+  breakMessage?: string | null
 }) {
   const t = useTranslations("series")
   const loc = useLocalize()
@@ -130,14 +136,15 @@ export function SeriesHero({
         <div className="flex min-w-0 flex-col gap-3.5">
           <div className="flex flex-wrap items-center gap-1.5">
             <Badge variant="dark">{loc.genre(series.genre)}</Badge>
+            {secondGenre ? <Badge variant="dark">{loc.genre(secondGenre)}</Badge> : null}
             <Badge variant="dark">{t(novel ? "novel" : "comic")}</Badge>
             {series.schedule ? (
               <Badge variant="dark">
                 <CalendarIcon className="size-3" aria-hidden />
-                {loc.schedule(series.schedule)}
+                {loc.schedule(series)}
               </Badge>
             ) : null}
-            <Badge variant="new">{t(series.status === "completed" ? "completed" : "ongoing")}</Badge>
+            <Badge variant="new">{t(series.status === "completed" ? "completed" : series.status === "hiatus" ? "onBreak" : "ongoing")}</Badge>
           </div>
           <h1 className="type-series-title">{series.title}</h1>
           <p className="flex items-center gap-2 text-[13px] leading-[18px] text-[#e4e4e7]">
@@ -156,6 +163,9 @@ export function SeriesHero({
               series.creator
             )}
           </p>
+          {series.status === "hiatus" && breakMessage ? (
+            <p className="max-w-[62ch] text-[13px] leading-[18px] font-medium break-words text-surface-foreground">{t("breakNote", { message: breakMessage })}</p>
+          ) : null}
           <p className="max-w-[62ch] text-[15px] leading-6 text-[#d4d4d8]">{synopsis}</p>
 
           <dl className="flex flex-wrap gap-[18px] md:gap-7">

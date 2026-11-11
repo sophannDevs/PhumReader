@@ -686,7 +686,7 @@ class CreatorContentApiTest {
     private static String seriesJson(String title, String type, String coverUploadId) {
         return "{\"title\":\"%s\",\"type\":%s,\"genre\":\"fantasy\",\"languages\":[\"en\"],\"summary\":\"A glass sea.\","
                         .formatted(title, type == null ? "null" : "\"" + type + "\"")
-                + "\"ageRating\":\"all\",\"updateDay\":\"Fri\",\"status\":\"ongoing\",\"tags\":[\"Sea\",\"sea\",\"glass\"],"
+                + "\"ageRating\":\"all\",\"updateDays\":[\"Fri\"],\"status\":\"ongoing\",\"tags\":[\"Sea\",\"sea\",\"glass\"],"
                 + "\"coverUploadId\":"
                 + (coverUploadId == null ? "null" : "\"" + coverUploadId + "\"")
                 + ",\"bannerUploadId\":null}";

@@ -20,6 +20,7 @@ const card = (id: string, title: string) => ({
   totalEpisodes: 1,
   status: "ongoing",
   updateDay: null,
+  updateDays: [],
   language: ["en"],
   ageRating: "all",
   badges: { isNew: false, up: false },

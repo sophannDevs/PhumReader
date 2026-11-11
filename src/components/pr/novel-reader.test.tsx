@@ -75,6 +75,7 @@ const seriesCard = {
   totalEpisodes: 3,
   status: "ongoing",
   updateDay: null,
+  updateDays: [],
   language: ["en"],
   ageRating: "all",
   badges: { isNew: false, up: false },

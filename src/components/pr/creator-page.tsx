@@ -46,6 +46,7 @@ type Row = {
   eps: number
   views: string
   subs: string
+  /** The next update day (a series can have several, V21-02) */
   day?: Weekday | null
   summary: string
   /** ISO date it was submitted for review (real API); demo shows yesterday */
@@ -75,6 +76,10 @@ const WEEK: Weekday[] = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
 function nextRelease(day: Weekday, base: string): string {
   const diff = (WEEK.indexOf(day) - WEEK.indexOf(weekdayOf(base)) + 7) % 7 || 7
   return addDays(base, diff)
+}
+/** The update day that comes first after `base` (V21-02: a series can come out on several days), or null. */
+function nextDay(days: readonly Weekday[], base: string): Weekday | null {
+  return [...days].sort((a, b) => nextRelease(a, base).localeCompare(nextRelease(b, base)))[0] ?? null
 }
 /** 6:00 PM ICT on an ISO date, as epoch ms (11:00 UTC). */
 const sixPm = (iso: string) => {
@@ -123,7 +128,7 @@ function Dashboard() {
         eps: s.totalEpisodes,
         views: s.views,
         subs: formatCount(subscribers),
-        day: s.updateDay,
+        day: nextDay(s.updateDays, ictDate(now)),
         summary: "",
         submitted: review ? ictDate(Date.parse(review.submittedAt)) : null,
       }))

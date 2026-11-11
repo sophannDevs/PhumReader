@@ -18,6 +18,7 @@
     "Sat": "Every Sat",
     "Sun": "Every Sun"
   },
+  "everyDays": "Every {days}",
   "episode": "Episode {n}",
   "episodeS2": "(S2) Episode {n}",
   "chapter": "Chapter {n}",
@@ -59,6 +60,7 @@
     }
   ],
   "hookFallback": "An ongoing {genre} story, new every {day}.",
+  "listAnd": "{a} and {b}",
   "dayFull": {
     "Mon": "Monday",
     "Tue": "Tuesday",
@@ -67,5 +69,14 @@
     "Fri": "Friday",
     "Sat": "Saturday",
     "Sun": "Sunday"
+  },
+  "dayShort": {
+    "Mon": "Mon",
+    "Tue": "Tue",
+    "Wed": "Wed",
+    "Thu": "Thu",
+    "Fri": "Fri",
+    "Sat": "Sat",
+    "Sun": "Sun"
   }
 }

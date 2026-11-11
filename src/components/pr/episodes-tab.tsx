@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input"
 import { fastPassPrice, type Episode, type Series } from "@/data"
 import { Link, useRouter } from "@/i18n/navigation"
 import { formatShortDate } from "@/lib/format"
+import { useLocalize } from "@/lib/localize"
 import { useEpisodes } from "@/lib/queries"
 import { useSeriesViewer } from "@/lib/me"
 import { readerHref, seriesHref } from "@/lib/routes"
@@ -35,7 +36,7 @@ export function EpisodesTab({
   onUnlock: (episode: Episode, mode?: UnlockMode) => void
 }) {
   const t = useTranslations("series")
-  const th = useTranslations("home")
+  const loc = useLocalize()
   const locale = useLocale()
   const router = useRouter()
   const coins = useCoins()
@@ -185,11 +186,11 @@ export function EpisodesTab({
       <div className="flex flex-col gap-2">
         <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
           <p className="text-[13px] leading-[18px] text-muted-foreground tabular-nums max-md:w-full">
-            {series.updateDay
+            {series.updateDays.length && series.status !== "hiatus"
               ? t(novel ? "chaptersLine" : "episodesLine", {
                   count: all.length,
-                  // "new every Sun"; Khmer uses the full day name ("ថ្ងៃអាទិត្យ").
-                  day: th(locale === "km" ? `dayFull.${series.updateDay}` : `days.${series.updateDay}`),
+                  // "new every Sun" or "new every Mon and Thu"; Khmer uses the full day names ("ថ្ងៃអាទិត្យ").
+                  day: loc.days(series.updateDays, "short"),
                 })
               : t(novel ? "chaptersCount" : "episodesCount", { count: all.length })}
           </p>

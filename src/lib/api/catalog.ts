@@ -1,10 +1,10 @@
 import type { HeroSlideView, NovelChapter, RankingEntry } from "@/data/selectors"
-import type { Episode, Genre, NovelBlock, Series, Weekday } from "@/data/types"
+import { genreSchema, type Episode, type Genre, type NovelBlock, type Series, type Weekday } from "@/data/types"
 import { ApiError, api, type Schemas } from "@/lib/api/client"
 import type { ChapterData, EpisodeData, HomeData, SeriesDetail } from "@/lib/api/types"
 export type { SeriesDetail }
 import { formatCount, formatDate } from "@/lib/format"
-import { genreSlug } from "@/lib/routes"
+import { genreFromSlug, genreSlug } from "@/lib/routes"
 
 /**
  * The catalog from the real API (Stage 1 Step 5 part 2), in the shapes the pages already use
@@ -25,7 +25,16 @@ export const PLACEHOLDER_COVER = "/covers/placeholder.svg"
 
 // ---------------------------------------------------------------- mapping
 
+/** "Every Sun", "Every Mon and Thu", "Every Mon, Wed and Fri", or "" (the data's English label; `useLocalize` translates it). */
+export function scheduleOf(days: readonly Weekday[]): string {
+  if (!days.length) return ""
+  if (days.length === 1) return `Every ${days[0]}`
+  return `Every ${days.slice(0, -1).join(", ")} and ${days[days.length - 1]}`
+}
+
 export function toSeries(c: Card): Series {
+  // Every update day in week order (V21-02); `updateDay` is the first one (an older answer only had that).
+  const days = WEEKDAYS.filter((d) => (c.updateDays ?? (c.updateDay ? [c.updateDay] : [])).includes(d))
   return {
     id: c.id,
     slug: c.slug,
@@ -39,11 +48,12 @@ export function toSeries(c: Card): Series {
     freeEpisodes: c.freeEpisodes,
     fastPassEpisodes: c.fastPassEpisodes,
     totalEpisodes: c.totalEpisodes,
-    updateDay: c.updateDay ?? null,
-    schedule: c.updateDay ? `Every ${c.updateDay}` : "",
+    updateDay: days[0] ?? null,
+    updateDays: days,
+    schedule: scheduleOf(days),
     badges: c.badges,
-    // The pages know "ongoing" and "completed"; a series on hiatus is still ongoing.
-    status: c.status === "completed" ? "completed" : "ongoing",
+    // A series on hiatus shows "On break" (V21-02).
+    status: c.status,
     language: c.language as Series["language"],
     ageRating: c.ageRating,
   }
@@ -125,18 +135,27 @@ export async function fetchHome(): Promise<HomeData> {
   }
 }
 
-/** null when the slug is unknown (404). */
-export async function fetchSeries(slug: string): Promise<SeriesDetail | null> {
-  const d = await notFoundAsNull(api.get<Schemas["SeriesDetail"]>(`/series/${slug}`))
-  if (!d) return null
+/** The series page from the API's answer (also used by the server-side fetch in ./server.ts). */
+export function toSeriesDetail(d: Schemas["SeriesDetail"]): SeriesDetail {
+  const series = toSeries(d.series)
   return {
-    series: toSeries(d.series),
+    series,
     synopsis: d.synopsis,
     stats: { subscribers: formatCount(d.stats.subscribers), comments: formatCount(d.stats.comments) },
     related: d.related.map(toSeries),
     creatorSeriesCount: d.creatorSeriesCount,
     creatorId: d.creatorId,
+    // V21-02: the API sends the second genre as a slug; the pages show genre names ("slice-of-life" -> "Slice of life").
+    secondGenre: d.secondGenre ? ((genreFromSlug(d.secondGenre, genreSchema.options) ?? d.secondGenre) as Genre) : null,
+    breakMessage: series.status === "hiatus" ? (d.breakMessage ?? null) : null,
+    commentsEnabled: d.commentsEnabled ?? true,
   }
+}
+
+/** null when the slug is unknown (404). */
+export async function fetchSeries(slug: string): Promise<SeriesDetail | null> {
+  const d = await notFoundAsNull(api.get<Schemas["SeriesDetail"]>(`/series/${slug}`))
+  return d ? toSeriesDetail(d) : null
 }
 
 /** Every released episode, oldest first. */
@@ -150,7 +169,15 @@ export async function fetchEpisode(slug: string, n: number): Promise<EpisodeData
   const c = await notFoundAsNull(api.get<Schemas["EpisodeContent"]>(`/series/${slug}/episodes/${n}`))
   if (!c) return null
   const series = toSeries(c.series)
-  return { series, episode: toEpisode(c.episode, series.cover), total: c.total, panels: c.panels, viewer: marksOf(c) }
+  return {
+    series,
+    episode: toEpisode(c.episode, series.cover),
+    total: c.total,
+    panels: c.panels,
+    viewer: marksOf(c),
+    // false when the episode's or the series' comments switch is off (V21-02): the reader hides the comment box.
+    commentsEnabled: c.commentsEnabled,
+  }
 }
 
 export async function fetchChapter(slug: string, n: number): Promise<ChapterData | null> {
@@ -167,7 +194,7 @@ export async function fetchChapter(slug: string, n: number): Promise<ChapterData
     creatorNote: c.creatorNote ?? "",
     likes: episode.likes,
   }
-  return { series, chapter, total: c.total, viewer: marksOf(c) }
+  return { series, chapter, total: c.total, viewer: marksOf(c), commentsEnabled: c.commentsEnabled }
 }
 
 export async function fetchRankings(kind: "comics" | "novels"): Promise<RankingEntry[]> {

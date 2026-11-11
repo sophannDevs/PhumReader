@@ -36,7 +36,7 @@ import type { Weekday } from "@/data"
 import { Link, useRouter } from "@/i18n/navigation"
 import { DEMO_MODE } from "@/lib/api/config"
 import * as api from "@/lib/api/creator"
-import { creatorKeys, useEpisodeEdit, useMyEpisodes, useMySeries } from "@/lib/creator"
+import { creatorKeys, useEpisodeEdit, useMyEpisodes, useMySeries, useSeriesEdit } from "@/lib/creator"
 import {
   DEFAULT_HOUR,
   FAST_PASS_COINS,
@@ -67,12 +67,22 @@ import { cn } from "@/lib/utils"
  * - Demo: the series are the store's `myWorks` (not drafts); images are the creator's own files with a simulated
  *   upload; publishing adds one to the work's episode count. Save draft only marks the draft as saved.
  * - Real API: POST/PUT /creator/series/{id}/episodes(/{n}) with the uploaded panels (or the text as blocks: empty lines
- *   split paragraphs, "# " starts a heading, "> " a quote, "* * *" a scene break). Fast Pass is 5 coins, free after 7 days.
- *   A series in review or with changes requested is marked "in review" in the series list, like in demo mode.
+ *   split paragraphs, "# " starts a heading, "> " a quote, "* * *" a scene break). The release date, hour and Fast Pass
+ *   switch start from the series (V21-02: its next update day, release time and series-wide Fast Pass); a new episode
+ *   that keeps the series' Fast Pass sends `useSeriesFastPass` (5 coins, free after ceil(ahead × 7 ÷ update days) days,
+ *   as the preview says), otherwise 5 coins and the same number of days. An episode being edited keeps its own price
+ *   and days. A series in review or with changes requested is marked "in review" in the series list, like in demo mode.
  */
 
 type Format = "comic" | "novel"
-type UploadSeries = { id: string; title: string; format: Format; day: Weekday | null; inReview: boolean; draft: boolean }
+type UploadSeries = { id: string; title: string; format: Format; days: Weekday[]; inReview: boolean; draft: boolean }
+/** What a new episode starts with: the series' release hour and Fast Pass switch (real API, V21-02). */
+type Defaults = {
+  hour: number
+  fastPass: api.SeriesFastPass
+  /** false until the series' own settings are known (demo mode, or the series could not be loaded) */
+  known: boolean
+}
 type EditData = {
   n: number
   title: string
@@ -81,6 +91,9 @@ type EditData = {
   panels: PanelItem[]
   text: string
   fastPass: boolean
+  /** Real API: the episode's own Fast Pass price and days, kept when it is saved again */
+  priceCoins: number | null
+  freeAfterDays: number | null
   comments: boolean
   note: string
 }
@@ -111,7 +124,7 @@ function useUploadSeries() {
     const list: UploadSeries[] = demo.data
       ? works
           .filter((w) => w.status !== "draft")
-          .map((w) => ({ id: w.id, title: w.title, format: w.format, day: w.day, inReview: w.status === "review" || w.status === "changes", draft: false }))
+          .map((w) => ({ id: w.id, title: w.title, format: w.format, days: [w.day], inReview: w.status === "review" || w.status === "changes", draft: false }))
       : []
     return { list, pending: demo.isPending, error: demo.isError, retry: () => void demo.refetch() }
   }
@@ -121,7 +134,7 @@ function useUploadSeries() {
       id: r.series.id,
       title: r.series.title,
       format: r.series.type,
-      day: r.series.updateDay,
+      days: r.series.updateDays,
       inReview: r.visibility === "review" || r.visibility === "changes",
       draft: r.visibility === "draft",
     }))
@@ -193,12 +206,32 @@ function UploadSkeleton() {
   )
 }
 
+const FALLBACK_DEFAULTS: Defaults = { hour: DEFAULT_HOUR, fastPass: api.DEFAULT_SERIES_FAST_PASS, known: false }
+
+/**
+ * The series' release hour and Fast Pass switch (real API, V21-02); null while they load. Demo works have none (6 PM,
+ * Fast Pass on). A series that fails to load keeps those defaults, so uploading still works.
+ */
+function useDefaults(seriesId: string): Defaults | null {
+  const edit = useSeriesEdit(seriesId)
+  if (DEMO_MODE) return FALLBACK_DEFAULTS
+  if (edit.isPending) return null
+  if (!edit.data) return FALLBACK_DEFAULTS
+  return {
+    hour: edit.data.releaseHour ?? DEFAULT_HOUR,
+    fastPass: edit.data.fastPass ?? api.DEFAULT_SERIES_FAST_PASS,
+    known: true,
+  }
+}
+
 /** The next number: the demo work's count + 1, or after the highest of the series' episodes (real API). */
 function NewEpisode({ series, options, onSeries }: { series: UploadSeries; options: UploadSeries[]; onSeries: (id: string) => void }) {
   const eps = useAppStore((s) => s.myWorks.find((w) => w.id === series.id)?.eps ?? 0)
   const real = useMyEpisodes(series.id, !DEMO_MODE)
+  const defaults = useDefaults(series.id)
   const last = DEMO_MODE ? eps : real.data ? Math.max(0, ...real.data.map((e) => e.number)) : null
-  return <UploadForm series={series} options={options} onSeries={onSeries} prev={last} />
+  if (!defaults) return <UploadSkeleton />
+  return <UploadForm series={series} options={options} onSeries={onSeries} prev={last} defaults={defaults} />
 }
 
 /** `&ep=<n>`: the episode to edit (demo: the generated list; real API: GET …/episodes/{n}). */
@@ -207,6 +240,7 @@ function EditLoader({ series, n }: { series: UploadSeries; n: number }) {
   const ts = useTranslations("states")
   const work = useAppStore((s) => s.myWorks.find((w) => w.id === series.id))
   const real = useEpisodeEdit(series.id, n)
+  const defaults = useDefaults(series.id)
   let data: EditData | null | undefined
   if (DEMO_MODE) {
     const ep = work ? demoEpisodes(work, today).find((e) => e.n === n) : undefined
@@ -222,6 +256,8 @@ function EditLoader({ series, n }: { series: UploadSeries; n: number }) {
               : [],
           text: "",
           fastPass: ep.state === "fastpass" || ep.state === "scheduled",
+          priceCoins: null,
+          freeAfterDays: null,
           comments: true,
           note: "",
         }
@@ -246,6 +282,8 @@ function EditLoader({ series, n }: { series: UploadSeries; n: number }) {
       })),
       text: blocksToText(e.blocks),
       fastPass: !!e.priceCoins,
+      priceCoins: e.priceCoins ?? null,
+      freeAfterDays: e.freeAfterDays ?? null,
       comments: e.commentsEnabled,
       note: e.creatorNote ?? "",
     }
@@ -253,7 +291,7 @@ function EditLoader({ series, n }: { series: UploadSeries; n: number }) {
     data = null
   }
 
-  if (data === undefined) return <UploadSkeleton />
+  if (data === undefined || !defaults) return <UploadSkeleton />
   if (!data) {
     return (
       <div className="container pt-6 pb-16">
@@ -271,7 +309,7 @@ function EditLoader({ series, n }: { series: UploadSeries; n: number }) {
       </div>
     )
   }
-  return <UploadForm key={`${series.id}:${n}`} series={series} options={[series]} prev={n - 1} edit={data} />
+  return <UploadForm key={`${series.id}:${n}`} series={series} options={[series]} prev={n - 1} edit={data} defaults={defaults} />
 }
 
 function UploadForm({
@@ -280,6 +318,7 @@ function UploadForm({
   onSeries,
   prev,
   edit,
+  defaults,
 }: {
   series: UploadSeries
   options: UploadSeries[]
@@ -287,6 +326,8 @@ function UploadForm({
   /** The number before this one; null while it loads */
   prev: number | null
   edit?: EditData
+  /** The series' release hour and Fast Pass switch */
+  defaults: Defaults
 }) {
   const t = useTranslations("episodeForm")
   const qc = useQueryClient()
@@ -304,12 +345,14 @@ function UploadForm({
   const [title, setTitle] = useState(edit?.title ?? "")
   const [text, setText] = useState(edit?.text ?? "")
   const [when, setWhen] = useState<"now" | "schedule">(edit && !edit.scheduledAt ? "now" : "schedule")
-  const [date, setDate] = useState(() => {
-    if (edit?.scheduledAt) return ictDate(edit.scheduledAt)
-    return series.day ? onOrAfter(series.day, dates[0]) : dates[0]
-  })
-  const [hour, setHour] = useState(() => (edit?.scheduledAt ? new Date(edit.scheduledAt + 7 * 3_600_000).getUTCHours() : DEFAULT_HOUR))
-  const [fastPass, setFastPass] = useState(edit?.fastPass ?? true)
+  // Date, hour and Fast Pass follow the chosen series (its next update day, release hour and Fast Pass switch) until
+  // the creator picks one; null = not picked.
+  const [datePick, setDate] = useState<string | null>(() => (edit?.scheduledAt ? ictDate(edit.scheduledAt) : null))
+  const [hourPick, setHour] = useState<number | null>(() => (edit?.scheduledAt ? new Date(edit.scheduledAt + 7 * 3_600_000).getUTCHours() : null))
+  const [fastPassPick, setFastPass] = useState<boolean | null>(edit ? edit.fastPass : null)
+  const date = datePick ?? (series.days.map((d) => onOrAfter(d, dates[0])).sort()[0] ?? dates[0])
+  const hour = hourPick ?? defaults.hour
+  const fastPass = fastPassPick ?? defaults.fastPass.on
   const [comments, setComments] = useState(edit?.comments ?? true)
   const [note, setNote] = useState(edit?.note ?? "")
   const [tried, setTried] = useState(false)
@@ -329,7 +372,10 @@ function UploadForm({
   const words = countWords(text)
   const at = ictAt(date, hour)
   const whenText = t("whenAt", { date: dayDate(date), time: hourLabel(hour) })
-  const freeOn = dayDate(addDays(when === "now" || live ? base : date, FREE_AFTER_DAYS))
+  // Days a Fast Pass episode stays paid: its own when it has them; else the series' rule (V21-02), or 7 in demo mode.
+  const freeDays =
+    edit?.freeAfterDays ?? (DEMO_MODE ? FREE_AFTER_DAYS : api.seriesFreeAfterDays(defaults.fastPass.ahead, series.days.length))
+  const freeOn = dayDate(addDays(when === "now" || live ? base : date, freeDays))
   // A schedule slot must still be ahead (real time in real mode).
   const slots = dates.includes(date) ? dates : [date, ...dates]
 
@@ -349,13 +395,18 @@ function UploadForm({
   }, [announce])
 
   function input(publish: api.EpisodeInput["publish"]): api.EpisodeInput {
+    const isNew = !edit && !savedNumber
+    // A new episode left at the series' Fast Pass takes it from the series (the API works out the same free date).
+    const fromSeries = isNew && defaults.known && fastPass === defaults.fastPass.on
     return {
       title: title.trim(),
-      number: edit || savedNumber ? undefined : null,
+      number: isNew ? null : undefined,
       thumbnailUploadId: null,
       creatorNote: note.trim() || null,
       commentsEnabled: comments,
-      fastPass: fastPass ? { priceCoins: FAST_PASS_COINS, freeAfterDays: FREE_AFTER_DAYS } : undefined,
+      // Left out = free (and must be left out with useSeriesFastPass).
+      fastPass: fromSeries || !fastPass ? undefined : { priceCoins: edit?.priceCoins ?? FAST_PASS_COINS, freeAfterDays: freeDays },
+      useSeriesFastPass: fromSeries ? true : null,
       publish,
       imageUploadIds: comic ? items.flatMap((i) => (i.uploadId ? [i.uploadId] : [])) : null,
       blocks: comic ? null : textToBlocks(text),

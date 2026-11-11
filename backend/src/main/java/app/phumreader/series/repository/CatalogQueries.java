@@ -12,7 +12,6 @@ import app.phumreader.series.repository.CatalogRows.RankingRow;
 import app.phumreader.series.repository.CatalogRows.SeriesKey;
 import java.sql.Array;
 import java.sql.SQLException;
-import java.time.DayOfWeek;
 import java.time.OffsetDateTime;
 import java.util.Collection;
 import java.util.LinkedHashMap;
@@ -38,18 +37,21 @@ public class CatalogQueries {
 
     /**
      * Series card columns for the series rows selected by {@code %s} (alias {@code c}), with genre,
-     * creator and episode counts. The outer query must order the rows again.
+     * creator and episode counts. The outer query must order the rows again. Episodes the creator
+     * hid (V21-02) are not counted.
      */
     private static final String CARDS =
             """
             select c.id, c.slug, c.title, c.type, c.summary, g.slug as genre_slug,
-                   g.name as genre_name, c.creator_id, p.pen_name, c.cover_url, c.view_count,
-                   c.like_count, c.subscriber_count, c.update_day, c.status, c.languages,
-                   c.age_rating, coalesce(c.launched_at, c.created_at) as launched_at,
+                   g.name as genre_name, g2.slug as second_genre_slug, c.creator_id, p.pen_name,
+                   c.cover_url, c.view_count, c.like_count, c.subscriber_count, c.update_days,
+                   c.status, c.languages, c.age_rating, c.comments_enabled, c.break_message,
+                   coalesce(c.launched_at, c.created_at) as launched_at,
                    e.free_episodes, e.fast_pass_episodes, e.total_episodes,
                    e.latest_free_number, e.latest_release
             from (%s) c
             join genres g on g.id = c.genre_id
+            left join genres g2 on g2.id = c.second_genre_id
             join creator_profiles p on p.user_id = c.creator_id
             cross join lateral (
                 select count(*) filter (where ep.free_at is null or ep.free_at <= :now)
@@ -63,6 +65,7 @@ public class CatalogQueries {
                            as latest_release
                 from episodes ep
                 where ep.series_id = c.id and ep.status = 'PUBLISHED' and ep.published_at <= :now
+                      and ep.hidden_at is null
             ) e
             """;
 
@@ -76,16 +79,19 @@ public class CatalogQueries {
                             rs.getString("summary"),
                             rs.getString("genre_slug"),
                             rs.getString("genre_name"),
+                            rs.getString("second_genre_slug"),
                             rs.getObject("creator_id", UUID.class),
                             rs.getString("pen_name"),
                             rs.getString("cover_url"),
                             rs.getLong("view_count"),
                             rs.getLong("like_count"),
                             rs.getLong("subscriber_count"),
-                            day(rs.getString("update_day")),
+                            DayArrays.days(rs.getArray("update_days")),
                             SeriesStatus.valueOf(rs.getString("status")),
                             languages(rs.getArray("languages")),
                             AgeRating.valueOf(rs.getString("age_rating")),
+                            rs.getBoolean("comments_enabled"),
+                            rs.getString("break_message"),
                             rs.getObject("launched_at", OffsetDateTime.class),
                             rs.getInt("free_episodes"),
                             rs.getInt("fast_pass_episodes"),
@@ -108,11 +114,14 @@ public class CatalogQueries {
                             rs.getBoolean("comments_enabled"),
                             rs.getString("creator_note"));
 
-    /** Columns of {@link #EPISODE}; only released episodes (published, release time passed). */
+    /**
+     * Columns of {@link #EPISODE}; only released episodes (published, release time passed) that the
+     * creator did not hide.
+     */
     private static final String EPISODE_COLUMNS =
             "select id, series_id, number, title, published_at, free_at, price_coins,"
                     + " thumbnail_url, like_count, comments_enabled, creator_note from episodes"
-                    + " where status = 'PUBLISHED' and published_at <= :now";
+                    + " where status = 'PUBLISHED' and published_at <= :now and hidden_at is null";
 
     private final JdbcClient jdbc;
 
@@ -178,13 +187,18 @@ public class CatalogQueries {
                 .list();
     }
 
-    /** The {@code perDay} most viewed series of each update day (series without a day left out). */
+    /**
+     * Every series that is among the {@code perDay} most viewed of one of its update days (series
+     * without a day left out), each once, most viewed first. A series that updates on several days
+     * competes on each of them.
+     */
     public List<SeriesRow> mostViewedPerDay(int perDay, OffsetDateTime now) {
         String ranked =
-                "select * from (select s.*, row_number() over (partition by s.update_day"
-                        + " order by s.view_count desc, s.id) as place from series s"
-                        + " where s.visibility = 'PUBLISHED' and s.update_day is not null) d"
-                        + " where d.place <= :per";
+                PUBLISHED
+                        + " and id in (select x.id from (select s.id, row_number() over"
+                        + " (partition by d.day order by s.view_count desc, s.id) as place"
+                        + " from series s cross join lateral unnest(s.update_days) as d(day)"
+                        + " where s.visibility = 'PUBLISHED') x where x.place <= :per)";
         return jdbc.sql(cards(ranked) + " order by c.view_count desc, c.id")
                 .param("per", perDay)
                 .param("now", now)
@@ -519,10 +533,6 @@ public class CatalogQueries {
 
     private static String cards(String seriesRows) {
         return CARDS.formatted(seriesRows);
-    }
-
-    private static @Nullable DayOfWeek day(@Nullable String value) {
-        return value == null ? null : DayOfWeek.valueOf(value);
     }
 
     private static List<String> languages(Array array) throws SQLException {

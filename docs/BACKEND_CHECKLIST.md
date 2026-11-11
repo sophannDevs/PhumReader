@@ -38,7 +38,7 @@ Sources of truth: the plan doc, `CLAUDE.md`, `docs/BACKEND.md` (decisions and lo
 - Money: balances change only through the ledger, in one transaction with a wallet row lock; every payment and
   unlock call is idempotent. Never build card number fields: cards use the PayWay hosted page.
 
-Progress: 35 / 51 plan tasks · 0 / 7 V2.1 API additions · Stage 1 done · Phase 5 complete · Milestone M5 complete (M1, M3, M4, M6, M7 pending formal verification)
+Progress: 35 / 51 plan tasks · 1 / 7 V2.1 API additions · Stage 1 done · Phase 5 complete · Milestone M5 complete (M1, M3, M4, M6, M7 pending formal verification)
 
 ---
 
@@ -946,12 +946,57 @@ as the plan tasks (tests, `./gradlew check`, OpenAPI + `npm run api:gen`); commi
     page; its "upload episode 1" step runs only with S3 storage. Tick once that step has passed at home. Vitest tests
     for the new screens are written but not run here (no Vitest on this PC).
 
-- [ ] **V21-02 Series and episode fields from the V2.1 forms**
+- [x] **V21-02 Series and episode fields from the V2.1 forms**
   - Build: second genre, age 16+ / 18+, language "both" (two versions), several update days, release time (ICT),
     series-wide Fast Pass (on/off, 1–5 episodes ahead) and comments switch, story status with a break message, hide
     and show one episode, delete a series (owner only; soft delete if anyone unlocked an episode).
   - Depends on: P3-14
   - Done when: everything Create series and Manage series save is still there after a reload in real mode.
+  - Design (approved by the owner 2026-11-11). Today real mode drops these (V2-56, V2-58):
+    - **Second genre**: `series.second_genre_id` (optional, not the main genre); API `secondGenre` (slug or null) on
+      `SeriesInput` / `SeriesEdit` / `SeriesDetail`. Shown on the series page; genre lists and search keep using the
+      main genre (a later change can add the second one).
+    - **Age 16+ / 18+**: the age rating gains `TEEN16`: API `all` (all ages) · `teen` (13+) · `teen16` (16+) ·
+      `mature` (18+). Existing `teen` / `mature` rows keep their meaning. The reader's age badge shows the number.
+    - **Language "both"**: already stored as `languages: ["km","en"]` and read back as "both". Separate Khmer and
+      English versions of each episode have no design, so they stay out of V21-02.
+    - **Several update days**: `series.update_days` (weekday array, 0–7 distinct; `update_day` is migrated into it and
+      dropped). API `updateDays` everywhere `updateDay` is today (`SeriesCard` keeps `updateDay` = the first day for one
+      release). Home's daily lists and the UP badge use every day; the website's "Every Sun" becomes "Every Mon and Thu".
+    - **Release time (ICT)**: `series.release_hour` (0–23, ICT; the form offers 12, 18, 20, 21); API `releaseHour`.
+      Upload episode uses it as the default hour of a scheduled release.
+    - **Series Fast Pass**: `series.fast_pass` (on/off, default on) and `fast_pass_ahead` (1–5, default 3); API
+      `fastPass: { on, ahead }`. They are the defaults for new episodes (Upload episode's switch; free after
+      `ahead` × 7 ÷ number of update days, rounded up, so a weekly series with 3 ahead gives 21 days). Episodes already
+      out keep their own price and free date (turning Fast Pass off frees nobody's coins).
+    - **Comments switch**: `series.comments_enabled` (default on); API `commentsEnabled` on the series. Off: the series
+      page and every episode refuse new comments (403 `comments_disabled`, as an episode's own switch does today) and
+      the website hides the composer. The per-episode switch stays; both must be on.
+    - **On break with a message**: `series.break_message` (up to 120 characters, kept only while the status is
+      `hiatus`); API `breakMessage`. The series page shows "On break" and the message (today hiatus shows as
+      ongoing).
+    - **Hide / show one episode (creator)**: `episodes.hidden_at`, separate from the admin's `HIDDEN` status (which the
+      creator still can't undo). `POST /creator/series/{id}/episodes/{n}/hide` and `…/show`. A hidden episode
+      disappears for readers, also for those who unlocked it, until it is shown again (the website already warns that
+      coins aren't refunded); numbers don't shift.
+    - **Delete series** (owner's choice 2026-11-11: spec §21): `DELETE /creator/series/{id}`, owner only, removes the
+      series for good, and only while none of its episodes was ever published (409 `has_published_episodes`
+      otherwise; such a series can only be hidden). Drafts and future scheduled episodes go with it. Nothing anyone
+      paid for can disappear, so no soft-delete state.
+    - **Website (real mode)**: Create series and Manage series send and read all of the above; the Fast Pass and
+      Settings tabs save to the API instead of a toast; Hide / Show and Delete appear in real mode; reader pages show
+      the second genre, the age number, every update day and "On break".
+  - Done 2026-11-11: migration V10 (`second_genre_id`, age `TEEN16`, `update_days` replacing `update_day`,
+    `release_hour`, `fast_pass` + `fast_pass_ahead`, `comments_enabled`, `break_message`, `episodes.hidden_at`); the
+    fields on `SeriesInput` / `SeriesEdit` and the reader answers; `EpisodeInput.useSeriesFastPass` (new episodes take
+    the series' Fast Pass: free after ceil(ahead × 7 ÷ update days)); the series comments switch (403
+    `comments_disabled`); `POST …/episodes/{n}/hide` and `…/show`; `DELETE /creator/series/{id}` (409
+    `has_published_episodes`). Tests: `SeriesFieldsApiTest`, `FreeAfterDaysTest`; `./gradlew check --offline` 279
+    tests green. `e2e/real.spec.ts` test 16 (Create series and Manage series fields after a reload, delete a draft)
+    and test 17 (the reader's series page, hide / show a chapter, delete refused) pass against the local backend.
+    Open points: the Create series option "Both, as separate versions" still promises two versions while the API
+    stores one series in two languages (owner decision); the new Vitest tests are written but not run on the office
+    PC (no Vitest there).
 
 - [ ] **V21-03 In-app notifications inbox**
   - Build: a `notifications` table fed by the same outbox events as P3-16 (new episode, comment reply, coins and

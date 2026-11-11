@@ -10,8 +10,13 @@ import java.util.UUID;
 import org.jspecify.annotations.Nullable;
 
 /**
- * One published series with its genre, creator and episode counts as of the query's "now".
+ * One published series with its genre, creator and episode counts as of the query's "now". Episodes
+ * the creator hid are not counted.
  *
+ * @param secondGenreSlug the optional second genre (V21-02)
+ * @param updateDays the days new episodes come out, in week order
+ * @param commentsEnabled the series' comments switch
+ * @param breakMessage the "On break" message (only while the status is HIATUS)
  * @param freeEpisodes published episodes that anyone can read now (free, or Fast Pass whose free
  *     date has passed)
  * @param fastPassEpisodes published episodes that still need coins (Fast Pass before their free
@@ -27,16 +32,19 @@ public record SeriesRow(
         String summary,
         String genreSlug,
         String genreName,
+        @Nullable String secondGenreSlug,
         UUID creatorId,
         String creatorName,
         @Nullable String coverUrl,
         long views,
         long likes,
         long subscribers,
-        @Nullable DayOfWeek updateDay,
+        List<DayOfWeek> updateDays,
         SeriesStatus status,
         List<String> languages,
         AgeRating ageRating,
+        boolean commentsEnabled,
+        @Nullable String breakMessage,
         OffsetDateTime launchedAt,
         int freeEpisodes,
         int fastPassEpisodes,

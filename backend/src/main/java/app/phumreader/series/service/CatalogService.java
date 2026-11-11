@@ -205,7 +205,11 @@ public class CatalogService {
                         .toList();
         for (Weekday day : Weekday.values()) {
             List<SeriesCard> list = new ArrayList<>();
-            scheduled.stream().filter(c -> c.updateDay() == day).forEach(list::add);
+            // Most viewed first; a series with several days competes on each of them.
+            scheduled.stream()
+                    .filter(c -> c.updateDays().contains(day))
+                    .limit(DAILY_PER_DAY)
+                    .forEach(list::add);
             for (SeriesCard up : upSeries) {
                 if (list.size() >= DAILY_PER_DAY) {
                     break;
@@ -315,10 +319,16 @@ public class CatalogService {
                 new SeriesStats(row.subscribers(), queries.visibleComments(row.id())),
                 cards.of(queries.related(row.id(), RELATED, at)),
                 row.creatorId(),
-                queries.publishedSeriesOfCreator(row.creatorId()));
+                queries.publishedSeriesOfCreator(row.creatorId()),
+                row.secondGenreSlug(),
+                row.breakMessage(),
+                row.commentsEnabled());
     }
 
-    /** Released episodes of a series, oldest or newest first; 404 for an unknown series. */
+    /**
+     * Released episodes of a series, oldest or newest first (episodes the creator hid are left out,
+     * numbers don't shift); 404 for an unknown series.
+     */
     public CursorPage<EpisodeSummary> episodes(
             String slug, EpisodeOrder order, @Nullable String cursor, @Nullable Integer limit) {
         int size = Cursors.limit(limit);
@@ -413,7 +423,8 @@ public class CatalogService {
                 row.type(),
                 row.creatorId(),
                 cards.of(row),
-                row.latestFreeNumber());
+                row.latestFreeNumber(),
+                row.commentsEnabled());
     }
 
     private static EpisodeRef episodeRef(
@@ -515,9 +526,10 @@ public class CatalogService {
         SeriesCard of(SeriesRow r) {
             boolean up =
                     r.status() == SeriesStatus.ONGOING
-                            && r.updateDay() == today.day()
+                            && r.updateDays().contains(today.day())
                             && r.latestRelease() != null
                             && recent(r.latestRelease(), now, UP_FOR);
+            List<Weekday> days = r.updateDays().stream().map(Weekday::of).toList();
             boolean isNew = recent(r.launchedAt(), now, NEW_FOR);
             return new SeriesCard(
                     r.id(),
@@ -532,7 +544,8 @@ public class CatalogService {
                     r.freeEpisodes(),
                     r.fastPassEpisodes(),
                     r.totalEpisodes(),
-                    r.updateDay() == null ? null : Weekday.of(r.updateDay()),
+                    days.isEmpty() ? null : days.getFirst(),
+                    days,
                     r.status(),
                     r.languages(),
                     r.ageRating(),

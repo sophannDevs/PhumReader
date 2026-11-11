@@ -179,6 +179,12 @@ export type SeriesDetail = {
   creatorSeriesCount: number
   /** Real API only: the id the Follow button needs. */
   creatorId?: string
+  /** Real API only (V21-02): the second genre; demo series have one genre. */
+  secondGenre?: Genre | null
+  /** Real API only (V21-02): the "On break" message; demo series are never on a break. */
+  breakMessage?: string | null
+  /** Real API only (V21-02): false when the creator turned comments off; the demo always allows them. */
+  commentsEnabled?: boolean
 }
 
 /** null when the slug is unknown (pages call notFound()). Not affected by ?demo=empty. */
@@ -206,6 +212,8 @@ export type EpisodeData = {
   panels: Panel[]
   /** Real API only: what the signed-in reader did with this episode. */
   viewer?: ReaderMarks
+  /** Real API only: false when the comments switch is off (the demo always allows comments). */
+  commentsEnabled?: boolean
 }
 
 export type ReaderMarks = { liked: boolean; bookmarked: boolean }
@@ -228,7 +236,7 @@ export const fetchEpisode = (slug: string, n: number) =>
     }
   )
 
-export type ChapterData = { series: Series; chapter: NovelChapter; total: number; viewer?: ReaderMarks }
+export type ChapterData = { series: Series; chapter: NovelChapter; total: number; viewer?: ReaderMarks; commentsEnabled?: boolean }
 
 export const fetchChapter = (slug: string, n: number) =>
   withDemo<ChapterData | null>(

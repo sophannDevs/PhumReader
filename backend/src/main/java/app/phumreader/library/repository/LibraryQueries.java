@@ -317,7 +317,8 @@ public class LibraryQueries {
                 "select u.id, u.episode_id, e.series_id, s.title, e.number, u.created_at"
                         + " from unlocks u join episodes e on e.id = u.episode_id"
                         + " join series s on s.id = e.series_id"
-                        + " where u.user_id = :u and s.visibility = 'PUBLISHED'";
+                        + " where u.user_id = :u and s.visibility = 'PUBLISHED'"
+                        + " and e.hidden_at is null";
         return page(order, after, "created_at", "id", "series_id", "number")
                 .run(jdbc, select, userId, limit)
                 .query((rs, n) ->
@@ -331,11 +332,15 @@ public class LibraryQueries {
                 .list();
     }
 
-    /** Episode numbers of one series the reader unlocked, lowest first. */
+    /**
+     * Episode numbers of one series the reader unlocked, lowest first (not the ones the creator
+     * hid).
+     */
     public List<Integer> unlockedNumbers(UUID userId, UUID seriesId) {
         return jdbc.sql(
                         "select e.number from unlocks u join episodes e on e.id = u.episode_id"
-                                + " where u.user_id = :u and e.series_id = :s order by e.number")
+                                + " where u.user_id = :u and e.series_id = :s"
+                                + " and e.hidden_at is null order by e.number")
                 .param("u", userId)
                 .param("s", seriesId)
                 .query(Integer.class)

@@ -322,20 +322,33 @@ docs/BACKEND_CHECKLIST.md, "V2.1 API additions" (V21-01 … V21-07).
   autosaves to store `draftSeries` ("new" or the work id; `?draft=C3` continues the dashboard draft). Demo: the cover
   is a sample cover from the catalogue ("Demo: a sample cover was added"); Submit adds the work to `myWorks` with status
   "review". Real mode: Save draft creates/updates the series as a draft, Submit saves it and submits it for review
-  (V21-01; the same "in review" screen) and the cover is a real upload; the second genre, 16+ vs 18+, "Both" languages, more than one update day, the
-  release time and Fast Pass stay in the local draft (no API fields).
+  (V21-01; the same "in review" screen) and the cover is a real upload. Since V21-02 every field is saved and read
+  back: second genre, All / 13+ / 16+ / 18+ (`all` / `teen` / `teen16` / `mature`), every update day, the release time
+  and the Fast Pass switch. "Both" languages is one series in `["en", "km"]` (separate versions of each episode have no
+  design). PUT replaces the whole series, so the settings only Manage series shows (Fast Pass episodes ahead, comments,
+  break message) are carried over from the saved series. In real mode a new series starts with Fast Pass on (the API's
+  default); demo mode keeps the prototype's off.
 - V2-57 (F22) **Upload episode** on `/creator/upload?series=<id>` (`&ep=<n>` edits; V1 episode routes redirect). Demo: the
   series list is `myWorks` minus drafts; images are the creator's own files with a simulated upload (the real width is
   checked: 690–1600 px); publishing adds one to the work's episode count; Save draft only marks it saved. Real mode
   sends the panels, or the novel text as blocks (blank line = paragraph, "# " heading, "> " quote, "* * *" scene
-  break). Fast Pass is 5 coins and free for everyone 7 days after release (prototype Manage > Fast Pass).
+  break). Fast Pass is 5 coins and free for everyone 7 days after release in demo mode (prototype). Real mode (V21-02):
+  the release date, hour and Fast Pass switch start from the series (its next update day, release time and series
+  Fast Pass) until the creator picks another; a new episode left at the series' Fast Pass sends `useSeriesFastPass`,
+  and the "free for everyone on …" date uses the same rule as the API: ceil(ahead × 7 ÷ number of update days) days
+  (a weekly series with 3 ahead: 21). An edited episode keeps its own price and days.
 - V2-58 (F23) **Manage series** `/creator/series/[id]` with `?tab=episodes|details|fast-pass|settings` (V1 `…/edit` redirects
   to the details tab). Demo: the episode list is generated from the work (`demoEpisodes`); the changes come from
   `reviewNotes[id]` (each with "Mark fixed"), else the two automatic-check items; Resubmit sets the status back to
   "review". Episode edits, story status, break message, extra update days, Fast Pass, comments and hiding the series
   last for the visit. Real mode: GET/PUT the series and episodes, DELETE drafts, hiding the series unpublishes it; the
-  reviewer's changes and note come from the API and Mark fixed / Undo / Resubmit are saved there (V21-01); the API
-  can't hide one episode or delete a series (not shown) and doesn't store the series-wide Fast Pass or comments.
+  reviewer's changes and note come from the API and Mark fixed / Undo / Resubmit are saved there (V21-01). Since
+  V21-02 the details (story status with the break message, every update day), the Fast Pass tab (on/off, 1–5 ahead)
+  and the comments switch are saved to the API and read back; every save sends the whole series (PUT replaces it).
+  Hide / Show one episode calls the API (`hiddenAt`); an episode an admin took down shows "Taken down by PhumiReader"
+  without Show. Delete series calls the API and stays blocked once any episode was published (spec §21; the API
+  answers 409 `has_published_episodes` too). The Fast Pass description's "free … N days after release" uses the
+  API's rule (ahead × 7 ÷ update days, rounded up), which is ahead × 7 for the demo's weekly works as before.
 - V2-59 (F23) On phones the prototype's flex-wrap pushes the cover above long Fast Pass rows; we keep the cover beside
   the title on every row (same content, steadier layout).
 - V2-60 (F04) **ListRowActions** is built into each list's rows (admin queue, upload image list, Manage episodes, Library
@@ -391,3 +404,15 @@ docs/BACKEND_CHECKLIST.md, "V2.1 API additions" (V21-01 … V21-07).
   excluded (the dev profile's empty `REDIS_URL` makes Spring Boot 4.1.2 refuse to start), a real-mode build whose
   type check skips the test files (no Vitest here), and a backend restart after 10 sign-ups in an hour (the per-IP
   sign-up limit is kept in memory without Redis).
+- V2-69 (V21-02) **Series fields on the reader pages** (no design for these, so the nearest existing pattern): the
+  second genre is a second dark badge in the series hero, joins the About tab's Genre row ("Fantasy, Romance") and its
+  tags; genre lists and search keep the main genre (API). Several update days read "Every Mon and Thu" (km
+  "រៀងរាល់ថ្ងៃច័ន្ទ និងថ្ងៃព្រហស្បតិ៍") on cards, the hero and About, and "Monday and Thursday" in the full-sentence
+  lines (About, end of episode, creator profile); the day filters (Genres, Search) match any of the days and Library's
+  "Recently updated" uses the latest one. A series on hiatus shows "On break" (hero badge and About status) and the
+  creator's message as "On break: …" under the creator's name; its "New episodes every …" lines are left out and
+  the end of an episode says "You’re all caught up. The creator is on a break." The age rating reads All ages / 13+ /
+  16+ / 18+. With comments turned off (the series' switch, or the episode's and the series' together on the reader's
+  end card) the comment box is replaced by "The creator turned off comments here."; a post the API refuses with 403
+  `comments_disabled` shows that line as a toast and reloads the page data. Demo series keep one update day
+  (`updateDays` = `[updateDay]`), are never on a break and always allow comments.

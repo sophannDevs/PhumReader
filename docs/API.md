@@ -1,9 +1,9 @@
 # PhumiReader API reference
 
-The REST API of the Spring Boot backend in `backend/` (Phase 2): version **v1**, **110 endpoints**.
+The REST API of the Spring Boot backend in `backend/` (Phase 2): version **v1**, **113 endpoints**.
 
 > **Where this comes from.** Written from the controllers in `backend/src/main/java/app/phumreader/*/web/`
-> and the generated contract `backend/openapi/openapi.json` (2026-11-11, commit `da199ea`). The OpenAPI file is
+> and the generated contract `backend/openapi/openapi.json` (2026-11-11, V21-02). The OpenAPI file is
 > the machine-readable contract: `./gradlew check` fails when it is out of date, and `npm run api:gen` turns it
 > into the website's TypeScript types (`src/lib/api/schema.d.ts`). This page explains it for people. If the two
 > ever disagree, the code wins; please update this page in the same commit as the controller change.
@@ -290,6 +290,7 @@ Paths below are relative to `/api/v1`. "CSRF" applies to every write (see [CSRF]
 | POST | `/creator/series` | Creator | Create a series (draft) |
 | GET | `/creator/series/{id}` | Creator | One series for the edit form |
 | PUT | `/creator/series/{id}` | Creator | Edit a series |
+| DELETE | `/creator/series/{id}` | Creator | Delete a series that never published an episode |
 | POST | `/creator/series/{id}/submit` | Creator | Submit for review / Resubmit |
 | PUT | `/creator/series/{id}/review/items/{item}` | Creator | Mark a requested change fixed |
 | DELETE | `/creator/series/{id}/review/items/{item}` | Creator | Undo Mark fixed |
@@ -300,6 +301,8 @@ Paths below are relative to `/api/v1`. "CSRF" applies to every write (see [CSRF]
 | GET | `/creator/series/{id}/episodes/{number}` | Creator | One episode for the edit form |
 | PUT | `/creator/series/{id}/episodes/{number}` | Creator | Edit an episode |
 | DELETE | `/creator/series/{id}/episodes/{number}` | Creator | Delete a draft or scheduled episode |
+| POST | `/creator/series/{id}/episodes/{number}/hide` | Creator | Hide a published episode from readers |
+| POST | `/creator/series/{id}/episodes/{number}/show` | Creator | Show it again |
 | **Media uploads** ||||
 | POST | `/creator/uploads` | Creator (any signed-in user for `AVATAR`) | Start an image upload |
 | POST | `/creator/uploads/{id}/complete` | Signed in (owner) | Check the image, make variants |
@@ -565,7 +568,9 @@ All public. Answers keep the website's field names (`src/data/types.ts`) with ra
 
 #### `GET /api/v1/home`
 
-Home feed: hero slides, daily updates by weekday, rankings, genres, web novels. **200** → [HomeFeed](#homefeed).
+Home feed: hero slides, daily updates by weekday, rankings, genres, web novels. A series with several update days
+(`updateDays`) is in the daily list of each of them, and has the UP badge on each of them. **200** →
+[HomeFeed](#homefeed).
 
 #### `GET /api/v1/rankings`
 
@@ -601,11 +606,13 @@ Published series.
 
 #### `GET /api/v1/series/{slug}`
 
-The series page. **200** → [SeriesDetail](#seriesdetail). **Errors:** `404 series_not_found`.
+The series page, with the second genre, the "On break" message and the series' comments switch (V21-02).
+**200** → [SeriesDetail](#seriesdetail). **Errors:** `404 series_not_found`.
 
 #### `GET /api/v1/series/{slug}/episodes`
 
-Released episodes (no drafts, nothing scheduled in the future).
+Released episodes (no drafts, nothing scheduled in the future, nothing the creator hid; the numbers of the others
+don't shift).
 
 | Parameter | Values |
 |---|---|
@@ -647,6 +654,9 @@ Up to 6 series titles for search-as-you-type. `q`: 0–100 characters; empty ret
 An episode (comic: `panels`) or chapter (novel: `blocks`) to read. **Public**; when signed in, `viewer` carries the
 reader's like, bookmark and unlock state. The series' creator and admins read Fast Pass episodes without unlocking.
 Panel URLs of Fast Pass episodes are signed and work for 5 minutes: load the episode again instead of caching them.
+An episode the creator hid answers `404 episode_not_found` for everyone, also readers who unlocked it, and
+`previous` / `next` / `total` skip it. `commentsEnabled` is true only while both the episode's and the series'
+comments switches are on (hide the composer otherwise).
 
 **200** → [EpisodeContent](#episodecontent).
 **Errors:** `402 episode_locked` with `price` and `freeOn` (a Fast Pass episode the reader has not unlocked; guests
@@ -701,7 +711,8 @@ Subscribed series. **Signed in.** `sort`: `recent` (default) or `title`; plus pa
 
 #### `GET /api/v1/me/unlocked`
 
-Unlocked episodes. **Signed in.** `sort`: `recent` (default) or `title` (series title, then number); plus paging.
+Unlocked episodes (not the ones the creator hid). **Signed in.** `sort`: `recent` (default) or `title` (series
+title, then number); plus paging.
 **200** → page of [UnlockedEntry](#unlockedentry).
 
 #### `GET /api/v1/me/follows`
@@ -753,13 +764,15 @@ Comments on an episode. Same parameters and answer as above.
 
 Comment on the series page. **Signed in.** Body: `{ "body": "Loved this chapter!" }` (1–500 characters).
 **201** → [CommentView](#commentview).
-**Errors:** `400 too_long` (field `body`) · `404 series_not_found` · `429 too_many_comments`.
+**Errors:** `400 too_long` (field `body`) · `403 comments_disabled` (the creator turned comments off for the whole
+series, V21-02) · `404 series_not_found` · `429 too_many_comments`.
 
 #### `POST /api/v1/series/{slug}/episodes/{n}/comments`
 
 Comment on an episode. **Signed in.** Same body and answer.
 **Errors:** as above, plus `402` when the reader may not read the episode · `403 comments_disabled` (the creator
-turned comments off for this episode).
+turned comments off for this episode or for the whole series) · `404 episode_not_found` (also for an episode the
+creator hid).
 
 #### `DELETE /api/v1/comments/{id}`
 
@@ -868,6 +881,9 @@ approves; this sets the launch date) or `changes` (the admin asks for changes; t
 resubmits → `review`) or `draft` (rejected). `hidden`: an admin took it down. Readers only see `published`. A series
 that was live once can be taken off (`unpublish`) and put live again (`publish`) without a new review.
 
+**Hidden episodes** (V21-02): the creator can hide a published episode (`…/hide`, `hiddenAt` set) and show it again
+(`…/show`). Separate from an admin's takedown (`status: "hidden"`), which only an admin can undo.
+
 #### `POST /api/v1/creator`
 
 Accepts the Creator terms and adds the `CREATOR` role. **Signed in.**
@@ -902,29 +918,42 @@ Creates a series as a draft. **Creator.** The slug is made from the title and ne
   "languages": ["km", "en"],
   "summary": "A village story…",
   "tags": ["village", "ghost"],
-  "ageRating": "teen",
-  "status": "ongoing",
-  "updateDay": "Fri",
+  "secondGenre": "drama",
+  "ageRating": "teen16",
+  "status": "hiatus",
+  "breakMessage": "Back on 1 March.",
+  "updateDays": ["Mon", "Thu"],
+  "releaseHour": 20,
+  "fastPass": { "on": true, "ahead": 3 },
+  "commentsEnabled": true,
   "coverUploadId": "<uuid of a finished COVER upload>",
   "bannerUploadId": "<uuid of a finished BANNER upload>"
 }
 ```
 
+The whole series is sent on every save: a field left out or `null` takes its default (below), except the cover and
+banner, which stay when no new upload is sent.
+
 | Field | Rules |
 |---|---|
 | `title` | required, up to 120 characters |
 | `genre` | required, a genre slug |
+| `secondGenre` | optional genre slug, not the main genre (`400 unknown_genre` / `same_as_genre`, field `secondGenre`); genre lists and search use the main genre only |
 | `languages` | required, each `en` or `km` |
 | `type` | `comic` or `novel`; cannot change later (`400 type_fixed`) |
 | `summary` | up to 2000 characters (needed to submit and publish) |
 | `tags` | up to 10 |
-| `ageRating` | `all`, `teen`, `mature` |
-| `status` | `ongoing`, `completed`, `hiatus` |
-| `updateDay` | `Mon` … `Sun`, or `null` |
+| `ageRating` | `all` (all ages, default), `teen` (13+), `teen16` (16+), `mature` (18+) |
+| `status` | `ongoing` (default), `completed`, `hiatus` |
+| `breakMessage` | up to 120 characters; kept only while `status` is `hiatus`, dropped otherwise |
+| `updateDays` | `Mon` … `Sun`, each at most once (`400 duplicate_day`, field `updateDays`), at most 7; `null` or `[]` = no schedule. Saved and sent back in week order (Mon first) |
+| `releaseHour` | 0–23, the hour in Asia/Phnom_Penh new episodes come out (the form offers 12, 18, 20, 21); `null` = not set |
+| `fastPass` | `{ on, ahead }`: the defaults for new episodes (`ahead` 1–5). Default `{ "on": true, "ahead": 3 }`. Episodes already out never change |
+| `commentsEnabled` | default `true`; `false` closes comments on the series page and every episode |
 | `coverUploadId`, `bannerUploadId` | finished uploads of kind `COVER` / `BANNER` (a cover is needed to submit and publish) |
 
-**201** → [SeriesEdit](#seriesedit). **Errors:** `400 unknown_genre` · `400 upload_invalid` / `upload_not_ready` ·
-`403 not_a_creator`.
+**201** → [SeriesEdit](#seriesedit). **Errors:** `400 unknown_genre` (field `genre` or `secondGenre`) ·
+`400 same_as_genre` · `400 duplicate_day` · `400 upload_invalid` / `upload_not_ready` · `403 not_a_creator`.
 
 #### `GET /api/v1/creator/series/{id}`
 
@@ -934,8 +963,17 @@ was never submitted). **Creator.** **200** → [SeriesEdit](#seriesedit).
 
 #### `PUT /api/v1/creator/series/{id}`
 
-Edits a series. **Creator.** Same body as create; leave the upload ids out to keep the current cover and banner.
+Edits a series. **Creator.** Same body as create (the whole series; a field left out takes its default); leave the
+upload ids out to keep the current cover and banner.
 **200** → [SeriesEdit](#seriesedit). **Errors:** as create and get, plus `400 type_fixed`.
+
+#### `DELETE /api/v1/creator/series/{id}`
+
+Deletes the series for good (V21-02), only while none of its episodes was ever published: drafts and scheduled
+episodes, its submissions for review, subscriptions and comments go with it. A series with an episode that is (or
+was) live, hidden by the creator or by an admin, released by its scheduled time or unlocked by anyone can only be
+hidden. **Creator** (owner). **204.**
+**Errors:** `409 has_published_episodes` · `403 not_your_series` · `404 series_not_found`.
 
 #### `POST /api/v1/creator/series/{id}/submit`
 
@@ -968,7 +1006,8 @@ Takes the series back to a draft. **Creator.** **200** → [SeriesEdit](#seriese
 
 #### `GET /api/v1/creator/series/{id}/episodes`
 
-Every episode, newest first, drafts and scheduled ones too. **Creator.** **200** → [CreatorEpisode](#creatorepisode)`[]`.
+Every episode, newest first, drafts and scheduled ones too. `hiddenAt` is set while the creator hides a published
+episode; `status: "hidden"` means an admin took it down. **Creator.** **200** → [CreatorEpisode](#creatorepisode)`[]`.
 
 #### `POST /api/v1/creator/series/{id}/episodes`
 
@@ -983,6 +1022,7 @@ Adds an episode (comic) or chapter (novel). **Creator.**
   "creatorNote": "Thanks for reading!",
   "commentsEnabled": true,
   "fastPass": { "priceCoins": 5, "freeAfterDays": 7 },
+  "useSeriesFastPass": null,
   "publish": { "mode": "scheduled", "at": "2026-11-14T12:00:00Z" }
 }
 ```
@@ -997,13 +1037,14 @@ A novel chapter sends `blocks` instead of `imageUploadIds`:
 | `imageUploadIds` | comics only, finished `PANEL` uploads in reading order: at most 100 images and 200 MB |
 | `blocks` | novels only, up to 2000 blocks; `type` is `paragraph`, `heading`, `quote` or `scene-break`; `text` up to 20 000 characters |
 | `creatorNote` | up to 1000 characters |
-| `fastPass` | `null` = free. Otherwise `priceCoins` 3–10 (default 5) and `freeAfterDays` 1–90 (default 7) |
+| `fastPass` | `null` (or left out) = free. Otherwise `priceCoins` 3–10 (default 5) and `freeAfterDays` 1–90 (default 7); `{}` = 5 coins, 7 days |
+| `useSeriesFastPass` | `true`: take the series' Fast Pass switch instead of `fastPass` (which must then be `null`, else `400 not_with_series_fast_pass`, field `fastPass`). Series on: 5 coins, free after ceil(`ahead` × 7 ÷ max(1, number of update days)) days (weekly, 3 ahead: 21). Series off: free. New episodes only (`PUT` answers `400 new_episodes_only`, field `useSeriesFastPass`). `null` / `false`: `fastPass` decides, as before |
 | `publish.mode` | `draft`, `now` or `scheduled` (then `publish.at` is a future instant) |
 
 **201** → [EpisodeEdit](#episodeedit).
 **Errors:** `400 number_taken` · `400 not_for_comics` (blocks on a comic) · `400 not_for_novels` (images on a
 novel) · `400 too_many_images` · `400 episode_too_large` · `400 schedule_in_past` (field `publish.at`) ·
-`400 upload_invalid` / `upload_not_ready` · `403 not_your_series`.
+`400 not_with_series_fast_pass` · `400 upload_invalid` / `upload_not_ready` · `403 not_your_series`.
 
 #### `GET /api/v1/creator/series/{id}/episodes/{number}`
 
@@ -1014,13 +1055,23 @@ One episode as the edit form shows it. **Creator.** **200** → [EpisodeEdit](#e
 
 Edits an episode: send the whole episode. A published episode stays published (`publish.mode: "now"`); drafts and
 scheduled episodes can change mode. **Creator.** **200** → [EpisodeEdit](#episodeedit).
-**Errors:** as create, plus `400 number_fixed` (the number cannot change) · `409 episode_hidden` (an admin took it
-down).
+**Errors:** as create, plus `400 number_fixed` (the number cannot change) · `400 new_episodes_only`
+(`useSeriesFastPass`) · `409 episode_hidden` (an admin took it down). An episode the creator hid stays hidden.
 
 #### `DELETE /api/v1/creator/series/{id}/episodes/{number}`
 
 Deletes a draft or scheduled episode. **Creator.** **204.** **Errors:** `409 episode_published` (live episodes cannot
 be deleted).
+
+#### `POST /api/v1/creator/series/{id}/episodes/{number}/hide` · `POST …/show`
+
+Hide (V21-02): readers no longer see the published episode, also readers who unlocked it (no refund), until it is
+shown again; it leaves the episode list, the reader (`404`), its neighbours' `previous` / `next`, the series'
+counts, Library > Unlocked and its comments. Numbers don't shift. Hiding it again keeps the first `hiddenAt`;
+showing a visible episode changes nothing. **Creator** (owner). No body. **200** →
+[CreatorEpisode](#creatorepisode) (`hiddenAt` set after hide, `null` after show).
+**Errors:** `409 episode_not_published` (drafts and scheduled episodes) · `409 episode_hidden` (an admin took it
+down; only an admin can put it back) · `403 not_your_series` · `404 episode_not_found`.
 
 ### Media uploads
 
@@ -1478,11 +1529,12 @@ interface CreatorDashboard {
 interface CreatorEpisode {
   commentsEnabled: boolean;
   freeAt?: string | null;                    // ISO 8601 instant
+  hiddenAt?: string | null;                  // ISO 8601 instant; set while the creator hides it
   likes: number;
   number: number;
   priceCoins?: number | null;
   publishedAt?: string | null;               // ISO 8601 instant
-  status: string;
+  status: string;                            // draft, scheduled, published, hidden (an admin took it down)
   thumbnailUrl?: string | null;
   title: string;
   views: number;
@@ -1578,7 +1630,7 @@ interface EmailRequest {
 interface EpisodeContent {
   blocks: NovelBlock[];
   comments: number;
-  commentsEnabled: boolean;
+  commentsEnabled: boolean;                  // the episode's and the series' switches are both on
   creatorNote?: string | null;
   episode: EpisodeSummary;
   next?: EpisodeSummary;
@@ -1600,6 +1652,7 @@ interface EpisodeEdit {
   creatorNote?: string | null;
   freeAfterDays?: number | null;
   freeAt?: string | null;                    // ISO 8601 instant
+  hiddenAt?: string | null;                  // ISO 8601 instant; set while the creator hides it
   number: number;
   panels: PanelView[];
   priceCoins?: number | null;
@@ -1624,6 +1677,7 @@ interface EpisodeInput {
   publish: Publish;
   thumbnailUploadId?: string | null;         // uuid
   title: string;                             // max 120 chars
+  useSeriesFastPass?: boolean | null;        // true: Fast Pass from the series' switch (new episodes only)
 }
 ```
 
@@ -2138,7 +2192,7 @@ interface ReviewFlag {
 
 ```ts
 interface ReviewQueueItem {
-  ageRating: "all" | "teen" | "mature";
+  ageRating: "all" | "teen" | "teen16" | "mature";
   coverUrl?: string | null;
   creator: string;                           // pen name
   episodeCount: number;                      // drafts included
@@ -2166,7 +2220,7 @@ interface SearchResults {
 
 ```ts
 interface SeriesCard {
-  ageRating: "all" | "teen" | "mature";
+  ageRating: "all" | "teen" | "teen16" | "mature";
   badges: Badges;
   cover?: string | null;
   creator: string;
@@ -2181,7 +2235,8 @@ interface SeriesCard {
   title: string;
   totalEpisodes: number;
   type: "comic" | "novel";
-  updateDay?: "Mon" | "Tue" | "Wed" | "Thu" | "Fri" | "Sat" | "Sun" | null;
+  updateDay?: "Mon" | "Tue" | "Wed" | "Thu" | "Fri" | "Sat" | "Sun" | null; // the first of updateDays
+  updateDays: ("Mon" | "Tue" | "Wed" | "Thu" | "Fri" | "Sat" | "Sun")[];  // week order; [] = no schedule
   views: number;
 }
 ```
@@ -2190,9 +2245,12 @@ interface SeriesCard {
 
 ```ts
 interface SeriesDetail {
+  breakMessage?: string | null;              // the "On break" message while status is hiatus
+  commentsEnabled: boolean;                  // false: hide the composer on the series page and its episodes
   creatorId: string;                         // uuid
   creatorSeriesCount: number;
   related: SeriesCard[];
+  secondGenre?: string | null;               // genre slug
   series: SeriesCard;
   stats: SeriesStats;
   synopsis: string;
@@ -2203,12 +2261,17 @@ interface SeriesDetail {
 
 ```ts
 interface SeriesEdit {
-  ageRating: "all" | "teen" | "mature";
+  ageRating: "all" | "teen" | "teen16" | "mature";
   bannerUrl?: string | null;
+  breakMessage?: string | null;              // only while status is hiatus
+  commentsEnabled: boolean;
   coverUrl?: string | null;
-  genre: string;
+  fastPass: SeriesFastPass;
+  genre: string;                             // genre slug
   id: string;                                // uuid
   languages: string[];
+  releaseHour?: number | null;               // 0-23, Asia/Phnom_Penh
+  secondGenre?: string | null;               // genre slug
   slug: string;
   status: "ongoing" | "completed" | "hiatus";
   summary: string;
@@ -2216,26 +2279,42 @@ interface SeriesEdit {
   title: string;
   type: "comic" | "novel";
   review?: SeriesReview;                     // null when it was never submitted
-  updateDay?: "Mon" | "Tue" | "Wed" | "Thu" | "Fri" | "Sat" | "Sun" | null;
+  updateDays: ("Mon" | "Tue" | "Wed" | "Thu" | "Fri" | "Sat" | "Sun")[]; // week order
   visibility: "draft" | "review" | "changes" | "published" | "hidden";
 }
+
+### SeriesFastPass
+
+The series' Fast Pass switch (V21-02): the defaults for new episodes.
+
+```ts
+interface SeriesFastPass {
+  ahead: number;                             // 1-5 episodes readers can buy ahead
+  on: boolean;                               // new episodes are Fast Pass by default
+}
+```
 ```
 
 ### SeriesInput
 
 ```ts
 interface SeriesInput {
-  ageRating?: "all" | "teen" | "mature" | null;
+  ageRating?: "all" | "teen" | "teen16" | "mature" | null;
   bannerUploadId?: string | null;            // uuid
+  breakMessage?: string | null;              // max 120 chars; kept only while status is hiatus
+  commentsEnabled?: boolean | null;          // default true
   coverUploadId?: string | null;             // uuid
+  fastPass?: SeriesFastPass;                 // default { on: true, ahead: 3 }
   genre: string;                             // not empty
   languages: string[];                       // each matches en|km
+  releaseHour?: number | null;               // 0-23
+  secondGenre?: string | null;               // genre slug, not the main genre
   status?: "ongoing" | "completed" | "hiatus" | null;
   summary?: string | null;                   // max 2000 chars
   tags?: string[] | null;                    // max 10 items
   title: string;                             // max 120 chars
   type?: "comic" | "novel" | null;
-  updateDay?: "Mon" | "Tue" | "Wed" | "Thu" | "Fri" | "Sat" | "Sun" | null;
+  updateDays?: ("Mon" | "Tue" | "Wed" | "Thu" | "Fri" | "Sat" | "Sun")[] | null; // max 7, each once
 }
 ```
 

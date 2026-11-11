@@ -390,10 +390,11 @@ function fromSeriesItem(q: AdminSeriesItem, own: boolean): QueueSeries {
   };
 }
 
-/** The API's age ratings as the queue shows them ("mature" is the form's 16+ and 18+; the edit form reads it as 18+). */
+/** The API's age ratings as the queue shows them (V21-02: teen 13+, teen16 16+, mature 18+). */
 const API_AGE: Record<real.ReviewQueueItem["ageRating"], string> = {
   all: "All ages",
   teen: "13+",
+  teen16: "16+",
   mature: "18+",
 };
 

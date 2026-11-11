@@ -109,8 +109,9 @@ public class CommentService {
     }
 
     /**
-     * Posts a comment (1-500 characters after trimming). On an episode: 402 when the reader may not
-     * read it, 403 {@code comments_disabled} when the creator turned comments off.
+     * Posts a comment (1-500 characters after trimming). 403 {@code comments_disabled} when the
+     * creator turned comments off for the whole series (V21-02). On an episode: 402 when the reader
+     * may not read it, 403 {@code comments_disabled} when the creator turned comments off for it.
      */
     @Transactional
     public CommentView post(CurrentUser user, String slug, @Nullable Integer episode, String body) {
@@ -123,6 +124,10 @@ public class CommentService {
                     "body", "too_long", "Comments can be at most " + MAX_BODY + " characters.");
         }
         SeriesRef series = catalog.require(slug);
+        if (!series.commentsEnabled()) {
+            throw ApiException.forbidden(
+                    "comments_disabled", "Comments are turned off for this series.");
+        }
         UUID episodeId = null;
         if (episode != null) {
             EpisodeRef ref = reading.requireReadable(series, episode, user);

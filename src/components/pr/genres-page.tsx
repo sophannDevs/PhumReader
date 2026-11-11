@@ -93,7 +93,7 @@ export function GenresPage() {
     !(format === "novel" && s.type !== "novel") &&
     !(status === "completed" && s.status !== "completed") &&
     !(status === "ongoing" && s.status === "completed") &&
-    (day === "any" || s.updateDay === day)
+    (day === "any" || s.updateDays.includes(day))
 
   const pool = catalog.series
   const list = pool.filter((s) => match(s)).sort(COMPARE[sort])
@@ -285,7 +285,7 @@ function GenreCard({ series: s }: { series: Series }) {
   const loc = useLocalize()
   const done = s.status === "completed"
   const novel = s.type === "novel"
-  const lead = done ? t("completed") : loc.schedule(s.schedule)
+  const lead = done ? t("completed") : loc.schedule(s)
   return (
     <li className="min-w-0">
       <Link

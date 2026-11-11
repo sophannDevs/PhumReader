@@ -50,10 +50,45 @@ export async function becomeCreator(penName: string): Promise<string> {
 
 export type SeriesEdit = Schemas["SeriesEdit"]
 export type SeriesInput = Schemas["SeriesInput"]
+/** The series' Fast Pass switch (V21-02): the defaults for new episodes. */
+export type SeriesFastPass = Schemas["SeriesFastPass"]
+
+/** The API's default series Fast Pass: on, 3 episodes ahead (V21-02). */
+export const DEFAULT_SERIES_FAST_PASS: SeriesFastPass = { on: true, ahead: 3 }
+
+/**
+ * The saved series as an edit body. PUT replaces the whole series (a field left out takes its default), so every
+ * save starts from this and changes only its own fields. The cover and banner stay (no new upload ids).
+ */
+export function inputFrom(s: SeriesEdit): SeriesInput {
+  return {
+    title: s.title,
+    genre: s.genre,
+    secondGenre: s.secondGenre ?? null,
+    languages: s.languages,
+    summary: s.summary,
+    tags: s.tags,
+    ageRating: s.ageRating,
+    status: s.status,
+    breakMessage: s.status === "hiatus" ? (s.breakMessage ?? null) : null,
+    updateDays: s.updateDays,
+    releaseHour: s.releaseHour ?? null,
+    fastPass: s.fastPass ?? DEFAULT_SERIES_FAST_PASS,
+    commentsEnabled: s.commentsEnabled,
+    coverUploadId: null,
+    bannerUploadId: null,
+  }
+}
 
 export const fetchSeriesEdit = (id: string) => api.get<SeriesEdit>(`/creator/series/${id}`)
 export const createSeries = (input: SeriesInput) => api.post<SeriesEdit>("/creator/series", input)
+/** Send the whole series ({@link inputFrom}): a field left out takes its default (V21-02). */
 export const updateSeries = (id: string, input: SeriesInput) => api.put<SeriesEdit>(`/creator/series/${id}`, input)
+/**
+ * Deletes the series for good (V21-02), only while none of its episodes was ever published: 409
+ * `has_published_episodes` otherwise (such a series can only be hidden).
+ */
+export const deleteSeries = (id: string) => api.delete<void>(`/creator/series/${id}`)
 /**
  * Submit for review (a draft) or Resubmit (changes requested, every item marked fixed): the series waits in the admins'
  * queue and goes live when one approves it (V21-01). 400 `required` (summary / coverUploadId), 409 `changes_not_fixed`,
@@ -84,3 +119,13 @@ export const updateEpisode = (seriesId: string, n: number, input: EpisodeInput) 
   api.put<EpisodeEdit>(`/creator/series/${seriesId}/episodes/${n}`, input)
 /** A draft or scheduled episode only (409 episode_published for a live one). */
 export const deleteEpisode = (seriesId: string, n: number) => api.delete<void>(`/creator/series/${seriesId}/episodes/${n}`)
+/**
+ * Hide a published episode from readers, also those who unlocked it (V21-02; `hiddenAt` set). 409
+ * `episode_not_published` (draft or scheduled), `episode_hidden` (an admin took it down).
+ */
+export const hideEpisode = (seriesId: string, n: number) => api.post<MyEpisode>(`/creator/series/${seriesId}/episodes/${n}/hide`)
+/** Show a hidden episode again (`hiddenAt` null); same errors as {@link hideEpisode}. */
+export const showEpisode = (seriesId: string, n: number) => api.post<MyEpisode>(`/creator/series/${seriesId}/episodes/${n}/show`)
+
+/** Days a Fast Pass episode stays paid when it takes the series' switch: ceil(ahead × 7 ÷ max(1, update days)), as the API does. */
+export const seriesFreeAfterDays = (ahead: number, days: number) => Math.min(90, Math.max(1, Math.ceil((ahead * 7) / Math.max(1, days))))

@@ -232,7 +232,10 @@ export function DoneCard({ title, body, children }: { title: string; body: React
   )
 }
 
-/** API error codes of the series review (V21-01) → their message in the "manage" messages. */
+/**
+ * API error codes of the series review (V21-01), deleting a series and hiding an episode (V21-02) → their message in
+ * the "manage" messages.
+ */
 const REVIEW_ERRORS = {
   already_in_review: "errorAlreadyInReview",
   already_published: "errorAlreadyPublished",
@@ -241,11 +244,15 @@ const REVIEW_ERRORS = {
   changes_requested: "errorChangesRequested",
   no_changes_requested: "errorReviewChanged",
   item_not_requested: "errorReviewChanged",
+  has_published_episodes: "errorHasPublished",
+  episode_hidden: "errorEpisodeHidden",
+  episode_not_published: "errorEpisodeNotPublished",
 } as const
 
 /**
  * A failed save as one toast: too many tries (with the wait), PhumiReader hid the series, a series review answer
- * (already in review, changes not fixed, …; a missing summary or cover on submit), or "Something went wrong".
+ * (already in review, changes not fixed, …; a missing summary or cover on submit), a series that can't be deleted, an
+ * episode that can't be hidden or shown, or "Something went wrong".
  */
 export function useFailToast() {
   const ts = useTranslations("states")

@@ -31,8 +31,11 @@ public final class CatalogViews {
      * @param freeEpisodes episodes anyone can read now
      * @param fastPassEpisodes episodes that need coins until their free date
      * @param totalEpisodes released episodes (free + Fast Pass)
-     * @param updateDay the day new episodes come out, if the series has a schedule
+     * @param updateDay the first of {@code updateDays} (week order), if the series has a schedule
+     * @param updateDays every day new episodes come out, in week order (Mon first); empty without a
+     *     schedule
      * @param language languages the series is available in ("en", "km")
+     * @param ageRating all, teen (13+), teen16 (16+) or mature (18+)
      */
     public record SeriesCard(
             UUID id,
@@ -48,14 +51,15 @@ public final class CatalogViews {
             int fastPassEpisodes,
             int totalEpisodes,
             @Nullable Weekday updateDay,
+            List<Weekday> updateDays,
             SeriesStatus status,
             List<String> language,
             AgeRating ageRating,
             Badges badges) {}
 
     /**
-     * @param up the series updates today (Asia/Phnom_Penh) and released an episode in the last 7
-     *     days
+     * @param up the series is ongoing, updates today (one of its update days, Asia/Phnom_Penh) and
+     *     released an episode in the last 7 days
      * @param isNew launched on PhumReader in the last 30 days
      */
     public record Badges(boolean up, boolean isNew) {}
@@ -94,6 +98,10 @@ public final class CatalogViews {
      * @param related up to 4 other series in the same genre
      * @param creatorId the creator's id (follow / unfollow)
      * @param creatorSeriesCount the creator's published series, this one included
+     * @param secondGenre the second genre's slug, if the series has one (V21-02)
+     * @param breakMessage the creator's "On break" message while the status is hiatus
+     * @param commentsEnabled the series takes new comments (off: hide the composer on the series
+     *     page and its episodes; posting answers 403 comments_disabled)
      */
     public record SeriesDetail(
             SeriesCard series,
@@ -101,7 +109,10 @@ public final class CatalogViews {
             SeriesStats stats,
             List<SeriesCard> related,
             UUID creatorId,
-            int creatorSeriesCount) {}
+            int creatorSeriesCount,
+            @Nullable String secondGenre,
+            @Nullable String breakMessage,
+            boolean commentsEnabled) {}
 
     /**
      * @param comments visible comments on the series page and its episodes
@@ -133,8 +144,9 @@ public final class CatalogViews {
      * Everything the home page shows except the reader's own "Continue reading".
      *
      * @param today the day of the week in Asia/Phnom_Penh (the "Today" tab)
-     * @param daily for each day "Mon" … "Sun": up to 6 series that update that day, topped up with
-     *     series that have the UP badge
+     * @param daily for each day "Mon" … "Sun": up to 6 series that update that day (a series with
+     *     several update days can be in several lists), topped up with series that have the UP
+     *     badge
      * @param rankings the first 8 comics and the first 8 web novels
      * @param genres genre names in display order
      * @param byGenre for each genre name: its most viewed series (up to 12)

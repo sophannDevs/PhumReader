@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 import { CreateSeriesPage } from "@/components/pr/create-series-page"
 import { useAppStore } from "@/lib/store"
 import { setSearch } from "@/test/navigation"
-import { renderUi, screen, waitFor } from "@/test/render"
+import { renderUi, screen, waitFor, within } from "@/test/render"
 import { API, apiError, http, HttpResponse, server } from "@/test/server"
 
 /** Create series in real mode (V21-01): Submit saves the series and submits it for review instead of publishing it. */
@@ -19,7 +19,12 @@ const edit = (over: Record<string, unknown> = {}) => ({
   tags: [],
   ageRating: "all",
   status: "ongoing",
-  updateDay: "Sat",
+  breakMessage: null,
+  updateDays: ["Sat"],
+  secondGenre: null,
+  releaseHour: 18,
+  fastPass: { on: true, ahead: 3 },
+  commentsEnabled: true,
   coverUrl: "/covers/x.svg",
   bannerUrl: null,
   visibility: "draft",
@@ -85,5 +90,96 @@ describe("CreateSeriesPage: Submit for review (real API)", () => {
     expect(screen.queryByRole("heading", { name: "Lantern Ferry is in review" })).not.toBeInTheDocument()
     expect(screen.getByRole("button", { name: "Submit for review" })).toBeEnabled()
     expect(calls).toEqual(["save", "submit"])
+  })
+})
+
+/** V21-02: every field the form shows is saved, and the ones only Manage series shows are carried over (PUT replaces). */
+describe("CreateSeriesPage: every field round-trips (real API)", () => {
+  const saved = edit({
+    secondGenre: "romance",
+    ageRating: "teen16",
+    languages: ["en", "km"],
+    updateDays: ["Mon", "Thu"],
+    releaseHour: 20,
+    fastPass: { on: false, ahead: 4 },
+    commentsEnabled: false,
+    status: "hiatus",
+    breakMessage: "Back on Dec 6 with season 2!",
+    tags: ["river"],
+  })
+  const everything = {
+    title: "Lantern Ferry",
+    genre: "fantasy",
+    secondGenre: "romance",
+    languages: ["en", "km"],
+    summary: "A ferry girl on the Kampot river finds a lantern that shows the way to people who are lost.",
+    ageRating: "teen16",
+    updateDays: ["Mon", "Thu"],
+    releaseHour: 20,
+    fastPass: { on: false, ahead: 4 },
+    commentsEnabled: false,
+    status: "hiatus",
+    breakMessage: "Back on Dec 6 with season 2!",
+    tags: ["river"],
+    coverUploadId: null,
+    bannerUploadId: null,
+  }
+  function serveSaved(onPut: (body: unknown) => void) {
+    setSearch("draft=s1")
+    server.use(
+      http.get(`${API}/creator/dashboard`, () => HttpResponse.json(dashboard)),
+      http.get(`${API}/creator/series`, () => HttpResponse.json([])),
+      http.get(`${API}/creator/series/s1`, () => HttpResponse.json(saved)),
+      http.put(`${API}/creator/series/s1`, async ({ request }) => {
+        onPut(await request.json())
+        return HttpResponse.json(saved)
+      }),
+    )
+  }
+
+  it("opens a saved draft with its update days, release time and Fast Pass, and Save draft sends every field back", async () => {
+    signIn()
+    let body: unknown
+    serveSaved((b) => (body = b))
+    const { user } = renderUi(<CreateSeriesPage />)
+    const days = await screen.findByRole("group", { name: /Update days/ })
+    expect(within(days).getByRole("button", { name: "Mon" })).toHaveAttribute("aria-pressed", "true")
+    expect(within(days).getByRole("button", { name: "Thu" })).toHaveAttribute("aria-pressed", "true")
+    expect(within(days).getByRole("button", { name: "Tue" })).toHaveAttribute("aria-pressed", "false")
+    expect(screen.getByLabelText("Release time")).toHaveValue("20")
+    expect(screen.getByRole("switch", { name: "Fast Pass" })).not.toBeChecked()
+
+    await user.click(screen.getByRole("button", { name: "Save draft" }))
+    await waitFor(() => expect(toast.success).toHaveBeenCalledWith("Draft saved"))
+    // The type is fixed once saved (left out); the rest is the whole series, including what only Manage series shows.
+    expect(body).toEqual(everything)
+  })
+
+  it("shows the second genre and 16+ on Basics, and sends the changed days, time, Fast Pass, age and genre", async () => {
+    signIn()
+    let body: unknown
+    serveSaved((b) => (body = b))
+    const { user } = renderUi(<CreateSeriesPage />)
+    const days = await screen.findByRole("group", { name: /Update days/ })
+    await user.click(within(days).getByRole("button", { name: "Tue" }))
+    await user.selectOptions(screen.getByLabelText("Release time"), "21")
+    await user.click(screen.getByRole("switch", { name: "Fast Pass" }))
+
+    await user.click(screen.getByRole("button", { name: /^Basics/ }))
+    expect(await screen.findByLabelText(/Second genre/)).toHaveValue("Romance")
+    expect(screen.getByRole("radio", { name: "16+" })).toHaveAttribute("aria-checked", "true")
+    await user.click(screen.getByRole("radio", { name: "18+" }))
+    await user.selectOptions(screen.getByLabelText(/Second genre/), "Drama")
+
+    await user.click(screen.getByRole("button", { name: "Save draft" }))
+    await waitFor(() => expect(body).toBeDefined())
+    expect(body).toEqual({
+      ...everything,
+      secondGenre: "drama",
+      ageRating: "mature",
+      updateDays: ["Mon", "Tue", "Thu"],
+      releaseHour: 21,
+      fastPass: { on: true, ahead: 4 },
+    })
   })
 })

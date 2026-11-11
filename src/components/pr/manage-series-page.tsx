@@ -43,6 +43,7 @@ import { creatorKeys, useMyEpisodes, useMySeries, useSeriesEdit } from "@/lib/cr
 import {
   BREAK_NOTE_MAX,
   DEFAULT_HOUR,
+  FAST_PASS_AHEAD,
   FAST_PASS_COINS,
   GENRES,
   SUMMARY_MAX,
@@ -80,8 +81,11 @@ import { cn } from "@/lib/utils"
  * - Real API: GET/PUT /creator/series/{id}, the episode list, PUT …/episodes/{n} (title, release slot) and DELETE for
  *   drafts; hiding the series unpublishes it. The status is the series' visibility; the reviewer's changes, note and
  *   submission date come from its `review` (V21-01): Mark fixed / Undo call PUT / DELETE …/review/items/{item} and
- *   Resubmit POST …/submit. The API can't hide one episode or delete a series yet (not shown), and the series-wide Fast
- *   Pass and comments settings are not saved.
+ *   Resubmit POST …/submit. V21-02: the details (story status with the break message, every update day), the Fast Pass
+ *   tab and the comments switch are saved with PUT …/series/{id}, which replaces the whole series, so every save sends
+ *   the saved series with only its own fields changed (`inputFrom`). Hide / Show call POST …/episodes/{n}/hide|show
+ *   (`hiddenAt`; an episode an admin took down shows as hidden without Show), and Delete series calls DELETE
+ *   …/series/{id} (only while no episode was ever published; 409 has_published_episodes otherwise).
  */
 
 type Format = "comic" | "novel"
@@ -90,6 +94,8 @@ type Run = "ongoing" | "hiatus" | "completed"
 type Tab = "episodes" | "details" | "fast-pass" | "settings"
 type Filter = "all" | "live" | "scheduled" | "drafts"
 type Details = { title: string; summary: string; genre: StudioGenre; run: Run; note: string; days: Weekday[]; cover: string; coverUploadId: string | null }
+/** The series-wide Fast Pass (V21-02): on/off and how many episodes ahead (1–5). */
+type FastPass = { on: boolean; n: number }
 
 type Model = {
   id: string
@@ -101,6 +107,11 @@ type Model = {
   days: Weekday[]
   summary: string
   run: Run
+  /** The "On break" message (real API; "" in demo mode) */
+  breakMessage: string
+  fastPass: FastPass
+  /** The series' comments switch */
+  comments: boolean
   subs: string
   views: string
   /** "View as reader": the public series page, or the creator's profile in demo mode */
@@ -116,11 +127,13 @@ type Actions = {
   saveDetails: (d: Details, titleChanged: boolean) => Promise<void>
   saveEpisode: (n: number, title: string, at: number | null) => Promise<void>
   deleteDraft: (n: number) => Promise<void>
-  /** null: the API can't hide one episode */
-  hideEpisode: ((n: number, hide: boolean) => Promise<void>) | null
+  hideEpisode: (n: number, hide: boolean) => Promise<void>
+  /** The series-wide Fast Pass (demo: for the visit) */
+  saveFastPass: (fp: FastPass) => Promise<void>
+  /** The series' comments switch (demo: for the visit) */
+  saveComments: (on: boolean) => Promise<void>
   setVisible: (visible: boolean) => Promise<void>
-  /** null: deleting a series is not available */
-  deleteSeries: (() => Promise<void>) | null
+  deleteSeries: () => Promise<void>
   /** Mark a requested change fixed or not fixed (demo: for the visit) */
   markFixed: (item: string, fixed: boolean) => Promise<void>
   resubmit: () => Promise<void>
@@ -212,6 +225,9 @@ function DemoManage({ id }: { id: string }) {
     days: [work.day],
     summary: changes ? submittedSummary(work) : work.summary,
     run: "ongoing",
+    breakMessage: "",
+    fastPass: { on: work.status === "published", n: FAST_PASS_AHEAD },
+    comments: true,
     subs: work.subs,
     views: work.views,
     readerHref: handle ? `/creators/${handle}` : "/creator",
@@ -229,6 +245,8 @@ function DemoManage({ id }: { id: string }) {
     saveEpisode: async () => void (await withDemo(() => null)),
     deleteDraft: async () => void (await withDemo(() => null)),
     hideEpisode: async () => void (await withDemo(() => null)),
+    saveFastPass: async () => undefined,
+    saveComments: async () => undefined,
     setVisible: async () => void (await withDemo(() => null)),
     deleteSeries: async () => {
       await withDemo(() => null)
@@ -252,7 +270,9 @@ function DemoManage({ id }: { id: string }) {
 
 function RealManage({ id }: { id: string }) {
   const tu = useTranslations("seriesForm")
+  const tm = useTranslations("manage")
   const qc = useQueryClient()
+  const router = useRouter()
   const edit = useSeriesEdit(id)
   const eps = useMyEpisodes(id)
   const mine = useMySeries({ q: "", visibility: "" }, true)
@@ -272,10 +292,13 @@ function RealManage({ id }: { id: string }) {
     .map((e): StudioEpisode => {
       const released = e.publishedAt ? ictDate(Date.parse(e.publishedAt)) : undefined
       const fast = e.status === "published" && !!e.priceCoins && !!e.freeAt && Date.parse(e.freeAt) > now
+      // Hidden: by the creator (`hiddenAt`, V21-02; Show puts it back) or taken down by an admin (status "hidden").
+      const takenDown = e.status === "hidden"
+      const hidden = takenDown || (e.status === "published" && !!e.hiddenAt)
       return {
         n: e.number,
         title: e.title,
-        state: e.status === "scheduled" ? "scheduled" : e.status === "draft" ? "draft" : e.status === "hidden" ? "hidden" : fast ? "fastpass" : "published",
+        state: e.status === "scheduled" ? "scheduled" : e.status === "draft" ? "draft" : hidden ? "hidden" : fast ? "fastpass" : "published",
         thumb: e.thumbnailUrl ?? null,
         views: e.status === "published" ? e.views : null,
         likes: e.status === "published" ? e.likes : null,
@@ -283,6 +306,8 @@ function RealManage({ id }: { id: string }) {
         released,
         free: fast && e.freeAt ? ictDate(Date.parse(e.freeAt)) : undefined,
         at: e.status === "scheduled" && e.publishedAt ? Date.parse(e.publishedAt) : undefined,
+        hiddenSince: !takenDown && e.hiddenAt ? ictDate(Date.parse(e.hiddenAt)) : undefined,
+        takenDown,
       }
     })
     .sort((a, b) => a.n - b.n)
@@ -293,9 +318,12 @@ function RealManage({ id }: { id: string }) {
     format: s.type,
     genre: genreFromSlug(s.genre, GENRES) ?? "Drama",
     status: s.visibility,
-    days: s.updateDay ? [s.updateDay] : [],
+    days: sortDays(s.updateDays ?? []),
     summary: s.summary,
     run: s.status,
+    breakMessage: s.status === "hiatus" ? (s.breakMessage ?? "") : "",
+    fastPass: { on: (s.fastPass ?? api.DEFAULT_SERIES_FAST_PASS).on, n: (s.fastPass ?? api.DEFAULT_SERIES_FAST_PASS).ahead },
+    comments: s.commentsEnabled ?? true,
     subs: formatCount(row?.subscribers ?? 0),
     views: row?.series.views ?? "0",
     readerHref: `/series/${s.slug}`,
@@ -315,23 +343,26 @@ function RealManage({ id }: { id: string }) {
     if (STALE_REVIEW.has(errorCode(error) ?? "")) void refresh()
     return error
   }
-  const input = (d: Details): api.SeriesInput => ({
-    title: d.title.trim(),
-    genre: genreSlug(d.genre),
-    languages: s.languages,
-    summary: d.summary.trim(),
-    ageRating: s.ageRating,
-    updateDay: sortDays(d.days)[0] ?? null,
-    status: d.run,
-    tags: s.tags,
-    coverUploadId: d.coverUploadId,
-    bannerUploadId: null,
-  })
+  // PUT replaces the whole series (V21-02): every save sends the saved series with only its own fields changed.
+  const save = async (patch: Partial<api.SeriesInput>) => {
+    await api.updateSeries(id, { ...api.inputFrom(s), ...patch })
+    await refresh()
+  }
   const actions: Actions = {
-    saveDetails: async (d) => {
-      await api.updateSeries(id, input(d))
-      await refresh()
-    },
+    saveDetails: (d) =>
+      save({
+        title: d.title.trim(),
+        genre: genreSlug(d.genre),
+        // The form lists every genre; one the creator picks as the main genre can't stay the second one.
+        secondGenre: s.secondGenre && s.secondGenre !== genreSlug(d.genre) ? s.secondGenre : null,
+        summary: d.summary.trim(),
+        status: d.run,
+        breakMessage: d.run === "hiatus" ? d.note.trim() || null : null,
+        updateDays: sortDays(d.days),
+        coverUploadId: d.coverUploadId,
+      }),
+    saveFastPass: (fp) => save({ fastPass: { on: fp.on, ahead: fp.n } }),
+    saveComments: (on) => save({ commentsEnabled: on }),
     saveEpisode: async (n, title, at) => {
       const cur = await api.fetchEpisodeEdit(id, n)
       await api.updateEpisode(id, n, {
@@ -355,12 +386,34 @@ function RealManage({ id }: { id: string }) {
       await api.deleteEpisode(id, n)
       await refresh()
     },
-    hideEpisode: null,
+    hideEpisode: async (n, hide) => {
+      try {
+        await (hide ? api.hideEpisode(id, n) : api.showEpisode(id, n))
+      } catch (error) {
+        // An admin took it down, or it is no longer published: load the list as it is now.
+        if (["episode_hidden", "episode_not_published"].includes(errorCode(error) ?? "")) void refresh()
+        throw error
+      }
+      // Only the list is stale; reloading the series now would reset the page.
+      void qc.invalidateQueries({ queryKey: creatorKeys.all, refetchType: "none" })
+    },
     setVisible: async (visible) => {
       await (visible ? api.publishSeries(id) : api.unpublishSeries(id))
       await refresh()
     },
-    deleteSeries: null,
+    deleteSeries: async () => {
+      try {
+        await api.deleteSeries(id)
+      } catch (error) {
+        // An episode came out meanwhile (e.g. a scheduled one): the list shows it and Delete is blocked.
+        if (errorCode(error) === "has_published_episodes") void refresh()
+        throw error
+      }
+      // Not reloaded here (the series is gone: this page would show "not found"); the dashboard loads the list again.
+      await qc.invalidateQueries({ queryKey: creatorKeys.all, refetchType: "none" })
+      toast.success(tm("seriesDeleted"))
+      router.push("/creator")
+    },
     markFixed: async (item, fixed) => {
       if (!isReviewItem(item)) return
       try {
@@ -460,7 +513,7 @@ function ManageView({ model, actions }: { model: Model; actions: Actions }) {
     summary: model.summary,
     genre: model.genre,
     run: model.run,
-    note: "",
+    note: model.breakMessage,
     days: model.days,
     cover: model.cover,
     coverUploadId: null,
@@ -478,9 +531,11 @@ function ManageView({ model, actions }: { model: Model; actions: Actions }) {
   const [fixing, setFixing] = useState<number | null>(null)
   const [resubmitting, setResubmitting] = useState(false)
   const [resubmitted, setResubmitted] = useState(false)
-  const [fp, setFp] = useState({ on: model.status === "published", n: 3 })
-  const [fpSaved, setFpSaved] = useState(fp)
-  const [comments, setComments] = useState(true)
+  const [fp, setFp] = useState<FastPass>(model.fastPass)
+  const [fpSaved, setFpSaved] = useState<FastPass>(model.fastPass)
+  const [fpBusy, setFpBusy] = useState(false)
+  const [comments, setComments] = useState(model.comments)
+  const [commentsBusy, setCommentsBusy] = useState(false)
   const [hidden, setHidden] = useState(model.status === "hidden")
   const [dialog, setDialog] = useState<Dialogs>(null)
   const [busy, setBusy] = useState(false)
@@ -528,6 +583,7 @@ function ManageView({ model, actions }: { model: Model; actions: Actions }) {
       case "draft":
         return e.ready ? t("readyForLaunch") : t("notScheduled")
       case "hidden":
+        if (e.takenDown) return t("takenDown")
         return e.hiddenSince ? t("whenHidden", { date: formatShortDate(e.hiddenSince, locale) }) : t("hiddenNow")
       default:
         return released ? t("whenReleased", { date: released }) : ""
@@ -638,7 +694,7 @@ function ManageView({ model, actions }: { model: Model; actions: Actions }) {
         setEps((all) => all.map((x) => (x.n === dialog.ep.n ? { ...x, title: dialog.title.trim(), at: dialog.at ?? x.at } : x)))
         toast.success(t("episodeSaved", { unit, n: dialog.ep.n }))
       } else if (dialog.kind === "hide") {
-        await actions.hideEpisode?.(dialog.ep.n, true)
+        await actions.hideEpisode(dialog.ep.n, true)
         setEps((all) => all.map((x) => (x.n === dialog.ep.n ? { ...x, state: "hidden", hiddenSince: DEMO_MODE ? today : ictDate(Date.now()) } : x)))
         toast.success(t("episodeHidden", { unit, n: dialog.ep.n }))
       } else if (dialog.kind === "delete") {
@@ -651,7 +707,7 @@ function ManageView({ model, actions }: { model: Model; actions: Actions }) {
         setHidden(true)
         toast.success(t("seriesHidden"))
       } else if (dialog.kind === "deleteSeries") {
-        await actions.deleteSeries?.()
+        await actions.deleteSeries()
       }
       setDialog(null)
     } catch (error) {
@@ -662,11 +718,37 @@ function ManageView({ model, actions }: { model: Model; actions: Actions }) {
   }
   async function showEpisode(e: StudioEpisode) {
     try {
-      await actions.hideEpisode?.(e.n, false)
+      await actions.hideEpisode(e.n, false)
       setEps((all) => all.map((x) => (x.n === e.n ? { ...x, state: x.free ? "fastpass" : "published", hiddenSince: undefined } : x)))
       toast.success(t("episodeShown", { unit, n: e.n }))
     } catch (error) {
       fail(error)
+    }
+  }
+  async function saveFastPass() {
+    setFpBusy(true)
+    try {
+      await actions.saveFastPass(fp)
+      setFpSaved(fp)
+      toast.success(fp.on ? t("fpSaved", { unit, count: fp.n }) : t("fpTurnedOff"))
+    } catch (error) {
+      fail(error)
+    } finally {
+      setFpBusy(false)
+    }
+  }
+  async function switchComments(on: boolean) {
+    if (commentsBusy) return
+    setComments(on)
+    setCommentsBusy(true)
+    try {
+      await actions.saveComments(on)
+      toast.success(on ? t("commentsOn") : t("commentsOff"))
+    } catch (error) {
+      setComments(!on)
+      fail(error)
+    } finally {
+      setCommentsBusy(false)
     }
   }
   async function showSeries() {
@@ -938,7 +1020,7 @@ function ManageView({ model, actions }: { model: Model; actions: Actions }) {
                         >
                           {t("edit")}
                         </Button>
-                        {!draft && e.state !== "scheduled" && actions.hideEpisode ? (
+                        {!draft && e.state !== "scheduled" && !e.takenDown ? (
                           <Button
                             type="button"
                             variant="ghost"
@@ -1109,7 +1191,15 @@ function ManageView({ model, actions }: { model: Model; actions: Actions }) {
 
         {tab === "fast-pass" ? (
           <StudioCard className="flex flex-col gap-[18px] p-5 max-md:p-4">
-            <SwitchRow id="mg-fp" strong label={tf("fastPass")} desc={t("fpDesc", { unit, coins: FAST_PASS_COINS, days: fp.n * 7 })} checked={fp.on} onChange={(on) => setFp({ ...fp, on })} />
+            <SwitchRow
+              id="mg-fp"
+              strong
+              label={tf("fastPass")}
+              // Free after ahead × 7 ÷ update days, rounded up (V21-02): a weekly series with 3 ahead waits 21 days.
+              desc={t("fpDesc", { unit, coins: FAST_PASS_COINS, days: api.seriesFreeAfterDays(fp.n, saved.days.length) })}
+              checked={fp.on}
+              onChange={(on) => setFp({ ...fp, on })}
+            />
             {fp.on ? (
               <>
                 <div className={fieldCol}>
@@ -1154,11 +1244,9 @@ function ManageView({ model, actions }: { model: Model; actions: Actions }) {
                 type="button"
                 variant="brand"
                 size="sm"
+                loading={fpBusy}
                 disabled={fp.on === fpSaved.on && fp.n === fpSaved.n}
-                onClick={() => {
-                  setFpSaved(fp)
-                  toast.success(fp.on ? t("fpSaved", { unit, count: fp.n }) : t("fpTurnedOff"))
-                }}
+                onClick={() => void saveFastPass()}
               >
                 {t("fpSave")}
               </Button>
@@ -1173,10 +1261,7 @@ function ManageView({ model, actions }: { model: Model; actions: Actions }) {
               label={t("allowComments")}
               desc={t("allowCommentsDesc", { unit })}
               checked={comments}
-              onChange={(on) => {
-                setComments(on)
-                toast.success(on ? t("commentsOn") : t("commentsOff"))
-              }}
+              onChange={(on) => void switchComments(on)}
             />
             <div className="h-px bg-border" />
             <div className="flex items-center justify-between gap-3 max-md:flex-wrap">
@@ -1193,7 +1278,7 @@ function ManageView({ model, actions }: { model: Model; actions: Actions }) {
               <span className="flex min-w-0 flex-col gap-0.5">
                 <span className="text-[13px] leading-[18px] font-semibold">{t("deleteSeries")}</span>
                 <span className="text-xs leading-4 text-muted-foreground" id="mg-del-d">
-                  {publishedEver ? t("deleteBlocked", { unit }) : actions.deleteSeries ? t("deleteDesc") : t("deleteSoon")}
+                  {publishedEver ? t("deleteBlocked", { unit }) : t("deleteDesc")}
                 </span>
               </span>
               <Button
@@ -1202,7 +1287,7 @@ function ManageView({ model, actions }: { model: Model; actions: Actions }) {
                 size="sm"
                 className="shrink-0"
                 aria-describedby="mg-del-d"
-                disabled={publishedEver || !actions.deleteSeries}
+                disabled={publishedEver}
                 onClick={() => setDialog({ kind: "deleteSeries" })}
               >
                 {t("deleteSeries")}

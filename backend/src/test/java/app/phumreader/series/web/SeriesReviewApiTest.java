@@ -514,7 +514,7 @@ class SeriesReviewApiTest {
     private String series(String title, String summary, boolean cover) throws Exception {
         String body =
                 ("{\"title\":\"%s\",\"type\":\"comic\",\"genre\":\"fantasy\",\"languages\":[\"en\",\"km\"],"
-                                + "\"summary\":\"%s\",\"ageRating\":\"teen\",\"updateDay\":\"Fri\"}")
+                                + "\"summary\":\"%s\",\"ageRating\":\"teen\",\"updateDays\":[\"Fri\"]}")
                         .formatted(title, summary);
         String id =
                 JsonPath.read(

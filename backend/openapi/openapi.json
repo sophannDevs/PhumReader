@@ -1881,7 +1881,7 @@
         "tags" : [ "creator" ]
       },
       "post" : {
-        "description" : "cover / banner come from finished uploads (POST /creator/uploads). The slug is made from the title and never changes.",
+        "description" : "cover / banner come from finished uploads (POST /creator/uploads). The slug is made from the title and never changes. secondGenre: another genre's slug or null (400 fields.secondGenre = unknown_genre / same_as_genre). ageRating: all, teen (13+), teen16 (16+) or mature (18+). updateDays: Mon ... Sun, each at most once (400 fields.updateDays = duplicate_day), sent back in week order. releaseHour: 0-23 in Asia/Phnom_Penh. fastPass: { on, ahead 1-5 }, default on with 3 ahead: the defaults for new episodes. commentsEnabled: default true. breakMessage: up to 120 characters, kept only while the status is hiatus.",
         "operationId" : "create_1",
         "requestBody" : {
           "content" : {
@@ -1920,6 +1920,36 @@
       }
     },
     "/api/v1/creator/series/{id}" : {
+      "delete" : {
+        "description" : "Only while none of its episodes was ever published (live, hidden, released or unlocked): drafts and scheduled episodes go with it. 409 has_published_episodes otherwise (such a series can only be hidden); 403 not_your_series for another creator's series.",
+        "operationId" : "deleteSeries",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "No Content"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Delete a series for good",
+        "tags" : [ "creator" ]
+      },
       "get" : {
         "description" : "403 for another creator's series, 404 when it does not exist.",
         "operationId" : "series",
@@ -1958,7 +1988,7 @@
         "tags" : [ "creator" ]
       },
       "put" : {
-        "description" : "Leave the upload ids out to keep the current cover / banner.",
+        "description" : "Send the whole series: a field left out or null takes its default. Leave the upload ids out to keep the current cover / banner. secondGenre: another genre's slug or null (400 fields.secondGenre = unknown_genre / same_as_genre). ageRating: all, teen (13+), teen16 (16+) or mature (18+). updateDays: Mon ... Sun, each at most once (400 fields.updateDays = duplicate_day), sent back in week order. releaseHour: 0-23 in Asia/Phnom_Penh. fastPass: { on, ahead 1-5 }, default on with 3 ahead: the defaults for new episodes. commentsEnabled: default true. breakMessage: up to 120 characters, kept only while the status is hiatus.",
         "operationId" : "update",
         "parameters" : [ {
           "in" : "path",
@@ -2007,6 +2037,7 @@
     },
     "/api/v1/creator/series/{id}/episodes" : {
       "get" : {
+        "description" : "hiddenAt is set while the creator hides a published episode from readers; status hidden means an admin took it down.",
         "operationId" : "episodes",
         "parameters" : [ {
           "in" : "path",
@@ -2046,7 +2077,7 @@
         "tags" : [ "creator" ]
       },
       "post" : {
-        "description" : "publish.mode is DRAFT, NOW or SCHEDULED (with publish.at, an instant in the future). Comics send imageUploadIds in reading order (at most 100, 200 MB), novels send blocks. fastPass null means free; otherwise 3-10 coins and free after 1-90 days (defaults 5 and 7). number null takes the next free number.",
+        "description" : "publish.mode is DRAFT, NOW or SCHEDULED (with publish.at, an instant in the future). Comics send imageUploadIds in reading order (at most 100, 200 MB), novels send blocks. fastPass null means free; otherwise 3-10 coins and free after 1-90 days (defaults 5 and 7). useSeriesFastPass true takes the series' Fast Pass instead (fastPass must be null, 400 fields.fastPass = not_with_series_fast_pass): on, 5 coins and free after ceil(ahead x 7 / max(1, update days)) days; off, free. number null takes the next free number.",
         "operationId" : "createEpisode",
         "parameters" : [ {
           "in" : "path",
@@ -2177,7 +2208,7 @@
         "tags" : [ "creator" ]
       },
       "put" : {
-        "description" : "Send the whole episode. A published episode stays published (publish.mode NOW); drafts and scheduled episodes can change mode.",
+        "description" : "Send the whole episode. A published episode stays published (publish.mode NOW); drafts and scheduled episodes can change mode. useSeriesFastPass true answers 400 fields.useSeriesFastPass = new_episodes_only. A hidden episode stays hidden.",
         "operationId" : "updateEpisode",
         "parameters" : [ {
           "in" : "path",
@@ -2229,6 +2260,100 @@
           }
         },
         "summary" : "Edit an episode",
+        "tags" : [ "creator" ]
+      }
+    },
+    "/api/v1/creator/series/{id}/episodes/{number}/hide" : {
+      "post" : {
+        "description" : "Readers no longer see it, also those who unlocked it (no refund), until it is shown again; numbers don't shift. Hiding it again keeps hiddenAt. 409 episode_not_published for drafts and scheduled episodes, episode_hidden when an admin took it down.",
+        "operationId" : "hideEpisode",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }, {
+          "in" : "path",
+          "name" : "number",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CreatorEpisode"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Hide a published episode from readers",
+        "tags" : [ "creator" ]
+      }
+    },
+    "/api/v1/creator/series/{id}/episodes/{number}/show" : {
+      "post" : {
+        "description" : "Showing a visible episode changes nothing. 409 episode_not_published for drafts and scheduled episodes, episode_hidden when an admin took it down (only an admin can put it back).",
+        "operationId" : "showEpisode",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }, {
+          "in" : "path",
+          "name" : "number",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CreatorEpisode"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Show a hidden episode to readers again",
         "tags" : [ "creator" ]
       }
     },
@@ -5158,6 +5283,10 @@
             "type" : [ "string", "null" ],
             "format" : "date-time"
           },
+          "hiddenAt" : {
+            "type" : [ "string", "null" ],
+            "format" : "date-time"
+          },
           "likes" : {
             "type" : "integer",
             "format" : "int64"
@@ -5658,6 +5787,10 @@
             "type" : [ "string", "null" ],
             "format" : "date-time"
           },
+          "hiddenAt" : {
+            "type" : [ "string", "null" ],
+            "format" : "date-time"
+          },
           "number" : {
             "type" : "integer",
             "format" : "int32"
@@ -5739,6 +5872,9 @@
             "type" : "string",
             "maxLength" : 120,
             "minLength" : 0
+          },
+          "useSeriesFastPass" : {
+            "type" : [ "boolean", "null" ]
           }
         },
         "required" : [ "publish", "title" ]
@@ -6700,7 +6836,7 @@
         "properties" : {
           "ageRating" : {
             "type" : "string",
-            "enum" : [ "all", "teen", "mature" ]
+            "enum" : [ "all", "teen", "teen16", "mature" ]
           },
           "coverUrl" : {
             "type" : [ "string", "null" ]
@@ -6768,7 +6904,7 @@
         "properties" : {
           "ageRating" : {
             "type" : "string",
-            "enum" : [ "all", "teen", "mature" ]
+            "enum" : [ "all", "teen", "teen16", "mature" ]
           },
           "badges" : {
             "$ref" : "#/components/schemas/Badges"
@@ -6826,16 +6962,29 @@
             "type" : [ "string", "null" ],
             "enum" : [ "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun", null ]
           },
+          "updateDays" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string",
+              "enum" : [ "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun" ]
+            }
+          },
           "views" : {
             "type" : "integer",
             "format" : "int64"
           }
         },
-        "required" : [ "ageRating", "badges", "creator", "fastPassEpisodes", "freeEpisodes", "genre", "id", "language", "likes", "slug", "status", "title", "totalEpisodes", "type", "views" ]
+        "required" : [ "ageRating", "badges", "creator", "fastPassEpisodes", "freeEpisodes", "genre", "id", "language", "likes", "slug", "status", "title", "totalEpisodes", "type", "updateDays", "views" ]
       },
       "SeriesDetail" : {
         "type" : "object",
         "properties" : {
+          "breakMessage" : {
+            "type" : [ "string", "null" ]
+          },
+          "commentsEnabled" : {
+            "type" : "boolean"
+          },
           "creatorId" : {
             "type" : "string",
             "format" : "uuid"
@@ -6850,6 +6999,9 @@
               "$ref" : "#/components/schemas/SeriesCard"
             }
           },
+          "secondGenre" : {
+            "type" : [ "string", "null" ]
+          },
           "series" : {
             "$ref" : "#/components/schemas/SeriesCard"
           },
@@ -6860,20 +7012,29 @@
             "type" : "string"
           }
         },
-        "required" : [ "creatorId", "creatorSeriesCount", "related", "series", "stats", "synopsis" ]
+        "required" : [ "commentsEnabled", "creatorId", "creatorSeriesCount", "related", "series", "stats", "synopsis" ]
       },
       "SeriesEdit" : {
         "type" : "object",
         "properties" : {
           "ageRating" : {
             "type" : "string",
-            "enum" : [ "all", "teen", "mature" ]
+            "enum" : [ "all", "teen", "teen16", "mature" ]
           },
           "bannerUrl" : {
             "type" : [ "string", "null" ]
           },
+          "breakMessage" : {
+            "type" : [ "string", "null" ]
+          },
+          "commentsEnabled" : {
+            "type" : "boolean"
+          },
           "coverUrl" : {
             "type" : [ "string", "null" ]
+          },
+          "fastPass" : {
+            "$ref" : "#/components/schemas/SeriesFastPass"
           },
           "genre" : {
             "type" : "string"
@@ -6888,8 +7049,15 @@
               "type" : "string"
             }
           },
+          "releaseHour" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int32"
+          },
           "review" : {
             "$ref" : "#/components/schemas/SeriesReview"
+          },
+          "secondGenre" : {
+            "type" : [ "string", "null" ]
           },
           "slug" : {
             "type" : "string"
@@ -6914,31 +7082,60 @@
             "type" : "string",
             "enum" : [ "comic", "novel" ]
           },
-          "updateDay" : {
-            "type" : [ "string", "null" ],
-            "enum" : [ "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun", null ]
+          "updateDays" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string",
+              "enum" : [ "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun" ]
+            }
           },
           "visibility" : {
             "type" : "string",
             "enum" : [ "draft", "review", "changes", "published", "hidden" ]
           }
         },
-        "required" : [ "ageRating", "genre", "id", "languages", "slug", "status", "summary", "tags", "title", "type", "visibility" ]
+        "required" : [ "ageRating", "commentsEnabled", "fastPass", "genre", "id", "languages", "slug", "status", "summary", "tags", "title", "type", "updateDays", "visibility" ]
+      },
+      "SeriesFastPass" : {
+        "type" : "object",
+        "properties" : {
+          "ahead" : {
+            "type" : "integer",
+            "format" : "int32",
+            "maximum" : 5,
+            "minimum" : 1
+          },
+          "on" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "ahead", "on" ]
       },
       "SeriesInput" : {
         "type" : "object",
         "properties" : {
           "ageRating" : {
             "type" : [ "string", "null" ],
-            "enum" : [ "all", "teen", "mature", null ]
+            "enum" : [ "all", "teen", "teen16", "mature", null ]
           },
           "bannerUploadId" : {
             "type" : [ "string", "null" ],
             "format" : "uuid"
           },
+          "breakMessage" : {
+            "type" : [ "string", "null" ],
+            "maxLength" : 120,
+            "minLength" : 0
+          },
+          "commentsEnabled" : {
+            "type" : [ "boolean", "null" ]
+          },
           "coverUploadId" : {
             "type" : [ "string", "null" ],
             "format" : "uuid"
+          },
+          "fastPass" : {
+            "$ref" : "#/components/schemas/SeriesFastPass"
           },
           "genre" : {
             "type" : "string",
@@ -6951,6 +7148,15 @@
               "pattern" : "en|km"
             },
             "minItems" : 1
+          },
+          "releaseHour" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int32",
+            "maximum" : 23,
+            "minimum" : 0
+          },
+          "secondGenre" : {
+            "type" : [ "string", "null" ]
           },
           "status" : {
             "type" : [ "string", "null" ],
@@ -6980,9 +7186,14 @@
             "type" : [ "string", "null" ],
             "enum" : [ "comic", "novel", null ]
           },
-          "updateDay" : {
-            "type" : [ "string", "null" ],
-            "enum" : [ "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun", null ]
+          "updateDays" : {
+            "type" : [ "array", "null" ],
+            "items" : {
+              "type" : "string",
+              "enum" : [ "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun" ]
+            },
+            "maxItems" : 7,
+            "minItems" : 0
           }
         },
         "required" : [ "genre", "languages", "title" ]

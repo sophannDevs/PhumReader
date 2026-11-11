@@ -57,7 +57,8 @@ type Item = {
   live: boolean
   summary: string
   eps: number
-  day: Weekday | null
+  /** Update days in week order (V21-02: a series can have several); [] without a schedule */
+  days: Weekday[]
   subs: string
   likes: string
   /** Episode 1 in the reader (catalog series only) */
@@ -91,7 +92,6 @@ function Profile({ handle, baseName, isOwner }: { handle: string; baseName: stri
   const t = useTranslations("profile")
   const ts = useTranslations("states")
   const tt = useTranslations("toasts")
-  const td = useTranslations("data")
   const locale = useLocale()
   const loc = useLocalize()
   const user = useUser()
@@ -131,7 +131,7 @@ function Profile({ handle, baseName, isOwner }: { handle: string; baseName: stri
                 live: w.status === "published",
                 summary: w.summary,
                 eps: w.eps,
-                day: w.day,
+                days: [w.day],
                 subs: w.subs,
                 likes: w.likes,
                 studio: true,
@@ -146,7 +146,7 @@ function Profile({ handle, baseName, isOwner }: { handle: string; baseName: stri
           live: true,
           summary: loc.hook(s),
           eps: s.totalEpisodes,
-          day: s.updateDay,
+          days: s.updateDays,
           subs: derivedStats(s).subscribers,
           likes: s.likes,
           href: readerHref(s, 1),
@@ -347,15 +347,15 @@ function Profile({ handle, baseName, isOwner }: { handle: string; baseName: stri
                       { k: t("aboutSince"), v: t("sinceValue", { year }) },
                       {
                         k: t("aboutSchedule"),
-                        v: items.some((i) => i.live && i.day) ? (
+                        v: items.some((i) => i.live && i.days.length) ? (
                           <span className="flex flex-col gap-0.5">
                             {items
-                              .filter((i) => i.live && i.day)
+                              .filter((i) => i.live && i.days.length)
                               .map((i) => (
                                 <span key={i.key}>
                                   {i.studio
-                                    ? t("scheduleTime", { title: i.title, day: td(`dayFull.${i.day}`), time: formatTime(SIX_PM, locale) })
-                                    : t("scheduleItem", { title: i.title, day: td(`dayFull.${i.day}`) })}
+                                    ? t("scheduleTime", { title: i.title, day: loc.days(i.days, "full"), time: formatTime(SIX_PM, locale) })
+                                    : t("scheduleItem", { title: i.title, day: loc.days(i.days, "full") })}
                                 </span>
                               ))}
                           </span>
@@ -383,7 +383,6 @@ function Profile({ handle, baseName, isOwner }: { handle: string; baseName: stri
 
 function SeriesItem({ item: i }: { item: Item }) {
   const t = useTranslations("profile")
-  const td = useTranslations("data")
   const loc = useLocalize()
   return (
     <li className="flex gap-4 rounded-card border bg-card p-4 shadow-xs">
@@ -402,7 +401,7 @@ function SeriesItem({ item: i }: { item: Item }) {
         {i.summary ? <p className="text-[13px] leading-[19px] text-muted-foreground">{i.summary}</p> : null}
         <span className="text-xs leading-4 text-muted-foreground">
           {i.live
-            ? t("metaLive", { unit: i.format, count: i.eps, day: i.day ? td(`dayFull.${i.day}`) : "—", subs: i.subs })
+            ? t("metaLive", { unit: i.format, count: i.eps, day: i.days.length ? loc.days(i.days, "full") : "—", subs: i.subs })
             : t("metaSoon", { unit: i.format })}
         </span>
         {i.live && i.href ? (

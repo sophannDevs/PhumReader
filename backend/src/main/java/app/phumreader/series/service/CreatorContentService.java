@@ -25,6 +25,7 @@ import app.phumreader.series.service.CreatorInput.Block;
 import app.phumreader.series.service.CreatorInput.EpisodeInput;
 import app.phumreader.series.service.CreatorInput.FastPass;
 import app.phumreader.series.service.CreatorInput.PublishMode;
+import app.phumreader.series.service.CreatorInput.SeriesFastPass;
 import app.phumreader.series.service.CreatorInput.SeriesInput;
 import app.phumreader.series.service.CreatorViews.BlockView;
 import app.phumreader.series.service.CreatorViews.CreatorEpisode;
@@ -33,10 +34,12 @@ import app.phumreader.series.service.CreatorViews.PanelView;
 import app.phumreader.series.service.CreatorViews.SeriesEdit;
 import java.text.Normalizer;
 import java.time.Clock;
+import java.time.DayOfWeek;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
@@ -69,6 +72,9 @@ public class CreatorContentService {
     static final int DEFAULT_PRICE = 5;
 
     static final int DEFAULT_FREE_DAYS = 7;
+
+    /** V21-02: a new series has Fast Pass on, 3 episodes ahead. */
+    static final SeriesFastPass DEFAULT_SERIES_FAST_PASS = new SeriesFastPass(true, 3);
 
     private final CreatorService creators;
     private final CreatorWrites writes;
@@ -111,7 +117,7 @@ public class CreatorContentService {
         }
         UUID id = UUID.randomUUID();
         SeriesValues values = seriesValues(user, in, null, null);
-        writes.insertSeries(id, user.id(), uniqueSlug(in.title()), in.type(), values, genre(in));
+        writes.insertSeries(id, user.id(), uniqueSlug(in.title()), in.type(), values);
         changed(id);
         return creators.ownedSeries(user, id);
     }
@@ -129,7 +135,7 @@ public class CreatorContentService {
             throw ApiException.invalidField(
                     "coverUploadId", "required", "A live series needs a cover.");
         }
-        writes.updateSeries(id, seriesValues(user, in, row.coverUrl(), row.bannerUrl()), genre(in));
+        writes.updateSeries(id, seriesValues(user, in, row.coverUrl(), row.bannerUrl()));
         changed(id);
         return creators.ownedSeries(user, id);
     }
@@ -162,6 +168,25 @@ public class CreatorContentService {
         writes.setVisibility(id, SeriesVisibility.DRAFT.name(), clock.instant());
         changed(id);
         return creators.ownedSeries(user, id);
+    }
+
+    /**
+     * Deletes the series for good (V21-02), only while none of its episodes was ever published:
+     * drafts and future scheduled episodes go with it. Otherwise 409 {@code
+     * has_published_episodes}: readers may have paid for an episode, so such a series can only be
+     * hidden.
+     */
+    @Transactional
+    public void deleteSeries(CurrentUser user, UUID id) {
+        creators.requireOwnedSeries(user, id);
+        if (writes.lockAndCheckEverPublished(id, clock.instant())) {
+            throw ApiException.conflict(
+                    "has_published_episodes",
+                    "This series has published episodes, so it cannot be deleted. Hide it"
+                            + " instead.");
+        }
+        writes.deleteSeries(id);
+        changed(id);
     }
 
     // ================================================================ review (V21-01)
@@ -293,17 +318,72 @@ public class CreatorContentService {
                                                 .map(t -> t.trim().toLowerCase(Locale.ROOT))
                                                 .filter(t -> !t.isEmpty())
                                                 .toList()));
+        short genre = genre(in);
+        SeriesStatus status = in.status() == null ? SeriesStatus.ONGOING : in.status();
+        SeriesFastPass fastPass = in.fastPass() == null ? DEFAULT_SERIES_FAST_PASS : in.fastPass();
+        // The break message only belongs to a series on a break; any other status drops it.
+        String breakMessage =
+                status != SeriesStatus.HIATUS
+                                || in.breakMessage() == null
+                                || in.breakMessage().isBlank()
+                        ? null
+                        : in.breakMessage().strip();
         return new SeriesValues(
                 in.title().trim(),
                 in.summary() == null ? "" : in.summary().trim(),
-                in.genre(),
+                genre,
+                secondGenre(in, genre),
                 List.copyOf(new LinkedHashSet<>(in.languages())),
                 in.ageRating() == null ? AgeRating.ALL : in.ageRating(),
-                in.status() == null ? SeriesStatus.ONGOING : in.status(),
-                in.updateDay() == null ? null : in.updateDay().day(),
+                status,
+                updateDays(in.updateDays()),
+                in.releaseHour(),
+                fastPass.on(),
+                fastPass.ahead(),
+                in.commentsEnabled() == null || in.commentsEnabled(),
+                breakMessage,
                 cover,
                 banner,
                 tags);
+    }
+
+    /** The days in week order; 400 {@code duplicate_day} when a day comes twice. */
+    private static List<DayOfWeek> updateDays(@Nullable List<Weekday> days) {
+        if (days == null) {
+            return List.of();
+        }
+        EnumSet<DayOfWeek> set = EnumSet.noneOf(DayOfWeek.class);
+        for (Weekday day : days) {
+            if (!set.add(day.day())) {
+                throw ApiException.invalidField(
+                        "updateDays", "duplicate_day", "Choose each update day once.");
+            }
+        }
+        return List.copyOf(set);
+    }
+
+    /**
+     * The second genre's id; 400 {@code unknown_genre} for a slug that is not in the list and
+     * {@code same_as_genre} when it is the main genre.
+     */
+    private @Nullable Short secondGenre(SeriesInput in, short mainGenre) {
+        if (in.secondGenre() == null || in.secondGenre().isBlank()) {
+            return null;
+        }
+        short id =
+                writes.genreId(in.secondGenre().strip())
+                        .orElseThrow(() ->
+                                ApiException.invalidField(
+                                        "secondGenre",
+                                        "unknown_genre",
+                                        "Choose a genre from the list."));
+        if (id == mainGenre) {
+            throw ApiException.invalidField(
+                    "secondGenre",
+                    "same_as_genre",
+                    "Choose a second genre that is not the main genre.");
+        }
+        return id;
     }
 
     private short genre(SeriesInput in) {
@@ -338,20 +418,22 @@ public class CreatorContentService {
     @Transactional(readOnly = true)
     public List<CreatorEpisode> episodes(CurrentUser user, UUID seriesId) {
         creators.requireOwnedSeries(user, seriesId);
-        return writes.episodes(seriesId).stream()
-                .map(e ->
-                        new CreatorEpisode(
-                                e.number(),
-                                e.title(),
-                                e.status().toLowerCase(Locale.ROOT),
-                                e.publishedAt(),
-                                e.freeAt(),
-                                e.priceCoins(),
-                                e.thumbnailUrl(),
-                                e.commentsEnabled(),
-                                e.views(),
-                                e.likes()))
-                .toList();
+        return writes.episodes(seriesId).stream().map(CreatorContentService::row).toList();
+    }
+
+    private static CreatorEpisode row(EpisodeRow e) {
+        return new CreatorEpisode(
+                e.number(),
+                e.title(),
+                e.status().toLowerCase(Locale.ROOT),
+                e.publishedAt(),
+                e.freeAt(),
+                e.priceCoins(),
+                e.thumbnailUrl(),
+                e.commentsEnabled(),
+                e.hiddenAt(),
+                e.views(),
+                e.likes());
     }
 
     @Transactional(readOnly = true)
@@ -370,7 +452,7 @@ public class CreatorContentService {
         }
         UUID id = UUID.randomUUID();
         Content content = content(user, series, in);
-        Stored stored = state(in, null);
+        Stored stored = state(in, fastPassOf(in, series), null);
         writes.insertEpisode(id, seriesId, number, values(user, in, stored, null));
         saveContent(id, series.type(), content);
         afterWrite(seriesId, stored.status());
@@ -387,8 +469,14 @@ public class CreatorContentService {
         if (in.number() != null && in.number() != number) {
             throw ApiException.invalidField("number", "number_fixed", "The number cannot change.");
         }
+        if (Boolean.TRUE.equals(in.useSeriesFastPass())) {
+            throw ApiException.invalidField(
+                    "useSeriesFastPass",
+                    "new_episodes_only",
+                    "The series' Fast Pass only sets new episodes; send fastPass instead.");
+        }
         Content content = content(user, series, in);
-        Stored stored = state(in, current);
+        Stored stored = state(in, in.fastPass(), current);
         writes.updateEpisode(current.id(), values(user, in, stored, current.thumbnailUrl()));
         saveContent(current.id(), series.type(), content);
         afterWrite(seriesId, stored.status());
@@ -409,6 +497,48 @@ public class CreatorContentService {
                     "episode_published", "A published episode cannot be deleted.");
         }
         writes.deleteEpisode(current.id());
+    }
+
+    /**
+     * The creator hides a live episode from readers (V21-02): it leaves the lists and the reader,
+     * also for readers who unlocked it, until it is shown again; numbers don't shift. Hiding it
+     * again keeps the first time. 409 {@code episode_not_published} for drafts and scheduled
+     * episodes, {@code episode_hidden} when an admin took it down.
+     */
+    @Transactional
+    public CreatorEpisode hideEpisode(CurrentUser user, UUID seriesId, int number) {
+        creators.requireOwnedSeries(user, seriesId);
+        EpisodeRow current = requireLive(seriesId, number);
+        writes.hideEpisode(current.id(), clock.instant());
+        catalog.refreshHome();
+        return row(requireEpisode(seriesId, number));
+    }
+
+    /** Readers see a hidden episode again; showing a visible one changes nothing. */
+    @Transactional
+    public CreatorEpisode showEpisode(CurrentUser user, UUID seriesId, int number) {
+        creators.requireOwnedSeries(user, seriesId);
+        EpisodeRow current = requireLive(seriesId, number);
+        if (current.hiddenAt() != null) {
+            writes.showEpisode(current.id());
+            catalog.refreshHome();
+        }
+        return row(requireEpisode(seriesId, number));
+    }
+
+    /** A published episode that the admins did not take down. */
+    private EpisodeRow requireLive(UUID seriesId, int number) {
+        EpisodeRow e = requireEpisode(seriesId, number);
+        if (e.status().equals("HIDDEN")) {
+            throw ApiException.conflict(
+                    "episode_hidden",
+                    "An admin took this episode down; only PhumReader can put it back.");
+        }
+        if (!e.status().equals("PUBLISHED")) {
+            throw ApiException.conflict(
+                    "episode_not_published", "Only a published episode can be hidden or shown.");
+        }
+        return e;
     }
 
     private EpisodeRow requireEpisode(UUID seriesId, int number) {
@@ -508,13 +638,42 @@ public class CreatorContentService {
             @Nullable Integer price,
             @Nullable Integer days) {}
 
-    private Stored state(EpisodeInput in, @Nullable EpisodeRow current) {
+    /**
+     * The Fast Pass of a new episode: {@code fastPass} as sent, or with {@code useSeriesFastPass}
+     * the series' switch (V21-02): on, Fast Pass at the default price, free after ceil(ahead * 7 /
+     * update days) days; off, free.
+     */
+    private static @Nullable FastPass fastPassOf(EpisodeInput in, EditRow series) {
+        if (!Boolean.TRUE.equals(in.useSeriesFastPass())) {
+            return in.fastPass();
+        }
+        if (in.fastPass() != null) {
+            throw ApiException.invalidField(
+                    "fastPass",
+                    "not_with_series_fast_pass",
+                    "Send either fastPass or useSeriesFastPass, not both.");
+        }
+        if (!series.fastPass()) {
+            return null;
+        }
+        return new FastPass(
+                DEFAULT_PRICE, freeAfterDays(series.fastPassAhead(), series.updateDays().size()));
+    }
+
+    /**
+     * Days until a new Fast Pass episode is free when readers can buy {@code ahead} episodes ahead
+     * of a series that updates {@code updateDays} times a week (a weekly series, 3 ahead: 21).
+     */
+    static int freeAfterDays(int ahead, int updateDays) {
+        return Math.ceilDiv(ahead * 7, Math.max(1, updateDays));
+    }
+
+    private Stored state(EpisodeInput in, @Nullable FastPass fp, @Nullable EpisodeRow current) {
         if (current != null && current.status().equals("HIDDEN")) {
             throw ApiException.conflict(
                     "episode_hidden", "An admin took this episode down; it cannot be edited.");
         }
         Instant now = clock.instant();
-        FastPass fp = in.fastPass();
         Integer price =
                 fp == null ? null : fp.priceCoins() == null ? DEFAULT_PRICE : fp.priceCoins();
         Integer days =
@@ -617,6 +776,7 @@ public class CreatorContentService {
                 e.thumbnailUrl(),
                 e.creatorNote(),
                 e.commentsEnabled(),
+                e.hiddenAt(),
                 panels,
                 blocks,
                 words);

@@ -7,6 +7,7 @@ import app.phumreader.series.domain.SeriesStatus;
 import app.phumreader.series.domain.SeriesType;
 import app.phumreader.series.domain.SeriesVisibility;
 import app.phumreader.series.service.CatalogViews.SeriesCard;
+import app.phumreader.series.service.CreatorInput.SeriesFastPass;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
@@ -67,8 +68,16 @@ public final class CreatorViews {
     /**
      * A series as its creator edits it (GET /creator/series/{id}).
      *
+     * @param genre the main genre's slug
+     * @param secondGenre the second genre's slug, if any
+     * @param breakMessage the "On break" message (only while the status is hiatus)
      * @param visibility draft, review (waiting for an admin), changes (the admin asked for
      *     changes), published or hidden (taken down by an admin)
+     * @param updateDays the days new episodes come out, in week order (Mon first); empty when the
+     *     series has no schedule
+     * @param releaseHour the hour new episodes come out, 0-23 in Asia/Phnom_Penh
+     * @param fastPass the series' Fast Pass switch (the defaults for new episodes)
+     * @param commentsEnabled readers may comment on the series page and its episodes
      * @param review the latest submission for review; {@code null} when it was never submitted
      */
     public record SeriesEdit(
@@ -78,11 +87,16 @@ public final class CreatorViews {
             String title,
             String summary,
             String genre,
+            @Nullable String secondGenre,
             List<String> languages,
             AgeRating ageRating,
             SeriesStatus status,
+            @Nullable String breakMessage,
             SeriesVisibility visibility,
-            @Nullable Weekday updateDay,
+            List<Weekday> updateDays,
+            @Nullable Integer releaseHour,
+            SeriesFastPass fastPass,
+            boolean commentsEnabled,
             @Nullable String coverUrl,
             @Nullable String bannerUrl,
             List<String> tags,
@@ -110,7 +124,13 @@ public final class CreatorViews {
      */
     public record RequestedChange(ReviewItem item, boolean fixed) {}
 
-    /** One row of a creator's episode list, any status. */
+    /**
+     * One row of a creator's episode list, any status.
+     *
+     * @param status draft, scheduled, published or hidden (taken down by an admin)
+     * @param hiddenAt when the creator hid this published episode from readers (V21-02); {@code
+     *     null} while readers see it. Separate from the admin's {@code hidden} status
+     */
     public record CreatorEpisode(
             int number,
             String title,
@@ -120,6 +140,7 @@ public final class CreatorViews {
             @Nullable Integer priceCoins,
             @Nullable String thumbnailUrl,
             boolean commentsEnabled,
+            @Nullable Instant hiddenAt,
             long views,
             long likes) {}
 
@@ -132,9 +153,10 @@ public final class CreatorViews {
     /**
      * An episode as its creator edits it.
      *
-     * @param status draft, scheduled or published
+     * @param status draft, scheduled, published or hidden (taken down by an admin)
      * @param publishedAt release time (scheduled time for SCHEDULED)
      * @param freeAfterDays Fast Pass: days after release until it is free; null when free
+     * @param hiddenAt when the creator hid it from readers; {@code null} while readers see it
      * @param panels comics: the panels in order
      * @param blocks novels: the chapter text
      */
@@ -149,6 +171,7 @@ public final class CreatorViews {
             @Nullable String thumbnailUrl,
             @Nullable String creatorNote,
             boolean commentsEnabled,
+            @Nullable Instant hiddenAt,
             List<PanelView> panels,
             List<BlockView> blocks,
             int wordCount) {}

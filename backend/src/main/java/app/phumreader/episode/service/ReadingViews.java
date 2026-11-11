@@ -21,7 +21,8 @@ public final class ReadingViews {
      * @param blocks chapter text (empty for a comic)
      * @param wordCount words in the chapter (0 for a comic)
      * @param comments visible comments on this episode
-     * @param commentsEnabled whether the creator allows comments on this episode
+     * @param commentsEnabled whether new comments are allowed here: the episode's and the series'
+     *     comments switches are both on (V21-02)
      */
     public record EpisodeContent(
             SeriesCard series,

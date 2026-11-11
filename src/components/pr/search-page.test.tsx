@@ -20,6 +20,7 @@ const card = (id: string, title: string) => ({
   totalEpisodes: 1,
   status: "ongoing",
   updateDay: null,
+  updateDays: [],
   language: ["en"],
   ageRating: "all",
   badges: { isNew: false, up: false },
@@ -29,6 +30,18 @@ const results = (...titles: string[]) => http.get(`${API}/search`, () => HttpRes
 const BOX = "Search series, creators and genres"
 
 describe("SearchPage", () => {
+  it("shows every update day of a series: 'Every Mon and Thu' and the hook's full names (V21-02)", async () => {
+    setSearch("q=tide")
+    server.use(
+      http.get(`${API}/search`, () =>
+        HttpResponse.json({ items: [{ ...card("a", "Lantern Tide"), updateDay: "Mon", updateDays: ["Mon", "Thu"] }] }),
+      ),
+    )
+    renderUi(<SearchPage />)
+    expect(await screen.findByText("Every Mon and Thu")).toBeInTheDocument()
+    expect(screen.getByText("An ongoing fantasy story, new every Monday and Thursday.")).toBeInTheDocument()
+  })
+
   it("fills the box from the address, asks the API for that text and shows the matches", async () => {
     setSearch("q=ink")
     let asked = ""

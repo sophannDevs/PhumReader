@@ -9,6 +9,7 @@ import app.phumreader.series.repository.CreatorQueries.EditRow;
 import app.phumreader.series.repository.CreatorQueries.ReviewRow;
 import app.phumreader.series.repository.CreatorQueries.SeriesNumbers;
 import app.phumreader.series.service.CatalogViews.SeriesCard;
+import app.phumreader.series.service.CreatorInput.SeriesFastPass;
 import app.phumreader.series.service.CreatorViews.CreatorDashboard;
 import app.phumreader.series.service.CreatorViews.CreatorSeries;
 import app.phumreader.series.service.CreatorViews.CreatorTotals;
@@ -86,11 +87,16 @@ public class CreatorService {
                 r.title(),
                 r.summary(),
                 r.genreSlug(),
+                r.secondGenreSlug(),
                 r.languages(),
                 r.ageRating(),
                 r.status(),
+                r.breakMessage(),
                 r.visibility(),
-                r.updateDay() == null ? null : Weekday.of(r.updateDay()),
+                r.updateDays().stream().map(Weekday::of).toList(),
+                r.releaseHour(),
+                new SeriesFastPass(r.fastPass(), r.fastPassAhead()),
+                r.commentsEnabled(),
                 r.coverUrl(),
                 r.bannerUrl(),
                 r.tags(),

@@ -46,6 +46,7 @@ export function ComicEndSection({
   onCancelAuto,
   dark,
   finishRef,
+  commentsEnabled = true,
 }: {
   series: Series;
   episode: Episode;
@@ -62,10 +63,11 @@ export function ComicEndSection({
   dark: boolean
   /** Marks the episode finished once the end card scrolls into view. */
   finishRef?: (el: HTMLElement | null) => void
+  /** Real API (V21-02): false when the creator turned comments off (no comment box) */
+  commentsEnabled?: boolean
 }) {
   const t = useTranslations("reader")
   const tt = useTranslations("toasts")
-  const td = useTranslations("data")
   const loc = useLocalize()
   const user = useUser()
   const askToLogin = useAskToLogin()
@@ -88,10 +90,13 @@ export function ComicEndSection({
     if (liking && (DEMO_MODE || user)) toast.success(t("thanksLike"))
   }
 
+  // "New episodes every Monday and Thursday." (V21-02: every update day); a series on a break says so instead.
   const caughtUp =
-    series.status === "completed" || !series.updateDay
-      ? t("caughtUpDone")
-      : t("caughtUpLine", { day: td(`dayFull.${series.updateDay}`) })
+    series.status === "hiatus"
+      ? t("caughtUpBreak")
+      : series.status === "completed" || !series.updateDays.length
+        ? t("caughtUpDone")
+        : t("caughtUpLine", { day: loc.days(series.updateDays, "full") })
 
   return (
     <section aria-label={t("endOf", { n: episode.n })} className="mx-auto flex w-full max-w-[800px] flex-col gap-4 px-4 pt-8 pb-[72px]">
@@ -166,7 +171,7 @@ export function ComicEndSection({
         <div className={cn(card, "text-center text-[13px] leading-[18px] text-foreground/80")}>{caughtUp}</div>
       )}
 
-      <TopComments series={series} episode={episode} dark={dark} />
+      <TopComments series={series} episode={episode} dark={dark} closed={!commentsEnabled} />
 
       <Button asChild variant="outline" className={cn(pill, "self-center")}>
         <Link href={seriesHref(series)}>
@@ -179,8 +184,9 @@ export function ComicEndSection({
 }
 
 /** "Comments 1.2K · See all", a one-line composer and the top 3 threads (the reader's own new ones first). */
-function TopComments({ series, episode, dark }: { series: Series; episode: Episode; dark: boolean }) {
+function TopComments({ series, episode, dark, closed }: { series: Series; episode: Episode; dark: boolean; closed: boolean }) {
   const t = useTranslations("reader")
+  const tc = useTranslations("comments")
   const user = useUser()
   const data = useCommentThreads(series, `${series.slug}:${episode.n}`)
   const blocked = useAppStore((s) => s.blocked)
@@ -216,19 +222,23 @@ function TopComments({ series, episode, dark }: { series: Series; episode: Episo
           {t("seeAll")}
         </Link>
       </div>
-      <form className="flex gap-2" onSubmit={post}>
-        <Input
-          value={draft}
-          maxLength={MAX}
-          onChange={(e) => setDraft(e.target.value.slice(0, MAX))}
-          placeholder={user ? t("addCommentPh") : t("loginToComment")}
-          aria-label={t("addComment")}
-          className="shadow-none"
-        />
-        <Button type="submit" variant="brand" loading={posting}>
-          {t("post")}
-        </Button>
-      </form>
+      {closed ? (
+        <p className="text-[13px] leading-[18px] text-muted-foreground">{tc("closed")}</p>
+      ) : (
+        <form className="flex gap-2" onSubmit={post}>
+          <Input
+            value={draft}
+            maxLength={MAX}
+            onChange={(e) => setDraft(e.target.value.slice(0, MAX))}
+            placeholder={user ? t("addCommentPh") : t("loginToComment")}
+            aria-label={t("addComment")}
+            className="shadow-none"
+          />
+          <Button type="submit" variant="brand" loading={posting}>
+            {t("post")}
+          </Button>
+        </form>
+      )}
       {data.query.isPending ? (
         <div className="flex flex-col gap-4" aria-hidden>
           {Array.from({ length: TOP }, (_, i) => (
@@ -249,10 +259,13 @@ function TopComments({ series, episode, dark }: { series: Series; episode: Episo
           </Button>
         </p>
       ) : top.length === 0 ? (
-        <p className="flex items-center gap-2 text-[13px] text-muted-foreground">
-          <MessageSquareIcon className="size-4" aria-hidden />
-          {data.threads.length === 0 ? t("noComments") : t("noVisibleComments")}
-        </p>
+        // Comments turned off and none written: the note above says it all ("No comments yet. Be the first." would not fit).
+        closed && data.threads.length === 0 ? null : (
+          <p className="flex items-center gap-2 text-[13px] text-muted-foreground">
+            <MessageSquareIcon className="size-4" aria-hidden />
+            {data.threads.length === 0 ? t("noComments") : t("noVisibleComments")}
+          </p>
+        )
       ) : (
         <ul aria-label={t("commentsTitle")} className={cn("flex flex-col [&>li:last-child]:border-b-0 [&>li:last-child]:pb-0", dark && "[&_p]:text-[#e4e4e7]")}>
           {top.map((c) => (

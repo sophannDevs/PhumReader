@@ -41,6 +41,11 @@ public class CreatorQueries {
     /**
      * A series as its creator edits it (no counters).
      *
+     * @param updateDays in week order
+     * @param releaseHour 0-23 in Asia/Phnom_Penh
+     * @param fastPass the series' Fast Pass switch (defaults for new episodes)
+     * @param fastPassAhead 1-5
+     * @param breakMessage only while the status is HIATUS
      * @param launched the series went live once ({@code launched_at} is set)
      */
     public record EditRow(
@@ -51,11 +56,17 @@ public class CreatorQueries {
             String title,
             String summary,
             String genreSlug,
+            @Nullable String secondGenreSlug,
             List<String> languages,
             AgeRating ageRating,
             SeriesStatus status,
             SeriesVisibility visibility,
-            @Nullable DayOfWeek updateDay,
+            List<DayOfWeek> updateDays,
+            @Nullable Integer releaseHour,
+            boolean fastPass,
+            int fastPassAhead,
+            boolean commentsEnabled,
+            @Nullable String breakMessage,
             @Nullable String coverUrl,
             @Nullable String bannerUrl,
             List<String> tags,
@@ -146,34 +157,41 @@ public class CreatorQueries {
         return jdbc.sql(
                         """
                         select s.id, s.creator_id, s.slug, s.type, s.title, s.summary, g.slug as genre,
-                               s.languages, s.age_rating, s.status, s.visibility, s.update_day,
+                               g2.slug as second_genre, s.languages, s.age_rating, s.status,
+                               s.visibility, s.update_days, s.release_hour, s.fast_pass,
+                               s.fast_pass_ahead, s.comments_enabled, s.break_message,
                                s.cover_url, s.banner_url, s.launched_at is not null as launched,
                                array(select t.tag from series_tags t where t.series_id = s.id
                                      order by t.tag) as tags
                         from series s join genres g on g.id = s.genre_id
+                        left join genres g2 on g2.id = s.second_genre_id
                         where s.id = :id
                         """)
                 .param("id", seriesId)
-                .query((rs, n) -> {
-                    String day = rs.getString("update_day");
-                    return new EditRow(
-                            rs.getObject("id", UUID.class),
-                            rs.getObject("creator_id", UUID.class),
-                            rs.getString("slug"),
-                            SeriesType.valueOf(rs.getString("type")),
-                            rs.getString("title"),
-                            rs.getString("summary"),
-                            rs.getString("genre"),
-                            List.of((String[]) rs.getArray("languages").getArray()),
-                            AgeRating.valueOf(rs.getString("age_rating")),
-                            SeriesStatus.valueOf(rs.getString("status")),
-                            SeriesVisibility.valueOf(rs.getString("visibility")),
-                            day == null ? null : DayOfWeek.valueOf(day),
-                            rs.getString("cover_url"),
-                            rs.getString("banner_url"),
-                            List.of((String[]) rs.getArray("tags").getArray()),
-                            rs.getBoolean("launched"));
-                })
+                .query((rs, n) ->
+                        new EditRow(
+                                rs.getObject("id", UUID.class),
+                                rs.getObject("creator_id", UUID.class),
+                                rs.getString("slug"),
+                                SeriesType.valueOf(rs.getString("type")),
+                                rs.getString("title"),
+                                rs.getString("summary"),
+                                rs.getString("genre"),
+                                rs.getString("second_genre"),
+                                List.of((String[]) rs.getArray("languages").getArray()),
+                                AgeRating.valueOf(rs.getString("age_rating")),
+                                SeriesStatus.valueOf(rs.getString("status")),
+                                SeriesVisibility.valueOf(rs.getString("visibility")),
+                                DayArrays.days(rs.getArray("update_days")),
+                                rs.getObject("release_hour", Integer.class),
+                                rs.getBoolean("fast_pass"),
+                                rs.getInt("fast_pass_ahead"),
+                                rs.getBoolean("comments_enabled"),
+                                rs.getString("break_message"),
+                                rs.getString("cover_url"),
+                                rs.getString("banner_url"),
+                                List.of((String[]) rs.getArray("tags").getArray()),
+                                rs.getBoolean("launched")))
                 .optional();
     }
 

@@ -105,7 +105,7 @@ public class ReadingService {
                 episode.creatorNote(),
                 chapter == null ? 0 : chapter.wordCount(),
                 queries.visibleComments(episode.id()),
-                episode.commentsEnabled(),
+                episode.commentsEnabled() && series.commentsEnabled(),
                 viewer);
     }
 
