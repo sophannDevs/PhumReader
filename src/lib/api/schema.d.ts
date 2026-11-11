@@ -1365,6 +1365,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/help/tickets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Sends a Contact us message and returns the ticket number
+         * @description Works signed in or not. The ticket is emailed to the support address. 400 invalid_topic, invalid_email, message_too_short, message_too_long or invalid_order (each names its field); 429 too_many_requests (5 per hour).
+         */
+        post: operations["createTicket"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/home": {
         parameters: {
             query?: never;
@@ -1500,6 +1520,41 @@ export interface paths {
         put?: never;
         post?: never;
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/help-votes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The account's answers to "Was this helpful?", by article number */
+        get: operations["votes"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/help-votes/{article}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Saves the answer for a help article (a new answer replaces the old) */
+        put: operations["vote"];
+        post?: never;
+        /** Takes the answer back */
+        delete: operations["clearVote"];
         options?: never;
         head?: never;
         patch?: never;
@@ -2845,6 +2900,8 @@ export interface components {
         };
         MeResponse: {
             avatarUrl?: string | null;
+            /** Format: int32 */
+            birthYear?: number | null;
             displayName: string;
             email: string;
             emailVerified: boolean;
@@ -3014,6 +3071,14 @@ export interface components {
             /** Format: int64 */
             coins: number;
             month: string;
+        };
+        Preferences: {
+            genres?: string[] | null;
+            storyLanguages: ("en" | "km")[];
+        };
+        PreferencesChange: {
+            genres?: string[] | null;
+            storyLanguages?: ("en" | "km")[] | null;
         };
         ProfileRequest: {
             displayName: string;
@@ -3319,6 +3384,7 @@ export interface components {
             /** @enum {string} */
             language: "en" | "km";
             notifications: components["schemas"]["NotificationSettings"];
+            preferences: components["schemas"]["Preferences"];
             reader: components["schemas"]["ReaderSettings"];
             /** @enum {string} */
             theme: "system" | "light" | "dark";
@@ -3327,6 +3393,7 @@ export interface components {
             /** @enum {string|null} */
             language?: "en" | "km" | null;
             notifications?: components["schemas"]["NotificationsChange"];
+            preferences?: components["schemas"]["PreferencesChange"];
             reader?: components["schemas"]["ReaderChange"];
             /** @enum {string|null} */
             theme?: "system" | "light" | "dark" | null;
@@ -3339,6 +3406,8 @@ export interface components {
             note?: string | null;
         };
         SignupRequest: {
+            /** Format: int32 */
+            birthYear?: number | null;
             email: string;
             language?: string | null;
             name: string;
@@ -3367,6 +3436,16 @@ export interface components {
         };
         Suggestions: {
             items: string[];
+        };
+        TicketRequest: {
+            email: string;
+            locale?: string | null;
+            message: string;
+            order?: string | null;
+            topic: string;
+        };
+        TicketResponse: {
+            ticket: string;
         };
         TokenRequest: {
             token: string;
@@ -3421,6 +3500,14 @@ export interface components {
         VerifyRequest: {
             code: string;
             email: string;
+        };
+        VoteRequest: {
+            helpful: boolean;
+        };
+        VoteView: {
+            /** Format: int32 */
+            article: number;
+            helpful: boolean;
         };
         Wallet: {
             /** Format: int32 */
@@ -6048,6 +6135,39 @@ export interface operations {
             };
         };
     };
+    createTicket: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TicketRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TicketResponse"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
     home: {
         parameters: {
             query?: never;
@@ -6316,6 +6436,97 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["CursorPageFollowedCreator"];
                 };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    votes: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VoteView"][];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    vote: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                article: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VoteRequest"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    clearVote: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                article: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Error */
             default: {

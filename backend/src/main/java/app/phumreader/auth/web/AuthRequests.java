@@ -1,5 +1,7 @@
 package app.phumreader.auth.web;
 
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
@@ -14,12 +16,14 @@ final class AuthRequests {
 
     /**
      * @param language the site language at sign-up, "en" or "km" (default "en")
+     * @param birthYear from the sign-up form; 13 or older to join (400 too_young, field birthYear)
      */
     record SignupRequest(
             @NotBlank @Size(min = 2, max = 60) String name,
             @NotBlank @Size(max = 254) @Pattern(regexp = EMAIL) String email,
             @NotBlank @Size(max = 128) String password,
-            @Nullable @Pattern(regexp = "en|km") String language) {}
+            @Nullable @Pattern(regexp = "en|km") String language,
+            @Nullable @Min(1900) @Max(2100) Integer birthYear) {}
 
     record VerifyRequest(
             @NotBlank @Size(max = 254) @Pattern(regexp = EMAIL) String email,

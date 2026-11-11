@@ -17,6 +17,8 @@ import app.phumreader.user.service.SettingsViews.AlertTypes;
 import app.phumreader.user.service.SettingsViews.AlertTypesChange;
 import app.phumreader.user.service.SettingsViews.NotificationSettings;
 import app.phumreader.user.service.SettingsViews.NotificationsChange;
+import app.phumreader.user.service.SettingsViews.Preferences;
+import app.phumreader.user.service.SettingsViews.PreferencesChange;
 import app.phumreader.user.service.SettingsViews.QuietHoursChange;
 import app.phumreader.user.service.SettingsViews.QuietHoursSetting;
 import app.phumreader.user.service.SettingsViews.ReaderChange;
@@ -125,14 +127,30 @@ public class UserService {
     /** A new reader with default settings; the email still has to be confirmed. */
     public User createReader(
             String email, String displayName, String passwordHash, String language) {
-        User user = users.save(User.newReader(email, displayName, passwordHash));
+        return createReader(email, displayName, passwordHash, language, null);
+    }
+
+    /** Same, with the birth year from the sign-up form. */
+    public User createReader(
+            String email,
+            String displayName,
+            String passwordHash,
+            String language,
+            @Nullable Integer birthYear) {
+        User user = User.newReader(email, displayName, passwordHash);
+        user.changeBirthYear(birthYear);
+        user = users.save(user);
         settings.save(UserSettings.defaults(user.getId(), language));
         return user;
     }
 
     /** Signing up again before confirming the email replaces the name and password. */
-    public void updateUnverifiedSignup(User user, String displayName, String passwordHash) {
+    public void updateUnverifiedSignup(
+            User user, String displayName, String passwordHash, @Nullable Integer birthYear) {
         user.changeUnverifiedSignup(displayName, passwordHash);
+        if (birthYear != null) {
+            user.changeBirthYear(birthYear);
+        }
     }
 
     /** Makes the account a creator. The access token carries the role after its next refresh. */
@@ -241,6 +259,16 @@ public class UserService {
         NotificationsChange notify = change.notifications();
         if (notify != null) {
             changeAlerts(row, notify);
+        }
+        PreferencesChange picks = change.preferences();
+        if (picks != null) {
+            if (picks.genres() != null) {
+                row.changePreferredGenres(
+                        picks.genres().stream().map(String::trim).distinct().toList());
+            }
+            if (picks.storyLanguages() != null) {
+                row.changeStoryLanguages(picks.storyLanguages().stream().distinct().toList());
+            }
         }
         return view(row);
     }
@@ -352,7 +380,8 @@ public class UserService {
                                 alert(row, "news")),
                         new QuietHoursSetting(
                                 row.isQuietHours(), row.getQuietFrom(), row.getQuietTo()),
-                        row.isDailyDigest()));
+                        row.isDailyDigest()),
+                new Preferences(row.getPreferredGenres(), row.getStoryLanguages()));
     }
 
     private static AlertSwitch alert(UserSettings row, String type) {

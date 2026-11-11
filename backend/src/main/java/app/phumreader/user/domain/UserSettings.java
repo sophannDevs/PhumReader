@@ -6,6 +6,7 @@ import jakarta.persistence.PostLoad;
 import jakarta.persistence.PostPersist;
 import jakarta.persistence.Table;
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 import org.hibernate.annotations.UpdateTimestamp;
 import org.jspecify.annotations.Nullable;
@@ -64,6 +65,12 @@ public class UserSettings implements Persistable<UUID> {
 
     private boolean dailyDigest;
 
+    /** Welcome / Home picks: comma-separated genre names; null = never chosen, empty = skipped. */
+    @Nullable private String preferredGenres;
+
+    /** Story languages, comma-separated locale codes (at least one). */
+    private String storyLanguages;
+
     @UpdateTimestamp private Instant updatedAt;
 
     private transient boolean isNew;
@@ -95,6 +102,7 @@ public class UserSettings implements Persistable<UUID> {
         settings.quietFrom = 22;
         settings.quietTo = 7;
         settings.dailyDigest = false;
+        settings.storyLanguages = "en,km";
         settings.isNew = true;
         return settings;
     }
@@ -223,6 +231,27 @@ public class UserSettings implements Persistable<UUID> {
 
     public void changeDailyDigest(boolean value) {
         dailyDigest = value;
+    }
+
+    /** Null when the reader never chose; empty when they skipped. */
+    @Nullable
+    public List<String> getPreferredGenres() {
+        if (preferredGenres == null) {
+            return null;
+        }
+        return preferredGenres.isEmpty() ? List.of() : List.of(preferredGenres.split(",", -1));
+    }
+
+    public List<Language> getStoryLanguages() {
+        return List.of(storyLanguages.split(",")).stream().map(Language::ofCode).toList();
+    }
+
+    public void changePreferredGenres(List<String> genres) {
+        preferredGenres = String.join(",", genres);
+    }
+
+    public void changeStoryLanguages(List<Language> languages) {
+        storyLanguages = String.join(",", languages.stream().map(Language::code).toList());
     }
 
     public void changeLanguage(Language value) {

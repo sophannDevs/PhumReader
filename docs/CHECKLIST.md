@@ -181,10 +181,10 @@ docs/BACKEND_CHECKLIST.md, "V2.1 API additions" (V21-01 … V21-07).
   dictionary entry (109 strings changed); everything else keeps the V1 Khmer.
 - V2-7 (upgrade) **No downloads**: missing shadcn components are written by hand on the installed `radix-ui` package
   instead of `npx shadcn add`; charts are plain SVG/CSS (no chart library).
-- V2-8 (upgrade) **Real mode**: V2.1 features the API does not have yet (welcome picks, birth year, the Help form,
-  the dashboard chart and comments, the creator profile's Updates tab, and the Settings options listed in V2-81) run
-  on the local store in real mode too. Notifications use the API since V21-03 (V2-70), reports and blocking since
-  V21-04 (V2-21), earnings and the creator profile since V21-05 (V2-48, V2-49), admin payments since V21-06 (V2-55).
+- V2-8 (upgrade) **Real mode**: V2.1 features the API does not have yet (after V21-07: the dashboard chart and
+  comments, the creator profile's Updates tab, and the Settings options listed in V2-81) run on the local store in
+  real mode too. Reports, blocking, welcome picks, earnings, the creator profile, admin payments, the Help form and
+  votes use the API now. Notifications use the API since V21-03 (V2-70).
 - V2-9 (F01) **Store field names**: one persisted object (`phumireader.app`, version 2). The spec's keys map to
   `subs` → `subscriptions`, `read` → `lastRead`, `novel` → `novelSettings`; `receipt` and `legalDoc` are URL
   params (`/coins/orders/[id]`, `/legal/[doc]`). Extra keys for prototype state: `welcomed`, `recentSearches`,
@@ -254,7 +254,7 @@ docs/BACKEND_CHECKLIST.md, "V2.1 API additions" (V21-01 … V21-07).
 - V2-33 (F10) **Forgot password**: the demo resets with a 6-digit code on /login (V2.1 design); the real API emails a
   link, so real mode shows "Check your inbox" and /reset?token= opens the new-password step. A demo reset saves the new
   password as an account on this device (the demo accounts' own passwords keep working).
-- V2-34 (F10) **Sign-up checks**: all 4 password rules; birth year is checked in the form only (the API has no field);
+- V2-34 (F10) **Sign-up checks**: all 4 password rules; birth year is checked in the form and, in real mode, also by the API (V21-07: kept on the account, under 13 refused);
   the three demo emails and accounts made on this device count as taken. Apple sign-in is simulated in the demo and
   "coming soon" in real mode. The 3-try lock is demo only (the API answers 429 after 5 tries).
 - V2-35 (F10) **Who gets /welcome**: new sign-ups (also an unconfirmed real-mode login confirmed with the code); social
@@ -282,8 +282,8 @@ docs/BACKEND_CHECKLIST.md, "V2.1 API additions" (V21-01 … V21-07).
 - V2-42 (F16) **Genres**: `/genres?g=<Genre>&format=comic|novel` (`g` also accepts a slug); status, day and sort are page
   state; `/genres` opens on All genres. The banner count ignores filters (prototype). Series pages link genres here.
 - V2-43 (F17) **Help**: articles are translated in the `help` namespace (topics and links from demo data); the contact
-  form is simulated in both modes (no support API), ticket T-xxxxx is random, screenshots stay in the browser, "Was this
-  helpful?" votes are not saved. Prototype page names map to routes (Shop → /coins, Settings → /settings#…, …).
+  form is simulated in demo mode (random ticket T-xxxxx); in real mode (V21-07) it creates a ticket and emails it to
+  `SUPPORT_EMAIL`; screenshots stay in the browser; "Was this helpful?" votes are kept on the account in real mode. Prototype page names map to routes (Shop → /coins, Settings → /settings#…, …).
 - V2-44 (F18) **Policies**: policy text stays English (`lang="en"`) on Khmer pages; the ខ្មែរ chip says the Khmer version
   comes before launch. Unknown documents show the 404 (HTTP 200 when streamed, as for series).
 - V2-45 (F19) **Error pages**: the language toggle switches the site language on the same address; "Did you mean" is
@@ -526,5 +526,5 @@ docs/BACKEND_CHECKLIST.md, "V2.1 API additions" (V21-01 … V21-07).
   export endpoint is a later task; whether the site must offer a download at all goes to the lawyer review.
 - V2-81 (Fix) **Settings options saved only in the browser (open)**: `/me/settings` has no fields for these, so in real
   mode they stay in the store and do not follow the reader to a new device: reading mode, image quality, auto-next,
-  data saver, region, story languages, public library, mature content, the Google and Facebook toggles, and the comic
-  reader's background and width. This lists what V2-31 calls "the rest". Not decided which of them get API fields.
+  data saver, region, public library, mature content, the Google and Facebook toggles, and the comic reader's
+  background and width (story languages moved to the API in V21-07). This lists what V2-31 calls "the rest". Not decided which of them get API fields.

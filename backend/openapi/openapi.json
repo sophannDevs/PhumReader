@@ -3328,6 +3328,46 @@
         "tags" : [ "health" ]
       }
     },
+    "/api/v1/help/tickets" : {
+      "post" : {
+        "description" : "Works signed in or not. The ticket is emailed to the support address. 400 invalid_topic, invalid_email, message_too_short, message_too_long or invalid_order (each names its field); 429 too_many_requests (5 per hour).",
+        "operationId" : "createTicket",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/TicketRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TicketResponse"
+                }
+              }
+            },
+            "description" : "Created"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Sends a Contact us message and returns the ticket number",
+        "tags" : [ "help" ]
+      }
+    },
     "/api/v1/home" : {
       "get" : {
         "operationId" : "home",
@@ -3653,6 +3693,108 @@
         },
         "summary" : "Followed creators, most recent first",
         "tags" : [ "library" ]
+      }
+    },
+    "/api/v1/me/help-votes" : {
+      "get" : {
+        "operationId" : "votes",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/VoteView"
+                  }
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "The account's answers to \"Was this helpful?\", by article number",
+        "tags" : [ "help" ]
+      }
+    },
+    "/api/v1/me/help-votes/{article}" : {
+      "delete" : {
+        "operationId" : "clearVote",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "article",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "No Content"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Takes the answer back",
+        "tags" : [ "help" ]
+      },
+      "put" : {
+        "operationId" : "vote",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "article",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/VoteRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "204" : {
+            "description" : "No Content"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Saves the answer for a help article (a new answer replaces the old)",
+        "tags" : [ "help" ]
       }
     },
     "/api/v1/me/history" : {
@@ -7539,6 +7681,10 @@
           "avatarUrl" : {
             "type" : [ "string", "null" ]
           },
+          "birthYear" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int32"
+          },
           "displayName" : {
             "type" : "string"
           },
@@ -7959,6 +8105,49 @@
           }
         },
         "required" : [ "coins", "month" ]
+      },
+      "Preferences" : {
+        "type" : "object",
+        "properties" : {
+          "genres" : {
+            "type" : [ "array", "null" ],
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "storyLanguages" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string",
+              "enum" : [ "en", "km" ]
+            }
+          }
+        },
+        "required" : [ "storyLanguages" ]
+      },
+      "PreferencesChange" : {
+        "type" : "object",
+        "properties" : {
+          "genres" : {
+            "type" : [ "array", "null" ],
+            "items" : {
+              "type" : "string",
+              "maxLength" : 40,
+              "minLength" : 0
+            },
+            "maxItems" : 40,
+            "minItems" : 0
+          },
+          "storyLanguages" : {
+            "type" : [ "array", "null" ],
+            "items" : {
+              "type" : "string",
+              "enum" : [ "en", "km" ]
+            },
+            "maxItems" : 2,
+            "minItems" : 1
+          }
+        }
       },
       "ProfileRequest" : {
         "type" : "object",
@@ -8838,6 +9027,9 @@
           "notifications" : {
             "$ref" : "#/components/schemas/NotificationSettings"
           },
+          "preferences" : {
+            "$ref" : "#/components/schemas/Preferences"
+          },
           "reader" : {
             "$ref" : "#/components/schemas/ReaderSettings"
           },
@@ -8846,7 +9038,7 @@
             "enum" : [ "system", "light", "dark" ]
           }
         },
-        "required" : [ "language", "notifications", "reader", "theme" ]
+        "required" : [ "language", "notifications", "preferences", "reader", "theme" ]
       },
       "SettingsChange" : {
         "type" : "object",
@@ -8857,6 +9049,9 @@
           },
           "notifications" : {
             "$ref" : "#/components/schemas/NotificationsChange"
+          },
+          "preferences" : {
+            "$ref" : "#/components/schemas/PreferencesChange"
           },
           "reader" : {
             "$ref" : "#/components/schemas/ReaderChange"
@@ -8889,6 +9084,12 @@
       "SignupRequest" : {
         "type" : "object",
         "properties" : {
+          "birthYear" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int32",
+            "maximum" : 2100,
+            "minimum" : 1900
+          },
           "email" : {
             "type" : "string",
             "maxLength" : 254,
@@ -8976,6 +9177,46 @@
           }
         },
         "required" : [ "items" ]
+      },
+      "TicketRequest" : {
+        "type" : "object",
+        "properties" : {
+          "email" : {
+            "type" : "string",
+            "maxLength" : 254,
+            "minLength" : 0
+          },
+          "locale" : {
+            "type" : [ "string", "null" ],
+            "maxLength" : 5,
+            "minLength" : 0
+          },
+          "message" : {
+            "type" : "string",
+            "maxLength" : 5000,
+            "minLength" : 0
+          },
+          "order" : {
+            "type" : [ "string", "null" ],
+            "maxLength" : 30,
+            "minLength" : 0
+          },
+          "topic" : {
+            "type" : "string",
+            "maxLength" : 30,
+            "minLength" : 0
+          }
+        },
+        "required" : [ "email", "message", "topic" ]
+      },
+      "TicketResponse" : {
+        "type" : "object",
+        "properties" : {
+          "ticket" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "ticket" ]
       },
       "TokenRequest" : {
         "type" : "object",
@@ -9119,6 +9360,28 @@
           }
         },
         "required" : [ "code", "email" ]
+      },
+      "VoteRequest" : {
+        "type" : "object",
+        "properties" : {
+          "helpful" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "helpful" ]
+      },
+      "VoteView" : {
+        "type" : "object",
+        "properties" : {
+          "article" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "helpful" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "article", "helpful" ]
       },
       "Wallet" : {
         "type" : "object",

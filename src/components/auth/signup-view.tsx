@@ -79,7 +79,7 @@ export function SignupView({
   const [show, setShow] = useState(false)
 
   const create = useMutation({
-    mutationFn: (v: SignupValues) => signUp({ name: v.name.trim(), email: v.email.trim(), password: v.password }, v.ui),
+    mutationFn: (v: SignupValues) => signUp({ name: v.name.trim(), email: v.email.trim(), password: v.password, birthYear: Number(v.year) }, v.ui),
     onSuccess: (pending, v) => onSubmitted(pending, v.ui),
     onError: (e) => {
       // The API checks the same rules as the form; map its answers onto the fields.
@@ -88,6 +88,7 @@ export function SignupView({
       if (errorCode(e) === "email_taken") form.setError("email", { message: "emailTaken" }, { shouldFocus: true })
       else if (errorCode(e) === "password_too_weak" || fields.password)
         form.setError("password", { message: "passwordRules" }, { shouldFocus: true })
+      else if (fields.birthYear) form.setError("year", { message: "tooYoung" }, { shouldFocus: true })
       else if (fields.email) form.setError("email", { message: "emailInvalid" }, { shouldFocus: true })
       else if (fields.name) form.setError("name", { message: "nameRequired" }, { shouldFocus: true })
       else if (wait !== undefined) toast.error(t("tooManyTitle"), { description: waitText(wait), duration: 5000 })

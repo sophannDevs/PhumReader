@@ -7,6 +7,8 @@ import app.phumreader.user.domain.ThemeChoice;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import java.util.List;
 import org.jspecify.annotations.Nullable;
 
@@ -30,7 +32,16 @@ public final class SettingsViews {
             Language language,
             ThemeChoice theme,
             ReaderSettings reader,
-            NotificationSettings notifications) {}
+            NotificationSettings notifications,
+            Preferences preferences) {}
+
+    /**
+     * What the reader picked on the welcome page or Home (V21-07).
+     *
+     * @param genres genre names; null = never chosen (Home asks), empty = skipped
+     * @param storyLanguages the languages of the stories to show, at least one
+     */
+    public record Preferences(@Nullable List<String> genres, List<Language> storyLanguages) {}
 
     /**
      * @param size text size in px, one of 14, 16, 18, 20, 22, 24
@@ -86,7 +97,16 @@ public final class SettingsViews {
             @Nullable Language language,
             @Nullable ThemeChoice theme,
             @Nullable ReaderChange reader,
-            @Nullable @Valid NotificationsChange notifications) {}
+            @Nullable @Valid NotificationsChange notifications,
+            @Nullable @Valid PreferencesChange preferences) {}
+
+    /**
+     * @param genres genre names (at most 40, each up to 40 characters); [] means "Skip"
+     * @param storyLanguages at least one language
+     */
+    public record PreferencesChange(
+            @Nullable @Size(max = 40) List<@NotBlank @Size(max = 40) String> genres,
+            @Nullable @Size(min = 1, max = 2) List<Language> storyLanguages) {}
 
     /**
      * @param size one of 14, 16, 18, 20, 22, 24

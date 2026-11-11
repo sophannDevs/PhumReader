@@ -284,6 +284,9 @@ Paths below are relative to `/api/v1`. "CSRF" applies to every write (see [CSRF]
 | POST | `/users/{id}/report` | Signed in | Report an account: spam, impersonate, harass, other; 400 `cannot_report_self`, 404 `user_not_found` |
 | GET | `/me/reports` | Signed in | Your reports with status in_review / removed / no_violation |
 | GET | `/me/blocks` | Signed in | Accounts you blocked |
+| POST | `/help/tickets` | Public | Contact us: saves a ticket (`{ "ticket": "T-58214" }`) and emails it to the support address (V21-07). 5 per hour; 400 `invalid_topic`, `invalid_email`, `message_too_short`, `message_too_long`, `invalid_order` |
+| GET | `/me/help-votes` | Signed in | The account's "Was this helpful?" answers `[{ "article", "helpful" }]` |
+| PUT / DELETE | `/me/help-votes/{article}` | Signed in | Save `{ "helpful": true }` for help article 0–99 / take it back |
 | POST | `/coins/orders/{number}/refund-request` | Signed in | Ask for a refund of a paid order (V21-06; the order then carries `refundRequest`) |
 | GET | `/admin/refund-requests` | Admin | Refund requests with eligibility (unused / partial / spent, double charge) |
 | POST | `/admin/refund-requests/{id}/approve` / `decline` | Admin | Take back the unused coins / decline with a reason |
@@ -377,7 +380,7 @@ starts. **200**, no useful body.
 Creates an account and emails a 6-digit code (valid 10 minutes, 5 tries). **Public.**
 
 ```json
-{ "name": "Sokha Chan", "email": "sokha@example.com", "password": "Sokha2026!", "language": "km" }
+{ "name": "Sokha Chan", "email": "sokha@example.com", "password": "Sokha2026!", "language": "km", "birthYear": 1998 }
 ```
 
 | Field | Rules |
@@ -386,9 +389,10 @@ Creates an account and emails a 6-digit code (valid 10 minutes, 5 tries). **Publ
 | `email` | up to 254 characters, an email address |
 | `password` | up to 128 characters and at least 3 of: 8+ characters, upper and lower case, a number, a symbol |
 | `language` | optional, `en` or `km`: the account's starting language setting |
+| `birthYear` | optional (V21-07), 1900–2100; kept on the account and returned as `birthYear` by `GET /me`. Under 13 cannot join |
 
 **201** → [SignupResponse](#signupresponse) `{ "email", "codeExpiresInSeconds", "resendAfterSeconds" }`.
-**Errors:** `400 password_too_weak` (field `password`) · `409 email_taken` (a confirmed account has this email) ·
+**Errors:** `400 password_too_weak` (field `password`) · `400 too_young` (field `birthYear`) · `409 email_taken` (a confirmed account has this email) ·
 `429 too_many_requests`.
 
 #### `POST /api/v1/auth/verify`
@@ -574,6 +578,8 @@ all settings. **Signed in.**
 | `reader.size` | `14`, `16`, `18`, `20`, `22`, `24` |
 | `reader.theme` | `light`, `sepia`, `dark` |
 | `reader.wide` | boolean |
+| `preferences.genres` | up to 40 genre names (V21-07): the welcome / Home picks. `[]` means "Skip"; `GET` returns `null` until the reader chose |
+| `preferences.storyLanguages` | 1–2 of `en`, `km`: the languages of the stories to show |
 | `notifications.types.<type>.push` · `.email` | boolean; `<type>`: `update` (new episodes of subscribed series), `fastpass` (a wanted Fast Pass episode is free), `comment`, `coins`, `news` |
 | `notifications.quiet.on` | boolean: no push during the quiet hours |
 | `notifications.quiet.from` · `.to` | 0–23, whole hours in Asia/Phnom_Penh; quiet from `from` up to (not including) `to`; may wrap midnight (22 → 7); the same hour twice means no quiet time |

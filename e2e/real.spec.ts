@@ -1921,7 +1921,51 @@ test("21. refund request: asked on the receipt, shown in /admin/payments, approv
   }
 });
 
-test("22. delete the account: signed out everywhere, wrong password refused first", async () => {
+test("22. smaller V2.1 fields: birth year, Home picks, Help ticket and votes stay on the account and follow it to a new device", async ({
+  browser,
+}) => {
+  test.setTimeout(120_000);
+  // Birth year from the sign-up form (test 1).
+  expect(((await (await page.request.get("/api/v1/me")).json()) as { birthYear: number }).birthYear).toBe(1995);
+
+  // Home: the picker shows until a genre is chosen; the pick is saved with the account.
+  await page.goto("/");
+  await visible(page.getByRole("button", { name: "Romance", exact: true })).click();
+  await visible(page.getByRole("button", { name: /^Show/ })).click();
+  await expect(visible(page.getByText("Recommended for you"))).toBeVisible();
+  await expect
+    .poll(async () => ((await (await page.request.get("/api/v1/me/settings")).json()) as { preferences: { genres: string[] | null } }).preferences.genres)
+    .toEqual(["Romance"]);
+
+  // Help: the Contact us form creates a ticket; "Was this helpful?" is saved.
+  await page.goto("/help");
+  await visible(page.getByLabel("Topic *")).selectOption("other");
+  await visible(page.getByLabel("Message *")).fill(`Where do I find my reading history? ${stamp}`);
+  await visible(page.getByRole("button", { name: "Send message" })).click();
+  await expect(visible(page.getByText(/^T-\d{5}$/).or(page.locator("strong", { hasText: /^T-\d{5}$/ })).first())).toBeVisible();
+  await visible(page.locator('[data-slot="accordion-trigger"]').first()).click();
+  await visible(page.getByRole("button", { name: "Yes", exact: true }).first()).click();
+  await expect
+    .poll(async () => ((await (await page.request.get("/api/v1/me/help-votes")).json()) as { article: number; helpful: boolean }[]).length)
+    .toBe(1);
+
+  // A new device signs in: no picker on Home, and the vote is still marked.
+  const other = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+  const op = await other.newPage();
+  try {
+    await logIn(op, NEW_PASSWORD);
+    await op.goto("/");
+    await expect(visible(op.getByText("Recommended for you"))).toBeVisible();
+    await expect(op.getByRole("button", { name: "Romance", exact: true })).toHaveCount(0);
+    await op.goto("/help");
+    await visible(op.locator('[data-slot="accordion-trigger"]').first()).click();
+    await expect(visible(op.getByRole("button", { name: "Yes", exact: true }).first())).toHaveAttribute("aria-pressed", "true");
+  } finally {
+    await other.close();
+  }
+});
+
+test("23. delete the account: signed out everywhere, wrong password refused first", async () => {
   await page.goto("/settings");
   await visible(page.getByRole("button", { name: "Delete account" })).click();
   // V2.1: type DELETE first; the button stays disabled until then.

@@ -9,6 +9,7 @@ import * as account from "@/lib/api/account"
 import { meKeys } from "@/lib/api/keys"
 import { useAccountEmail } from "@/lib/me"
 import { prefsFromApi, useAccountSettings } from "@/lib/notifications"
+import { applyPreferences } from "@/lib/preferences"
 import { useAppStore } from "@/lib/store"
 import { useTheme } from "@/lib/theme"
 
@@ -46,6 +47,7 @@ export function SettingsSync() {
       notifications: { episodes: saved.notifications.episodes, fastPass: saved.notifications.fastPass },
       notifPrefs: prefsFromApi(saved.notifications),
     })
+    applyPreferences(saved.preferences)
     setTheme(saved.theme)
     // eslint-disable-next-line react-hooks/exhaustive-deps -- setTheme is stable enough; apply once per account
   }, [email, saved])

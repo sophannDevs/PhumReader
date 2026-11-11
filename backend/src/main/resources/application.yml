@@ -28,6 +28,8 @@ server:
 
 phumreader:
   frontend-url: ${FRONTEND_URL:}
+  # Where Help > Contact us tickets are emailed ([SUPPORT EMAIL]). Empty: the ticket is saved only.
+  support-email: ${SUPPORT_EMAIL:}
   payments:
     # ABA PayWay (plan A4). Empty merchant id = no PayWay (the dev profile uses the simulator).
     payway:

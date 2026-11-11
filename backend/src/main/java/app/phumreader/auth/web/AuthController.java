@@ -70,6 +70,7 @@ class AuthController {
                         body.email(),
                         body.password(),
                         body.language(),
+                        body.birthYear(),
                         client(request));
         return new SignupResponse(
                 pending.email(),

@@ -29,6 +29,8 @@ export const meKeys = {
   /** GET /me/blocks and GET /me/reports (V21-04). */
   blocks: (email: string) => ["blocks", email] as const,
   reports: (email: string) => ["reports", email] as const,
+  /** GET /me/help-votes (V21-07). */
+  helpVotes: (email: string) => ["help-votes", email] as const,
 }
 
 export const walletKeys = {

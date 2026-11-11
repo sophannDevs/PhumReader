@@ -1,5 +1,6 @@
 "use client"
 
+import { useQueryClient } from "@tanstack/react-query"
 import { ChevronRightIcon, SettingsIcon } from "lucide-react"
 import { useLocale } from "next-intl"
 import { useTranslations } from "@/i18n/translations"
@@ -31,6 +32,7 @@ import { withDemo } from "@/lib/demo-api"
 import { fieldErrors } from "@/lib/api/errors"
 import { formatShortDate, ictDate, initials } from "@/lib/format"
 import { prefsFromApi, samePrefs, useAccountSettings } from "@/lib/notifications"
+import { savePreferences } from "@/lib/preferences"
 import { logOut, toUser } from "@/lib/session"
 import {
   type AppSettings,
@@ -176,6 +178,7 @@ function PillGroup<T extends string>({
 
 export function SettingsPage() {
   const t = useTranslations("settings")
+  const queryClient = useQueryClient()
   const ta = useTranslations("account")
   const tt = useTranslations("toasts")
   const te = useTranslations("errors")
@@ -259,6 +262,10 @@ export function SettingsPage() {
       if (nameTrim !== user.name) {
         if (DEMO_MODE) useAppStore.getState().login({ ...user, name: nameTrim })
         else useAppStore.getState().login(toUser(await account.patchProfile(nameTrim)))
+      }
+      // Real mode: the story languages belong to the account (V21-07), so every device shows the same stories.
+      if (!DEMO_MODE && f.langs.join() !== settings.langs.join()) {
+        await savePreferences(queryClient, user.email, { storyLanguages: [...f.langs] })
       }
     } catch (e) {
       setSaving(false)

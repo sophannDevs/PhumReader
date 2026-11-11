@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { demoData, type HelpArticle, type HelpTopic } from "@/data"
 import { Link } from "@/i18n/navigation"
+import { useHelpVotes } from "@/lib/help"
 import { cn } from "@/lib/utils"
 
 /** Topic cards in the prototype's order, with its glyphs (text presentation, so they don't turn into emoji). */
@@ -66,7 +67,7 @@ export function HelpPage() {
   const [q, setQ] = useState("")
   const [topic, setTopic] = useState<HelpTopic | "all">("all")
   const [open, setOpen] = useState("")
-  const [votes, setVotes] = useState<Record<number, "y" | "n">>({})
+  const { votes, vote: castVote } = useHelpVotes()
 
   const articles: Article[] = useMemo(
     () =>
@@ -235,7 +236,7 @@ export function HelpPage() {
                               size="sm"
                               aria-pressed={vote === "y"}
                               className="aria-pressed:bg-accent"
-                              onClick={() => setVotes((v) => ({ ...v, [a.i]: "y" }))}
+                              onClick={() => castVote(a.i, "y")}
                             >
                               {t("yes")}
                             </Button>
@@ -244,7 +245,7 @@ export function HelpPage() {
                               size="sm"
                               aria-pressed={vote === "n"}
                               className="aria-pressed:bg-accent"
-                              onClick={() => setVotes((v) => ({ ...v, [a.i]: "n" }))}
+                              onClick={() => castVote(a.i, "n")}
                             >
                               {t("no")}
                             </Button>

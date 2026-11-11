@@ -1,13 +1,18 @@
 "use client"
 
 import { SettingsIcon, SparklesIcon } from "lucide-react"
+import { useQueryClient } from "@tanstack/react-query"
 import { useTranslations } from "@/i18n/translations"
 import { useState } from "react"
 import { toast } from "sonner"
 import { SeriesCard } from "@/components/pr/series-card"
 import { Chip, Eyebrow, phoneSwipeRow, SectionHead } from "@/components/pr/v2-primitives"
 import { Button } from "@/components/ui/button"
+import { DEMO_MODE } from "@/lib/api/config"
 import { parseCount } from "@/lib/format"
+import { useAccountEmail } from "@/lib/me"
+import { useAccountSettings } from "@/lib/notifications"
+import { savePreferences } from "@/lib/preferences"
 import { useLocalize } from "@/lib/localize"
 import type { Genre, Series } from "@/data"
 import { useAppStore, useHydrated } from "@/lib/store"
@@ -21,17 +26,26 @@ export function ForYouSection({ genres, all }: { genres: Genre[]; all: Series[] 
   const t = useTranslations("home")
   const loc = useLocalize()
   const hydrated = useHydrated()
-  const prefs = useAppStore((s) => s.prefs)
+  const tt = useTranslations("toasts")
+  const qc = useQueryClient()
+  const email = useAccountEmail()
+  const storePrefs = useAppStore((s) => s.prefs)
+  // Real mode, signed in: the account's picks decide (the same on every device) once they are loaded.
+  const account = useAccountSettings().data
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState<Genre[]>([])
 
   if (!hydrated) return null
+  const fromAccount = !DEMO_MODE && !!email
+  if (fromAccount && !account) return null
+  const prefs = fromAccount && account ? ((account.preferences.genres ?? null) as Genre[] | null) : storePrefs
+  const savePicks = (genres: Genre[]) => savePreferences(qc, email, { genres }).catch(() => toast.error(tt("actionFailed")))
   const showPicker = prefs === null || editing
 
   if (showPicker) {
     const save = () => {
       if (draft.length === 0) return
-      useAppStore.getState().setPrefs(draft)
+      void savePicks(draft)
       setEditing(false)
       toast.success(t("prefsSaved", { count: draft.length }))
     }
@@ -62,7 +76,7 @@ export function ForYouSection({ genres, all }: { genres: Genre[]; all: Series[] 
             <Button
               variant="ghost"
               onClick={() => {
-                if (prefs === null) useAppStore.getState().setPrefs([])
+                if (prefs === null) void savePicks([])
                 setEditing(false)
               }}
             >

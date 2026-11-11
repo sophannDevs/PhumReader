@@ -14,6 +14,8 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Link } from "@/i18n/navigation"
+import { DEMO_MODE } from "@/lib/api/config"
+import { createTicket } from "@/lib/api/help"
 import { withDemo } from "@/lib/demo-api"
 import { localDigits } from "@/lib/format"
 import { useAppStore, useHydrated } from "@/lib/store"
@@ -54,8 +56,8 @@ function Required() {
  * Help center "Contact us" (spec §19, prototype Help): topic, email, order number (payments only, TW-12345678),
  * message (20+ characters, counter), screenshots (PNG or JPG up to 5 MB, kept in the browser), and a ticket number
  * T-xxxxx after sending. A receipt's "Get help" fills it in through the store's `helpPrefill` (read once, then
- * cleared), and /help#contact scrolls here with the topic focused. Sending is simulated in both modes (the API has
- * no support inbox yet).
+ * cleared), and /help#contact scrolls here with the topic focused. Demo mode simulates sending; real mode (V21-07) POSTs
+ * /help/tickets, which saves the ticket and emails it to the support address (screenshots stay in the browser).
  */
 export function HelpContact() {
   const t = useTranslations("help.contact")
@@ -94,7 +96,12 @@ export function HelpContact() {
   }, [hydrated, form])
 
   const send = useMutation({
-    mutationFn: () => withDemo(() => ({ ticket: `T-${58213 + Math.floor(Math.random() * 900)}` }), { delay: 900 }),
+    mutationFn: async () => {
+      if (DEMO_MODE) return withDemo(() => ({ ticket: `T-${58213 + Math.floor(Math.random() * 900)}` }), { delay: 900 })
+      // Real mode (V21-07): the API saves the ticket and emails it to the support address.
+      const v = form.getValues()
+      return { ticket: await createTicket({ topic: v.topic, email: v.email.trim(), order: v.order, message: v.msg.trim(), locale }) }
+    },
     onSuccess: ({ ticket }) => setSent({ ticket, email: form.getValues("email").trim() }),
     onError: () => toast.error(t("sendFailed")),
   })

@@ -2,6 +2,7 @@
 # and backend/.env is never read.
 phumreader:
   frontend-url: http://localhost:3000
+  support-email: support@phumireader.test
   auth:
     generate-dev-keys: true
     # Any reuse of a rotated refresh token counts (tests move the clock).

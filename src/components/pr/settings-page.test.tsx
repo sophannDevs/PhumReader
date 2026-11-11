@@ -284,6 +284,7 @@ const accountSettings = (notifications: Partial<Settings["notifications"]> = {})
     digest: false,
     ...notifications,
   },
+  preferences: { genres: null, storyLanguages: ["en", "km"] },
 })
 
 describe("SettingsPage: notifications summary (real API)", () => {

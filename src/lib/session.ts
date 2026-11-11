@@ -14,7 +14,7 @@ type Me = Schemas["MeResponse"]
 
 export const toUser = (me: Me): StoredUser => ({ name: me.displayName, email: me.email, roles: me.roles, avatarUrl: me.avatarUrl ?? null })
 
-export type SignupData = { name: string; email: string; password: string }
+export type SignupData = { name: string; email: string; password: string; birthYear?: number }
 
 /** A sign-up (or an unconfirmed log in) waiting for its email code. */
 export type PendingCode = {

@@ -14,6 +14,7 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.Clock;
 import java.time.Duration;
+import java.time.Year;
 import java.util.Optional;
 import java.util.UUID;
 import org.jspecify.annotations.Nullable;
@@ -58,6 +59,8 @@ public class AuthService {
     private final RateLimiter limiter;
     private final PasswordEncoder passwords;
     private final EmailSender email;
+    private static final int MIN_AGE = 13;
+
     private final Clock clock;
     private final String frontendUrl;
     private final String unknownUserHash;
@@ -92,10 +95,12 @@ public class AuthService {
             String emailAddress,
             String password,
             @Nullable String language,
+            @Nullable Integer birthYear,
             ClientInfo client) {
         limiter.acquire(
                 "signup:ip:" + client.ip(), SIGNUPS_PER_IP, SIGNUP_WINDOW, "too_many_requests");
         requireStrongPassword(password);
+        requireOldEnough(birthYear);
         String address = User.normalizeEmail(emailAddress);
         Optional<User> existing = users.findByEmail(address);
         if (existing.isPresent()) {
@@ -103,12 +108,21 @@ public class AuthService {
             if (user.isEmailVerified() || user.getStatus() != UserStatus.ACTIVE) {
                 throw ApiException.conflict("email_taken", "That email already has an account.");
             }
-            users.updateUnverifiedSignup(user, displayName, passwords.encode(password));
+            users.updateUnverifiedSignup(user, displayName, passwords.encode(password), birthYear);
         } else {
-            users.createReader(address, displayName, passwords.encode(password), language);
+            users.createReader(
+                    address, displayName, passwords.encode(password), language, birthYear);
         }
         sendCode(address);
         return new PendingSignup(address, VerificationCodes.LIFETIME, RESEND_COOLDOWN);
+    }
+
+    /** Under 13 cannot join (the form says the same). No birth year (older clients) passes. */
+    private void requireOldEnough(@Nullable Integer birthYear) {
+        if (birthYear != null && Year.now(clock).getValue() - birthYear < MIN_AGE) {
+            throw ApiException.invalidField(
+                    "birthYear", "too_young", "You must be 13 or older to join.");
+        }
     }
 
     /** The right code confirms the email and signs in (remembered). */

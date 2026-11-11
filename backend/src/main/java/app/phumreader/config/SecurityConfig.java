@@ -68,6 +68,8 @@ public class SecurityConfig {
         "/api/v1/auth/logout",
         "/api/v1/auth/forgot-password",
         "/api/v1/auth/reset-password",
+        // Contact us works without an account (a signed-in reader is recognised by the cookie).
+        "/api/v1/help/tickets",
         // ABA PayWay's server-to-server callback: signed by PayWay, no cookie, no CSRF (P3-11).
         "/api/v1/payments/payway/callback"
     };

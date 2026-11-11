@@ -29,6 +29,7 @@ const ACCOUNT: Settings = {
     quiet: { on: false, from: 21, to: 6 },
     digest: true,
   },
+  preferences: { genres: ["Romance", "Fantasy"], storyLanguages: ["km"] },
 }
 
 /** GET and PATCH /me/settings; returns the PATCH bodies. */
@@ -70,6 +71,9 @@ describe("SettingsSync", () => {
     )
     expect(useAppStore.getState().notifications).toEqual({ episodes: false, fastPass: true })
     expect(useAppStore.getState().novelSettings).toEqual(ACCOUNT.reader)
+    // V21-07: the welcome picks follow the account.
+    expect(useAppStore.getState().prefs).toEqual(["Romance", "Fantasy"])
+    expect(useAppStore.getState().settings.langs).toEqual(["km"])
     // Shared with the alert settings and Settings (one request).
     expect(client.getQueryData(meKeys.settings(EMAIL))).toEqual(ACCOUNT)
   })

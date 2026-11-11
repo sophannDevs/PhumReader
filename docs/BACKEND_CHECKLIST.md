@@ -1182,12 +1182,35 @@ as the plan tasks (tests, `./gradlew check`, OpenAPI + `npm run api:gen`); commi
   - **Website notes** are the assumptions V2-72 to V2-81 in `docs/CHECKLIST.md`. `npm test` and `test:e2e:real` were not
     run in this pass (no Vitest packages and no backend on that PC).
 
-- [ ] **V21-07 Smaller V2.1 fields**
+- [x] **V21-07 Smaller V2.1 fields**
   - Build: welcome picks (genres, story languages) saved as account preferences and used by Home; birth year at
     sign-up (for 16+ / 18+); the Help contact form creates a ticket (T-xxxxx) sent to `[SUPPORT EMAIL]`; "Was this
     helpful?" votes.
   - Depends on: P3-02, P3-17
   - Done when: each one is still there after a reload and on a new device in real mode.
+  - Design (proposed 2026-11-11, not yet confirmed by the owner):
+    - **Migration V16** (`V16__small_fields.sql`; V15 before the rebase, V15 is now the account reports):
+      `user_settings.preferred_genres` (null until chosen, empty = "Skip") and `story_languages`; `users.birth_year`; `support_tickets` (numbers from 58214) and `help_votes` (one answer per account and article).
+      Row level security on both new tables.
+    - **Welcome / Home picks.** Part of `GET/PATCH /me/settings` as `preferences { genres, storyLanguages }` (names of
+      genres, 1-2 story languages). /welcome "Start reading", Home's "What do you like to read?" and Settings > Language
+      save them; `SettingsSync` applies them to a new device and Home waits for them, so it never asks twice.
+    - **Birth year.** `birthYear` on `POST /auth/signup` (1900-2100); under 13 is refused (`too_young`, field
+      `birthYear`). `GET /me` returns it. Social sign-in accounts have none. The 16+ / 18+ checks keep using the
+      series' age rating; the stored year is what a later check will read.
+    - **Help ticket.** `POST /help/tickets` (public; signed in is recognised): topic, email, order `TW-12345678` for
+      payments, message 20-1000; 5 per hour; the ticket `T-58214` is saved and emailed to `SUPPORT_EMAIL`
+      (`phumreader.support-email`, empty = saved only). Screenshots stay in the browser. Erasing an account deletes its
+      tickets and votes.
+    - **Votes.** `GET /me/help-votes`, `PUT/DELETE /me/help-votes/{article}` (article = place in the Help list, 0-99).
+      Signed out, a vote lasts for the visit only.
+    - **Not in this task.** No admin screen for tickets (they arrive by email); no reply flow.
+    - **Done 2026-11-11.** V16, the endpoints and `SmallFieldsApiTest` (10); `./gradlew check` green, OpenAPI and
+      `api:gen` updated. Website: sign-up sends the year, `/welcome`, Home and Settings save the picks, the Help form
+      and votes use the API (`small-fields-real.test.tsx` 5, plus sign-up and `SettingsSync` tests). `e2e/real.spec.ts`
+      test 22 passes (year, Home pick, ticket, vote; a second browser sees the pick and the vote). Also fixed the
+      production build: the Daily updates "Today" tab read `Date.now()` while prerendering (`useSyncExternalStore`).
+      `SUPPORT_EMAIL` is not set in `backend/.env`, so dev saves tickets without emailing.
 
 ---
 

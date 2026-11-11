@@ -95,7 +95,7 @@ describe("SignupView: creating the account", () => {
     await fillAll(user, { name: "  Sokha  " })
     await submit(user)
     await waitFor(() => expect(onSubmitted).toHaveBeenCalledOnce())
-    expect(body).toEqual({ name: "Sokha", email: "sokha@example.com", password: "Abcdef1!", language: "en" })
+    expect(body).toEqual({ name: "Sokha", email: "sokha@example.com", password: "Abcdef1!", birthYear: 1998, language: "en" })
     expect(onSubmitted.mock.calls[0][0]).toMatchObject({ email: "sokha@example.com", resendAfterSeconds: 45 })
     expect(onSubmitted.mock.calls[0][1]).toBe("en")
   })
@@ -119,6 +119,15 @@ describe("SignupView: creating the account", () => {
     await user.click(document.querySelector("button[type=submit]") as HTMLElement)
     await waitFor(() => expect(onSubmitted).toHaveBeenCalled())
     expect(body.language).toBe("km")
+  })
+
+  it("puts the API's too_young answer on the birth year field", async () => {
+    server.use(http.post(`${API}/auth/signup`, () => apiError(400, "too_young", { fields: { birthYear: "too_young" } })))
+    const { user, onSubmitted } = setup()
+    await fillAll(user)
+    await submit(user)
+    expect(await screen.findByText(/13 or older/)).toBeInTheDocument()
+    expect(onSubmitted).not.toHaveBeenCalled()
   })
 
   it("puts the email_taken answer on the email field", async () => {

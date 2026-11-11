@@ -1,0 +1,109 @@
+import { describe, expect, it } from "vitest"
+import { HelpPage } from "@/components/pr/help-page"
+import { ForYouSection } from "@/components/pr/home/for-you"
+import { meKeys } from "@/lib/api/keys"
+import { useAppStore } from "@/lib/store"
+import { renderUi, screen, waitFor } from "@/test/render"
+import { API, apiError, http, HttpResponse, server } from "@/test/server"
+
+/** The smaller V2.1 fields on the real API (V21-07): Home picks, the Help contact form and "Was this helpful?" votes. */
+
+const EMAIL = "sokha@example.com"
+const signIn = () => useAppStore.getState().login({ name: "Sokha Chan", email: EMAIL })
+const account = (genres: string[] | null) => ({
+  language: "en",
+  theme: "system",
+  reader: { font: "sans", size: 18, theme: "light", wide: true },
+  notifications: {
+    episodes: true,
+    fastPass: true,
+    types: {
+      update: { push: true, email: false },
+      comment: { push: true, email: false },
+      coins: { push: true, email: true },
+      fastpass: { push: true, email: false },
+      news: { push: false, email: false },
+    },
+    quiet: { on: true, from: 22, to: 7 },
+    digest: false,
+  },
+  preferences: { genres, storyLanguages: ["en", "km"] },
+})
+
+describe("Home picks (ForYouSection)", () => {
+  it("asks until the account has picks, then saves them to the account", async () => {
+    signIn()
+    const patches: unknown[] = []
+    server.use(
+      http.get(`${API}/me/settings`, () => HttpResponse.json(account(null))),
+      http.patch(`${API}/me/settings`, async ({ request }) => {
+        const body = (await request.json()) as { preferences: { genres: string[] } }
+        patches.push(body)
+        return HttpResponse.json(account(body.preferences.genres))
+      }),
+    )
+    const { user, client } = renderUi(<ForYouSection genres={["Romance", "Fantasy"]} all={[]} />)
+    await user.click(await screen.findByRole("button", { name: "Romance" }))
+    await user.click(screen.getByRole("button", { name: /^Show/ }))
+    await waitFor(() => expect(patches).toEqual([{ preferences: { genres: ["Romance"] } }]))
+    expect(useAppStore.getState().prefs).toEqual(["Romance"])
+    await waitFor(() => expect((client.getQueryData(meKeys.settings(EMAIL)) as ReturnType<typeof account>).preferences.genres).toEqual(["Romance"]))
+  })
+
+  it("does not ask again on a new device when the account already has picks", async () => {
+    signIn()
+    server.use(http.get(`${API}/me/settings`, () => HttpResponse.json(account(["Fantasy"]))))
+    renderUi(<ForYouSection genres={["Romance", "Fantasy"]} all={[]} />)
+    expect(await screen.findByText(/Recommended for you|Popular right now/)).toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: "Romance" })).not.toBeInTheDocument()
+  })
+})
+
+describe("Help: Contact us and votes", () => {
+  it("sends the ticket to the API and shows its number", async () => {
+    let body: unknown
+    server.use(
+      http.post(`${API}/help/tickets`, async ({ request }) => {
+        body = await request.json()
+        return HttpResponse.json({ ticket: "T-58214" }, { status: 201 })
+      }),
+    )
+    const { user } = renderUi(<HelpPage />)
+    await user.selectOptions(screen.getByLabelText(/Topic/, { selector: "select" }), "other")
+    await user.type(screen.getByLabelText(/^Email/), "dara@example.com")
+    await user.type(screen.getByLabelText(/^Message/), "Where do I find my reading history?")
+    await user.click(screen.getByRole("button", { name: "Send message" }))
+    expect(await screen.findByText("T-58214")).toBeInTheDocument()
+    expect(body).toEqual({ topic: "other", email: "dara@example.com", order: null, message: "Where do I find my reading history?", locale: "en" })
+  })
+
+  it("keeps the form and says so when the ticket cannot be sent", async () => {
+    server.use(http.post(`${API}/help/tickets`, () => apiError(429, "too_many_requests")))
+    const { user } = renderUi(<HelpPage />)
+    await user.selectOptions(screen.getByLabelText(/Topic/, { selector: "select" }), "other")
+    await user.type(screen.getByLabelText(/^Email/), "dara@example.com")
+    await user.type(screen.getByLabelText(/^Message/), "Where do I find my reading history?")
+    await user.click(screen.getByRole("button", { name: "Send message" }))
+    await waitFor(() => expect(screen.getByRole("button", { name: "Send message" })).toBeEnabled())
+    expect(screen.queryByText(/T-\d+/)).not.toBeInTheDocument()
+  })
+
+  it("loads the account's votes and saves a new one", async () => {
+    signIn()
+    const saved: unknown[] = []
+    server.use(
+      http.get(`${API}/me/help-votes`, () => HttpResponse.json([{ article: 0, helpful: true }])),
+      http.put(`${API}/me/help-votes/:article`, async ({ request, params }) => {
+        saved.push([params.article, await request.json()])
+        return new HttpResponse(null, { status: 204 })
+      }),
+    )
+    const { user } = renderUi(<HelpPage />)
+    await user.click(await waitFor(() => document.querySelector('[data-slot="accordion-trigger"]') as HTMLElement))
+    const yes = (await screen.findAllByRole("button", { name: "Yes" }))[0]
+    await waitFor(() => expect(yes).toHaveAttribute("aria-pressed", "true"))
+    await user.click(screen.getAllByRole("button", { name: "No" })[0])
+    await waitFor(() => expect(saved).toEqual([["0", { helpful: false }]]))
+    expect(screen.getAllByRole("button", { name: "No" })[0]).toHaveAttribute("aria-pressed", "true")
+  })
+})

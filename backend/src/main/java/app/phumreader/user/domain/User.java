@@ -39,6 +39,9 @@ public class User implements Persistable<UUID> {
 
     @Nullable private String avatarUrl;
 
+    /** From the sign-up form; null for accounts made with Google or Facebook. */
+    @Nullable private Integer birthYear;
+
     @Enumerated(EnumType.STRING)
     private UserStatus status;
 
@@ -121,6 +124,10 @@ public class User implements Persistable<UUID> {
     }
 
     /** A new profile picture, or none ({@code null}) to go back to the initials. */
+    public void changeBirthYear(@Nullable Integer year) {
+        this.birthYear = year;
+    }
+
     public void changeAvatar(@Nullable String avatarUrl) {
         this.avatarUrl = avatarUrl;
     }
@@ -252,6 +259,10 @@ public class User implements Persistable<UUID> {
 
     public String getDisplayName() {
         return displayName;
+    }
+
+    public @Nullable Integer getBirthYear() {
+        return birthYear;
     }
 
     public @Nullable String getAvatarUrl() {

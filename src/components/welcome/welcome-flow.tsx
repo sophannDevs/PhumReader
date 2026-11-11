@@ -22,6 +22,7 @@ import { firstName, parseCount } from "@/lib/format"
 import { useLocalize } from "@/lib/localize"
 import { meKeys } from "@/lib/me"
 import { saveAlertPrefs } from "@/lib/notifications"
+import { savePreferences } from "@/lib/preferences"
 import { useAppStore, useHydrated, useUser } from "@/lib/store"
 import { cn } from "@/lib/utils"
 
@@ -72,6 +73,7 @@ const byViews = (a: { views: string }, b: { views: string }) => parseCount(b.vie
  */
 export function WelcomeFlow() {
   const t = useTranslations("welcome")
+  const tt = useTranslations("toasts")
   const locale = useLocale() as Locale
   const pathname = usePathname()
   const router = useRouter()
@@ -146,8 +148,8 @@ export function WelcomeFlow() {
 
   async function finish() {
     const store = useAppStore.getState()
-    store.setPrefs(state.picked)
-    store.setSettings({ langs: stories })
+    // Real mode saves the picks to the account (so Home follows on every device); a failure keeps them in this browser.
+    savePreferences(queryClient, user?.email, { genres: state.picked, storyLanguages: stories }).catch(() => toast.error(tt("actionFailed")))
     // Real mode saves it to the account (New episodes push); a failure keeps the reader's other choices.
     if (state.alerts) void saveAlertPrefs(queryClient, user?.email, { update: [true, store.notifPrefs.update[1]] }).catch(() => undefined)
     const added = state.subs.filter((id) => !store.subscriptions.includes(id))

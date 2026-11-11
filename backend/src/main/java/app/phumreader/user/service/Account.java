@@ -15,7 +15,8 @@ public record Account(
         @Nullable String avatarUrl,
         List<String> roles,
         boolean emailVerified,
-        UserStatus status) {
+        UserStatus status,
+        @Nullable Integer birthYear) {
 
     public static Account of(User user) {
         return new Account(
@@ -25,6 +26,7 @@ public record Account(
                 user.getAvatarUrl(),
                 user.getRoles().stream().map(Role::name).sorted().toList(),
                 user.isEmailVerified(),
-                user.getStatus());
+                user.getStatus(),
+                user.getBirthYear());
     }
 }
