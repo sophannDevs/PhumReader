@@ -1,5 +1,6 @@
 import type { Metadata } from "next"
-import { getTranslations, setRequestLocale } from "next-intl/server"
+import { setRequestLocale } from "next-intl/server"
+import { getTranslations } from "@/i18n/translations-server"
 import { Suspense } from "react"
 import { SearchPage, SearchSkeleton } from "@/components/pr/search-page"
 

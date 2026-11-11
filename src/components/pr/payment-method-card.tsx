@@ -1,6 +1,6 @@
 "use client"
 
-import { useTranslations } from "next-intl"
+import { useTranslations } from "@/i18n/translations"
 import { Badge } from "@/components/ui/badge"
 import { RadioGroupItem, radioCardClassName } from "@/components/ui/radio-group"
 import type { PaymentMethod } from "@/data/types"

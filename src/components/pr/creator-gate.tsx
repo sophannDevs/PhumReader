@@ -1,7 +1,7 @@
 "use client"
 
 import { AlertCircleIcon, LogInIcon, PenLineIcon, type LucideIcon } from "lucide-react"
-import { useTranslations } from "next-intl"
+import { useTranslations } from "@/i18n/translations"
 import { useState } from "react"
 import { BecomeCreatorDialog } from "@/components/pr/become-creator-dialog"
 import { Eyebrow, StateBox } from "@/components/pr/v2-primitives"

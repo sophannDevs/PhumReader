@@ -1,9 +1,10 @@
 import Image from "next/image"
-import { useTranslations } from "next-intl"
+import { useTranslations } from "@/i18n/translations"
 import type { Series } from "@/data/types"
 import { Link } from "@/i18n/navigation"
 import { seriesHref } from "@/lib/routes"
 import { cn } from "@/lib/utils"
+import { Num } from "@/i18n/num"
 
 /** Movement strings come from demo data: "▲ 2", "▼ 3", "NEW" or "—" (V2.1 `.rk-move`). */
 export function Movement({ value, className }: { value: string; className?: string }) {
@@ -13,13 +14,13 @@ export function Movement({ value, className }: { value: string; className?: stri
   if (value.startsWith("▲"))
     return (
       <span className={cn(base, "text-[#15803d]", className)} aria-label={t("moveUp", { n })}>
-        {value}
+        <Num>{value}</Num>
       </span>
     )
   if (value.startsWith("▼"))
     return (
       <span className={cn(base, "text-[#b91c1c]", className)} aria-label={t("moveDown", { n })}>
-        {value}
+        <Num>{value}</Num>
       </span>
     )
   if (value.toUpperCase() === "NEW")
@@ -67,7 +68,7 @@ export function RankRow({
           top ? "text-lg text-brand-ink" : "text-base text-muted-foreground"
         )}
       >
-        {rank}
+        <Num>{rank}</Num>
       </span>
       <Image
         src={series.cover}

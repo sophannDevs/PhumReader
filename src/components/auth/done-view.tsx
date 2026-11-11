@@ -1,7 +1,7 @@
 "use client"
 
 import { CheckIcon, Loader2Icon } from "lucide-react"
-import { useTranslations } from "next-intl"
+import { useTranslations } from "@/i18n/translations"
 import { useEffect, useState } from "react"
 import { usePlaceName } from "@/components/auth/use-place-name"
 import { useRouter } from "@/i18n/navigation"

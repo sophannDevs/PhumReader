@@ -1,7 +1,7 @@
 "use client"
 
 import { BellIcon, CheckIcon, HomeIcon } from "lucide-react"
-import { useTranslations } from "next-intl"
+import { useTranslations } from "@/i18n/translations"
 import { useState } from "react"
 import { toast } from "sonner"
 import { ErrorHelp, ErrorHero, StatusLink, errorActions } from "@/components/pr/error-page"

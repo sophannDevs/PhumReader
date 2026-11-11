@@ -5,10 +5,12 @@ import { NextIntlClientProvider } from "next-intl"
 import type { ReactElement, ReactNode } from "react"
 import { ReportProvider } from "@/components/pr/report-dialog"
 import { ThemeProvider } from "@/lib/theme"
+import { localizeKmMessages } from "@/i18n/km-messages"
 import en from "@/messages/en"
 import km from "@/messages/km"
 
-const messages = { en, km } as const
+// Khmer as the app loads it (src/i18n/messages.ts): numbers filled in print with Khmer digits.
+const messages = { en, km: localizeKmMessages(km) } as const
 
 /**
  * Render a component the way the app does: next-intl (real messages, English by default), TanStack

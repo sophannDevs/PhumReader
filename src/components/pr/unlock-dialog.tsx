@@ -2,7 +2,7 @@
 
 import { CircleAlertIcon, CoinsIcon, InfoIcon, ZapIcon } from "lucide-react"
 import Image from "next/image"
-import { useTranslations } from "next-intl"
+import { useTranslations } from "@/i18n/translations"
 import { CoinIcon } from "@/components/pr/coin-icon"
 import { daysUntilFree } from "@/components/pr/episode-row"
 import { OptionCard } from "@/components/pr/patterns"

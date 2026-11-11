@@ -2,7 +2,7 @@
 
 import { HomeIcon } from "lucide-react"
 import { useSearchParams } from "next/navigation"
-import { useTranslations } from "next-intl"
+import { useTranslations } from "@/i18n/translations"
 import { ErrorHelp, ErrorHero, errorActions } from "@/components/pr/error-page"
 import { Button } from "@/components/ui/button"
 import { Link } from "@/i18n/navigation"

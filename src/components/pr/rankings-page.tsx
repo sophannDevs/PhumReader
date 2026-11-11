@@ -2,7 +2,7 @@
 
 import { AlertCircleIcon, HeartIcon, InfoIcon, RefreshCwIcon, TrendingUpIcon } from "lucide-react"
 import Image from "next/image"
-import { useTranslations } from "next-intl"
+import { useTranslations } from "@/i18n/translations"
 import { useState } from "react"
 import { LineTabs, SubscribeButton, seedOf, viewsOf } from "@/components/pr/browse-kit"
 import { NativeSelect } from "@/components/pr/settings-ui"
@@ -17,6 +17,8 @@ import { useLocalize } from "@/lib/localize"
 import { useRankings } from "@/lib/queries"
 import { seriesHref } from "@/lib/routes"
 import { cn } from "@/lib/utils"
+import { Num } from "@/i18n/num"
+import { useDigits } from "@/i18n/local-digits"
 
 type List = "trending" | "popular" | "new" | "rising"
 type Format = "all" | "comic" | "novel"
@@ -257,7 +259,8 @@ export function RankingsPage() {
 /** `.rk-move`: ▲3 (green), ▼1 (red), NEW (blue) or – , with a spoken label. */
 function MovePill({ move }: { move: Move }) {
   const tc = useTranslations("cards")
-  const text = move.kind === "up" ? `▲${move.n}` : move.kind === "down" ? `▼${move.n}` : move.kind === "new" ? tc("new") : "–"
+  const digits = useDigits()
+  const text = move.kind === "up" ? `▲${digits(move.n)}` : move.kind === "down" ? `▼${digits(move.n)}` : move.kind === "new" ? tc("new") : "–"
   const label =
     move.kind === "up"
       ? tc("moveUp", { n: move.n })
@@ -312,7 +315,7 @@ function Podium({ entry: e, statLabel }: { entry: Entry; statLabel: string }) {
             MEDAL[e.rank - 1]
           )}
         >
-          {e.rank}
+          <Num>{e.rank}</Num>
         </span>
       </Link>
       <div className="flex min-w-0 flex-col gap-1">
@@ -331,12 +334,12 @@ function Podium({ entry: e, statLabel }: { entry: Entry; statLabel: string }) {
         <span className="truncate text-[13px] leading-[18px] text-muted-foreground">{s.creator}</span>
         <span className="flex flex-wrap items-center gap-x-2.5 text-xs leading-4 text-muted-foreground">
           <span>
-            <strong className="text-foreground tabular-nums">{e.stat}</strong> {statLabel}
+            <strong className="text-foreground tabular-nums"><Num>{e.stat}</Num></strong> {statLabel}
           </span>
           <span className="inline-flex items-center gap-[3px]">
             <HeartIcon className="size-3" aria-hidden />
             <span className="sr-only">{t("likes")}</span>
-            {s.likes}
+            <Num>{s.likes}</Num>
           </span>
         </span>
       </div>
@@ -360,7 +363,7 @@ function Row({ entry: e, statLabel }: { entry: Entry; statLabel: string }) {
   return (
     <li className="flex items-center gap-3.5 border-t bg-background px-4 py-2.5 transition-colors first:border-t-0 hover:bg-[#fafafa] max-md:gap-2.5 max-md:px-3">
       <span className="w-7 shrink-0 text-center text-lg font-bold tabular-nums max-md:w-[22px] max-md:text-base">
-        <span aria-hidden>{e.rank}</span>
+        <span aria-hidden><Num>{e.rank}</Num></span>
         <span className="sr-only">{tc("rank", { rank: e.rank })}</span>
       </span>
       <MovePill move={e.move} />
@@ -380,11 +383,11 @@ function Row({ entry: e, statLabel }: { entry: Entry; statLabel: string }) {
         </span>
       </div>
       <span className="hidden w-[120px] shrink-0 flex-col items-end text-sm md:flex">
-        <strong className="tabular-nums">{e.stat}</strong>
+        <strong className="tabular-nums"><Num>{e.stat}</Num></strong>
         <span className="text-xs leading-4 text-muted-foreground">{statLabel}</span>
       </span>
       <span className="hidden w-[120px] shrink-0 flex-col items-end text-sm md:flex">
-        <strong className="tabular-nums">{s.likes}</strong>
+        <strong className="tabular-nums"><Num>{s.likes}</Num></strong>
         <span className="text-xs leading-4 text-muted-foreground">{t("likes")}</span>
       </span>
       <SubscribeButton

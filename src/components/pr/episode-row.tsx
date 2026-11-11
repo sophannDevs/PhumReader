@@ -1,6 +1,7 @@
 import { CheckIcon, ChevronRightIcon, HeartIcon, LockIcon, ZapIcon } from "lucide-react"
 import Image from "next/image"
-import { useLocale, useTranslations } from "next-intl"
+import { useLocale } from "next-intl"
+import { useTranslations } from "@/i18n/translations"
 import { Badge } from "@/components/ui/badge"
 import type { Episode, Series } from "@/data/types"
 import { Link } from "@/i18n/navigation"
@@ -9,6 +10,7 @@ import { daysFromToday, formatShortDate, ictDate } from "@/lib/format"
 import { readerHref } from "@/lib/routes"
 import { cn } from "@/lib/utils"
 import { useLocalize } from "@/lib/localize"
+import { Num } from "@/i18n/num"
 
 export type EpisodeState = "free" | "read" | "locked" | "unlocked"
 
@@ -112,7 +114,7 @@ export function EpisodeRow({
           <span className="flex items-center gap-[3px]">
             <HeartIcon className="size-3" aria-hidden />
             <span className="sr-only">{t("likes", { count: episode.likes })}</span>
-            <span aria-hidden>{episode.likes}</span>
+            <span aria-hidden><Num>{episode.likes}</Num></span>
           </span>
         </span>
       </span>

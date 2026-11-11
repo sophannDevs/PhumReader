@@ -1,6 +1,6 @@
 "use client"
 
-import { useTranslations } from "next-intl"
+import { useTranslations } from "@/i18n/translations"
 import { ContinueReadingSection, ContinueReadingSkeleton } from "@/components/pr/continue-reading-section"
 import { DailyUpdatesSection } from "@/components/pr/daily-updates-section"
 import { ForYouSection } from "@/components/pr/home/for-you"

@@ -123,6 +123,24 @@ const eslintConfig = defineConfig([
       ],
     },
   },
+  // Translations come from src/i18n (T44): its wrappers give numbers in Khmer messages Khmer digits.
+  {
+    files: ["src/**/*.{ts,tsx}"],
+    ignores: ["src/i18n/translations.ts", "src/i18n/translations-server.ts"],
+    rules: {
+      "no-restricted-syntax": [
+        "error",
+        {
+          selector: "ImportDeclaration[source.value='next-intl'] ImportSpecifier[imported.name='useTranslations']",
+          message: "Import useTranslations from @/i18n/translations (Khmer digits in Khmer messages).",
+        },
+        {
+          selector: "ImportDeclaration[source.value='next-intl/server'] ImportSpecifier[imported.name='getTranslations']",
+          message: "Import getTranslations from @/i18n/translations-server (Khmer digits in Khmer messages).",
+        },
+      ],
+    },
+  },
   // 3. The API client layer never depends on screens. (Other files in src/lib, such as query.tsx and
   //    use-reader-nav.ts, mix UI and logic today; separating them is outside P1-06.)
   {

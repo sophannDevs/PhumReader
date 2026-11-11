@@ -1,7 +1,8 @@
 "use client"
 
 import { useSearchParams } from "next/navigation"
-import { useFormatter, useTranslations } from "next-intl"
+import { useFormatter } from "next-intl"
+import { useTranslations } from "@/i18n/translations"
 import { useId, useRef, useState } from "react"
 import {
   AdminError,

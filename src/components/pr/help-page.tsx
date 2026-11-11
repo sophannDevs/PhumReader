@@ -1,7 +1,7 @@
 "use client"
 
 import { SearchIcon, XIcon } from "lucide-react"
-import { useLocale, useTranslations } from "next-intl"
+import { useTranslations } from "@/i18n/translations"
 import { useMemo, useState } from "react"
 import { HelpContact } from "@/components/pr/help-contact"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
@@ -9,7 +9,6 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { demoData, type HelpArticle, type HelpTopic } from "@/data"
 import { Link } from "@/i18n/navigation"
-import { localDigits } from "@/lib/format"
 import { cn } from "@/lib/utils"
 
 /** Topic cards in the prototype's order, with its glyphs (text presentation, so they don't turn into emoji). */
@@ -64,7 +63,6 @@ const focusRing = "outline-none focus-visible:ring-2 focus-visible:ring-ring foc
  */
 export function HelpPage() {
   const t = useTranslations("help")
-  const locale = useLocale()
   const [q, setQ] = useState("")
   const [topic, setTopic] = useState<HelpTopic | "all">("all")
   const [open, setOpen] = useState("")
@@ -89,7 +87,6 @@ export function HelpPage() {
   }
   const list = filter(query, topic)
   const filtered = topic !== "all" || !!query
-  const num = (n: number) => ({ count: n, n: localDigits(n, locale) })
 
   function pickPopular(text: string) {
     setQ(text)
@@ -175,7 +172,7 @@ export function HelpPage() {
                 </span>
                 <span className="flex min-w-0 flex-col gap-0.5">
                   <span className="text-[13px] leading-[18px] font-semibold">{t(`topics.${id}`)}</span>
-                  <span className="text-xs leading-4 text-muted-foreground">{t("topicCount", num(n))}</span>
+                  <span className="text-xs leading-4 text-muted-foreground">{t("topicCount", { count: n })}</span>
                 </span>
               </button>
             )
@@ -202,7 +199,7 @@ export function HelpPage() {
               ) : null}
             </div>
             <p role="status" aria-live="polite" className="text-[13px] leading-[18px] text-muted-foreground">
-              {query ? t("countFor", { ...num(list.length), q: query }) : t("count", num(list.length))}
+              {query ? t("countFor", { count: list.length, q: query }) : t("count", { count: list.length })}
             </p>
 
             {list.length ? (

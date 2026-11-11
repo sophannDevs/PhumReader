@@ -1,7 +1,7 @@
 "use client"
 
 import { AlertCircleIcon, RefreshCwIcon, SparklesIcon, TrendingUpIcon, TrophyIcon } from "lucide-react"
-import { useTranslations } from "next-intl"
+import { useTranslations } from "@/i18n/translations"
 import { useState } from "react"
 import { toast } from "sonner"
 import { RankRow } from "@/components/pr/rank-row"

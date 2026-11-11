@@ -1,7 +1,7 @@
 "use client"
 
 import { ChevronRightIcon, MessageSquareIcon, RotateCcwIcon } from "lucide-react"
-import { useTranslations } from "next-intl"
+import { useTranslations } from "@/i18n/translations"
 import { useRef, useState } from "react"
 import { CommentComposer } from "@/components/pr/comment-composer"
 import { CommentList } from "@/components/pr/comment-list"
@@ -15,6 +15,7 @@ import { Link } from "@/i18n/navigation"
 import { useCommentThread } from "@/lib/comments"
 import { useUser } from "@/lib/store"
 import { cn } from "@/lib/utils"
+import { Num } from "@/i18n/num"
 
 /**
  * Composer + comment list for a series (or episode). Likes live in the store (persisted);
@@ -79,7 +80,7 @@ export function CommentsSection({
       >
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-semibold">
-            {tr("commentsTitle")} {count ? <span className={cn("font-normal tabular-nums", themed ? "text-reader-quiet" : "text-surface-quiet")}>{count}</span> : null}
+            {tr("commentsTitle")} {count ? <span className={cn("font-normal tabular-nums", themed ? "text-reader-quiet" : "text-surface-quiet")}><Num>{count}</Num></span> : null}
           </h2>
           <span className={cn("type-caption", themed ? "text-reader-quiet" : "text-surface-quiet")}>{tr("topComments")}</span>
         </div>

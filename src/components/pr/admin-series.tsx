@@ -3,7 +3,7 @@
 import { AlertCircleIcon, CheckIcon } from "lucide-react"
 import Image from "next/image"
 import { useSearchParams } from "next/navigation"
-import { useTranslations } from "next-intl"
+import { useTranslations } from "@/i18n/translations"
 import { useId, useRef, useState } from "react"
 import {
   AdminError,

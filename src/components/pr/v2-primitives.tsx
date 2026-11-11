@@ -2,6 +2,7 @@
 
 import { CheckIcon, type LucideIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { Num } from "@/i18n/num"
 
 /**
  * Small V2.1 building blocks from design/prototype-src/shared.css and the page CSS:
@@ -87,7 +88,7 @@ export function Chip({
       {check && selected ? <CheckIcon className="size-3" aria-hidden /> : null}
       {children}
       {count !== undefined ? (
-        <span className={cn("text-[11px] tabular-nums", selected ? "text-[#d4d4d8]" : "text-muted-foreground")}>{count}</span>
+        <span className={cn("text-[11px] tabular-nums", selected ? "text-[#d4d4d8]" : "text-muted-foreground")}><Num>{count}</Num></span>
       ) : null}
     </button>
   )

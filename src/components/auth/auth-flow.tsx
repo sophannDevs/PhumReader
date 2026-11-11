@@ -2,7 +2,7 @@
 
 import { CheckIcon } from "lucide-react"
 import { useSearchParams } from "next/navigation"
-import { useTranslations } from "next-intl"
+import { useTranslations } from "@/i18n/translations"
 import { useEffect, useState } from "react"
 import { authDraft, clearAuthDraft, type FlowState } from "@/components/auth/auth-draft"
 import { CodeView } from "@/components/auth/code-view"

@@ -1,6 +1,7 @@
 import type { Metadata } from "next"
 import { notFound } from "next/navigation"
-import { getTranslations, setRequestLocale } from "next-intl/server"
+import { setRequestLocale } from "next-intl/server"
+import { getTranslations } from "@/i18n/translations-server"
 import { Suspense } from "react"
 import { isPolicyId, POLICY_IDS } from "@/components/pr/legal-docs"
 import { LegalPage } from "@/components/pr/legal-page"

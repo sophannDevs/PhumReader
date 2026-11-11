@@ -147,6 +147,9 @@ docs/BACKEND_CHECKLIST.md, "V2.1 API additions" (V21-01 … V21-07).
 - [ ] T44 Khmer: native review of every `km` string (launch blocker A12), and decide the digits: numbers filled into
   messages print Latin digits, while the dictionary's fixed strings use Khmer digits (V2-61). Apply the decision
   everywhere (one formatter, not per page).
+  Done 2026-11-11: the digit rule and its formatter (V2-67), and the review pack `docs/KHMER_REVIEW.md` +
+  `docs/khmer-review.csv` (`npm run i18n:review`; `-- --apply <csv>` reads the reviewer's corrections back).
+  Open until a native speaker has reviewed the strings and the corrections are applied.
 - [ ] T45 Real-API e2e for the V2.1 screens: `e2e/real.spec.ts` (15 tests) still describes the V1 screens (V2-63); it
   hasn't changed since the V2.1 upgrade (c8b3193 ported the Vitest unit tests, not this file). Needs the backend
   running (home PC). Key flows 3 and 4 also need V21-04 and V21-01. → P6-03
@@ -360,3 +363,14 @@ docs/BACKEND_CHECKLIST.md, "V2.1 API additions" (V21-01 … V21-07).
   visitor saw the device's demo wallet ("3"). On the owner's request (2026-11-11) the balance shows only when logged
   in, in both modes: the header chip, the series Fast Pass card's "N coins · Get more" link and the Coins page's "Your
   balance" card. Guests still see the Coins page packs and the Fast Pass card's "Unlock all" (it asks them to log in).
+- V2-67 (T44) **Digits in Khmer** (owner decision 2026-11-11): Khmer digits (០–៩) for counts, episode and chapter
+  numbers, dates, times and coins; Latin digits for money (US dollar and riel prices, which always arrive as text
+  with "$" or "៛"). Numbers filled into messages: `src/i18n/messages.ts` rewrites the Khmer messages once
+  (`km-messages.ts`: every printed `{arg}` and `#` becomes `{arg__kh}`), and the translators from
+  `@/i18n/translations` / `@/i18n/translations-server` add `arg__kh` with Khmer digits to every call
+  (`local-digits.ts`; ESLint blocks importing `useTranslations` / `getTranslations` from next-intl). Codes, ids,
+  titles, names and search text keep their digits. Numbers shown outside a message use `<Num>` / `useDigits`
+  (cards, rank rows, rankings, series stats and tab counts, episode rows, comment counts, coin chip and packs, steps).
+  The Help page's own `{n}` workaround is gone. Not converted: digits written into fixed Khmer strings ("© 2026",
+  "3:4", "690–1600 px", "13+"): flagged "Latin digits" in the review doc for the native reviewer; and the demo data's
+  English time stamps on comments ("6d").

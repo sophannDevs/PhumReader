@@ -3,7 +3,7 @@
 import { AlertCircleIcon, ClockIcon, HeartIcon, RefreshCwIcon, SearchIcon, TrendingUpIcon, XIcon } from "lucide-react"
 import Image from "next/image"
 import { useSearchParams } from "next/navigation"
-import { useTranslations } from "next-intl"
+import { useTranslations } from "@/i18n/translations"
 import { Fragment, useEffect, useId, useRef, useState } from "react"
 import { toast } from "sonner"
 import { LineTabs, SubscribeButton, likesOf, replaceQuery, useCatalog } from "@/components/pr/browse-kit"
@@ -23,6 +23,7 @@ import { useSearchSeries } from "@/lib/queries"
 import { creatorHref, seriesHref } from "@/lib/routes"
 import { useAppStore, useHydrated, useUser } from "@/lib/store"
 import { cn } from "@/lib/utils"
+import { Num } from "@/i18n/num"
 
 /** Search terms people use (prototype `trending`): demo content, so English in both languages. */
 const TRENDING = ["Glass Compass", "romance", "Mina Sok", "tiny dragon", "fantasy", "Letters to Tuesday", "sci-fi", "Sunday Sword"]
@@ -305,7 +306,7 @@ function Landing({ onSearch }: { onSearch: (q: string) => void }) {
                 onClick={() => onSearch(q)}
                 className={cn("flex h-10 w-full items-center gap-3 rounded-lg px-2 text-left text-sm hover:bg-accent", focusRing)}
               >
-                <span className="w-[18px] font-bold text-brand-ink tabular-nums">{i + 1}</span>
+                <span className="w-[18px] font-bold text-brand-ink tabular-nums"><Num>{i + 1}</Num></span>
                 {q}
               </button>
             </li>
@@ -580,7 +581,7 @@ function ResultRow({ series: s, k }: { series: Series; k: string }) {
           <span className="inline-flex items-center gap-[3px]">
             <HeartIcon className="size-3" aria-hidden />
             <span className="sr-only">{t("likes", { count: s.likes })}</span>
-            <span aria-hidden>{s.likes}</span>
+            <span aria-hidden><Num>{s.likes}</Num></span>
           </span>
           {s.schedule ? <span>{loc.schedule(s.schedule)}</span> : null}
         </span>

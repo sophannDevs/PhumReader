@@ -1,7 +1,7 @@
 "use client"
 
 import { BookOpenIcon, CopyIcon, HomeIcon, RefreshCwIcon } from "lucide-react"
-import { useTranslations } from "next-intl"
+import { useTranslations } from "@/i18n/translations"
 import { startTransition, useEffect, useRef, useState } from "react"
 import { toast } from "sonner"
 import { recoverDemoCrash } from "@/components/pr/demo-crash"

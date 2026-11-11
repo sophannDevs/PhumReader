@@ -2,7 +2,8 @@
 
 import { useQueryClient } from "@tanstack/react-query"
 import { AlertCircleIcon, CheckIcon } from "lucide-react"
-import { useLocale, useTranslations } from "next-intl"
+import { useLocale } from "next-intl"
+import { useTranslations } from "@/i18n/translations"
 import { createContext, useCallback, useContext, useEffect, useRef } from "react"
 import { toast } from "sonner"
 import { useAdminError } from "@/components/pr/admin-dialogs"

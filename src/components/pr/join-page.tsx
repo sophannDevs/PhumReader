@@ -2,7 +2,7 @@
 
 import { ArrowRightIcon, BadgeCheckIcon, CheckIcon, CoinsIcon, LanguagesIcon, LayoutDashboardIcon, MessageSquareQuoteIcon, TimerIcon } from "lucide-react"
 import Image from "next/image"
-import { useTranslations } from "next-intl"
+import { useTranslations } from "@/i18n/translations"
 import { useState } from "react"
 import { Eyebrow } from "@/components/pr/v2-primitives"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
@@ -11,6 +11,7 @@ import { fastPassPrice, getSeries } from "@/data"
 import { Link } from "@/i18n/navigation"
 import { useAppStore, useHydrated, useUser } from "@/lib/store"
 import { cn } from "@/lib/utils"
+import { Num } from "@/i18n/num"
 
 /**
  * Become a creator (spec §26, prototype Join/): hero with Start creating / Creator guidelines, How it works in 4 steps,
@@ -114,7 +115,7 @@ export function JoinPage() {
             {STEPS.map((n) => (
               <li key={n} className="flex flex-col gap-2 rounded-card border bg-card p-[18px] shadow-xs">
                 <span aria-hidden className="inline-flex size-8 items-center justify-center rounded-full bg-foreground text-sm font-bold text-background">
-                  {n}
+                  <Num>{n}</Num>
                 </span>
                 <span className="type-h4">{t(`step${n}Title`)}</span>
                 <span className="text-[13px] leading-[18px] text-muted-foreground">{t(`step${n}Desc`)}</span>
@@ -252,7 +253,7 @@ function Range({
           onChange={(e) => onChange(Number(e.target.value) || min)}
           className="h-6 min-w-0 flex-1 cursor-pointer rounded-full accent-[#00a650] outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         />
-        <strong className="min-w-12 text-right text-sm tabular-nums">{fmt(value)}</strong>
+        <strong className="min-w-12 text-right text-sm tabular-nums"><Num>{fmt(value)}</Num></strong>
       </div>
     </div>
   )

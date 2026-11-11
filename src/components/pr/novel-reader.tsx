@@ -1,7 +1,7 @@
 "use client"
 
 import { notFound } from "next/navigation"
-import { useTranslations } from "next-intl"
+import { useTranslations } from "@/i18n/translations"
 import { EpisodeListPopover } from "@/components/layout/episode-list-popover"
 import { NovelReaderBar } from "@/components/layout/reader-bar"
 import { ReadingSettingsPopover } from "@/components/layout/reading-settings"

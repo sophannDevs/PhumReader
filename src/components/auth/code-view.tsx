@@ -3,7 +3,7 @@
 import { useMutation } from "@tanstack/react-query"
 import { REGEXP_ONLY_DIGITS } from "input-otp"
 import { MailIcon } from "lucide-react"
-import { useTranslations } from "next-intl"
+import { useTranslations } from "@/i18n/translations"
 import { useEffect, useRef, useState } from "react"
 import { toast } from "sonner"
 import { AuthHead, AuthNote, authLink, BackButton, FieldError, SubmitButton } from "@/components/auth/auth-ui"

@@ -1,12 +1,13 @@
 "use client"
 
-import { useTranslations } from "next-intl"
+import { useTranslations } from "@/i18n/translations"
 import { packTotal } from "@/components/pr/checkout-flow"
 import { CoinIcon } from "@/components/pr/coin-icon"
 import { Badge } from "@/components/ui/badge"
 import { RadioGroupItem, radioCardClassName } from "@/components/ui/radio-group"
 import type { CoinPack } from "@/data/types"
 import { cn } from "@/lib/utils"
+import { Num } from "@/i18n/num"
 
 /**
  * Coin pack as a radio card (prototype Shop `.radio-card`). Render inside a `RadioGroup`; the item value is
@@ -62,7 +63,7 @@ export function PackCard({
       <span className="flex items-center gap-2">
         <CoinIcon size={20} />
         <span className="text-2xl leading-[30px] font-semibold tracking-[-0.02em] tabular-nums max-md:text-xl max-md:leading-[26px]">
-          {pack.coins}
+          <Num>{pack.coins}</Num>
         </span>
         <span className="sr-only">{t("coinsLabel", { count: pack.coins })}</span>
       </span>

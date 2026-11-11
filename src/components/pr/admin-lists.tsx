@@ -2,7 +2,8 @@
 
 import type { UseInfiniteQueryResult } from "@tanstack/react-query";
 import { InboxIcon, SearchIcon } from "lucide-react";
-import { useFormatter, useTranslations } from "next-intl";
+import { useFormatter } from "next-intl";
+import { useTranslations } from "@/i18n/translations";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { ReasonDialog, type ReasonAsk } from "@/components/pr/admin-dialogs";

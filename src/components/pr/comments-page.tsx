@@ -3,7 +3,7 @@
 import { BookIcon, ChevronRightIcon, MessageSquareIcon, RotateCcwIcon } from "lucide-react"
 import Image from "next/image"
 import { notFound, useSearchParams } from "next/navigation"
-import { useTranslations } from "next-intl"
+import { useTranslations } from "@/i18n/translations"
 import { useMemo, useState } from "react"
 import { ThreadComposer } from "@/components/pr/comment-composer"
 import { CommentThread } from "@/components/pr/comment-thread"
@@ -19,6 +19,7 @@ import { useCommentThreads } from "@/lib/comments"
 import { useEpisodes, useSeries } from "@/lib/queries"
 import { readerHref, seriesHref } from "@/lib/routes"
 import { useAppStore } from "@/lib/store"
+import { Num } from "@/i18n/num"
 
 const PAGE = 6
 
@@ -128,7 +129,7 @@ function CommentsBody({ series, seriesCount, ep }: { series: Series; seriesCount
         <Image src={series.cover} alt="" width={104} height={136} sizes="52px" className="h-[68px] w-[52px] shrink-0 rounded-lg object-cover" />
         <div className="flex min-w-0 flex-1 flex-col gap-0.5">
           <h1 className="type-h2">
-            {t("title")} <span className="font-medium text-muted-foreground tabular-nums">{count}</span>
+            {t("title")} <span className="font-medium text-muted-foreground tabular-nums"><Num>{count}</Num></span>
           </h1>
           <span className="truncate text-[13px] leading-[18px] text-muted-foreground">
             {series.title} · {scopeLabel}

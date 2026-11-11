@@ -1,7 +1,7 @@
 "use client"
 
 import { MinusIcon, PlusIcon, SlidersHorizontalIcon, TypeIcon } from "lucide-react"
-import { useTranslations } from "next-intl"
+import { useTranslations } from "@/i18n/translations"
 import { useId } from "react"
 import { toast } from "sonner"
 import { novelVars, useNovelSettings } from "@/components/pr/reader-theme"

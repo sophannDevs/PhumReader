@@ -1,6 +1,7 @@
 import type { Metadata } from "next"
 import { notFound } from "next/navigation"
-import { getTranslations, setRequestLocale } from "next-intl/server"
+import { setRequestLocale } from "next-intl/server"
+import { getTranslations } from "@/i18n/translations-server"
 import { Suspense } from "react"
 import { CreatorProfilePage, ProfileSkeleton } from "@/components/pr/creator-profile-page"
 import { routing } from "@/i18n/routing"

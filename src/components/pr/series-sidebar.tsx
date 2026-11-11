@@ -1,7 +1,7 @@
 "use client"
 
 import Image from "next/image"
-import { useTranslations } from "next-intl"
+import { useTranslations } from "@/i18n/translations"
 import { Button } from "@/components/ui/button"
 import type { Series } from "@/data"
 import { Link } from "@/i18n/navigation"

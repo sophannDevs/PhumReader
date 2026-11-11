@@ -1,7 +1,7 @@
 "use client"
 
 import { ArrowLeftIcon, CheckIcon } from "lucide-react"
-import { useTranslations } from "next-intl"
+import { useTranslations } from "@/i18n/translations"
 import { passwordChecks } from "@/components/auth/auth-schemas"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"

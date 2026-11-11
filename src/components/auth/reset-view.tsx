@@ -2,7 +2,7 @@
 
 import { LinkIcon } from "lucide-react"
 import { useSearchParams } from "next/navigation"
-import { useTranslations } from "next-intl"
+import { useTranslations } from "@/i18n/translations"
 import { useState } from "react"
 import { AuthHead, BackButton } from "@/components/auth/auth-ui"
 import { NewPasswordForm } from "@/components/auth/new-password-form"

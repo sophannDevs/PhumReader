@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useSyncExternalStore } from "react"
 import { WifiIcon, WifiOffIcon } from "lucide-react"
-import { useTranslations } from "next-intl"
+import { useTranslations } from "@/i18n/translations"
 
 function getOnlineSnapshot(): boolean {
   return typeof navigator !== "undefined" ? navigator.onLine : true

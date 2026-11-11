@@ -1,7 +1,7 @@
 "use client"
 
 import { useId, useState } from "react"
-import { useTranslations } from "next-intl"
+import { useTranslations } from "@/i18n/translations"
 import { toast } from "sonner"
 import { CommentAvatar } from "@/components/pr/comment-thread"
 import { Button } from "@/components/ui/button"

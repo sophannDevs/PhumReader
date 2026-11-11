@@ -1,7 +1,7 @@
 "use client"
 
 import { SettingsIcon, SparklesIcon } from "lucide-react"
-import { useTranslations } from "next-intl"
+import { useTranslations } from "@/i18n/translations"
 import { useState } from "react"
 import { toast } from "sonner"
 import { SeriesCard } from "@/components/pr/series-card"

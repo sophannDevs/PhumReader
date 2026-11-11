@@ -2,7 +2,7 @@
 
 import { ArrowRightIcon, BellIcon, HeartIcon, ListIcon, MessageSquareIcon, Share2Icon, ZapIcon } from "lucide-react"
 import Image from "next/image"
-import { useTranslations } from "next-intl"
+import { useTranslations } from "@/i18n/translations"
 import { useMemo, useState } from "react"
 import { toast } from "sonner"
 import { CommentThread } from "@/components/pr/comment-thread"
@@ -21,6 +21,7 @@ import { useAskToLogin, useEpisodeReactions, useSubscribe } from "@/lib/me"
 import { seriesHref } from "@/lib/routes"
 import { useAppStore, useUser } from "@/lib/store"
 import { cn } from "@/lib/utils"
+import { Num } from "@/i18n/num"
 
 /** `.vw-card`: the reader's card colours (set on the reader root), 14 px radius. */
 const card = "rounded-[14px] border bg-card p-6 text-card-foreground max-md:p-[18px]"
@@ -106,7 +107,7 @@ export function ComicEndSection({
             onClick={like}
           >
             <HeartIcon className={cn(liked && "fill-destructive text-destructive")} aria-hidden />
-            {formatCount(likeCount)}
+            <Num>{formatCount(likeCount)}</Num>
           </Button>
           <Button variant="outline" aria-pressed={subscribed} className={pill} onClick={() => void toggleSubscribe()}>
             <BellIcon aria-hidden />
@@ -206,7 +207,7 @@ function TopComments({ series, episode, dark }: { series: Series; episode: Episo
     <div className={cn(card, "flex flex-col gap-3.5")}>
       <div className="flex items-center justify-between gap-3">
         <h2 className="type-h4">
-          {t("commentsTitle")} <span className="font-medium text-muted-foreground tabular-nums">{episodeCommentCount(episode)}</span>
+          {t("commentsTitle")} <span className="font-medium text-muted-foreground tabular-nums"><Num>{episodeCommentCount(episode)}</Num></span>
         </h2>
         <Link
           href={`/series/${series.slug}/comments?ep=${episode.n}`}

@@ -1,5 +1,6 @@
 import type { Metadata } from "next"
-import { getTranslations, setRequestLocale } from "next-intl/server"
+import { setRequestLocale } from "next-intl/server"
+import { getTranslations } from "@/i18n/translations-server"
 import { HelpPage } from "@/components/pr/help-page"
 
 export async function generateMetadata({ params }: PageProps<"/[locale]/help">): Promise<Metadata> {

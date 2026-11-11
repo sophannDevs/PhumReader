@@ -1,7 +1,8 @@
 "use client"
 
 import { CheckIcon, SearchIcon } from "lucide-react"
-import { useLocale, useTranslations } from "next-intl"
+import { useLocale } from "next-intl"
+import { useTranslations } from "@/i18n/translations"
 import { useEffect, useState } from "react"
 import { ReasonDialog, type ReasonAsk } from "@/components/pr/admin-dialogs"
 import { AdminCard, AdminError, AdminHead, useDecide } from "@/components/pr/admin-kit"

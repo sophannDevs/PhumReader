@@ -2,7 +2,7 @@
 
 import { ChevronRightIcon, HomeIcon, SearchIcon } from "lucide-react"
 import Image from "next/image"
-import { useTranslations } from "next-intl"
+import { useTranslations } from "@/i18n/translations"
 import { useMemo, useState, useSyncExternalStore } from "react"
 import { toast } from "sonner"
 import { ErrorCards, ErrorHelp, ErrorHero, errorActions, errorLinkButton } from "@/components/pr/error-page"

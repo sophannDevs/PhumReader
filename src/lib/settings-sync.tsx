@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react"
 import { toast } from "sonner"
-import { useTranslations } from "next-intl"
+import { useTranslations } from "@/i18n/translations"
 import { DEMO_MODE } from "@/lib/api/config"
 import * as account from "@/lib/api/account"
 import { useAccountEmail } from "@/lib/me"

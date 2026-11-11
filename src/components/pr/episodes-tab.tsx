@@ -1,7 +1,8 @@
 "use client"
 
 import { ArrowUpDownIcon, BookOpenIcon, RotateCcwIcon, ZapIcon } from "lucide-react"
-import { useLocale, useTranslations } from "next-intl"
+import { useLocale } from "next-intl"
+import { useTranslations } from "@/i18n/translations"
 import { useId, useMemo, useState } from "react"
 import { CoinIcon } from "@/components/pr/coin-icon"
 import { daysUntilFree, EpisodeGroupHead, EpisodeList, EpisodeRow, episodeIso, type EpisodeState } from "@/components/pr/episode-row"

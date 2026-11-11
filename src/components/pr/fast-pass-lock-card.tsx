@@ -1,7 +1,7 @@
 "use client"
 
 import { ChevronLeftIcon, CoinsIcon, ZapIcon } from "lucide-react"
-import { useTranslations } from "next-intl"
+import { useTranslations } from "@/i18n/translations"
 import { daysUntilFree } from "@/components/pr/episode-row"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"

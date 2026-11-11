@@ -2,7 +2,7 @@
 
 import { ListIcon, LockIcon } from "lucide-react"
 import Image from "next/image"
-import { useTranslations } from "next-intl"
+import { useTranslations } from "@/i18n/translations"
 import { useState } from "react"
 import { novelVars } from "@/components/pr/reader-theme"
 import { Badge } from "@/components/ui/badge"

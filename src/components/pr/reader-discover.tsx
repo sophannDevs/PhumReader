@@ -2,7 +2,7 @@
 
 import { ChevronRightIcon } from "lucide-react";
 import Image from "next/image";
-import { useTranslations } from "next-intl";
+import { useTranslations } from "@/i18n/translations";
 import type { ReactNode } from "react";
 import type { RankingEntry, Series } from "@/data";
 import { Link } from "@/i18n/navigation";
@@ -10,6 +10,7 @@ import { parseCount } from "@/lib/format";
 import { useRankings } from "@/lib/queries";
 import { seriesHref } from "@/lib/routes";
 import { cn } from "@/lib/utils";
+import { Num } from "@/i18n/num"
 
 type Tone = "comic" | "novel";
 
@@ -61,7 +62,7 @@ function Row({
           {series.genre}
         </p>
         <div className="flex min-w-0 items-baseline gap-2.5">
-          <span className="text-lg font-bold tabular-nums">{rank}</span>
+          <span className="text-lg font-bold tabular-nums"><Num>{rank}</Num></span>
           <h3 className="type-card-title truncate text-base">{series.title}</h3>
         </div>
         <p className={cn("type-caption truncate font-normal", c.quiet)}>

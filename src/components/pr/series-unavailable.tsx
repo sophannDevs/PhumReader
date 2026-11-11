@@ -2,7 +2,8 @@
 
 import { BookOpenIcon, ChevronRightIcon, HomeIcon } from "lucide-react"
 import Image from "next/image"
-import { useLocale, useTranslations } from "next-intl"
+import { useLocale } from "next-intl"
+import { useTranslations } from "@/i18n/translations"
 import { SeriesCard } from "@/components/pr/series-card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"

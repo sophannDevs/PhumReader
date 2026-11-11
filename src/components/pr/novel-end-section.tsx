@@ -1,7 +1,7 @@
 "use client"
 
 import { BookmarkIcon, ChevronLeftIcon, ChevronRightIcon, HeartIcon, Share2Icon } from "lucide-react"
-import { useTranslations } from "next-intl"
+import { useTranslations } from "@/i18n/translations"
 import { toast } from "sonner"
 import { useReport } from "@/components/pr/report-dialog"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"

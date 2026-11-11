@@ -1,7 +1,8 @@
 "use client"
 
 import { ChevronRightIcon, SettingsIcon } from "lucide-react"
-import { useLocale, useTranslations } from "next-intl"
+import { useLocale } from "next-intl"
+import { useTranslations } from "@/i18n/translations"
 import { useEffect, useRef, useState } from "react"
 import { toast } from "sonner"
 import {

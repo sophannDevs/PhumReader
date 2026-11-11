@@ -1,7 +1,8 @@
 "use client"
 
 import { AlertCircleIcon, CheckIcon } from "lucide-react"
-import { useLocale, useTranslations } from "next-intl"
+import { useLocale } from "next-intl"
+import { useTranslations } from "@/i18n/translations"
 import { forwardRef } from "react"
 import { toast } from "sonner"
 import { SmallSwitch } from "@/components/pr/settings-ui"

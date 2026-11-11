@@ -1,7 +1,7 @@
 "use client"
 
 import { BookmarkIcon, ThumbsUpIcon } from "lucide-react"
-import { useTranslations } from "next-intl"
+import { useTranslations } from "@/i18n/translations"
 import { useId, useState } from "react"
 import { useReport } from "@/components/pr/report-dialog"
 import { Badge } from "@/components/ui/badge"
@@ -12,6 +12,7 @@ import { formatCount, initials } from "@/lib/format"
 import { useAskToLogin } from "@/lib/me"
 import { useUser } from "@/lib/store"
 import { cn } from "@/lib/utils"
+import { Num } from "@/i18n/num"
 
 /**
  * One comment thread (V2.1 Comments page, prototype Comments `.cm-item`): the comment with Creator / You badges,
@@ -102,7 +103,7 @@ function LikeButton({ c, onLike }: { c: ReplyView; onLike: () => void }) {
     >
       <ThumbsUpIcon className={cn("size-3.5", c.liked && "fill-primary")} aria-hidden />
       <span className="sr-only">{t("likeSr", { name: c.name })} </span>
-      {formatCount(count)}
+      <Num>{formatCount(count)}</Num>
     </Button>
   )
 }

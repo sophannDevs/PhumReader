@@ -2,7 +2,7 @@
 
 import { BookOpenIcon, CalendarIcon, ChevronRightIcon, ShareIcon } from "lucide-react"
 import Image from "next/image"
-import { useTranslations } from "next-intl"
+import { useTranslations } from "@/i18n/translations"
 import { useEffect, useState } from "react"
 import { toast } from "sonner"
 import { Badge } from "@/components/ui/badge"
@@ -15,6 +15,7 @@ import { creatorHandle, creatorHref, genreHref, readerHref } from "@/lib/routes"
 import { useSeriesViewer, useSubscribe } from "@/lib/me"
 import { useLocalize } from "@/lib/localize"
 import { cn } from "@/lib/utils"
+import { Num } from "@/i18n/num"
 
 const ghostDark =
   "border-white/20 bg-white/10 text-surface-foreground shadow-none hover:bg-white/[0.18] hover:text-surface-foreground focus-visible:ring-offset-surface"
@@ -161,7 +162,7 @@ export function SeriesHero({
             {statItems.map((s) => (
               <div key={s.label} className="flex flex-col-reverse">
                 <dt className="text-xs text-surface-quiet">{s.label}</dt>
-                <dd className="text-lg leading-6 font-bold tabular-nums">{s.value}</dd>
+                <dd className="text-lg leading-6 font-bold tabular-nums"><Num>{s.value}</Num></dd>
               </div>
             ))}
           </dl>

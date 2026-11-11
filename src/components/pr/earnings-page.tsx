@@ -3,7 +3,8 @@
 import { useQuery } from "@tanstack/react-query"
 import { AlertCircleIcon, AlertTriangleIcon, CoinsIcon } from "lucide-react"
 import Image from "next/image"
-import { useLocale, useTranslations } from "next-intl"
+import { useLocale } from "next-intl"
+import { useTranslations } from "@/i18n/translations"
 import { useState } from "react"
 import { toast } from "sonner"
 import { CreatorNav } from "@/components/layout/creator-nav"
@@ -16,7 +17,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Skeleton } from "@/components/ui/skeleton"
 import { DEMO_MODE } from "@/lib/api/config"
 import { withDemo } from "@/lib/demo-api"
-import { formatDate, localDigits } from "@/lib/format"
+import { formatDate } from "@/lib/format"
 import { useDemoFlag } from "@/lib/queries"
 import { useAppStore } from "@/lib/store"
 import { cn } from "@/lib/utils"
@@ -210,7 +211,6 @@ function CoinsChart({ months, coins }: { months: number[]; coins: number[] }) {
 
 function CoinsTable({ months, coins }: { months: number[]; coins: number[] }) {
   const t = useTranslations("earnings")
-  const locale = useLocale()
   return (
     <table className="w-full border-collapse text-sm">
       <caption className="sr-only">{t("tableCaption")}</caption>
@@ -231,7 +231,7 @@ function CoinsTable({ months, coins }: { months: number[]; coins: number[] }) {
         {coins.map((v, i) => (
           <tr key={months[i]} className="not-last:border-b">
             <th scope="row" className="px-1 py-2.5 text-left font-normal">
-              {t("monthLong", { month: t(`monthFull.${months[i]}`), year: localDigits(2026, locale) })}
+              {t("monthLong", { month: t(`monthFull.${months[i]}`), year: 2026 })}
             </th>
             <td className="px-1 py-2.5 text-right tabular-nums">{fmt(v)}</td>
             <td className="px-1 py-2.5 text-right tabular-nums">{fmt(Math.round(v / PRICE))}</td>

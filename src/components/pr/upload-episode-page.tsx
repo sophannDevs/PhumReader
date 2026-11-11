@@ -3,7 +3,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { AlertCircleIcon, ArrowDownIcon, ArrowUpIcon, LayersIcon, PlusIcon, RotateCcwIcon, XIcon } from "lucide-react"
 import { useSearchParams } from "next/navigation"
-import { useTranslations } from "next-intl"
+import { useTranslations } from "@/i18n/translations"
 import { useEffect, useRef, useState } from "react"
 import { toast } from "sonner"
 import { CreatorNav } from "@/components/layout/creator-nav"

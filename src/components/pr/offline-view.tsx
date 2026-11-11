@@ -1,7 +1,7 @@
 "use client"
 
 import { CheckIcon, HomeIcon, RefreshCwIcon } from "lucide-react"
-import { useTranslations } from "next-intl"
+import { useTranslations } from "@/i18n/translations"
 import { useCallback, useEffect, useRef, useState } from "react"
 import { ErrorHelp, ErrorHero, ErrorStatus, errorActions } from "@/components/pr/error-page"
 import { Button } from "@/components/ui/button"

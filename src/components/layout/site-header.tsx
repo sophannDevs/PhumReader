@@ -1,7 +1,8 @@
 "use client"
 
 import { BellIcon, BookOpenIcon, CoinsIcon, LogOutIcon, PenLineIcon, SearchIcon, ShieldCheckIcon, SlidersHorizontalIcon } from "lucide-react"
-import { useLocale, useTranslations } from "next-intl"
+import { useLocale } from "next-intl"
+import { useTranslations } from "@/i18n/translations"
 import { useSyncExternalStore } from "react"
 import { CoinChip } from "@/components/pr/coin-chip"
 import { LanguageButton } from "@/components/layout/language-switch"

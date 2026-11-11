@@ -3,7 +3,8 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { AlertCircleIcon, CheckIcon, LibraryIcon, RefreshCwIcon, SparklesIcon, XIcon, ZapIcon } from "lucide-react"
 import Image from "next/image"
-import { useLocale, useTranslations } from "next-intl"
+import { useLocale } from "next-intl"
+import { useTranslations } from "@/i18n/translations"
 import { useState } from "react"
 import { UndoBar, useUndo } from "@/components/pr/patterns"
 import { NativeSelect } from "@/components/pr/settings-ui"
@@ -24,6 +25,7 @@ import { useDemoFlag, useLibrary } from "@/lib/queries"
 import { readerHref, seriesHref } from "@/lib/routes"
 import { useAppStore, useHydrated, useUser } from "@/lib/store"
 import { cn } from "@/lib/utils"
+import { Num } from "@/i18n/num"
 
 /**
  * My library (spec §8, prototype Library/): tabs Subscribed / Recently read / Unlocked, the "New episodes" filter,
@@ -355,7 +357,7 @@ export function LibraryPage() {
           {tabs.map((x) => (
             <TabsTrigger key={x.value} value={x.value} className="h-11 px-3 pt-0 pb-0">
               {x.label}
-              {countsKnown ? <TabsCount className="rounded-badge px-2 py-0.5 text-xs font-semibold text-secondary-foreground">{x.count}</TabsCount> : null}
+              {countsKnown ? <TabsCount className="rounded-badge px-2 py-0.5 text-xs font-semibold text-secondary-foreground"><Num>{x.count}</Num></TabsCount> : null}
             </TabsTrigger>
           ))}
         </TabsList>

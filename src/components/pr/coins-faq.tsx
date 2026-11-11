@@ -1,6 +1,6 @@
 "use client"
 
-import { useTranslations } from "next-intl"
+import { useTranslations } from "@/i18n/translations"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import type { FaqItem } from "@/data"
 import { useLocalize } from "@/lib/localize"

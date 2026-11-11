@@ -1,7 +1,7 @@
 "use client"
 
 import { ArrowRightIcon, CheckIcon, ClockIcon, MessageSquareIcon, ShieldIcon, SmartphoneIcon, XIcon } from "lucide-react"
-import { useTranslations } from "next-intl"
+import { useTranslations } from "@/i18n/translations"
 import { useCallback, useEffect, useState } from "react"
 import { type Flow, packTotal } from "@/components/pr/checkout-flow"
 import type { Checkout } from "@/lib/api/coins"
@@ -13,6 +13,7 @@ import { useRouter } from "@/i18n/navigation"
 import { useLocalize } from "@/lib/localize"
 import { useAppStore, useCoins, useUser } from "@/lib/store"
 import { cn } from "@/lib/utils"
+import { Num } from "@/i18n/num"
 
 export { packTotal }
 
@@ -342,8 +343,8 @@ export function CheckoutCard({
         <div className={cn(body, "gap-2.5")}>
           <dl className="m-0 flex flex-col gap-2.5">
             <Row label={t("packLine", { coins: pack.coins })} value={t("balanceLabel", { count: pack.coins })} />
-            {pack.bonus > 0 ? <Row label={t("packBonus")} value={<span className="text-brand-ink">+{pack.bonus}</span>} /> : null}
-            {offer ? <Row label={t("firstBonus")} value={<span className="text-brand-ink">+{pack.coins}</span>} /> : null}
+            {pack.bonus > 0 ? <Row label={t("packBonus")} value={<span className="text-brand-ink">+<Num>{pack.bonus}</Num></span>} /> : null}
+            {offer ? <Row label={t("firstBonus")} value={<span className="text-brand-ink">+<Num>{pack.coins}</Num></span>} /> : null}
             <div className="h-px bg-border" aria-hidden />
             <div className="flex items-center justify-between gap-4">
               <dt className="type-h4">{t("youGet")}</dt>

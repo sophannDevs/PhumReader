@@ -1,12 +1,13 @@
 import { HeartIcon } from "lucide-react"
 import Image from "next/image"
-import { useTranslations } from "next-intl"
+import { useTranslations } from "@/i18n/translations"
 import { Badge } from "@/components/ui/badge"
 import type { Series } from "@/data/types"
 import { Link } from "@/i18n/navigation"
 import { seriesHref } from "@/lib/routes"
 import { cn } from "@/lib/utils"
 import { useLocalize } from "@/lib/localize"
+import { Num } from "@/i18n/num"
 
 /**
  * Series card (V2.1 `.s-card`): 3:4 cover (10 px radius, hover zoom) with top-left badges, then a 14 px title
@@ -83,7 +84,7 @@ export function SeriesCard({
         ) : hook || meta === "creator" ? null : (
           <p className="flex items-center gap-1 text-[13px] leading-[18px] text-muted-foreground tabular-nums max-md:text-xs">
             <HeartIcon className="size-3" aria-hidden />
-            <span aria-label={t("likes", { count: series.likes })}>{series.likes}</span>
+            <span aria-label={t("likes", { count: series.likes })}><Num>{series.likes}</Num></span>
           </p>
         )}
       </div>

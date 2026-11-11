@@ -2,7 +2,7 @@
 
 import { ArrowRightIcon, BookOpenIcon, CalendarIcon, HeartIcon, UserIcon } from "lucide-react"
 import Image from "next/image"
-import { useTranslations } from "next-intl"
+import { useTranslations } from "@/i18n/translations"
 import { useState } from "react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -13,6 +13,7 @@ import { useLocalize } from "@/lib/localize"
 import { useSubscribe } from "@/lib/me"
 import { readerHref, seriesHref } from "@/lib/routes"
 import { cn } from "@/lib/utils"
+import { Num } from "@/i18n/num"
 
 /**
  * Home spotlight (spec §1, prototype Home `.sp`): the main pick and a "Featured this week" list with every pick
@@ -119,7 +120,7 @@ function SpotlightMain({ slide }: { slide: HeroSlideView }) {
           <span className="inline-flex items-center gap-1">
             <HeartIcon className="size-3.5" aria-hidden />
             <span className="sr-only">{t("likesLabel")}</span>
-            {s.likes}
+            <Num>{s.likes}</Num>
           </span>
           {s.schedule ? (
             <span className="inline-flex items-center gap-1">

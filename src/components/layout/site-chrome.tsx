@@ -1,6 +1,6 @@
 "use client"
 
-import { useTranslations } from "next-intl"
+import { useTranslations } from "@/i18n/translations"
 import { toast } from "sonner"
 import { MobileTabBar } from "@/components/layout/mobile-tab-bar"
 import { useSearch } from "@/components/layout/search-provider"

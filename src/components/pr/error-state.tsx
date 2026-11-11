@@ -1,7 +1,7 @@
 "use client"
 
 import { AlertCircleIcon } from "lucide-react"
-import { useTranslations } from "next-intl"
+import { useTranslations } from "@/i18n/translations"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 

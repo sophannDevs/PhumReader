@@ -2,7 +2,7 @@
 
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react"
 import { notFound } from "next/navigation"
-import { useTranslations } from "next-intl"
+import { useTranslations } from "@/i18n/translations"
 import Image from "next/image"
 import { memo, useEffect, useRef, useState } from "react"
 import { toast } from "sonner"

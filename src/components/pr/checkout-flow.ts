@@ -3,7 +3,7 @@
 import { useQueryClient } from "@tanstack/react-query"
 import { useEffect, useRef, useState } from "react"
 import { toast } from "sonner"
-import { useTranslations } from "next-intl"
+import { useTranslations } from "@/i18n/translations"
 import type { CoinPack, PaymentMethod } from "@/data"
 import { DEMO_MODE } from "@/lib/api/config"
 import * as coins from "@/lib/api/coins"

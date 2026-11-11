@@ -1,7 +1,8 @@
 "use client";
 
 import { InfoIcon } from "lucide-react";
-import { useLocale, useTranslations } from "next-intl";
+import { useLocale } from "next-intl";
+import { useTranslations } from "@/i18n/translations";
 import { useState } from "react";
 import {
   AdminCard,

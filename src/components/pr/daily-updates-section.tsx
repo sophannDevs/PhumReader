@@ -1,7 +1,7 @@
 "use client"
 
 import { AlertCircleIcon, CalendarIcon, ChevronDownIcon, HeartIcon, RefreshCwIcon } from "lucide-react"
-import { useTranslations } from "next-intl"
+import { useTranslations } from "@/i18n/translations"
 import { useEffect, useRef, useState } from "react"
 import { SeriesCard } from "@/components/pr/series-card"
 import { phoneSwipeRow, SectionHead, Segmented, StateBox } from "@/components/pr/v2-primitives"
@@ -10,6 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import type { Series, Weekday } from "@/data"
 import { today, weekdayOf } from "@/lib/format"
 import { cn } from "@/lib/utils"
+import { Num } from "@/i18n/num"
 
 const DAYS: Weekday[] = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 type Kind = "all" | "comic" | "novel"
@@ -167,7 +168,7 @@ export function DailyUpdatesSection({
                       </span>
                       <span className="inline-flex items-center gap-[3px] tabular-nums">
                         <HeartIcon className="size-3" aria-hidden />
-                        {s.likes}
+                        <Num>{s.likes}</Num>
                       </span>
                     </p>
                   }

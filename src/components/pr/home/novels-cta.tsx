@@ -2,7 +2,7 @@
 
 import { PenLineIcon } from "lucide-react"
 import Image from "next/image"
-import { useTranslations } from "next-intl"
+import { useTranslations } from "@/i18n/translations"
 import { Eyebrow, SectionHead } from "@/components/pr/v2-primitives"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"

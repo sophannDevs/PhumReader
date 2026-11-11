@@ -1,7 +1,7 @@
 "use client"
 
 import { BookOpenIcon, CoinsIcon, HomeIcon, SearchIcon, UserIcon } from "lucide-react"
-import { useTranslations } from "next-intl"
+import { useTranslations } from "@/i18n/translations"
 import { Link, usePathname } from "@/i18n/navigation"
 import { cn } from "@/lib/utils"
 

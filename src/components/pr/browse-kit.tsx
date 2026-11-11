@@ -14,6 +14,7 @@ import { useAskToLogin, useSubscribe } from "@/lib/me"
 import { useDemoFlag } from "@/lib/queries"
 import { useHydrated, useUser } from "@/lib/store"
 import { cn } from "@/lib/utils"
+import { Num } from "@/i18n/num"
 
 /**
  * Pieces shared by the browse pages (Search §7, Rankings §10, Genres / Web novels §11):
@@ -78,7 +79,7 @@ export function LineTabs<T extends string>({
             {it.label}
             {it.count !== undefined ? (
               <Badge variant="secondary" className="tabular-nums">
-                {it.count}
+                <Num>{it.count}</Num>
               </Badge>
             ) : null}
           </button>

@@ -1,7 +1,7 @@
 "use client"
 
 import { PenLineIcon } from "lucide-react"
-import { useTranslations } from "next-intl"
+import { useTranslations } from "@/i18n/translations"
 import { useEffect, useRef } from "react"
 import { Link, usePathname } from "@/i18n/navigation"
 import { DEMO_MODE } from "@/lib/api/config"

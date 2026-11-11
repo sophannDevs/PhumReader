@@ -3,7 +3,7 @@
 import { AlertCircleIcon, RefreshCwIcon, SearchIcon, XIcon } from "lucide-react"
 import Image from "next/image"
 import { useSearchParams } from "next/navigation"
-import { useTranslations } from "next-intl"
+import { useTranslations } from "@/i18n/translations"
 import { useState } from "react"
 import { likesOf, replaceQuery, seedOf, useCatalog, viewsOf } from "@/components/pr/browse-kit"
 import { NativeSelect } from "@/components/pr/settings-ui"
@@ -17,6 +17,7 @@ import { Link } from "@/i18n/navigation"
 import { useLocalize } from "@/lib/localize"
 import { genreSlug, seriesHref } from "@/lib/routes"
 import { cn } from "@/lib/utils"
+import { Num } from "@/i18n/num"
 
 type Format = "all" | "comic" | "novel"
 type Status = "any" | "ongoing" | "completed"
@@ -319,7 +320,7 @@ function GenreCard({ series: s }: { series: Series }) {
             {lead ? `${lead} · ` : ""}
             <span aria-hidden>♥ </span>
             <span className="sr-only">{t("likes", { count: s.likes })}</span>
-            <span aria-hidden>{s.likes}</span>
+            <span aria-hidden><Num>{s.likes}</Num></span>
           </p>
         </div>
       </Link>

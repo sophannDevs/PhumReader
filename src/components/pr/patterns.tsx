@@ -1,11 +1,12 @@
 "use client"
 
 import { CheckIcon } from "lucide-react"
-import { useTranslations } from "next-intl"
+import { useTranslations } from "@/i18n/translations"
 import { useCallback, useEffect, useRef, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Link } from "@/i18n/navigation"
 import { cn } from "@/lib/utils"
+import { Num } from "@/i18n/num"
 
 /**
  * V2.1 patterns shared by several pages (foundations.md §8 "Patterns added"):
@@ -47,7 +48,7 @@ export function StepsBar({
                     : "border-border bg-background text-muted-foreground"
               )}
             >
-              {done ? <CheckIcon className="size-3.5" aria-hidden /> : i + 1}
+              {done ? <CheckIcon className="size-3.5" aria-hidden /> : <Num>{i + 1}</Num>}
             </span>
             <span
               className={cn(

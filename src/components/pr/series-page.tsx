@@ -1,7 +1,7 @@
 "use client"
 
 import { notFound, useSearchParams } from "next/navigation"
-import { useTranslations } from "next-intl"
+import { useTranslations } from "@/i18n/translations"
 import { Tabs as TabsPrimitive } from "radix-ui"
 import { useRef, useState } from "react"
 import { CommentsSection } from "@/components/pr/comments-section"
@@ -19,6 +19,7 @@ import { DEMO_MODE } from "@/lib/api/config"
 import { useAccountEmail, useSubscriptions } from "@/lib/me"
 import { useSeries } from "@/lib/queries"
 import { seriesHref } from "@/lib/routes"
+import { Num } from "@/i18n/num"
 
 export function SeriesSkeleton() {
   return (
@@ -99,7 +100,7 @@ function SeriesBody({ series, synopsis, stats, related, creatorSeriesCount, crea
             <TabsPrimitive.Trigger value="episodes" className={tabClass}>
               {t(novel ? "tabChapters" : "tabEpisodes")}
               <Badge variant="secondary" className="tabular-nums">
-                {series.totalEpisodes}
+                <Num>{series.totalEpisodes}</Num>
               </Badge>
             </TabsPrimitive.Trigger>
             <TabsPrimitive.Trigger value="about" className={tabClass}>
@@ -108,7 +109,7 @@ function SeriesBody({ series, synopsis, stats, related, creatorSeriesCount, crea
             <TabsPrimitive.Trigger value="comments" className={tabClass}>
               {t("tabComments")}
               <Badge variant="secondary" className="tabular-nums">
-                {stats.comments}
+                <Num>{stats.comments}</Num>
               </Badge>
             </TabsPrimitive.Trigger>
           </TabsPrimitive.List>

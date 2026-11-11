@@ -3,7 +3,8 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useMutation } from "@tanstack/react-query"
 import { CheckIcon, ClockIcon, CoinsIcon, MailIcon, MessageSquareIcon, PlusIcon, ShieldIcon } from "lucide-react"
-import { useLocale, useTranslations } from "next-intl"
+import { useLocale } from "next-intl"
+import { useTranslations } from "@/i18n/translations"
 import { useEffect, useRef, useState } from "react"
 import { useForm, useWatch } from "react-hook-form"
 import { toast } from "sonner"
@@ -279,7 +280,7 @@ export function HelpContact() {
               />
               <Button type="button" variant="outline" size="sm" onClick={() => fileInput.current?.click()}>
                 <PlusIcon className="size-3.5" />
-                {files.length ? t("attached", { count: files.length, n: localDigits(files.length, locale) }) : t("attach")}
+                {files.length ? t("attached", { count: files.length }) : t("attach")}
               </Button>
               <span className="text-xs leading-4 text-muted-foreground">{t("attachHint")}</span>
             </div>

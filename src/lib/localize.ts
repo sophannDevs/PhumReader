@@ -1,6 +1,7 @@
 "use client"
 
-import { useLocale, useTranslations } from "next-intl"
+import { useLocale } from "next-intl"
+import { useTranslations } from "@/i18n/translations"
 import type { Genre, Series } from "@/data"
 import { seriesHooks } from "@/data/hooks"
 import { formatDate } from "@/lib/format"

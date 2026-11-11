@@ -13,7 +13,8 @@ import {
   Undo2Icon,
   XIcon,
 } from "lucide-react"
-import { useLocale, useTranslations } from "next-intl"
+import { useLocale } from "next-intl"
+import { useTranslations } from "@/i18n/translations"
 import { toast } from "sonner"
 import { type Receipt, type ReceiptStatus, useReceipt } from "@/components/pr/receipt-data"
 import { Timeline, type TimelineStep } from "@/components/pr/receipt-timeline"

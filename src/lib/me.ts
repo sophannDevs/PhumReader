@@ -1,7 +1,7 @@
 "use client"
 
 import { useQuery, useQueryClient } from "@tanstack/react-query"
-import { useTranslations } from "next-intl"
+import { useTranslations } from "@/i18n/translations"
 import { useCallback, useEffect, useRef } from "react"
 import { toast } from "sonner"
 import type { ContinueView } from "@/data/selectors"

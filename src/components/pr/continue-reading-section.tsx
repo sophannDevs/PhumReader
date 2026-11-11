@@ -1,7 +1,7 @@
 "use client"
 
 import { ChevronRightIcon } from "lucide-react"
-import { useTranslations } from "next-intl"
+import { useTranslations } from "@/i18n/translations"
 import { ContinueCard } from "@/components/pr/continue-card"
 import { SkeletonRow } from "@/components/pr/skeletons"
 import { phoneSwipeRow, SectionHead } from "@/components/pr/v2-primitives"

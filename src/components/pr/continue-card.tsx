@@ -1,6 +1,6 @@
 import { ChevronRightIcon } from "lucide-react"
 import Image from "next/image"
-import { useTranslations } from "next-intl"
+import { useTranslations } from "@/i18n/translations"
 import type { Series } from "@/data/types"
 import { Link } from "@/i18n/navigation"
 import { readerHref } from "@/lib/routes"

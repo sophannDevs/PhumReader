@@ -1,5 +1,5 @@
 import { PlayIcon } from "lucide-react"
-import { useTranslations } from "next-intl"
+import { useTranslations } from "@/i18n/translations"
 import { LanguageToggleLink } from "@/components/layout/language-switch"
 import { Logo } from "@/components/layout/logo"
 import { Link } from "@/i18n/navigation"

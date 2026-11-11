@@ -1,6 +1,7 @@
 "use client"
 
-import { useLocale, useTranslations } from "next-intl"
+import { useLocale } from "next-intl"
+import { useTranslations } from "@/i18n/translations"
 import { Badge } from "@/components/ui/badge"
 import type { PaymentMethod, Purchase, PurchaseStatus } from "@/data"
 import { Link } from "@/i18n/navigation"

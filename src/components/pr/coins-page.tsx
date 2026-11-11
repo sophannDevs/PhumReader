@@ -1,7 +1,7 @@
 "use client"
 
 import { GiftIcon, ZapIcon } from "lucide-react"
-import { useTranslations } from "next-intl"
+import { useTranslations } from "@/i18n/translations"
 import { useEffect, useRef } from "react"
 import { CheckoutCard } from "@/components/pr/checkout-card"
 import { type Flow, packTotal, useCheckout } from "@/components/pr/checkout-flow"

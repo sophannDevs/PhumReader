@@ -1,7 +1,8 @@
 "use client"
 
 import { AlertCircleIcon, CheckCircle2Icon, ChevronRightIcon } from "lucide-react"
-import { useLocale, useTranslations } from "next-intl"
+import { useLocale } from "next-intl"
+import { useTranslations } from "@/i18n/translations"
 import { ErrorArt, type ErrorArtKind } from "@/components/pr/error-art"
 import { SeriesCard } from "@/components/pr/series-card"
 import { Badge } from "@/components/ui/badge"

@@ -1,5 +1,5 @@
 import { ArrowLeftIcon, ChevronLeftIcon, ChevronRightIcon } from "lucide-react"
-import { useTranslations } from "next-intl"
+import { useTranslations } from "@/i18n/translations"
 import { Button } from "@/components/ui/button"
 import { Link } from "@/i18n/navigation"
 import { cn } from "@/lib/utils"

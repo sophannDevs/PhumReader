@@ -1,7 +1,7 @@
 "use client"
 
 import { LogInIcon, ShieldAlertIcon } from "lucide-react"
-import { useTranslations } from "next-intl"
+import { useTranslations } from "@/i18n/translations"
 import { useEffect, useRef } from "react"
 import { Logo } from "@/components/layout/logo"
 import { SkipLink } from "@/components/layout/skip-link"

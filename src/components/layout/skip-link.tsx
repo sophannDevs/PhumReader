@@ -1,6 +1,6 @@
 "use client"
 
-import { useTranslations } from "next-intl"
+import { useTranslations } from "@/i18n/translations"
 
 /**
  * "Skip to content". Cache Components keeps the previous route mounted but hidden, so

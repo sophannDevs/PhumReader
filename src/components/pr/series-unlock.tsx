@@ -1,7 +1,7 @@
 "use client"
 
 import { useQueryClient } from "@tanstack/react-query"
-import { useTranslations } from "next-intl"
+import { useTranslations } from "@/i18n/translations"
 import { useEffect, useRef, useState } from "react"
 import { toast } from "sonner"
 import { UnlockDialog, type UnlockMode } from "@/components/pr/unlock-dialog"

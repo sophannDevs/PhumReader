@@ -1,7 +1,7 @@
 "use client"
 
 import { ThumbsUpIcon } from "lucide-react"
-import { useTranslations } from "next-intl"
+import { useTranslations } from "@/i18n/translations"
 import { CommentAvatar } from "@/components/pr/comment-thread"
 import { useReport } from "@/components/pr/report-dialog"
 import { Badge } from "@/components/ui/badge"
@@ -11,6 +11,7 @@ import { formatCount, initials } from "@/lib/format"
 import { useAskToLogin } from "@/lib/me"
 import { useUser } from "@/lib/store"
 import { cn } from "@/lib/utils"
+import { Num } from "@/i18n/num"
 
 /** A comment plus the state the page owns (stable id, whether this reader liked it). */
 export type CommentView = Comment & { id: string; liked?: boolean; canDelete?: boolean; mine?: boolean }
@@ -94,7 +95,7 @@ export function CommentList({
                 >
                   <ThumbsUpIcon className={cn("size-3.5", c.liked && "fill-primary")} aria-hidden />
                   <span className="sr-only">{t("likeSr", { name: c.name })} </span>
-                  {formatCount(count)}
+                  <Num>{formatCount(count)}</Num>
                 </Button>
                 <Button variant="ghost" size="sm" className={ghost} onClick={() => onReply(c.name)}>
                   {t("reply")}

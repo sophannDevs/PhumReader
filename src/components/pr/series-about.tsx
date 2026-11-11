@@ -1,7 +1,7 @@
 "use client"
 
 import { CircleAlertIcon } from "lucide-react"
-import { useTranslations } from "next-intl"
+import { useTranslations } from "@/i18n/translations"
 import { useReport } from "@/components/pr/report-dialog"
 import { Badge } from "@/components/ui/badge"
 import type { Series } from "@/data"
