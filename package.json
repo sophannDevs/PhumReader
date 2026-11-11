@@ -25,6 +25,7 @@
     "i18n:review": "node scripts/i18n-review.mjs"
   },
   "dependencies": {
+    "@animate-ui/react": "^2.4.3",
     "@hookform/resolvers": "^7.0.3",
     "@tanstack/react-query": "^5.106.1",
     "class-variance-authority": "^0.7.1",
