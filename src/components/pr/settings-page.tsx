@@ -30,6 +30,7 @@ import { DEMO_MODE } from "@/lib/api/config"
 import { withDemo } from "@/lib/demo-api"
 import { fieldErrors } from "@/lib/api/errors"
 import { formatShortDate, ictDate, initials } from "@/lib/format"
+import { prefsFromApi, samePrefs, useAccountSettings } from "@/lib/notifications"
 import { logOut, toUser } from "@/lib/session"
 import {
   type AppSettings,
@@ -48,8 +49,9 @@ import { cn } from "@/lib/utils"
  * region and Privacy switches are a form with a save bar ("You have unsaved changes · Discard / Save changes");
  * the app language, blocking, password, photo, downloads and account actions act at once.
  * Saving writes `settings` (+ `novelSettings.size`, the reader theme via useTheme, the display name). With the
- * real API the name goes to /me/profile and SettingsSync saves the reader theme, text size and alerts; the other
- * choices stay on this device (the API has no fields for them yet).
+ * real API the name goes to /me/profile and SettingsSync saves the reader theme and text size; the Notifications card
+ * sums up the account's alert settings (changed on /notifications); the other choices stay on this device (the API
+ * has no fields for them yet).
  */
 
 type Form = Pick<
@@ -182,6 +184,8 @@ export function SettingsPage() {
   const settings = useAppStore((s) => s.settings)
   const novelSize = useAppStore((s) => s.novelSettings.size)
   const notifPrefs = useAppStore((s) => s.notifPrefs)
+  // Real mode: the account's alert settings as SettingsSync loaded them (no request of its own; until then this browser's).
+  const accountSettings = useAccountSettings(false).data
   const blocked = useAppStore((s) => s.blocked)
   const reports = useAppStore((s) => s.reports)
   const { theme, setTheme } = useTheme()
@@ -349,7 +353,8 @@ export function SettingsPage() {
     </Row>
   )
 
-  const customAlerts = !same(notifPrefs, defaultNotifPrefs)
+  const alertPrefs = !DEMO_MODE && accountSettings ? prefsFromApi(accountSettings.notifications) : notifPrefs
+  const customAlerts = !samePrefs(alertPrefs, defaultNotifPrefs)
 
   return (
     <div className="container flex flex-col gap-5 pt-7 pb-16">

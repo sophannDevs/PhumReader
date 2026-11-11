@@ -21,6 +21,7 @@ import { putSubscription } from "@/lib/api/me"
 import { firstName, parseCount } from "@/lib/format"
 import { useLocalize } from "@/lib/localize"
 import { meKeys } from "@/lib/me"
+import { saveAlertPrefs } from "@/lib/notifications"
 import { useAppStore, useHydrated, useUser } from "@/lib/store"
 import { cn } from "@/lib/utils"
 
@@ -147,7 +148,8 @@ export function WelcomeFlow() {
     const store = useAppStore.getState()
     store.setPrefs(state.picked)
     store.setSettings({ langs: stories })
-    if (state.alerts) store.setNotifPrefs({ update: [true, store.notifPrefs.update[1]] })
+    // Real mode saves it to the account (New episodes push); a failure keeps the reader's other choices.
+    if (state.alerts) void saveAlertPrefs(queryClient, user?.email, { update: [true, store.notifPrefs.update[1]] }).catch(() => undefined)
     const added = state.subs.filter((id) => !store.subscriptions.includes(id))
     if (DEMO_MODE || !user) {
       store.setSubscriptions([...added, ...store.subscriptions])

@@ -1,6 +1,9 @@
+import { act } from "@testing-library/react"
 import { toast } from "sonner"
 import { beforeEach, describe, expect, it } from "vitest"
 import { SettingsPage } from "@/components/pr/settings-page"
+import type { Settings } from "@/lib/api/account"
+import { meKeys } from "@/lib/api/keys"
 import { useAppStore } from "@/lib/store"
 import { THEME_STORAGE_KEY } from "@/lib/theme-script"
 import { nav, router } from "@/test/navigation"
@@ -238,5 +241,51 @@ describe("SettingsPage: real app", () => {
     server.use(noDevices)
     renderUi(<SettingsPage />)
     expect(screen.queryByRole("button", { name: "Reset demo data" })).not.toBeInTheDocument()
+  })
+})
+
+/** The account's settings as GET /me/settings answers them (V21-03 alert defaults unless changed). */
+const accountSettings = (notifications: Partial<Settings["notifications"]> = {}): Settings => ({
+  language: "en",
+  theme: "system",
+  reader: { font: "sans", size: 18, theme: "light", wide: true },
+  notifications: {
+    episodes: true,
+    fastPass: true,
+    types: {
+      update: { push: true, email: false },
+      comment: { push: true, email: false },
+      coins: { push: true, email: true },
+      fastpass: { push: true, email: false },
+      news: { push: false, email: false },
+    },
+    quiet: { on: true, from: 22, to: 7 },
+    digest: false,
+    ...notifications,
+  },
+})
+
+describe("SettingsPage: notifications summary (real API)", () => {
+  it("sums up the account's alert settings once they are loaded, without a request of its own", async () => {
+    signIn()
+    server.use(noDevices)
+    const { client } = renderUi(<SettingsPage />)
+    expect(screen.getByText("New episodes, replies and payments. Push on, email off.")).toBeInTheDocument()
+    act(() => {
+      client.setQueryData(meKeys.settings("sokha@example.com"), accountSettings({ digest: true }))
+    })
+    expect(await screen.findByText("Your custom alert choices are on.")).toBeInTheDocument()
+  })
+
+  it("follows the account, not choices this browser kept from before", async () => {
+    signIn()
+    server.use(noDevices)
+    useAppStore.setState((s) => ({ notifPrefs: { ...s.notifPrefs, news: [true, true] } }))
+    const { client } = renderUi(<SettingsPage />)
+    expect(screen.getByText("Your custom alert choices are on.")).toBeInTheDocument()
+    act(() => {
+      client.setQueryData(meKeys.settings("sokha@example.com"), accountSettings())
+    })
+    expect(await screen.findByText("New episodes, replies and payments. Push on, email off.")).toBeInTheDocument()
   })
 })

@@ -19,9 +19,9 @@ import org.springframework.transaction.support.TransactionTemplate;
  * stop the others, and running twice does nothing the second time.
  *
  * <p>What goes: email, name, password, avatar, Google / Facebook links, sign-in devices, push
- * tokens, settings and the creator bio. What stays, pointing at "Deleted account": comments, the
- * coin ledger and order history (accounting), unlocks, and a creator's pen name and series (readers
- * keep their library and paid episodes).
+ * tokens, settings, the notifications inbox and the creator bio. What stays, pointing at "Deleted
+ * account": comments, the coin ledger and order history (accounting), unlocks, and a creator's pen
+ * name and series (readers keep their library and paid episodes).
  */
 @Service
 public class AccountErasureService {
@@ -75,7 +75,12 @@ public class AccountErasureService {
         user.erase();
         users.saveAndFlush(user);
         for (String table :
-                List.of("user_identities", "refresh_tokens", "push_tokens", "user_settings")) {
+                List.of(
+                        "user_identities",
+                        "refresh_tokens",
+                        "push_tokens",
+                        "user_settings",
+                        "notifications")) {
             jdbc.sql("delete from " + table + " where user_id = :id").param("id", id).update();
         }
         jdbc.sql("update creator_profiles set bio = null where user_id = :id")

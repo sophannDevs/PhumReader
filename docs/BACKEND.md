@@ -35,7 +35,7 @@ covers the plan's Phase 2 and most of Phase 4.
 | Payments | ABA PayWay for KHQR, ABA Pay and cards (PayWay hosted card page, A5). PhumReader never sees card numbers. 10-minute order expiry, signed webhook, nightly reconciliation. |
 | Fast Pass | Per episode: the creator sets the price (3–10 coins) and "free after N days"; default 5 coins, 7 days (A3). V21-02: a series-wide switch (on/off, 1–5 episodes ahead) gives the defaults for new episodes (free after ceil(ahead × 7 ÷ update days) days); episodes already out never change. No reader subscription plan in v1 (A6). |
 | Email | Resend, sender `no-reply@` the final domain (A13). Development: console log, Mailpit Windows binary optional. |
-| Notifications | Web push (Firebase Cloud Messaging) + email for new episodes of subscribed series, sent in batches by the worker (A17) |
+| Notifications | Web push (Firebase Cloud Messaging) + email for new episodes of subscribed series, sent in batches by the worker (A17). V21-03 (owner, 2026-11-11): an in-app inbox (`notifications`) written in the same transaction as each change (new episode by the worker, comment likes, coin orders, report outcomes, series review decisions, welcome); push and email follow the account's alert settings per type, and push waits out the reader's quiet hours (Asia/Phnom_Penh). |
 | API contract | REST + JSON under `/api/v1`. springdoc publishes OpenAPI to `backend/openapi/openapi.json` (committed); `openapi-typescript` generates `src/lib/api/schema.d.ts` (`npm run api:gen`). CI fails if either is stale. |
 | Configuration | `.env.example` for both apps; typed config (zod in the website, `@ConfigurationProperties` in the API); secrets only from the environment. An app refuses to start with a missing required setting and names it. |
 | Tests | JUnit 5, Spring Boot Test, MockMvc, ArchUnit. `./gradlew check` needs no Docker and no network: Zonky embedded PostgreSQL (real PostgreSQL binaries started by the tests) plus in-memory fakes for Redis, Meilisearch, R2, PayWay, email and push. Testcontainers is not used. |
@@ -74,12 +74,12 @@ One package per feature. Inside a feature: `web` (controllers + request/response
 
 | Area | Tables |
 |---|---|
-| Accounts | users, user_roles, user_identities (Google, Facebook), refresh_tokens (hashed, one family per device), user_settings, creator_profiles, creator_follows |
+| Accounts | users, user_roles, user_identities (Google, Facebook), refresh_tokens (hashed, one family per device), user_settings (V21-03: push and email per alert type, quiet hours, daily digest), creator_profiles, creator_follows |
 | Content | genres, series (V21-02: second genre, age TEEN16, several update days, release hour, Fast Pass switch and ahead, comments switch, break message), series_tags, series_reviews + series_review_items (V21-01: one row per submission for review, the admin's decision and the requested changes), episodes (number, title, status draft / scheduled / published / hidden by an admin, published_at, free_at + price for Fast Pass, comments on/off, hidden_at when the creator hides it: V21-02), episode_images (order, width, height, storage key), chapter_texts (blocks as JSON), featured_slides (home hero), rankings |
 | Reading | subscriptions, reading_progress (last episode, progress, highest episode opened), episode_likes, episode_bookmarks |
 | Money | coin_packs, coin_wallets (the locked row; balance = sum of the ledger), payment_orders, coin_ledger (append-only, one row per top-up, bonus, unlock, refund), unlocks, creator_earnings, idempotency_keys |
 | Community | comments, comment_likes, reports |
-| Operations | push_tokens, outbox_events (search and notification sync), audit_log, shedlock |
+| Operations | push_tokens, notifications (V21-03: the in-app inbox, one row per recipient and event: type + values, read / removed; removed rows go after 7 days, read rows after 90), outbox_events (search and notification sync), audit_log, shedlock |
 
 Migration: `backend/src/main/resources/db/migration/V1__init.sql`. Indexes from the plan: episodes by series +
 number, progress by user, ledger by user + time. Rules the database enforces: the ledger is append-only

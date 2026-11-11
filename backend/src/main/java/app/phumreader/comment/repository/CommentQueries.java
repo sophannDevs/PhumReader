@@ -177,7 +177,8 @@ public class CommentQueries {
     }
 
     /** Adds the like once; the comment's like count follows. */
-    public void like(UUID userId, UUID commentId, OffsetDateTime now) {
+    /** Adds the like; {@code false} when this person already liked the comment. */
+    public boolean like(UUID userId, UUID commentId, OffsetDateTime now) {
         int added =
                 jdbc.sql(
                                 "insert into comment_likes (user_id, comment_id, created_at)"
@@ -189,6 +190,7 @@ public class CommentQueries {
         if (added == 1) {
             changeLikes(commentId, 1);
         }
+        return added == 1;
     }
 
     public void unlike(UUID userId, UUID commentId) {

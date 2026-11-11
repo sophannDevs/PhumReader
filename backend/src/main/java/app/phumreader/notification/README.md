@@ -1,6 +1,7 @@
 # notification
 
-Email and web push for new episodes (P3-16). Development prints emails in the console.
+Email and web push for new episodes (P3-16) and the in-app notifications inbox (V21-03). Development prints
+emails in the console.
 
 ## Layout
 
@@ -14,10 +15,13 @@ Email and web push for new episodes (P3-16). Development prints emails in the co
 ## Main entry points
 
 `NotificationDispatcher`, `EmailSender` and `PushSender` with their console / SMTP / Resend / FCM variants.
+`NotificationInbox`: the inbox endpoints' service and the methods the sources call inside their own transaction
+(comment likes, coin orders, report outcomes, review decisions, welcome); `InboxCleanup`: the nightly clean-up.
 
 ## Talks to
 
-Called by `series` and `auth`; calls no other feature.
+Called by `series`, `auth`, `user`, `comment`, `payment` and `admin`; uses only `series.domain` (the series
+type and review decision enums).
 
 ## Rules (checked by `ArchitectureTest`)
 

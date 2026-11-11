@@ -26,6 +26,7 @@ import app.phumreader.common.error.ApiException;
 import app.phumreader.common.paging.CursorPage;
 import app.phumreader.common.paging.Cursors;
 import app.phumreader.common.security.CurrentUser;
+import app.phumreader.notification.service.NotificationInbox;
 import app.phumreader.payment.service.PaymentService;
 import app.phumreader.payment.service.PaymentService.Refund;
 import app.phumreader.search.service.SearchEvents;
@@ -75,6 +76,7 @@ public class AdminService {
     private final PaymentService payments;
     private final CatalogService catalog;
     private final SearchEvents searchEvents;
+    private final NotificationInbox inbox;
     private final JsonMapper json;
     private final Clock clock;
 
@@ -86,6 +88,7 @@ public class AdminService {
             PaymentService payments,
             CatalogService catalog,
             SearchEvents searchEvents,
+            NotificationInbox inbox,
             JsonMapper json,
             Clock clock) {
         this.queries = queries;
@@ -95,6 +98,7 @@ public class AdminService {
         this.payments = payments;
         this.catalog = catalog;
         this.searchEvents = searchEvents;
+        this.inbox = inbox;
         this.json = json;
         this.clock = clock;
     }
@@ -193,12 +197,12 @@ public class AdminService {
 
     /**
      * Takes live content down. Readers no longer see it, its creator cannot put it back, and the
-     * open reports on it are resolved.
+     * open reports on it are resolved (each reporter gets a notification, V21-03).
      */
     @Transactional
     public void hide(CurrentUser admin, ContentType type, UUID id, String reason) {
         change(admin, type, id, type.live(), type.hidden(), "content.hide", reason);
-        closeOpenReports(admin, type, id, RESOLVED, "Hidden: " + reason);
+        closeOpenReports(admin, type, id, "Hidden: " + reason);
     }
 
     /** Puts hidden content back. */
@@ -326,6 +330,7 @@ public class AdminService {
         queries.addReviewItems(review, items);
         // The series row is locked, so it is still in review.
         queries.leaveReview(seriesId, to.name(), now());
+        inbox.seriesReviewed(seriesId, review, decision, items, note, admin.id());
         return target.title();
     }
 
@@ -346,7 +351,8 @@ public class AdminService {
 
     /**
      * Settles a report: {@code dismiss} (nothing wrong), {@code resolve} (handled), or {@code hide}
-     * (the target is taken down, which also resolves every other open report on it).
+     * (the target is taken down, which also resolves every other open report on it). The reporters
+     * get a notification (V21-03).
      */
     @Transactional
     public AdminReport settle(
@@ -368,9 +374,16 @@ public class AdminService {
                 }
                 // Hidden by hand or by another report meanwhile: this one is still handled.
                 queries.closeReport(reportId, RESOLVED, admin.id(), note, now());
+                inbox.reportsResolved(List.of(reportId), true, admin.id());
             }
-            case RESOLVE -> queries.closeReport(reportId, RESOLVED, admin.id(), note, now());
-            case DISMISS -> queries.closeReport(reportId, DISMISSED, admin.id(), note, now());
+            case RESOLVE -> {
+                queries.closeReport(reportId, RESOLVED, admin.id(), note, now());
+                inbox.reportsResolved(List.of(reportId), false, admin.id());
+            }
+            case DISMISS -> {
+                queries.closeReport(reportId, DISMISSED, admin.id(), note, now());
+                inbox.reportDismissed(reportId, admin.id());
+            }
         }
         audit.record(
                 admin.id(),
@@ -399,16 +412,17 @@ public class AdminService {
         HIDE
     }
 
-    private void closeOpenReports(
-            CurrentUser admin, ContentType type, UUID id, String status, String note) {
-        int closed = queries.closeReportsOn(type, id, status, admin.id(), note, now());
-        if (closed > 0) {
+    /** Resolves the open reports on content that was taken down; the reporters hear it. */
+    private void closeOpenReports(CurrentUser admin, ContentType type, UUID id, String note) {
+        List<UUID> closed = queries.closeReportsOn(type, id, RESOLVED, admin.id(), note, now());
+        if (!closed.isEmpty()) {
             audit.record(
                     admin.id(),
                     "report.resolve",
                     type.name(),
                     id.toString(),
-                    details("reports", closed, "note", note));
+                    details("reports", closed.size(), "note", note));
+            inbox.reportsResolved(closed, true, admin.id());
         }
     }
 

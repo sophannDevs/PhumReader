@@ -14,6 +14,7 @@ import app.phumreader.common.paging.Cursors;
 import app.phumreader.common.ratelimit.RateLimiter;
 import app.phumreader.common.security.CurrentUser;
 import app.phumreader.episode.service.ReadingService;
+import app.phumreader.notification.service.NotificationInbox;
 import app.phumreader.series.service.CatalogRefs.EpisodeRef;
 import app.phumreader.series.service.CatalogRefs.SeriesRef;
 import app.phumreader.series.service.CatalogService;
@@ -60,6 +61,7 @@ public class CommentService {
     private final CatalogService catalog;
     private final ReadingService reading;
     private final RateLimiter limiter;
+    private final NotificationInbox inbox;
     private final Clock clock;
 
     public CommentService(
@@ -67,11 +69,13 @@ public class CommentService {
             CatalogService catalog,
             ReadingService reading,
             RateLimiter limiter,
+            NotificationInbox inbox,
             Clock clock) {
         this.queries = queries;
         this.catalog = catalog;
         this.reading = reading;
         this.limiter = limiter;
+        this.inbox = inbox;
         this.clock = clock;
     }
 
@@ -158,11 +162,19 @@ public class CommentService {
         queries.markDeleted(commentId, now());
     }
 
+    /**
+     * Likes or unlikes a comment. A new like from someone other than the author goes to the
+     * author's notifications inbox (one item per comment and day with the count, V21-03); taking a
+     * like back changes no item.
+     */
     @Transactional
     public CommentLikeState like(CurrentUser user, UUID commentId, boolean liked) {
         visible(commentId);
         if (liked) {
-            queries.like(user.id(), commentId, now());
+            OffsetDateTime at = now();
+            if (queries.like(user.id(), commentId, at)) {
+                inbox.commentLiked(user.id(), commentId, at.toInstant());
+            }
         } else {
             queries.unlike(user.id(), commentId);
         }

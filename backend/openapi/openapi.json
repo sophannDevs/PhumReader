@@ -193,7 +193,7 @@
     },
     "/api/v1/admin/content/{type}/{id}/restore" : {
       "post" : {
-        "operationId" : "restore",
+        "operationId" : "restore_1",
         "parameters" : [ {
           "in" : "path",
           "name" : "type",
@@ -3278,6 +3278,240 @@
         "tags" : [ "library" ]
       }
     },
+    "/api/v1/me/notifications" : {
+      "get" : {
+        "description" : "tab: all (default), unread, episodes, comments or coins; removed items are left out. 400 invalid_value (field tab), invalid_cursor.",
+        "operationId" : "list_1",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "tab",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "default" : "all",
+            "enum" : [ "all", "unread", "episodes", "comments", "coins" ]
+          }
+        }, {
+          "description" : "nextCursor of the previous page; omit for the first page",
+          "in" : "query",
+          "name" : "cursor",
+          "required" : false,
+          "schema" : {
+            "type" : [ "string", "null" ]
+          }
+        }, {
+          "description" : "Page size, 1-100 (default 20)",
+          "in" : "query",
+          "name" : "limit",
+          "required" : false,
+          "schema" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int32"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CursorPageNotificationItem"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "The inbox, newest first",
+        "tags" : [ "notifications" ]
+      }
+    },
+    "/api/v1/me/notifications/read-all" : {
+      "post" : {
+        "operationId" : "markAllRead",
+        "responses" : {
+          "204" : {
+            "description" : "No Content"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Marks every item read",
+        "tags" : [ "notifications" ]
+      }
+    },
+    "/api/v1/me/notifications/unread-count" : {
+      "get" : {
+        "operationId" : "unreadCount",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/UnreadCount"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "How many items are unread (the bell)",
+        "tags" : [ "notifications" ]
+      }
+    },
+    "/api/v1/me/notifications/{id}" : {
+      "delete" : {
+        "description" : "Restorable for 7 days (the page's Undo), then deleted. Removing again: no change. 404 notification_not_found for another's item.",
+        "operationId" : "remove",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "No Content"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Removes an item",
+        "tags" : [ "notifications" ]
+      }
+    },
+    "/api/v1/me/notifications/{id}/read" : {
+      "delete" : {
+        "description" : "404 notification_not_found for another's item.",
+        "operationId" : "markUnread",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "No Content"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Marks an item unread",
+        "tags" : [ "notifications" ]
+      },
+      "put" : {
+        "description" : "404 notification_not_found for another's item.",
+        "operationId" : "markRead",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "No Content"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Marks an item read (again: no change)",
+        "tags" : [ "notifications" ]
+      }
+    },
+    "/api/v1/me/notifications/{id}/restore" : {
+      "post" : {
+        "description" : "Restoring an item that is not removed: no change. 404 notification_not_found for another's item.",
+        "operationId" : "restore",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "No Content"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Brings a removed item back (Undo)",
+        "tags" : [ "notifications" ]
+      }
+    },
     "/api/v1/me/profile" : {
       "patch" : {
         "description" : "2 to 60 characters after trimming; 400 name_too_short.",
@@ -3350,7 +3584,7 @@
         "tags" : [ "account" ]
       },
       "put" : {
-        "description" : "New-episode notices go to every saved token of the account while Settings > Notifications > New episodes is on.",
+        "description" : "New-episode notices go to every saved token of the account while Settings > Notifications > New episodes push is on, outside the quiet hours.",
         "operationId" : "register",
         "requestBody" : {
           "content" : {
@@ -3410,7 +3644,7 @@
         "tags" : [ "account" ]
       },
       "patch" : {
-        "description" : "Only the fields in the body change, e.g. {\"reader\":{\"size\":20}}. 400 invalid_text_size (field reader.size).",
+        "description" : "Only the fields in the body change, e.g. {\"reader\":{\"size\":20}}, also inside notifications.types and notifications.quiet. notifications.episodes / fastPass are types.update.push / types.fastpass.push (types wins when both are sent). 400 invalid_text_size (field reader.size), validation_failed (quiet hours outside 0-23).",
         "operationId" : "updateSettings",
         "requestBody" : {
           "content" : {
@@ -4899,6 +5133,70 @@
         },
         "required" : [ "createdAt", "displayName", "email", "id", "roles", "status" ]
       },
+      "AlertSwitch" : {
+        "type" : "object",
+        "properties" : {
+          "email" : {
+            "type" : "boolean"
+          },
+          "push" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "email", "push" ]
+      },
+      "AlertSwitchChange" : {
+        "type" : "object",
+        "properties" : {
+          "email" : {
+            "type" : [ "boolean", "null" ]
+          },
+          "push" : {
+            "type" : [ "boolean", "null" ]
+          }
+        }
+      },
+      "AlertTypes" : {
+        "type" : "object",
+        "properties" : {
+          "coins" : {
+            "$ref" : "#/components/schemas/AlertSwitch"
+          },
+          "comment" : {
+            "$ref" : "#/components/schemas/AlertSwitch"
+          },
+          "fastpass" : {
+            "$ref" : "#/components/schemas/AlertSwitch"
+          },
+          "news" : {
+            "$ref" : "#/components/schemas/AlertSwitch"
+          },
+          "update" : {
+            "$ref" : "#/components/schemas/AlertSwitch"
+          }
+        },
+        "required" : [ "coins", "comment", "fastpass", "news", "update" ]
+      },
+      "AlertTypesChange" : {
+        "type" : "object",
+        "properties" : {
+          "coins" : {
+            "$ref" : "#/components/schemas/AlertSwitchChange"
+          },
+          "comment" : {
+            "$ref" : "#/components/schemas/AlertSwitchChange"
+          },
+          "fastpass" : {
+            "$ref" : "#/components/schemas/AlertSwitchChange"
+          },
+          "news" : {
+            "$ref" : "#/components/schemas/AlertSwitchChange"
+          },
+          "update" : {
+            "$ref" : "#/components/schemas/AlertSwitchChange"
+          }
+        }
+      },
       "AuditEntry" : {
         "type" : "object",
         "properties" : {
@@ -5527,6 +5825,21 @@
             "type" : "array",
             "items" : {
               "$ref" : "#/components/schemas/LedgerEntry"
+            }
+          },
+          "nextCursor" : {
+            "type" : [ "string", "null" ]
+          }
+        },
+        "required" : [ "items" ]
+      },
+      "CursorPageNotificationItem" : {
+        "type" : "object",
+        "properties" : {
+          "items" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/NotificationItem"
             }
           },
           "nextCursor" : {
@@ -6280,26 +6593,100 @@
         },
         "required" : [ "displayName", "email", "emailVerified", "id", "roles" ]
       },
+      "NotificationItem" : {
+        "type" : "object",
+        "properties" : {
+          "createdAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "data" : {
+            "type" : "object",
+            "additionalProperties" : { }
+          },
+          "episode" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int32"
+          },
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "kind" : {
+            "type" : "string",
+            "enum" : [ "episode", "comment", "coins", "system" ]
+          },
+          "read" : {
+            "type" : "boolean"
+          },
+          "series" : {
+            "$ref" : "#/components/schemas/NotificationSeries"
+          },
+          "type" : {
+            "type" : "string",
+            "enum" : [ "episode_published", "comment_liked", "order_paid", "order_refunded", "report_resolved", "report_dismissed", "series_approved", "series_changes", "series_rejected", "welcome" ]
+          }
+        },
+        "required" : [ "createdAt", "data", "id", "kind", "read", "type" ]
+      },
+      "NotificationSeries" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "slug" : {
+            "type" : "string"
+          },
+          "title" : {
+            "type" : "string"
+          },
+          "type" : {
+            "type" : "string",
+            "enum" : [ "comic", "novel" ]
+          }
+        },
+        "required" : [ "id", "slug", "title", "type" ]
+      },
       "NotificationSettings" : {
         "type" : "object",
         "properties" : {
+          "digest" : {
+            "type" : "boolean"
+          },
           "episodes" : {
             "type" : "boolean"
           },
           "fastPass" : {
             "type" : "boolean"
+          },
+          "quiet" : {
+            "$ref" : "#/components/schemas/QuietHoursSetting"
+          },
+          "types" : {
+            "$ref" : "#/components/schemas/AlertTypes"
           }
         },
-        "required" : [ "episodes", "fastPass" ]
+        "required" : [ "digest", "episodes", "fastPass", "quiet", "types" ]
       },
       "NotificationsChange" : {
         "type" : "object",
         "properties" : {
+          "digest" : {
+            "type" : [ "boolean", "null" ]
+          },
           "episodes" : {
             "type" : [ "boolean", "null" ]
           },
           "fastPass" : {
             "type" : [ "boolean", "null" ]
+          },
+          "quiet" : {
+            "$ref" : "#/components/schemas/QuietHoursChange"
+          },
+          "types" : {
+            "$ref" : "#/components/schemas/AlertTypesChange"
           }
         }
       },
@@ -6534,6 +6921,43 @@
           }
         },
         "required" : [ "mode" ]
+      },
+      "QuietHoursChange" : {
+        "type" : "object",
+        "properties" : {
+          "from" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int32",
+            "maximum" : 23,
+            "minimum" : 0
+          },
+          "on" : {
+            "type" : [ "boolean", "null" ]
+          },
+          "to" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int32",
+            "maximum" : 23,
+            "minimum" : 0
+          }
+        }
+      },
+      "QuietHoursSetting" : {
+        "type" : "object",
+        "properties" : {
+          "from" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "on" : {
+            "type" : "boolean"
+          },
+          "to" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        },
+        "required" : [ "from", "on", "to" ]
       },
       "RankingEntry" : {
         "type" : "object",
@@ -7458,6 +7882,16 @@
           }
         },
         "required" : [ "episode", "series", "unlockedAt" ]
+      },
+      "UnreadCount" : {
+        "type" : "object",
+        "properties" : {
+          "count" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        },
+        "required" : [ "count" ]
       },
       "UploadTicket" : {
         "type" : "object",

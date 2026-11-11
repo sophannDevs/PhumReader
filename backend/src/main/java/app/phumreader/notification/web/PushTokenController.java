@@ -42,7 +42,8 @@ class PushTokenController {
             summary = "Saves this browser's push token",
             description =
                     "New-episode notices go to every saved token of the account while"
-                            + " Settings > Notifications > New episodes is on.")
+                            + " Settings > Notifications > New episodes push is on, outside the"
+                            + " quiet hours.")
     void register(
             @Parameter(hidden = true) @AuthenticationPrincipal CurrentUser user,
             @Valid @RequestBody TokenRequest body) {

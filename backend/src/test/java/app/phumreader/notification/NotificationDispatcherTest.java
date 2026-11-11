@@ -8,7 +8,9 @@ import app.phumreader.notification.service.EmailSender;
 import app.phumreader.notification.service.NotificationDispatcher;
 import app.phumreader.notification.service.PushSender;
 import app.phumreader.support.IntegrationTest;
+import app.phumreader.support.MutableClock;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -29,8 +31,11 @@ import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.test.web.servlet.MockMvc;
 
 /**
- * New-episode notices (plan P3-16) against the real database with fake email and push services. The
- * data is committed (the dispatcher uses its own connections), so every test cleans up.
+ * New-episode notices (plan P3-16) and their inbox items (V21-03) against the real database with
+ * fake email and push services. Every active subscriber gets the inbox item; push and email follow
+ * their alert settings and quiet hours. The data is committed (the dispatcher uses its own
+ * connections), so every test cleans up. The clock stands at noon in Phnom Penh unless a test moves
+ * it (quiet hours are 22-7 by default).
  */
 @IntegrationTest
 @Import(NotificationDispatcherTest.Fakes.class)
@@ -84,6 +89,12 @@ class NotificationDispatcherTest {
     static class Fakes {
         @Bean
         @Primary
+        MutableClock mutableClock() {
+            return new MutableClock();
+        }
+
+        @Bean
+        @Primary
         FakeEmail fakeEmail() {
             return new FakeEmail();
         }
@@ -110,6 +121,10 @@ class NotificationDispatcherTest {
     @Autowired FakeEmail email;
     @Autowired FakePush push;
     @Autowired MockMvc mvc;
+    @Autowired MutableClock clock;
+
+    /** 12:00 in Phnom Penh. */
+    static final Instant NOON = Instant.parse("2026-11-05T05:00:00Z");
 
     UUID creator;
     UUID series;
@@ -118,6 +133,7 @@ class NotificationDispatcherTest {
     @BeforeEach
     void aSeriesWithAnEpisode() {
         cleanUp();
+        clock.set(NOON);
         email.batches.clear();
         email.failOnBatch = -1;
         email.millisPerBatch = 0;
@@ -155,6 +171,7 @@ class NotificationDispatcherTest {
 
     @AfterEach
     void cleanUp() {
+        clock.set(Instant.now());
         jdbc.sql("delete from outbox_events where topic = 'NOTIFICATION'").update();
         jdbc.sql("delete from series where slug like 'notif-%'").update();
         jdbc.sql(
@@ -167,21 +184,26 @@ class NotificationDispatcherTest {
     }
 
     @Test
-    void subscribersGetEmailAndPushUnlessTheySwitchedItOffOrCannotBeReached() {
+    void everySubscriberGetsTheInboxItemAndPushAndEmailFollowTheirSettings() {
         UUID reader = user("notif-reader@perf.test", true, "ACTIVE");
         UUID khmer = user("notif-khmer@perf.test", true, "ACTIVE");
+        UUID pushOnly = user("notif-default@perf.test", true, "ACTIVE");
         UUID optedOut = user("notif-optout@perf.test", true, "ACTIVE");
         UUID unverified = user("notif-unverified@perf.test", false, "ACTIVE");
         UUID banned = user("notif-banned@perf.test", true, "BANNED");
         UUID outsider = user("notif-outsider@perf.test", true, "ACTIVE");
-        for (UUID u : List.of(reader, khmer, optedOut, unverified, banned, creator)) {
+        for (UUID u : List.of(reader, khmer, pushOnly, optedOut, unverified, banned, creator)) {
             subscribe(u);
         }
-        settings(khmer, "km", true);
-        settings(optedOut, "en", false);
+        // pushOnly has no settings row: the website's defaults (push on, email off).
+        settings(reader, "en", true, true);
+        settings(khmer, "km", true, true);
+        settings(optedOut, "en", false, false);
+        settings(unverified, "en", true, true);
         token(reader, "tok-reader-1");
         token(reader, "tok-reader-2");
         token(khmer, "tok-khmer");
+        token(pushOnly, "tok-default");
         token(optedOut, "tok-optout");
         token(outsider, "tok-outsider");
         token(unverified, "tok-unverified");
@@ -190,7 +212,27 @@ class NotificationDispatcherTest {
         assertThat(dispatcher.processNext()).isTrue();
         assertThat(dispatcher.processNext()).as("nothing else waits").isFalse();
 
-        // Email: verified, active subscribers who did not switch it off; never the creator.
+        // Inbox: every active subscriber, also those who switched push and email off; never the
+        // creator, a banned account or someone who did not subscribe.
+        assertThat(inbox())
+                .containsExactlyInAnyOrder(reader, khmer, pushOnly, optedOut, unverified);
+        Map<String, Object> item =
+                jdbc.sql(
+                                "select kind, type, series_id, episode_number, data::text as data,"
+                                        + " read_at is null as unread from notifications"
+                                        + " where user_id = :u")
+                        .param("u", optedOut)
+                        .query()
+                        .singleRow();
+        assertThat(item)
+                .containsEntry("kind", "EPISODE")
+                .containsEntry("type", "episode_published")
+                .containsEntry("series_id", series)
+                .containsEntry("episode_number", 7)
+                .containsEntry("data", "{}")
+                .containsEntry("unread", true);
+
+        // Email: verified, active subscribers who switched new-episode email on.
         assertThat(email.all())
                 .extracting(EmailSender.Mail::to)
                 .containsExactlyInAnyOrder("notif-reader@perf.test", "notif-khmer@perf.test");
@@ -212,11 +254,73 @@ class NotificationDispatcherTest {
         assertThat(km.subject()).startsWith("ភាគថ្មី៖");
         assertThat(km.body()).contains("http://localhost:3000/km/read/notif-" + series + "/7");
 
-        // Push: every token of those people, also of the unverified one (push needs no email).
+        // Push: every token of those with push on, also of the unverified one (push needs no
+        // email).
         assertThat(push.sent.keySet())
                 .containsExactlyInAnyOrder(
-                        "tok-reader-1", "tok-reader-2", "tok-khmer", "tok-unverified");
+                        "tok-reader-1",
+                        "tok-reader-2",
+                        "tok-khmer",
+                        "tok-default",
+                        "tok-unverified");
         assertThat(processed(episode)).isTrue();
+    }
+
+    @Test
+    void quietHoursHoldBackPushButNeitherTheInboxItemNorTheEmail() {
+        UUID sleeper = user("notif-sleeper@perf.test", true, "ACTIVE");
+        UUID nightOwl = user("notif-owl@perf.test", true, "ACTIVE");
+        UUID afternoon = user("notif-afternoon@perf.test", true, "ACTIVE");
+        UUID mailer = user("notif-mailer@perf.test", true, "ACTIVE");
+        for (UUID u : List.of(sleeper, nightOwl, afternoon, mailer)) {
+            subscribe(u);
+        }
+        // sleeper: no settings row, so quiet 22-7. nightOwl: quiet hours off. afternoon: quiet
+        // 13-17 only. mailer: quiet 22-7 with email on.
+        settings(nightOwl, "en", true, false);
+        quiet(nightOwl, false, 22, 7);
+        settings(afternoon, "en", true, false);
+        quiet(afternoon, true, 13, 17);
+        settings(mailer, "en", true, true);
+        token(sleeper, "tok-sleeper");
+        token(nightOwl, "tok-owl");
+        token(afternoon, "tok-afternoon");
+        token(mailer, "tok-mailer");
+        // 23:30 in Phnom Penh: inside 22-7 (which wraps midnight).
+        clock.set(Instant.parse("2026-11-05T16:30:00Z"));
+        queue(episode);
+
+        dispatcher.processNext();
+
+        assertThat(inbox()).containsExactlyInAnyOrder(sleeper, nightOwl, afternoon, mailer);
+        assertThat(push.sent.keySet()).containsExactlyInAnyOrder("tok-owl", "tok-afternoon");
+        assertThat(email.all())
+                .extracting(EmailSender.Mail::to)
+                .containsExactly("notif-mailer@perf.test");
+
+        // 15:00 in Phnom Penh: only the afternoon quiet hours hold push back.
+        push.sent.clear();
+        email.batches.clear();
+        clock.set(Instant.parse("2026-11-05T08:00:00Z"));
+        UUID next = UUID.randomUUID();
+        jdbc.sql(
+                        "insert into episodes (id, series_id, number, title, status, published_at)"
+                                + " values (:id, :series, 8, 'Low Water', 'PUBLISHED', now())")
+                .param("id", next)
+                .param("series", series)
+                .update();
+        queue(next);
+
+        dispatcher.processNext();
+
+        assertThat(push.sent.keySet())
+                .containsExactlyInAnyOrder("tok-sleeper", "tok-owl", "tok-mailer");
+        assertThat(
+                        jdbc.sql("select count(*) from notifications where group_key = :k")
+                                .param("k", "episode:" + next)
+                                .query(Long.class)
+                                .single())
+                .isEqualTo(4);
     }
 
     @Test
@@ -230,6 +334,7 @@ class NotificationDispatcherTest {
         dispatcher.processNext();
 
         assertThat(email.all()).isEmpty();
+        assertThat(inbox()).isEmpty();
         assertThat(processed(episode)).isTrue();
     }
 
@@ -272,6 +377,8 @@ class NotificationDispatcherTest {
         assertThat(email.all()).hasSize(n);
         assertThat(email.all().stream().map(EmailSender.Mail::to).distinct()).hasSize(n);
         assertThat(processed(episode)).isTrue();
+        // The repeated page wrote no second inbox item: one per subscriber.
+        assertThat(inbox()).hasSize(n).doesNotHaveDuplicates();
     }
 
     @Test
@@ -306,6 +413,7 @@ class NotificationDispatcherTest {
 
         assertThat(email.all()).hasSize(n);
         assertThat(push.sent).hasSize(n);
+        assertThat(inbox()).hasSize(n);
         assertThat(took).as("10,000 subscribers").isLessThan(Duration.ofMinutes(5));
         Collections.sort(apiMillis);
         long worst = apiMillis.isEmpty() ? 0 : apiMillis.getLast();
@@ -338,14 +446,35 @@ class NotificationDispatcherTest {
                 .update();
     }
 
-    private void settings(UUID user, String language, boolean newEpisodes) {
+    /** New-episode push and email switches ("update" in Settings > Notifications). */
+    private void settings(UUID user, String language, boolean push, boolean mail) {
         jdbc.sql(
-                        "insert into user_settings (user_id, language, notify_new_episodes)"
-                                + " values (:u, :l, :n)")
+                        "insert into user_settings (user_id, language, notify_new_episodes,"
+                                + " email_new_episodes) values (:u, :l, :p, :m)")
                 .param("u", user)
                 .param("l", language)
-                .param("n", newEpisodes)
+                .param("p", push)
+                .param("m", mail)
                 .update();
+    }
+
+    private void quiet(UUID user, boolean on, int from, int to) {
+        jdbc.sql(
+                        "update user_settings set quiet_hours = :on, quiet_from = :f, quiet_to = :t"
+                                + " where user_id = :u")
+                .param("on", on)
+                .param("f", from)
+                .param("t", to)
+                .param("u", user)
+                .update();
+    }
+
+    /** Who has the new-episode item for the test's episode. */
+    private List<UUID> inbox() {
+        return jdbc.sql("select user_id from notifications where group_key = :k")
+                .param("k", "episode:" + episode)
+                .query(UUID.class)
+                .list();
     }
 
     private void token(UUID user, String token) {
@@ -355,7 +484,7 @@ class NotificationDispatcherTest {
                 .update();
     }
 
-    /** n verified subscribers with one push token each. */
+    /** n verified subscribers with one push token each and new-episode email on. */
     private void subscribers(int n) {
         jdbc.sql(
                         "insert into users (id, email, email_verified_at, display_name)"
@@ -372,6 +501,11 @@ class NotificationDispatcherTest {
         jdbc.sql(
                         "insert into push_tokens (user_id, token) select id, 'tok-' || id from users"
                                 + " where email like 'notif-%@perf.test' and id <> :creator")
+                .param("creator", creator)
+                .update();
+        jdbc.sql(
+                        "insert into user_settings (user_id, email_new_episodes) select id, true"
+                                + " from users where email like 'notif-%@perf.test' and id <> :creator")
                 .param("creator", creator)
                 .update();
     }

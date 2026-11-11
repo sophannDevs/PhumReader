@@ -24,6 +24,8 @@ export const meKeys = {
   unlocked: (email: string) => ["unlocked", email] as const,
   follows: (email: string) => ["follows", email] as const,
   devices: (email?: string) => ["devices", email ?? ""] as const,
+  /** GET /me/settings: the account's theme, reader and alert settings (V21-03). */
+  settings: (email: string) => ["settings", email] as const,
 }
 
 export const walletKeys = {
@@ -55,6 +57,15 @@ export const adminKeys = {
     ["admin", "list", email ?? "", name, ...params] as const,
 }
 
+/** The inbox (V21-03): every key starts with "notifications" + the email, so one invalidation refreshes the page and the bell. */
+export const notificationKeys = {
+  all: (email: string) => ["notifications", email] as const,
+  unread: (email: string) => ["notifications", email, "unread-count"] as const,
+  list: (email: string, tab: string) => ["notifications", email, "list", tab] as const,
+  /** Demo mode: the page's fake load (?demo= flags). */
+  demo: (flag?: string | null) => ["notifications-demo", flag ?? null] as const,
+}
+
 export const queryKeys = {
   catalog: catalogKeys,
   me: meKeys,
@@ -62,4 +73,5 @@ export const queryKeys = {
   comments: commentsKeys,
   creator: creatorKeys,
   admin: adminKeys,
+  notifications: notificationKeys,
 }

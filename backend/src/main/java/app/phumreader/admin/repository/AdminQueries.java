@@ -450,9 +450,9 @@ public class AdminQueries {
     /**
      * Closes every open report on one target.
      *
-     * @return how many were closed
+     * @return the reports that were closed
      */
-    public int closeReportsOn(
+    public List<UUID> closeReportsOn(
             ContentType type,
             UUID targetId,
             String status,
@@ -463,14 +463,15 @@ public class AdminQueries {
                         "update reports set status = :status, resolved_by = :admin,"
                                 + " resolved_at = :now, resolution_note = :note"
                                 + " where target_type = :type and target_id = :target"
-                                + " and status = 'OPEN'")
+                                + " and status = 'OPEN' returning id")
                 .param("status", status)
                 .param("admin", admin)
                 .param("now", now)
                 .param("note", note, Types.VARCHAR)
                 .param("type", type.name())
                 .param("target", targetId)
-                .update();
+                .query(UUID.class)
+                .list();
     }
 
     /** Closes one report. */

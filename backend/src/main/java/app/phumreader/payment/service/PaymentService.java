@@ -9,6 +9,7 @@ import app.phumreader.common.paging.Cursors;
 import app.phumreader.common.ratelimit.RateLimiter;
 import app.phumreader.common.security.CurrentUser;
 import app.phumreader.config.AppProperties;
+import app.phumreader.notification.service.NotificationInbox;
 import app.phumreader.payment.domain.OrderStatus;
 import app.phumreader.payment.domain.PaymentMethod;
 import app.phumreader.payment.repository.PaymentQueries;
@@ -46,7 +47,8 @@ import org.springframework.transaction.annotation.Transactional;
  * Coin packs and orders (plan P3-11). An order is PENDING for {@code
  * phumreader.payments.order-ttl}, then PAID, FAILED, CANCELLED or EXPIRED. Paying credits the
  * pack's coins, its bonus and (on the account's first paid order) the first-purchase bonus exactly
- * once, however often the confirmation arrives.
+ * once, however often the confirmation arrives. Paying and refunding put an item in the buyer's
+ * notifications inbox (V21-03) in the same transaction.
  *
  * <p>Until ABA PayWay keys exist, development pays orders with the simulator ({@code
  * phumreader.payments.simulator}); production refuses to start with it on.
@@ -65,6 +67,7 @@ public class PaymentService {
     private final CoinService coins;
     private final IdempotencyKeys idempotency;
     private final RateLimiter limiter;
+    private final NotificationInbox inbox;
     private final Clock clock;
     private final boolean simulator;
     private final @Nullable PayWayGateway payWay;
@@ -76,6 +79,7 @@ public class PaymentService {
             CoinService coins,
             IdempotencyKeys idempotency,
             RateLimiter limiter,
+            NotificationInbox inbox,
             Clock clock,
             AppProperties properties,
             Environment environment,
@@ -84,6 +88,7 @@ public class PaymentService {
         this.coins = coins;
         this.idempotency = idempotency;
         this.limiter = limiter;
+        this.inbox = inbox;
         this.clock = clock;
         this.simulator = properties.payments().simulator();
         this.orderTtl = properties.payments().orderTtl();
@@ -304,6 +309,11 @@ public class PaymentService {
         coins.credit(
                 userId, balance, firstBonus, LedgerReason.BONUS, orderId, "First purchase bonus");
         queries.markPaid(orderId, firstBonus, providerRef, now());
+        inbox.orderPaid(
+                userId,
+                orderId,
+                order.orderNumber(),
+                order.coins() + order.bonusCoins() + firstBonus);
         return view(queries.lock(orderId));
     }
 
@@ -348,6 +358,7 @@ public class PaymentService {
                 orderId,
                 "Refund " + order.orderNumber() + ": " + reason);
         queries.markRefunded(orderId, now());
+        inbox.orderRefunded(userId, orderId, order.orderNumber(), total);
         return new Refund(order.orderNumber(), userId, total);
     }
 

@@ -7,7 +7,8 @@ import { useSearch } from "@/components/layout/search-provider"
 import { SiteHeader } from "@/components/layout/site-header"
 import { usePathname } from "@/i18n/navigation"
 import { logOut } from "@/lib/session"
-import { useAppStore, useCoins, useUnreadCount, useUser } from "@/lib/store"
+import { useUnreadCount } from "@/lib/notifications"
+import { useAppStore, useCoins, useUser } from "@/lib/store"
 
 /** Remember the current page so Log in / Sign up can send the reader back (not from the login page itself). */
 function useSaveReturnTo() {

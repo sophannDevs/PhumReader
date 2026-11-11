@@ -1,83 +1,70 @@
 "use client"
 
+import { useQueryClient } from "@tanstack/react-query"
 import { useEffect, useRef } from "react"
 import { toast } from "sonner"
 import { useTranslations } from "@/i18n/translations"
 import { DEMO_MODE } from "@/lib/api/config"
 import * as account from "@/lib/api/account"
+import { meKeys } from "@/lib/api/keys"
 import { useAccountEmail } from "@/lib/me"
+import { prefsFromApi, useAccountSettings } from "@/lib/notifications"
 import { useAppStore } from "@/lib/store"
 import { useTheme } from "@/lib/theme"
 
 const SAVE_DELAY_MS = 500
 
 /**
- * Real API only. Signed in: loads the account's settings once and applies the reader theme, reading
- * defaults and alerts to this browser; afterwards every change to them is saved to the account (only
- * what changed, half a second after the last change). The language is saved when it is chosen
- * (Settings), not here: the address decides the language of a page.
- * The API's two alert switches (`notifications.episodes` / `fastPass`) are the push switches of
- * "New episodes" and "Fast Pass is free" in the V2.1 alert settings (`notifPrefs`); the other V2.1
- * alert choices stay on this device until the API has them.
+ * Real API only. Signed in: loads the account's settings (`useAccountSettings`, GET /me/settings) and applies the
+ * reader theme, reading defaults and alert settings to this browser once per account; afterwards every change to the
+ * theme and reading defaults is saved to the account (only what changed, half a second after the last change). The
+ * language is saved when it is chosen (Settings), not here: the address decides the language of a page.
+ * The alert settings (V21-03: push and email per type, quiet hours, digest; `notifPrefs`) are saved where they are
+ * changed, by `saveAlertPrefs` (Notifications page, /welcome), which keeps the cached account settings up to date.
  */
 export function SettingsSync() {
   const tt = useTranslations("toasts")
+  const qc = useQueryClient()
   const email = useAccountEmail()
   const { theme, setTheme } = useTheme()
   const reader = useAppStore((s) => s.novelSettings)
-  const episodes = useAppStore((s) => s.notifPrefs.update[0])
-  const fastPass = useAppStore((s) => s.notifPrefs.fastpass[0])
-  /** What the account has now; null until loaded. */
-  const saved = useRef<account.Settings | null>(null)
+  /** What the account has now (the cache follows every save). */
+  const saved = useAccountSettings().data
+  /** The account whose settings were applied to this browser. */
+  const applied = useRef<string | null>(null)
 
   useEffect(() => {
     if (DEMO_MODE) return
-    saved.current = null
-    if (!email) return
-    let cancelled = false
-    account
-      .fetchSettings()
-      .then((s) => {
-        if (cancelled) return
-        saved.current = s
-        useAppStore.setState((st) => ({
-          novelSettings: s.reader,
-          notifications: s.notifications,
-          notifPrefs: {
-            ...st.notifPrefs,
-            update: [s.notifications.episodes, st.notifPrefs.update[1]],
-            fastpass: [s.notifications.fastPass, st.notifPrefs.fastpass[1]],
-          },
-        }))
-        setTheme(s.theme)
-      })
-      .catch(() => undefined) // Keep this browser's settings; the next visit tries again.
-    return () => {
-      cancelled = true
+    if (!email) {
+      applied.current = null
+      return
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- setTheme is stable enough; load once per account
-  }, [email])
+    if (!saved || applied.current === email) return
+    applied.current = email
+    useAppStore.setState({
+      novelSettings: saved.reader,
+      notifications: { episodes: saved.notifications.episodes, fastPass: saved.notifications.fastPass },
+      notifPrefs: prefsFromApi(saved.notifications),
+    })
+    setTheme(saved.theme)
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- setTheme is stable enough; apply once per account
+  }, [email, saved])
 
   useEffect(() => {
-    const base = saved.current
-    if (DEMO_MODE || !base || !theme) return
-    const notifications = { episodes, fastPass }
+    if (DEMO_MODE || !email || !saved || applied.current !== email || !theme) return
     const change: account.SettingsChange = {}
-    if (theme !== base.theme) change.theme = theme
-    if (JSON.stringify(reader) !== JSON.stringify(base.reader)) change.reader = reader
-    if (episodes !== base.notifications.episodes || fastPass !== base.notifications.fastPass) change.notifications = notifications
+    if (theme !== saved.theme) change.theme = theme
+    if (JSON.stringify(reader) !== JSON.stringify(saved.reader)) change.reader = reader
     if (Object.keys(change).length === 0) return
     const timer = setTimeout(() => {
       account.patchSettings(change).then(
-        (s) => {
-          saved.current = s
-          useAppStore.setState({ notifications: s.notifications })
-        },
+        // Only what this sent: an alert switch saved meanwhile keeps its own answer.
+        (s) => qc.setQueryData<account.Settings>(meKeys.settings(email), (old) => ({ ...(old ?? s), theme: s.theme, reader: s.reader })),
         () => toast.error(tt("actionFailed"))
       )
     }, SAVE_DELAY_MS)
     return () => clearTimeout(timer)
-  }, [theme, reader, episodes, fastPass, tt])
+  }, [theme, reader, saved, email, qc, tt])
 
   return null
 }

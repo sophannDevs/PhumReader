@@ -3,6 +3,7 @@ package app.phumreader.user.service;
 import app.phumreader.common.error.ApiException;
 import app.phumreader.media.domain.UploadKind;
 import app.phumreader.media.service.MediaService;
+import app.phumreader.notification.service.NotificationInbox;
 import app.phumreader.user.domain.SocialProvider;
 import app.phumreader.user.domain.User;
 import app.phumreader.user.domain.UserIdentity;
@@ -10,8 +11,14 @@ import app.phumreader.user.domain.UserSettings;
 import app.phumreader.user.repository.UserIdentityRepository;
 import app.phumreader.user.repository.UserRepository;
 import app.phumreader.user.repository.UserSettingsRepository;
+import app.phumreader.user.service.SettingsViews.AlertSwitch;
+import app.phumreader.user.service.SettingsViews.AlertSwitchChange;
+import app.phumreader.user.service.SettingsViews.AlertTypes;
+import app.phumreader.user.service.SettingsViews.AlertTypesChange;
 import app.phumreader.user.service.SettingsViews.NotificationSettings;
 import app.phumreader.user.service.SettingsViews.NotificationsChange;
+import app.phumreader.user.service.SettingsViews.QuietHoursChange;
+import app.phumreader.user.service.SettingsViews.QuietHoursSetting;
 import app.phumreader.user.service.SettingsViews.ReaderChange;
 import app.phumreader.user.service.SettingsViews.ReaderSettings;
 import app.phumreader.user.service.SettingsViews.Settings;
@@ -21,6 +28,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
+import org.jspecify.annotations.Nullable;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -39,6 +47,7 @@ public class UserService {
     private final UserSettingsRepository settings;
     private final UserIdentityRepository identities;
     private final MediaService media;
+    private final NotificationInbox inbox;
     private final Clock clock;
 
     public UserService(
@@ -46,8 +55,10 @@ public class UserService {
             UserSettingsRepository settings,
             UserIdentityRepository identities,
             MediaService media,
+            NotificationInbox inbox,
             Clock clock) {
         this.media = media;
+        this.inbox = inbox;
         this.users = users;
         this.settings = settings;
         this.identities = identities;
@@ -73,6 +84,7 @@ public class UserService {
         if (!user.isEmailVerified()) {
             user.removePassword();
             user.verifyEmail(clock.instant());
+            welcome(user);
         }
         identities.save(
                 UserIdentity.link(user.getId(), provider, providerUserId, email, clock.instant()));
@@ -89,6 +101,7 @@ public class UserService {
         settings.save(UserSettings.defaults(user.getId(), language));
         identities.save(
                 UserIdentity.link(user.getId(), provider, providerUserId, email, clock.instant()));
+        welcome(user);
         return user;
     }
 
@@ -136,8 +149,19 @@ public class UserService {
         user.changePassword(passwordHash);
     }
 
+    /** Confirms the email; the first time, the account gets the welcome notification. */
     public void markEmailVerified(User user) {
-        user.verifyEmail(clock.instant());
+        if (!user.isEmailVerified()) {
+            user.verifyEmail(clock.instant());
+            welcome(user);
+        }
+    }
+
+    /** The welcome item in the notifications inbox (V21-03), once per account. */
+    private void welcome(User user) {
+        // The account row may still wait in the persistence context; the item points at it.
+        users.flush();
+        inbox.welcome(user.getId());
     }
 
     public void recordLogin(User user) {
@@ -216,12 +240,7 @@ public class UserService {
         }
         NotificationsChange notify = change.notifications();
         if (notify != null) {
-            if (notify.episodes() != null) {
-                row.changeNotifyNewEpisodes(notify.episodes());
-            }
-            if (notify.fastPass() != null) {
-                row.changeNotifyFastPass(notify.fastPass());
-            }
+            changeAlerts(row, notify);
         }
         return view(row);
     }
@@ -273,6 +292,41 @@ public class UserService {
                 .orElseThrow(() -> ApiException.notFound("user_not_found", "No such account."));
     }
 
+    /**
+     * The alert settings that are sent: the two older switches first, then {@code types} (which
+     * wins when both say something about the same switch), quiet hours and the digest.
+     */
+    private static void changeAlerts(UserSettings row, NotificationsChange notify) {
+        if (notify.episodes() != null) {
+            row.changeNotifyNewEpisodes(notify.episodes());
+        }
+        if (notify.fastPass() != null) {
+            row.changeNotifyFastPass(notify.fastPass());
+        }
+        AlertTypesChange types = notify.types();
+        if (types != null) {
+            changeAlert(row, "update", types.update());
+            changeAlert(row, "fastpass", types.fastpass());
+            changeAlert(row, "comment", types.comment());
+            changeAlert(row, "coins", types.coins());
+            changeAlert(row, "news", types.news());
+        }
+        QuietHoursChange quiet = notify.quiet();
+        if (quiet != null) {
+            row.changeQuietHours(quiet.on(), quiet.from(), quiet.to());
+        }
+        if (notify.digest() != null) {
+            row.changeDailyDigest(notify.digest());
+        }
+    }
+
+    private static void changeAlert(
+            UserSettings row, String type, @Nullable AlertSwitchChange change) {
+        if (change != null) {
+            row.changeAlert(type, change.push(), change.email());
+        }
+    }
+
     private static Settings view(UserSettings row) {
         return new Settings(
                 row.getLanguage(),
@@ -282,6 +336,22 @@ public class UserService {
                         row.getReaderTheme(),
                         row.getReaderFont(),
                         row.isReaderWideSpacing()),
-                new NotificationSettings(row.isNotifyNewEpisodes(), row.isNotifyFastPass()));
+                new NotificationSettings(
+                        row.isNotifyNewEpisodes(),
+                        row.isNotifyFastPass(),
+                        new AlertTypes(
+                                alert(row, "update"),
+                                alert(row, "fastpass"),
+                                alert(row, "comment"),
+                                alert(row, "coins"),
+                                alert(row, "news")),
+                        new QuietHoursSetting(
+                                row.isQuietHours(), row.getQuietFrom(), row.getQuietTo()),
+                        row.isDailyDigest()));
+    }
+
+    private static AlertSwitch alert(UserSettings row, String type) {
+        UserSettings.Alert alert = row.alert(type);
+        return new AlertSwitch(alert.push(), alert.email());
     }
 }

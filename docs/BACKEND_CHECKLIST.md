@@ -38,7 +38,7 @@ Sources of truth: the plan doc, `CLAUDE.md`, `docs/BACKEND.md` (decisions and lo
 - Money: balances change only through the ledger, in one transaction with a wallet row lock; every payment and
   unlock call is idempotent. Never build card number fields: cards use the PayWay hosted page.
 
-Progress: 35 / 51 plan tasks · 1 / 7 V2.1 API additions · Stage 1 done · Phase 5 complete · Milestone M5 complete (M1, M3, M4, M6, M7 pending formal verification)
+Progress: 35 / 51 plan tasks · 2 / 7 V2.1 API additions · Stage 1 done · Phase 5 complete · Milestone M5 complete (M1, M3, M4, M6, M7 pending formal verification)
 
 ---
 
@@ -998,13 +998,60 @@ as the plan tasks (tests, `./gradlew check`, OpenAPI + `npm run api:gen`); commi
     stores one series in two languages (owner decision); the new Vitest tests are written but not run on the office
     PC (no Vitest there).
 
-- [ ] **V21-03 In-app notifications inbox**
+- [x] **V21-03 In-app notifications inbox**
   - Build: a `notifications` table fed by the same outbox events as P3-16 (new episode, comment reply, coins and
     payments, report outcome); `GET /me/notifications` with the V2.1 tabs (all, unread, episodes, comments, coins)
     and a cursor; mark read / unread, mark all read, remove (restorable for the 6 s Undo); unread count for the
     header bell; alert settings (per type, quiet hours, daily digest).
   - Depends on: P3-16, P3-17
   - Done when: the bell count and the Notifications page match in two browsers signed in to the same account.
+  - Note: the plan doc (scope table) and assumption A17 say "no in-app notification list in v1"; the V2.1 design has
+    one (spec §13). The owner chose to build it (2026-11-11; A17 updated).
+  - Design (approved by the owner 2026-11-11):
+    - **Table `notifications`**: `user_id`, `kind` (`EPISODE` · `COMMENT` · `COINS` · `SYSTEM`, the page's tabs: New
+      episodes, Comments, Coins; System shows under All and Unread), `type`, optional `series_id` and episode number,
+      `data` jsonb (the values the text needs: coins, order number, like count, outcome…), `created_at`, `read_at`,
+      `removed_at`. Items are stored as a type plus values, not text: the website writes them in English or Khmer
+      (today the demo items are English text). Removed items are kept 7 days (Undo, restore), then deleted; read
+      items older than 90 days are deleted by a nightly job.
+    - **Sources** (one row per recipient, written in the same transaction as the change, or by the dispatcher):
+      | Type | Kind | When | Who |
+      |---|---|---|---|
+      | `episode_published` | EPISODE | the P3-16 dispatcher sends a new-episode notice | each subscriber (always in the inbox; push and email follow the alert settings) |
+      | `comment_liked` | COMMENT | someone else likes your comment | the author; one row per comment per day, its count goes up ("12 people liked your comment") |
+      | `order_paid` · `order_refunded` | COINS | a coin order is paid / an admin refunds it | the buyer |
+      | `report_resolved` · `report_dismissed` | SYSTEM | an admin settles or hides what you reported | the reporter |
+      | `series_approved` · `series_changes` · `series_rejected` | SYSTEM | the V21-01 review decision | the creator |
+      | `welcome` | SYSTEM | the email is verified | the new account |
+    - **Not in V21-03** (no source yet): comment replies (comments have no replies in the API), "a Fast Pass
+      episode is now free" (needs a job that notices `free_at` passing), and sending the daily digest email (the
+      switch is saved; the daily job comes later). Payment failures stay on the checkout screen only.
+    - **Endpoints** (signed in): `GET /me/notifications?tab=all|unread|episodes|comments|coins&cursor&limit` (newest
+      first; each item: id, kind, type, createdAt, read, series {slug, title} | null, episode number | null, data);
+      `GET /me/notifications/unread-count` (the bell; the website asks again on focus and every 60 s);
+      `PUT` / `DELETE /me/notifications/{id}/read`; `POST /me/notifications/read-all`; `DELETE /me/notifications/{id}`
+      (remove) and `POST /me/notifications/{id}/restore` (the Undo). Someone else's id answers 404.
+    - **Alert settings** move to the account: `GET` / `PATCH /me/settings` `notifications` gains, per type (`update`,
+      `fastpass`, `comment`, `coins`, `news`), `push` and `email`, plus `quiet { on, from, to }` (hours 0–23, ICT) and
+      `digest`. The existing `episodes` / `fastPass` stay as the new-episode and Fast Pass push switches. The P3-16
+      dispatcher follows them: push and email per type, and no push during quiet hours (the inbox row is still
+      written).
+    - **Website (real mode)**: the Notifications page, its tabs and actions, and the bell use the API; the Alert
+      settings load from and save to the account; clicking an item opens the episode, the series, Coins, the
+      reported series or Manage series. Demo mode keeps the demo items and the store.
+  - Done 2026-11-11: migration V11 (`notifications`, one row per `(user, group_key)` so every source is idempotent;
+    12 alert columns on `user_settings`); 7 endpoints under `/me/notifications`; the sources in `NotificationDispatcher`
+    (every active subscriber gets the inbox row; push and email follow the settings, no push in quiet hours),
+    `CommentService.like`, `PaymentService` (paid, refunded), `AdminService` (report outcomes, review decisions) and
+    the email check (welcome); nobody is told about their own action; nightly `InboxCleanup` (removed > 7 days, read >
+    90 days). Behaviour change: new-episode email now follows the alert setting, which is off by default (as on the
+    website), also for existing accounts; Fast Pass push defaults to on for new accounts. Tests:
+    `NotificationInboxApiTest`, `QuietHoursTest` and additions to the dispatcher and settings tests;
+    `./gradlew check --offline` 297 tests green. Website: the Notifications page, the bell and the alert settings use
+    the API (the clock is read in the browser, not during the prerender; remove / Undo calls of one item are sent in
+    order). `e2e/real.spec.ts` test 18 (bell and page match in two browsers through read, remove with Undo, remove
+    and mark all read) passes against the local backend. Push and email for comments, coins and news, the daily
+    digest email, comment replies and "Fast Pass now free" have no sender or source yet.
 
 - [ ] **V21-04 Blocking and report outcomes**
   - Build: block / unblock / list blocked accounts (their comments are hidden for the blocker); the V2.1 report
@@ -1180,7 +1227,7 @@ All 74 plan tasks, and where each one lives.
 | A14 | Google and Facebook login apps | Register both OAuth apps for staging and production domains | Phase 3 |
 | A15 | Domain and brand | Brand is PhumReader (CLAUDE.md); staging and production domains to be chosen | Blocks launch |
 | A16 | Terms, Privacy, refund policy, receipts and tax (VAT) | Pages exist with placeholder text; legal and finance supply content | Blocks launch |
-| A17 | Notifications | Web push + email for new episodes of subscribed series; no in-app notification list in v1 | Phase 3 |
+| A17 | Notifications | Web push + email for new episodes of subscribed series; no in-app notification list in v1. Changed by the owner 2026-11-11: the V2.1 in-app inbox is built in v1 (V21-03) | Phase 3 |
 | A18 | Account deletion | 30-day grace period, then personal data is erased; purchases stay as anonymised records | Phase 3 |
 | A19 | Comic upload rules | Panels exactly 800 px wide, JPG or PNG, 20 MB each, 100 images and 200 MB per episode | Phase 3 |
 | A20 | Launch scale | About 10,000 daily readers at launch, built to grow to 100,000 without code changes | Phase 6 |

@@ -181,8 +181,9 @@ docs/BACKEND_CHECKLIST.md, "V2.1 API additions" (V21-01 … V21-07).
   dictionary entry (109 strings changed); everything else keeps the V1 Khmer.
 - V2-7 (upgrade) **No downloads**: missing shadcn components are written by hand on the installed `radix-ui` package
   instead of `npx shadcn add`; charts are plain SVG/CSS (no chart library).
-- V2-8 (upgrade) **Real mode**: V2.1 features the API does not have yet (notifications, reports and blocking,
-  welcome picks, receipts, earnings, creator profile, admin payments) run on the local store in real mode too.
+- V2-8 (upgrade) **Real mode**: V2.1 features the API does not have yet (reports and blocking, welcome picks,
+  earnings, creator profile, admin payments) run on the local store in real mode too. Notifications use the API
+  since V21-03 (V2-70).
 - V2-9 (F01) **Store field names**: one persisted object (`phumireader.app`, version 2). The spec's keys map to
   `subs` → `subscriptions`, `read` → `lastRead`, `novel` → `novelSettings`; `receipt` and `legalDoc` are URL
   params (`/coins/orders/[id]`, `/legal/[doc]`). Extra keys for prototype state: `welcomed`, `recentSearches`,
@@ -237,13 +238,14 @@ docs/BACKEND_CHECKLIST.md, "V2.1 API additions" (V21-01 … V21-07).
 - V2-29 (F12) **Library**: a new demo login starts with no subscriptions or unlocks (the prototype shows 10 demo
   subscriptions). Recently read = the demo continue-reading entries plus series opened on this device; removing hides
   them (`historyHidden`). New-episode counts per series follow the prototype (UP series: id % 3 + 1).
-- V2-30 (T21) **Notifications** run on the store in both modes; notification text is English demo content in Khmer too;
-  quiet hours default to 10:00 PM – 7:00 AM (the design screen shows 12:00 AM twice, a prototype select bug).
+- V2-30 (T21) **Notifications** run on the store in demo mode; the demo's notification text is English demo content in
+  Khmer too (real mode writes each item in English or Khmer, V2-70); quiet hours default to 10:00 PM – 7:00 AM (the
+  design screen shows 12:00 AM twice, a prototype select bug).
 - V2-31 (F13) **Settings save**: account, reading, region, story languages and privacy switches go through the save bar;
   language, blocking, password, photo, download and account actions apply at once. Text size presets A− A A+ A++ =
   16/18/20/22 px in the novel reader. Real mode: name, photo, password, email, devices, log out everywhere and delete use
-  the API (delete also asks for the password); reader theme, text size and two push switches sync to /me/settings; the
-  rest stays on the device. V1 "Reset demo data" is gone (not in V2.1); demo "Delete account" clears this device's data.
+  the API (delete also asks for the password); reader theme and text size sync to /me/settings, and so do all the
+  alert settings since V21-03 (saved on /notifications, V2-70); the rest stays on the device. V1 "Reset demo data" is gone (not in V2.1); demo "Delete account" clears this device's data.
 - V2-32 (F10) **Auth chrome**: /login and /reset show the site header and footer but no phone tab bar (screens 05-*).
   /signup, /forgot and /verify redirect to /login?mode=… (query kept); the step lives in `?mode=`.
 - V2-33 (F10) **Forgot password**: the demo resets with a 6-digit code on /login (V2.1 design); the real API emails a
@@ -416,3 +418,25 @@ docs/BACKEND_CHECKLIST.md, "V2.1 API additions" (V21-01 … V21-07).
   end card) the comment box is replaced by "The creator turned off comments here."; a post the API refuses with 403
   `comments_disabled` shows that line as a toast and reloads the page data. Demo series keep one update day
   (`updateDays` = `[updateDay]`), are never on a break and always allow comments.
+- V2-70 (V21-03) **Notifications in real mode**: the inbox is GET /me/notifications per tab (New episodes = the API's
+  `episodes`; system items such as the welcome, report outcomes and series review decisions show under All and Unread
+  only), 20 at a time with "Load more". The API sends a type and values, and the page writes the title and body in
+  English or Khmer (`notifications.item.*`): new episode / chapter, "N people liked your comment" (on the series or
+  the episode), payment received / order refunded with the coins and order number, report removed / acted on / no
+  violation found, series approved / changes requested (short labels for the review items plus the admin's note) /
+  not approved, and the welcome. Today / This week (the 6 days before) / Earlier and the time label (clock, weekday,
+  date; the year when it isn't this year) follow `createdAt` in Cambodia time against the real clock (the demo's
+  pinned "today" is for demo data only). Clicking an item marks it read and opens: a new episode → the reader (comic
+  or novel), a liked comment → the series' comments page (`?ep=` for an episode), a coin order → its receipt
+  (/coins/orders/<number>, /coins without a number), a report outcome → the series page, a review decision → Manage
+  series (/creator/series/<id>), the welcome → Home. Mark read / unread, remove (Undo for 6 s = restore) and mark all
+  read show at once, then the page and the bell read the API again; a failure puts the item back with "Something went
+  wrong". The bell is GET /me/notifications/unread-count, shared with the page's Unread tab and "N unread" line, asked
+  again on window focus and every 60 s (the open page's list too), so two browsers on one account agree within a
+  minute or on switching windows. The alert settings load from the account (GET /me/settings) and every switch,
+  the quiet hours and the digest are saved at once with only what changed (PATCH `notifications.types`, `quiet`,
+  `digest`); "Saved" after the API answers, and on failure the switch goes back and "Couldn’t save. Try again." shows
+  (inline and as a toast). Settings > Notifications ("custom alert choices") reads the account's settings. A granted
+  notification permission on /welcome saves "New episodes" push to the account. Not built (no API source yet, V21-03
+  design): comment replies, "a Fast Pass episode is now free" items and the daily digest email (the switch is saved).
+  The bell does not refresh right after a coin purchase (on the next focus or within 60 s).

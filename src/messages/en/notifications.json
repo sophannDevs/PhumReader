@@ -33,6 +33,7 @@
   "errorTitle": "Your notifications didn’t load",
   "errorText": "Check your connection and try again.",
   "tryAgain": "Try again",
+  "loadMore": "Load more",
   "am": "AM",
   "pm": "PM",
   "days": {
@@ -81,5 +82,73 @@
   "digest": "Daily digest",
   "digestText": "One email a day instead of one per episode",
   "autoSave": "Changes save automatically",
-  "saved": "Saved"
+  "saved": "Saved",
+  "saveFailed": "Couldn’t save. Try again.",
+  "settingsErrorText": "Your alert settings didn’t load.",
+  "item": {
+    "episode": {
+      "title": "{title} · Episode {n} is out",
+      "body": "Your subscribed series has a new episode."
+    },
+    "chapter": {
+      "title": "{title} · Chapter {n} is out",
+      "body": "A new chapter is ready to read."
+    },
+    "liked": {
+      "title": "{count, plural, one {# person liked your comment} other {# people liked your comment}}",
+      "onSeries": "On {title}",
+      "onEpisode": "On {title} · Episode {n}",
+      "onChapter": "On {title} · Chapter {n}"
+    },
+    "paid": {
+      "title": "Payment received · +{coins} coins",
+      "body": "Order {order} is paid. Your balance was updated."
+    },
+    "refunded": {
+      "title": "Order refunded · {coins} coins taken back",
+      "body": "Order {order} was refunded. Your balance was updated."
+    },
+    "reportRemoved": "{target, select, series {The series} episode {The episode} chapter {The chapter} comment {The comment} other {What}} you reported was removed",
+    "reportResolved": "We took action on your report",
+    "reportDismissed": "We reviewed your report: no violation found",
+    "about": {
+      "series": "Your report about {title}",
+      "episode": "Your report about {title} · Episode {n}",
+      "chapter": "Your report about {title} · Chapter {n}",
+      "comment": "Your report about a comment on {title}",
+      "commentEpisode": "Your report about a comment on {title} · Episode {n}",
+      "commentChapter": "Your report about a comment on {title} · Chapter {n}",
+      "none": "Thank you for helping keep PhumiReader safe."
+    },
+    "approved": {
+      "title": "{title} was approved",
+      "body": "Your series is published. Readers can find it now."
+    },
+    "changes": {
+      "title": "Changes requested for {title}",
+      "fix": "To fix: {items}",
+      "none": "Open Manage series to see what to change."
+    },
+    "changeItems": {
+      "contact": "contact details in the summary",
+      "cover": "cover",
+      "title": "title",
+      "age": "age rating",
+      "images": "episode images"
+    },
+    "rejected": {
+      "title": "{title} was not approved",
+      "body": "Open Manage series to see why."
+    },
+    "note": "“{note}”",
+    "welcome": {
+      "title": "Welcome to PhumiReader",
+      "body": "Subscribe to series to get new-episode alerts here."
+    },
+    "removedSeries": "A removed series",
+    "other": {
+      "title": "New notification",
+      "body": "Open it to see more."
+    }
+  }
 }

@@ -1,5 +1,6 @@
 package app.phumreader.notification.repository;
 
+import app.phumreader.notification.domain.QuietHours;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
@@ -12,7 +13,7 @@ import org.springframework.stereotype.Repository;
 
 /**
  * What the notification worker reads and writes: its events in {@code outbox_events}, the people to
- * notify (subscribers who did not switch the notification off) and their push tokens.
+ * notify (every active subscriber, with their alert settings) and their push tokens.
  */
 @Repository
 public class NotificationStore {
@@ -33,8 +34,20 @@ public class NotificationStore {
             int number,
             String title) {}
 
-    /** One person to notify. */
-    public record Recipient(UUID userId, String email, boolean emailVerified, String language) {}
+    /**
+     * One subscriber: every one gets the inbox item; push and email follow their alert settings.
+     *
+     * @param push "New episodes" push is on
+     * @param mail "New episodes" email is on
+     */
+    public record Recipient(
+            UUID userId,
+            String email,
+            boolean emailVerified,
+            String language,
+            boolean push,
+            boolean mail,
+            QuietHours quiet) {}
 
     private final JdbcClient jdbc;
 
@@ -139,20 +152,25 @@ public class NotificationStore {
     }
 
     /**
-     * The next page of subscribers (by user id, after {@code after}) who are active and did not
-     * switch "new episodes" off. The creator is not notified about their own episode.
+     * The next page of subscribers (by user id, after {@code after}) whose accounts are active,
+     * with their alert settings (accounts without a settings row have the website's defaults: push
+     * on, email off, quiet 22-7). The creator is not notified about their own episode.
      */
     public List<Recipient> recipients(
             UUID seriesId, UUID creatorId, @Nullable UUID after, int limit) {
         return jdbc.sql(
                         """
                         select u.id, u.email, u.email_verified_at is not null as verified,
-                               coalesce(st.language, 'en') as language
+                               coalesce(st.language, 'en') as language,
+                               coalesce(st.notify_new_episodes, true) as push,
+                               coalesce(st.email_new_episodes, false) as mail,
+                               coalesce(st.quiet_hours, true) as quiet,
+                               coalesce(st.quiet_from, 22) as quiet_from,
+                               coalesce(st.quiet_to, 7) as quiet_to
                         from subscriptions sub
                         join users u on u.id = sub.user_id
                         left join user_settings st on st.user_id = u.id
                         where sub.series_id = :series and u.status = 'ACTIVE' and u.id <> :creator
-                          and coalesce(st.notify_new_episodes, true)
                           and (cast(:after as uuid) is null or u.id > cast(:after as uuid))
                         order by u.id limit :limit
                         """)
@@ -165,7 +183,13 @@ public class NotificationStore {
                                 rs.getObject("id", UUID.class),
                                 rs.getString("email"),
                                 rs.getBoolean("verified"),
-                                rs.getString("language")))
+                                rs.getString("language"),
+                                rs.getBoolean("push"),
+                                rs.getBoolean("mail"),
+                                new QuietHours(
+                                        rs.getBoolean("quiet"),
+                                        rs.getInt("quiet_from"),
+                                        rs.getInt("quiet_to"))))
                 .list();
     }
 

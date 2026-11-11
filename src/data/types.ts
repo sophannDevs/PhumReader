@@ -212,6 +212,16 @@ export const notificationSchema = z.strictObject({
   /** Series title, or "" */
   series: z.string(),
 });
+/**
+ * The real API's inbox kinds (V21-03, `NotificationItem.kind`) as the inbox's own: the API's "episode" is the
+ * demo's "update" (the New episodes tab and its icon); "system" items show under All and Unread only.
+ */
+export const notificationKindOfApi = {
+  episode: "update",
+  comment: "comment",
+  coins: "coins",
+  system: "system",
+} as const satisfies Record<"episode" | "comment" | "coins" | "system", z.infer<typeof notificationKindSchema>>;
 
 export const workStatusSchema = z.enum(["published", "review", "changes", "draft"]);
 export const myWorkSchema = z.strictObject({

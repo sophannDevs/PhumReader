@@ -1,6 +1,7 @@
 package app.phumreader.notification.service;
 
 import app.phumreader.config.AppProperties;
+import app.phumreader.notification.repository.InboxQueries;
 import app.phumreader.notification.repository.NotificationStore;
 import app.phumreader.notification.repository.NotificationStore.Claimed;
 import app.phumreader.notification.repository.NotificationStore.EpisodeInfo;
@@ -10,6 +11,8 @@ import app.phumreader.notification.service.PushSender.Message;
 import app.phumreader.notification.service.PushSender.Outcome;
 import java.time.Clock;
 import java.time.Duration;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -26,8 +29,11 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 /**
- * The notification worker (plan P3-16): sends "new episode" email and web push to the series'
- * subscribers who did not switch the notice off.
+ * The notification worker (plan P3-16, V21-03): every active subscriber of the series (not its
+ * creator) gets a "new episode" item in the in-app inbox; push and email then follow each
+ * subscriber's alert settings for new episodes ({@code update}): push only when it is on and it is
+ * not the subscriber's quiet hours (Asia/Phnom_Penh), email only when it is on and the address is
+ * confirmed. Quiet hours never hold back the inbox item or the email.
  *
  * <p>Made not to slow the API: it runs on its own scheduler thread, never holds a database
  * transaction or row lock while it talks to the email or push service, takes subscribers in pages
@@ -35,16 +41,19 @@ import org.springframework.stereotype.Service;
  * parallel on virtual threads (at most {@code phumreader.notifications.push-parallelism} at once)
  * and its emails in batches. After each page the position is saved, so a crash or a failed batch
  * continues where it stopped. Delivery is at least once: a page that failed half way can repeat
- * some notices.
+ * some notices. The inbox items of a page are written first, in one statement, and only once per
+ * person and episode, so a repeated page adds none.
  */
 @Service
 public class NotificationDispatcher {
 
     static final int PAGE = 500;
     static final Duration LEASE = Duration.ofMinutes(10);
+    static final ZoneId ZONE = ZoneId.of("Asia/Phnom_Penh");
     private static final Logger log = LoggerFactory.getLogger(NotificationDispatcher.class);
 
     private final NotificationStore store;
+    private final InboxQueries inbox;
     private final EmailSender email;
     private final PushSender push;
     private final Clock clock;
@@ -54,6 +63,7 @@ public class NotificationDispatcher {
 
     public NotificationDispatcher(
             NotificationStore store,
+            InboxQueries inbox,
             EmailSender email,
             PushSender push,
             Clock clock,
@@ -61,6 +71,7 @@ public class NotificationDispatcher {
             @Value("${phumreader.notifications.enabled:true}") boolean enabled,
             @Value("${phumreader.notifications.push-parallelism:32}") int pushParallelism) {
         this.store = store;
+        this.inbox = inbox;
         this.email = email;
         this.push = push;
         this.clock = clock;
@@ -115,6 +126,12 @@ public class NotificationDispatcher {
             if (page.isEmpty()) {
                 return total;
             }
+            inbox.episodePublished(
+                    page.stream().map(Recipient::userId).toList(),
+                    episode.episodeId(),
+                    episode.seriesId(),
+                    episode.number(),
+                    clock.instant().atOffset(ZoneOffset.UTC));
             deliver(page, episode);
             total += page.size();
             after = page.getLast().userId();
@@ -128,7 +145,13 @@ public class NotificationDispatcher {
                 (novel ? "/novel/" : "/read/") + episode.seriesSlug() + "/" + episode.number();
         List<Mail> mails = new ArrayList<>();
         Map<UUID, Message> pushes = new java.util.HashMap<>();
+        int hour = clock.instant().atZone(ZONE).getHour();
         for (Recipient who : page) {
+            boolean sendPush = who.push() && !who.quiet().covers(hour);
+            boolean sendMail = who.mail() && who.emailVerified();
+            if (!sendPush && !sendMail) {
+                continue;
+            }
             String prefix = "km".equals(who.language()) ? "/km" : "";
             var notice =
                     NotificationTexts.newEpisode(
@@ -139,12 +162,14 @@ public class NotificationDispatcher {
                             episode.title(),
                             frontendUrl + prefix + path,
                             frontendUrl + prefix + "/settings");
-            if (who.emailVerified()) {
+            if (sendMail) {
                 mails.add(new Mail(who.email(), notice.title(), notice.emailBody()));
             }
-            pushes.put(
-                    who.userId(),
-                    new Message(notice.title(), notice.body(), frontendUrl + prefix + path));
+            if (sendPush) {
+                pushes.put(
+                        who.userId(),
+                        new Message(notice.title(), notice.body(), frontendUrl + prefix + path));
+            }
         }
         if (!mails.isEmpty()) {
             email.sendAll(mails);

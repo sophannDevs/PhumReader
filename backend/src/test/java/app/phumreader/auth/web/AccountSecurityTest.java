@@ -259,6 +259,12 @@ class AccountSecurityTest {
     @Test
     void afterThirtyDaysTheNightlyJobErasesThePersonalDataAndFreesTheEmail() throws Exception {
         String email = confirmedAccount();
+        UUID id =
+                jdbc.sql("select id from users where email = :e")
+                        .param("e", email)
+                        .query(UUID.class)
+                        .single();
+        assertThat(notifications(id)).as("the welcome item").isEqualTo(1);
         Session here = logIn(email, PASSWORD, CHROME_ON_WINDOWS);
         deleteAccount(here, PASSWORD).andExpect(status().isOk());
 
@@ -279,6 +285,7 @@ class AccountSecurityTest {
                         .query(Long.class)
                         .single();
         assertThat(erased).isGreaterThanOrEqualTo(1);
+        assertThat(notifications(id)).as("the inbox goes with the personal data").isZero();
         assertThat(
                         jdbc.sql("select count(*) from users where lower(email) = :e")
                                 .param("e", email)
@@ -451,6 +458,13 @@ class AccountSecurityTest {
         Matcher m = CODE.matcher(subject);
         assertThat(m.find()).as("code in %s", subject).isTrue();
         return m.group(1);
+    }
+
+    private long notifications(UUID userId) {
+        return jdbc.sql("select count(*) from notifications where user_id = :u")
+                .param("u", userId)
+                .query(Long.class)
+                .single();
     }
 
     private static String uniqueEmail() {

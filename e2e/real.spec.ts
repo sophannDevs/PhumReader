@@ -1657,7 +1657,70 @@ test("17. readers see the V2.1 fields; hide and show a chapter; delete is blocke
   expect((await page.request.post(`/api/v1/creator/series/${id}/unpublish`, { headers })).status()).toBe(200);
 });
 
-test("18. delete the account: signed out everywhere, wrong password refused first", async () => {
+test("18. notifications: the bell and the page match in two browsers; read, remove with Undo, mark all read", async ({
+  browser,
+}) => {
+  test.setTimeout(150_000);
+  // This account has the welcome item (test 1) and the paid coin order (test 4).
+  const count = async (p: Page) =>
+    (await (await p.request.get("/api/v1/me/notifications/unread-count")).json()).count as number;
+  const bell = (p: Page) => visible(p.locator("header").getByRole("link", { name: /^Notifications/ }));
+  const row = (p: Page, text: string) => visible(p.locator("li", { hasText: text }));
+
+  await page.goto("/notifications");
+  await expect(row(page, "Welcome to PhumiReader")).toBeVisible();
+  await expect(row(page, "Payment received · +20 coins")).toBeVisible();
+  const n = await count(page);
+  expect(n).toBeGreaterThanOrEqual(2);
+  await expect(bell(page)).toHaveAccessibleName(`Notifications, ${n} unread`);
+
+  // A second browser on the same account sees the same count and items.
+  const other = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+  const op = await other.newPage();
+  try {
+    await logIn(op, NEW_PASSWORD);
+    await op.goto("/notifications");
+    await expect(bell(op)).toHaveAccessibleName(`Notifications, ${n} unread`);
+    await expect(visible(op.getByText(`${n} unread`))).toBeVisible();
+    await expect(row(op, "Welcome to PhumiReader")).toBeVisible();
+
+    // Read in the first browser: the bell drops there at once and in the second after a reload.
+    await row(page, "Welcome to PhumiReader").getByRole("button", { name: "Mark as read" }).click();
+    await expect(bell(page)).toHaveAccessibleName(`Notifications, ${n - 1} unread`);
+    await expect.poll(() => count(page)).toBe(n - 1);
+    await op.reload();
+    await expect(bell(op)).toHaveAccessibleName(`Notifications, ${n - 1} unread`);
+
+    // Remove with Undo brings it back; removed for good, the second browser no longer lists it.
+    await row(page, "Welcome to PhumiReader").getByRole("button", { name: "Remove notification" }).click();
+    await expect(visible(page.getByText("Notification removed"))).toBeVisible();
+    await visible(page.getByRole("button", { name: "Undo" })).click();
+    await expect(row(page, "Welcome to PhumiReader")).toBeVisible();
+    await row(page, "Welcome to PhumiReader").getByRole("button", { name: "Remove notification" }).click();
+    await expect
+      .poll(async () =>
+        ((await (await page.request.get("/api/v1/me/notifications")).json()).items as { type: string }[]).some(
+          (i) => i.type === "welcome",
+        ),
+      )
+      .toBe(false);
+    await op.reload();
+    await expect(row(op, "Payment received · +20 coins")).toBeVisible();
+    await expect(op.locator("li", { hasText: "Welcome to PhumiReader" }).locator("visible=true")).toHaveCount(0);
+
+    // Mark all read: both browsers end at zero.
+    await visible(page.getByRole("button", { name: "Mark all as read" })).click();
+    await expect.poll(() => count(page)).toBe(0);
+    await expect(bell(page)).toHaveAccessibleName("Notifications");
+    await op.reload();
+    await expect(bell(op)).toHaveAccessibleName("Notifications");
+    await expect(visible(op.getByText("You’re all caught up"))).toBeVisible();
+  } finally {
+    await other.close();
+  }
+});
+
+test("19. delete the account: signed out everywhere, wrong password refused first", async () => {
   await page.goto("/settings");
   await visible(page.getByRole("button", { name: "Delete account" })).click();
   // V2.1: type DELETE first; the button stays disabled until then.

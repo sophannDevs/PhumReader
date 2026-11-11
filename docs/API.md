@@ -1,9 +1,9 @@
 # PhumiReader API reference
 
-The REST API of the Spring Boot backend in `backend/` (Phase 2): version **v1**, **113 endpoints**.
+The REST API of the Spring Boot backend in `backend/` (Phase 2): version **v1**, **120 endpoints**.
 
 > **Where this comes from.** Written from the controllers in `backend/src/main/java/app/phumreader/*/web/`
-> and the generated contract `backend/openapi/openapi.json` (2026-11-11, V21-02). The OpenAPI file is
+> and the generated contract `backend/openapi/openapi.json` (2026-11-11, V21-03). The OpenAPI file is
 > the machine-readable contract: `./gradlew check` fails when it is out of date, and `npm run api:gen` turns it
 > into the website's TypeScript types (`src/lib/api/schema.d.ts`). This page explains it for people. If the two
 > ever disagree, the code wins; please update this page in the same commit as the controller change.
@@ -22,7 +22,7 @@ The REST API of the Spring Boot backend in `backend/` (Phase 2): version **v1**,
 7. [Rate limits](#7-rate-limits)
 8. [Endpoint index](#8-endpoint-index)
 9. [Endpoints](#9-endpoints): [Health](#health) · [Auth](#auth) · [Account security](#account-security) ·
-   [Me and settings](#me-and-settings) · [Catalog](#catalog) · [Search](#search) · [Reading](#reading) ·
+   [Me and settings](#me-and-settings) · [Notifications](#notifications) · [Catalog](#catalog) · [Search](#search) · [Reading](#reading) ·
    [Library](#library) · [Comments and reports](#comments-and-reports) · [Coins and payments](#coins-and-payments) ·
    [Creator](#creator) · [Media uploads](#media-uploads) · [Admin](#admin)
 10. [Data types](#10-data-types)
@@ -229,6 +229,14 @@ Paths below are relative to `/api/v1`. "CSRF" applies to every write (see [CSRF]
 | PATCH | `/me/settings` | Signed in | Change some settings |
 | PUT | `/me/push-token` | Signed in | Save this browser's push token |
 | DELETE | `/me/push-token` | Signed in | Forget this browser's push token |
+| **Notifications** ||||
+| GET | `/me/notifications` | Signed in | The inbox, per tab, newest first |
+| GET | `/me/notifications/unread-count` | Signed in | Unread items (the bell) |
+| PUT | `/me/notifications/{id}/read` | Signed in | Mark an item read |
+| DELETE | `/me/notifications/{id}/read` | Signed in | Mark an item unread |
+| POST | `/me/notifications/read-all` | Signed in | Mark every item read |
+| DELETE | `/me/notifications/{id}` | Signed in | Remove an item (restorable for 7 days) |
+| POST | `/me/notifications/{id}/restore` | Signed in | Bring a removed item back (Undo) |
 | **Catalog** ||||
 | GET | `/home` | Public | Home feed |
 | GET | `/rankings` | Public | Ranking of comics or novels |
@@ -377,7 +385,8 @@ Confirms the email with its code and signs in. **Public.**
 { "email": "sokha@example.com", "code": "123456" }
 ```
 
-**200** → [MeResponse](#meresponse), sign-in cookies set.
+**200** → [MeResponse](#meresponse), sign-in cookies set. The account gets the `welcome` item in its
+[notifications](#notifications) (also when Google or Facebook confirms the email, or a reset link does).
 **Errors:** `400 invalid_code`, `400 code_expired`, `400 too_many_attempts` (all on field `code`).
 
 #### `POST /api/v1/auth/resend-code`
@@ -529,14 +538,18 @@ Removes the profile picture (the website shows initials again). **Signed in.** *
 
 #### `GET /api/v1/me/settings`
 
-**Signed in.** **200** → [Settings](#settings).
+**Signed in.** **200** → [Settings](#settings). An account that never saved anything reads the website's
+defaults; the alert defaults (V21-03) are `update` push on / email off, `comment` on / off, `coins` on / on,
+`fastpass` on / off, `news` off / off, quiet hours on from 22 to 7, digest off.
 
 #### `PATCH /api/v1/me/settings`
 
-Saves only the fields that are sent and returns all settings. **Signed in.**
+Saves only the fields that are sent (also inside `notifications.types` and `notifications.quiet`) and returns
+all settings. **Signed in.**
 
 ```json
-{ "theme": "dark", "reader": { "size": 20 }, "notifications": { "episodes": false } }
+{ "theme": "dark", "reader": { "size": 20 },
+  "notifications": { "types": { "update": { "email": true } }, "quiet": { "from": 23 } } }
 ```
 
 | Field | Values |
@@ -547,20 +560,100 @@ Saves only the fields that are sent and returns all settings. **Signed in.**
 | `reader.size` | `14`, `16`, `18`, `20`, `22`, `24` |
 | `reader.theme` | `light`, `sepia`, `dark` |
 | `reader.wide` | boolean |
-| `notifications.episodes` | boolean: new-episode notices for subscribed series |
-| `notifications.fastPass` | boolean |
+| `notifications.types.<type>.push` · `.email` | boolean; `<type>`: `update` (new episodes of subscribed series), `fastpass` (a wanted Fast Pass episode is free), `comment`, `coins`, `news` |
+| `notifications.quiet.on` | boolean: no push during the quiet hours |
+| `notifications.quiet.from` · `.to` | 0–23, whole hours in Asia/Phnom_Penh; quiet from `from` up to (not including) `to`; may wrap midnight (22 → 7); the same hour twice means no quiet time |
+| `notifications.digest` | boolean: one daily email (saved only; nothing sends it yet) |
+| `notifications.episodes` | boolean: the same switch as `types.update.push` (kept for older clients) |
+| `notifications.fastPass` | boolean: the same switch as `types.fastpass.push` |
 
-**200** → [Settings](#settings). **Errors:** `400 invalid_text_size` (field `reader.size`).
+When `episodes` / `fastPass` and `types` are both sent, `types` wins. What the switches do today: the
+new-episode worker sends push only while `types.update.push` is on and it is not the reader's quiet hours, and
+email only while `types.update.email` is on (email ignores quiet hours); the inbox item is written either way.
+The other types' push and email have no sender yet (V21-03 stores them).
+
+**200** → [Settings](#settings). **Errors:** `400 invalid_text_size` (field `reader.size`) ·
+`400 validation_failed` (fields `notifications.quiet.from` / `notifications.quiet.to`: not 0–23).
 
 #### `PUT /api/v1/me/push-token`
 
 Saves this browser's web push (Firebase) token. New-episode notices go to every saved token of the account while
-`notifications.episodes` is on. **Signed in.** Body: `{ "token": "<FCM token, up to 4096 chars>" }`. **204.**
+`notifications.types.update.push` (= `notifications.episodes`) is on, outside the quiet hours. **Signed in.** Body: `{ "token": "<FCM token, up to 4096 chars>" }`. **204.**
 
 #### `DELETE /api/v1/me/push-token`
 
 Forgets this browser's push token (the reader turned push off). **Signed in.** Same body as above (a `DELETE` with
 a body). **204.**
+
+### Notifications
+
+The in-app inbox (V21-03): the Notifications page and the header bell. Every endpoint is **signed in**; an item of
+another account answers `404 notification_not_found`, like one that does not exist. Items are a `type` plus values
+in `data`, never text: the website writes them in English or Khmer. Each source writes its item in the same
+transaction as the change (new episodes: the notification worker), once (a repeated payment confirmation or a
+resumed worker page adds nothing).
+
+| `type` | `kind` (tab) | Who gets it, when | `series` · `episode` | `data` |
+|---|---|---|---|---|
+| `episode_published` | `episode` | every active subscriber (not the creator) when the worker announces a new episode, whatever their push / email switches | the series · the episode number | `{}` |
+| `comment_liked` | `comment` | the comment's author when someone else likes it; one item per comment and day (Asia/Phnom_Penh): a new liker raises `count` and makes the item unread and newest again (also after a remove); unliking never lowers it | the series · the episode number for a comment on an episode | `{ commentId, count }` |
+| `order_paid` | `coins` | the buyer when a coin order is paid | null | `{ orderNumber, coins }`: pack + bonus + first-purchase bonus |
+| `order_refunded` | `coins` | the buyer when an admin refunds the order | null | `{ orderNumber, coins }`: the coins taken back |
+| `report_resolved` | `system` | each reporter when an admin resolves the report, or hides the content (from the report or the content list) | the reported series, or the series of the episode / comment · the episode number | `{ reportId, targetType, hidden }`; `targetType`: `series`, `episode`, `comment`; `hidden`: the content was taken down |
+| `report_dismissed` | `system` | the reporter when an admin dismisses the report | as above | `{ reportId, targetType, hidden: false }` |
+| `series_approved` | `system` | the creator, on the V21-01 review decision | the series · null | `{}` |
+| `series_changes` | `system` | the creator | the series · null | `{ items, note }`: review item keys (`contact`, `cover`, `title`, `age`, `images`), the admin's note or null |
+| `series_rejected` | `system` | the creator | the series · null | `{ note }` |
+| `welcome` | `system` | the account, when its email is confirmed | null | `{}` |
+
+Nobody is notified about their own action (liking your own comment, an admin settling their own report or
+deciding on their own series). Removed items are kept 7 days for the Undo / restore, then deleted; read items
+older than 90 days are deleted too (nightly at 03:45 Phnom Penh). Erasing an account deletes its items. Not
+built yet: comment replies (comments have no replies), "a Fast Pass episode is now free", sending the daily
+digest.
+
+#### `GET /api/v1/me/notifications`
+
+The inbox, **newest first**; removed items are left out.
+
+| Parameter | Values |
+|---|---|
+| `tab` | `all` (default), `unread`, `episodes` (kind `episode`), `comments` (kind `comment`), `coins` (kind `coins`); `system` items show under `all` and `unread` only |
+| `cursor`, `limit` | paging |
+
+**200** → page of [NotificationItem](#notificationitem).
+
+```json
+{ "items": [ { "id": "6f0e…", "kind": "comment", "type": "comment_liked", "createdAt": "2026-11-05T06:10:00Z",
+  "read": false, "series": { "id": "1c2d…", "slug": "glass-compass", "title": "Glass Compass", "type": "comic" },
+  "episode": 65, "data": { "commentId": "9a8b…", "count": 12 } } ], "nextCursor": null }
+```
+
+**Errors:** `400 invalid_value` (field `tab`) · `400 invalid_cursor`.
+
+#### `GET /api/v1/me/notifications/unread-count`
+
+Unread items that were not removed (the bell; the website asks again on focus and every 60 s).
+**200** → [UnreadCount](#unreadcount) `{ "count": 3 }`.
+
+#### `PUT /api/v1/me/notifications/{id}/read` · `DELETE …/read`
+
+Marks the item read / unread. Again: no change (the first read time is kept). **204.**
+**Errors:** `404 notification_not_found`.
+
+#### `POST /api/v1/me/notifications/read-all`
+
+Marks every unread item read. **204.**
+
+#### `DELETE /api/v1/me/notifications/{id}`
+
+Removes the item: it leaves the list and the count, and can be restored for 7 days. Again: no change. **204.**
+**Errors:** `404 notification_not_found`.
+
+#### `POST /api/v1/me/notifications/{id}/restore`
+
+Brings a removed item back (the page's Undo); an item that is not removed: no change. **204.**
+**Errors:** `404 notification_not_found` (also once the clean-up deleted it).
 
 ### Catalog
 
@@ -782,7 +875,8 @@ Deletes a comment: its author, the series' creator or an admin. **Signed in.** *
 #### `PUT /api/v1/comments/{id}/like` · `DELETE …/like`
 
 Like a comment / take the like back. **Signed in.**
-**200** → [CommentLikeState](#commentlikestate) `{ "liked": true, "likes": 12 }`.
+**200** → [CommentLikeState](#commentlikestate) `{ "liked": true, "likes": 12 }`. A new like from someone else
+updates the author's `comment_liked` [notification](#notifications).
 
 #### `POST /api/v1/series/{slug}/report` · `POST /api/v1/series/{slug}/episodes/{n}/report` · `POST /api/v1/comments/{id}/report`
 
@@ -846,7 +940,8 @@ Cancels an open order. **Signed in.** **200** → [OrderView](#orderview).
 #### `POST /api/v1/coins/orders/{number}/simulate`
 
 **Development only:** pays or fails an order without ABA PayWay. **Signed in.** Body: `{ "outcome": "paid" }` or
-`{ "outcome": "failed" }`. **200** → [OrderView](#orderview).
+`{ "outcome": "failed" }`. **200** → [OrderView](#orderview). Paying (here, by the PayWay callback or by the
+reconciliation) writes the buyer's `order_paid` [notification](#notifications).
 **Errors:** `404` when `phumreader.payments.simulator` is off (always in production) · `409 order_expired` /
 `order_closed`.
 
@@ -1161,7 +1256,8 @@ Series, episodes or comments.
 
 #### `POST /api/v1/admin/content/{type}/{id}/hide`
 
-Takes live content down (`type`: `series`, `episode` or `comment`); its open reports are resolved. Body:
+Takes live content down (`type`: `series`, `episode` or `comment`); its open reports are resolved and their
+reporters get a `report_resolved` [notification](#notifications). Body:
 `{ "reason": "…" }` (required). **204.** **Errors:** `404 content_not_found` · `409 not_hideable`.
 
 #### `POST /api/v1/admin/content/{type}/{id}/restore`
@@ -1183,7 +1279,8 @@ Settles a report.
 ```
 
 `action`: `dismiss`, `resolve` or `hide` (also hides the reported content). `note`: optional, up to 1000 characters.
-**200** → [AdminReport](#adminreport).
+**200** → [AdminReport](#adminreport). The reporter gets a `report_dismissed` or `report_resolved`
+[notification](#notifications) (for `hide`: every reporter of that content).
 **Errors:** `404 report_not_found` · `409 report_closed` (another admin settled it) · `400 missing_target`.
 
 #### `GET /api/v1/admin/series-review`
@@ -1200,6 +1297,8 @@ The series review queue (V21-01): series waiting for a decision, **oldest submis
 #### `POST /api/v1/admin/series/{id}/approve`
 
 The series goes live (search, home feed and launch date as for a publish). No body. **204.** Audit: `series.approve`.
+Each decision (approve, request changes, reject) writes the creator's `series_approved` / `series_changes` /
+`series_rejected` [notification](#notifications).
 **Errors:** `404 series_not_found` · `409 not_in_review` (it no longer waits: another admin decided, a double click).
 
 #### `POST /api/v1/admin/series/{id}/request-changes`
@@ -1228,6 +1327,7 @@ Coin orders. `q` searches order number, email or name; `status`: `pending`, `pai
 #### `POST /api/v1/admin/orders/{id}/refund`
 
 Refunds a paid order: its coins are taken back through the ledger. Body: `{ "reason": "…" }` (required). **200** → [RefundResult](#refundresult).
+The buyer gets an `order_refunded` [notification](#notifications).
 **Errors:** `404 order_not_found` · `409 order_not_refundable` (not paid, or already refunded) · `409 coins_spent`
 (the reader already spent some of the coins).
 
@@ -1310,6 +1410,48 @@ interface AdminUser {
   lastLoginAt?: string | null;               // ISO 8601 instant
   roles: string[];
   status: string;
+}
+```
+
+### AlertSwitch
+
+```ts
+interface AlertSwitch {
+  email: boolean;
+  push: boolean;
+}
+```
+
+### AlertSwitchChange
+
+```ts
+interface AlertSwitchChange {
+  email?: boolean | null;
+  push?: boolean | null;
+}
+```
+
+### AlertTypes
+
+```ts
+interface AlertTypes {
+  coins: AlertSwitch;
+  comment: AlertSwitch;
+  fastpass: AlertSwitch;
+  news: AlertSwitch;
+  update: AlertSwitch;                       // new episodes of subscribed series
+}
+```
+
+### AlertTypesChange
+
+```ts
+interface AlertTypesChange {
+  coins?: AlertSwitchChange;
+  comment?: AlertSwitchChange;
+  fastpass?: AlertSwitchChange;
+  news?: AlertSwitchChange;
+  update?: AlertSwitchChange;
 }
 ```
 
@@ -1881,12 +2023,42 @@ interface MeResponse {
 }
 ```
 
+### NotificationItem
+
+```ts
+interface NotificationItem {
+  createdAt: string;                         // ISO 8601 instant; comment_liked: the latest like
+  data: Record<string, unknown>;             // per type, see Notifications
+  episode?: number | null;
+  id: string;                                // uuid
+  kind: "episode" | "comment" | "coins" | "system";
+  read: boolean;
+  series?: NotificationSeries;               // null when the item has no series
+  type: "episode_published" | "comment_liked" | "order_paid" | "order_refunded" | "report_resolved"
+      | "report_dismissed" | "series_approved" | "series_changes" | "series_rejected" | "welcome";
+}
+```
+
 ### NotificationsChange
 
 ```ts
 interface NotificationsChange {
-  episodes?: boolean | null;
-  fastPass?: boolean | null;
+  digest?: boolean | null;
+  episodes?: boolean | null;                 // = types.update.push
+  fastPass?: boolean | null;                 // = types.fastpass.push
+  quiet?: QuietHoursChange;
+  types?: AlertTypesChange;
+}
+```
+
+### NotificationSeries
+
+```ts
+interface NotificationSeries {
+  id: string;                                // uuid (Manage series)
+  slug: string;
+  title: string;
+  type: "comic" | "novel";
 }
 ```
 
@@ -1894,8 +2066,11 @@ interface NotificationsChange {
 
 ```ts
 interface NotificationSettings {
-  episodes: boolean;
-  fastPass: boolean;
+  digest: boolean;
+  episodes: boolean;                         // = types.update.push
+  fastPass: boolean;                         // = types.fastpass.push
+  quiet: QuietHoursSetting;
+  types: AlertTypes;
 }
 ```
 
@@ -2015,6 +2190,26 @@ interface ProgressRequest {
 interface Publish {
   at?: string | null;                        // ISO 8601 instant
   mode: "draft" | "now" | "scheduled";
+}
+```
+
+### QuietHoursChange
+
+```ts
+interface QuietHoursChange {
+  from?: number | null;                      // 0-23
+  on?: boolean | null;
+  to?: number | null;                        // 0-23
+}
+```
+
+### QuietHoursSetting
+
+```ts
+interface QuietHoursSetting {
+  from: number;                              // 0-23, Asia/Phnom_Penh
+  on: boolean;
+  to: number;                                // 0-23; may be before from (wraps midnight)
 }
 ```
 
@@ -2463,6 +2658,14 @@ interface UnlockResult {
   balance: number;
   coins: number;
   episode: number;
+}
+```
+
+### UnreadCount
+
+```ts
+interface UnreadCount {
+  count: number;
 }
 ```
 

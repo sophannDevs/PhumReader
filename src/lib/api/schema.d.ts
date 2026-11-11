@@ -65,7 +65,7 @@ export interface paths {
         get?: never;
         put?: never;
         /** Put hidden content back */
-        post: operations["restore"];
+        post: operations["restore_1"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1341,6 +1341,124 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/me/notifications": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The inbox, newest first
+         * @description tab: all (default), unread, episodes, comments or coins; removed items are left out. 400 invalid_value (field tab), invalid_cursor.
+         */
+        get: operations["list_1"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/notifications/read-all": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Marks every item read */
+        post: operations["markAllRead"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/notifications/unread-count": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** How many items are unread (the bell) */
+        get: operations["unreadCount"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/notifications/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Removes an item
+         * @description Restorable for 7 days (the page's Undo), then deleted. Removing again: no change. 404 notification_not_found for another's item.
+         */
+        delete: operations["remove"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/notifications/{id}/read": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Marks an item read (again: no change)
+         * @description 404 notification_not_found for another's item.
+         */
+        put: operations["markRead"];
+        post?: never;
+        /**
+         * Marks an item unread
+         * @description 404 notification_not_found for another's item.
+         */
+        delete: operations["markUnread"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/notifications/{id}/restore": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Brings a removed item back (Undo)
+         * @description Restoring an item that is not removed: no change. 404 notification_not_found for another's item.
+         */
+        post: operations["restore"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/me/profile": {
         parameters: {
             query?: never;
@@ -1371,7 +1489,7 @@ export interface paths {
         get?: never;
         /**
          * Saves this browser's push token
-         * @description New-episode notices go to every saved token of the account while Settings > Notifications > New episodes is on.
+         * @description New-episode notices go to every saved token of the account while Settings > Notifications > New episodes push is on, outside the quiet hours.
          */
         put: operations["register"];
         post?: never;
@@ -1398,7 +1516,7 @@ export interface paths {
         head?: never;
         /**
          * Saves the settings that are sent and returns all of them
-         * @description Only the fields in the body change, e.g. {"reader":{"size":20}}. 400 invalid_text_size (field reader.size).
+         * @description Only the fields in the body change, e.g. {"reader":{"size":20}}, also inside notifications.types and notifications.quiet. notifications.episodes / fastPass are types.update.push / types.fastpass.push (types wins when both are sent). 400 invalid_text_size (field reader.size), validation_failed (quiet hours outside 0-23).
          */
         patch: operations["updateSettings"];
         trace?: never;
@@ -1851,6 +1969,28 @@ export interface components {
             roles: string[];
             status: string;
         };
+        AlertSwitch: {
+            email: boolean;
+            push: boolean;
+        };
+        AlertSwitchChange: {
+            email?: boolean | null;
+            push?: boolean | null;
+        };
+        AlertTypes: {
+            coins: components["schemas"]["AlertSwitch"];
+            comment: components["schemas"]["AlertSwitch"];
+            fastpass: components["schemas"]["AlertSwitch"];
+            news: components["schemas"]["AlertSwitch"];
+            update: components["schemas"]["AlertSwitch"];
+        };
+        AlertTypesChange: {
+            coins?: components["schemas"]["AlertSwitchChange"];
+            comment?: components["schemas"]["AlertSwitchChange"];
+            fastpass?: components["schemas"]["AlertSwitchChange"];
+            news?: components["schemas"]["AlertSwitchChange"];
+            update?: components["schemas"]["AlertSwitchChange"];
+        };
         AuditEntry: {
             action: string;
             /** Format: uuid */
@@ -2065,6 +2205,10 @@ export interface components {
         };
         CursorPageLedgerEntry: {
             items: components["schemas"]["LedgerEntry"][];
+            nextCursor?: string | null;
+        };
+        CursorPageNotificationItem: {
+            items: components["schemas"]["NotificationItem"][];
             nextCursor?: string | null;
         };
         CursorPageOrderView: {
@@ -2323,13 +2467,44 @@ export interface components {
             id: string;
             roles: string[];
         };
+        NotificationItem: {
+            /** Format: date-time */
+            createdAt: string;
+            data: {
+                [key: string]: unknown;
+            };
+            /** Format: int32 */
+            episode?: number | null;
+            /** Format: uuid */
+            id: string;
+            /** @enum {string} */
+            kind: "episode" | "comment" | "coins" | "system";
+            read: boolean;
+            series?: components["schemas"]["NotificationSeries"];
+            /** @enum {string} */
+            type: "episode_published" | "comment_liked" | "order_paid" | "order_refunded" | "report_resolved" | "report_dismissed" | "series_approved" | "series_changes" | "series_rejected" | "welcome";
+        };
+        NotificationSeries: {
+            /** Format: uuid */
+            id: string;
+            slug: string;
+            title: string;
+            /** @enum {string} */
+            type: "comic" | "novel";
+        };
         NotificationSettings: {
+            digest: boolean;
             episodes: boolean;
             fastPass: boolean;
+            quiet: components["schemas"]["QuietHoursSetting"];
+            types: components["schemas"]["AlertTypes"];
         };
         NotificationsChange: {
+            digest?: boolean | null;
             episodes?: boolean | null;
             fastPass?: boolean | null;
+            quiet?: components["schemas"]["QuietHoursChange"];
+            types?: components["schemas"]["AlertTypesChange"];
         };
         NovelBlock: {
             text?: string | null;
@@ -2426,6 +2601,20 @@ export interface components {
             at?: string | null;
             /** @enum {string} */
             mode: "draft" | "now" | "scheduled";
+        };
+        QuietHoursChange: {
+            /** Format: int32 */
+            from?: number | null;
+            on?: boolean | null;
+            /** Format: int32 */
+            to?: number | null;
+        };
+        QuietHoursSetting: {
+            /** Format: int32 */
+            from: number;
+            on: boolean;
+            /** Format: int32 */
+            to: number;
         };
         RankingEntry: {
             /** Format: int32 */
@@ -2745,6 +2934,10 @@ export interface components {
             /** Format: date-time */
             unlockedAt: string;
         };
+        UnreadCount: {
+            /** Format: int64 */
+            count: number;
+        };
         UploadTicket: {
             /** Format: date-time */
             expiresAt: string;
@@ -2899,7 +3092,7 @@ export interface operations {
             };
         };
     };
-    restore: {
+    restore_1: {
         parameters: {
             query?: never;
             header?: never;
@@ -5367,6 +5560,213 @@ export interface operations {
                 "application/json": components["schemas"]["RestoreHistoryRequest"];
             };
         };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    list_1: {
+        parameters: {
+            query?: {
+                tab?: "all" | "unread" | "episodes" | "comments" | "coins";
+                /** @description nextCursor of the previous page; omit for the first page */
+                cursor?: string | null;
+                /** @description Page size, 1-100 (default 20) */
+                limit?: number | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CursorPageNotificationItem"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    markAllRead: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    unreadCount: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UnreadCount"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    remove: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    markRead: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    markUnread: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    restore: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
         responses: {
             /** @description No Content */
             204: {

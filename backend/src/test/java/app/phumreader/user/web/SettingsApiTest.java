@@ -23,7 +23,10 @@ import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Transactional;
 
-/** Settings: profile name, language, appearance, reader defaults, notifications (plan P3-17). */
+/**
+ * Settings: profile name, language, appearance, reader defaults, notifications (plan P3-17) and the
+ * alert settings per type, quiet hours and digest (V21-03).
+ */
 @IntegrationTest
 @Import(AuthTestConfig.class)
 @Transactional
@@ -55,7 +58,102 @@ class SettingsApiTest {
                 .andExpect(jsonPath("$.reader.font").value("sans"))
                 .andExpect(jsonPath("$.reader.wide").value(true))
                 .andExpect(jsonPath("$.notifications.episodes").value(true))
-                .andExpect(jsonPath("$.notifications.fastPass").value(false));
+                .andExpect(jsonPath("$.notifications.fastPass").value(true))
+                // The website's alert defaults (src/lib/store.ts defaultNotifPrefs).
+                .andExpect(jsonPath("$.notifications.types.update.push").value(true))
+                .andExpect(jsonPath("$.notifications.types.update.email").value(false))
+                .andExpect(jsonPath("$.notifications.types.comment.push").value(true))
+                .andExpect(jsonPath("$.notifications.types.comment.email").value(false))
+                .andExpect(jsonPath("$.notifications.types.coins.push").value(true))
+                .andExpect(jsonPath("$.notifications.types.coins.email").value(true))
+                .andExpect(jsonPath("$.notifications.types.fastpass.push").value(true))
+                .andExpect(jsonPath("$.notifications.types.fastpass.email").value(false))
+                .andExpect(jsonPath("$.notifications.types.news.push").value(false))
+                .andExpect(jsonPath("$.notifications.types.news.email").value(false))
+                .andExpect(jsonPath("$.notifications.quiet.on").value(true))
+                .andExpect(jsonPath("$.notifications.quiet.from").value(22))
+                .andExpect(jsonPath("$.notifications.quiet.to").value(7))
+                .andExpect(jsonPath("$.notifications.digest").value(false));
+    }
+
+    @Test
+    void theAlertSettingsAreSavedPerTypeAndTheOlderSwitchesFollowThem() throws Exception {
+        UUID reader = sessions.newReader("Dara");
+        // No settings row yet: the defaults, the same as a new account's.
+        mvc.perform(get("/api/v1/me/settings").with(sessions.as(reader)))
+                .andExpect(jsonPath("$.notifications.types.coins.email").value(true))
+                .andExpect(jsonPath("$.notifications.quiet.from").value(22));
+
+        save(
+                        reader,
+                        "{\"notifications\":{\"types\":{\"update\":{\"email\":true},"
+                                + "\"comment\":{\"push\":false},\"news\":{\"push\":true,\"email\":true}},"
+                                + "\"quiet\":{\"from\":23},\"digest\":true}}")
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.notifications.types.update.push").value(true))
+                .andExpect(jsonPath("$.notifications.types.update.email").value(true))
+                .andExpect(jsonPath("$.notifications.types.comment.push").value(false))
+                .andExpect(jsonPath("$.notifications.types.comment.email").value(false))
+                .andExpect(jsonPath("$.notifications.types.news.push").value(true))
+                .andExpect(jsonPath("$.notifications.types.news.email").value(true))
+                .andExpect(jsonPath("$.notifications.quiet.on").value(true))
+                .andExpect(jsonPath("$.notifications.quiet.from").value(23))
+                .andExpect(jsonPath("$.notifications.quiet.to").value(7))
+                .andExpect(jsonPath("$.notifications.digest").value(true));
+
+        // "episodes" and "fastPass" are the push switches of update and fastpass, both ways.
+        save(reader, "{\"notifications\":{\"episodes\":false,\"fastPass\":false}}")
+                .andExpect(jsonPath("$.notifications.types.update.push").value(false))
+                .andExpect(jsonPath("$.notifications.types.update.email").value(true))
+                .andExpect(jsonPath("$.notifications.types.fastpass.push").value(false));
+        save(
+                        reader,
+                        "{\"notifications\":{\"types\":{\"update\":{\"push\":true},"
+                                + "\"fastpass\":{\"push\":true,\"email\":true}},"
+                                + "\"quiet\":{\"on\":false,\"from\":0,\"to\":23}}}")
+                .andExpect(jsonPath("$.notifications.episodes").value(true))
+                .andExpect(jsonPath("$.notifications.fastPass").value(true));
+        // Sent together, "types" wins.
+        save(
+                        reader,
+                        "{\"notifications\":{\"episodes\":true,"
+                                + "\"types\":{\"update\":{\"push\":false}}}}")
+                .andExpect(jsonPath("$.notifications.episodes").value(false));
+
+        mvc.perform(get("/api/v1/me/settings").with(sessions.as(reader)))
+                .andExpect(jsonPath("$.notifications.episodes").value(false))
+                .andExpect(jsonPath("$.notifications.fastPass").value(true))
+                .andExpect(jsonPath("$.notifications.types.update.push").value(false))
+                .andExpect(jsonPath("$.notifications.types.update.email").value(true))
+                .andExpect(jsonPath("$.notifications.types.fastpass.email").value(true))
+                .andExpect(jsonPath("$.notifications.types.comment.push").value(false))
+                .andExpect(jsonPath("$.notifications.types.coins.push").value(true))
+                .andExpect(jsonPath("$.notifications.types.coins.email").value(true))
+                .andExpect(jsonPath("$.notifications.types.news.email").value(true))
+                .andExpect(jsonPath("$.notifications.quiet.on").value(false))
+                .andExpect(jsonPath("$.notifications.quiet.from").value(0))
+                .andExpect(jsonPath("$.notifications.quiet.to").value(23))
+                .andExpect(jsonPath("$.notifications.digest").value(true))
+                // Other settings were left alone.
+                .andExpect(jsonPath("$.reader.size").value(18))
+                .andExpect(jsonPath("$.language").value("en"));
+    }
+
+    @Test
+    void quietHoursMustBeHoursOfTheDay() throws Exception {
+        UUID reader = sessions.newReader("Dara");
+        save(reader, "{\"notifications\":{\"quiet\":{\"from\":24}}}")
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error.code").value("validation_failed"))
+                .andExpect(jsonPath("$.error.fields['notifications.quiet.from']").exists());
+        save(reader, "{\"notifications\":{\"quiet\":{\"to\":-1}}}")
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error.fields['notifications.quiet.to']").exists());
+        save(reader, "{\"notifications\":{\"types\":{\"update\":{\"push\":\"maybe\"}}}}")
+                .andExpect(status().isBadRequest());
+        mvc.perform(get("/api/v1/me/settings").with(sessions.as(reader)))
+                .andExpect(jsonPath("$.notifications.quiet.from").value(22))
+                .andExpect(jsonPath("$.notifications.quiet.to").value(7));
     }
 
     @Test

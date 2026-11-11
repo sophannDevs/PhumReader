@@ -21,7 +21,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-/** Settings page: profile name, language, appearance, reader defaults, notifications (P3-17). */
+/**
+ * Settings page: profile name, language, appearance, reader defaults, notifications (P3-17) and the
+ * alert settings per type, quiet hours and digest (V21-03).
+ */
 @RestController
 @RequestMapping("/api/v1/me")
 @Tag(name = "account")
@@ -43,8 +46,12 @@ class SettingsController {
     @Operation(
             summary = "Saves the settings that are sent and returns all of them",
             description =
-                    "Only the fields in the body change, e.g. {\"reader\":{\"size\":20}}."
-                            + " 400 invalid_text_size (field reader.size).")
+                    "Only the fields in the body change, e.g. {\"reader\":{\"size\":20}}, also"
+                            + " inside notifications.types and notifications.quiet."
+                            + " notifications.episodes / fastPass are types.update.push /"
+                            + " types.fastpass.push (types wins when both are sent). 400"
+                            + " invalid_text_size (field reader.size), validation_failed (quiet"
+                            + " hours outside 0-23).")
     Settings updateSettings(
             @Parameter(hidden = true) @AuthenticationPrincipal CurrentUser user,
             @Valid @RequestBody SettingsChange body) {

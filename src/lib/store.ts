@@ -131,12 +131,14 @@ export type AppState = {
   /** Toggles keyed by `likeKey.*` (episode likes, comment likes, bookmarks) */
   likes: Record<string, boolean>
   checkoutDraft: { pack: number; method: PaymentMethodId }
-  /** V1 Settings > Notifications (kept for the real API's settings sync) */
+  /** V1 Settings > Notifications: the push switches of New episodes and Fast Pass (`notifPrefs` has them too) */
   notifications: { episodes: boolean; fastPass: boolean }
   /** Home genre picks; null = never chosen (spec `prefs`) */
   prefs: Genre[] | null
+  /** Demo inbox: read and removed item ids (real mode: the API keeps them, V21-03) */
   notifRead: string[]
   notifGone: string[]
+  /** Alert settings; real mode: the account's, loaded by SettingsSync and saved by `saveAlertPrefs` */
   notifPrefs: NotifPrefs
   /** Blocked display names */
   blocked: string[]
@@ -452,13 +454,14 @@ export const useIsBlocked = (name: string) => useAppStore((s) => s.blocked.inclu
 export const isCreator = (user: StoredUser | null) => !!user?.roles?.some((r) => r === "CREATOR" || r === "ADMIN")
 export const isAdmin = (user: StoredUser | null) => !!user?.roles?.includes("ADMIN")
 
-/** Inbox items still shown (not removed), with their read state. */
+/** Demo inbox items still shown (not removed), with their read state. */
 export function visibleNotifications(state: Pick<AppState, "notifGone" | "notifRead">) {
   return demoData.notifications
     .filter((n) => !state.notifGone.includes(n.id))
     .map((n) => ({ ...n, read: state.notifRead.includes(n.id) }))
 }
-export const useUnreadCount = () =>
+/** The demo's unread items (the bell in demo mode; real mode asks the API: `useUnreadCount` in src/lib/notifications.ts). */
+export const useDemoUnreadCount = () =>
   useAppStore((s) => demoData.notifications.filter((n) => !s.notifGone.includes(n.id) && !s.notifRead.includes(n.id)).length)
 
 export type { NotificationKind }

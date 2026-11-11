@@ -8,6 +8,7 @@ import jakarta.persistence.Table;
 import java.time.Instant;
 import java.util.UUID;
 import org.hibernate.annotations.UpdateTimestamp;
+import org.jspecify.annotations.Nullable;
 import org.springframework.data.domain.Persistable;
 
 /**
@@ -33,9 +34,35 @@ public class UserSettings implements Persistable<UUID> {
 
     private boolean readerWideSpacing;
 
+    /** Push for new episodes (alert type "update"). */
     private boolean notifyNewEpisodes;
 
+    /** Push when a wanted Fast Pass episode turns free (alert type "fastpass"). */
     private boolean notifyFastPass;
+
+    private boolean emailNewEpisodes;
+
+    private boolean emailFastPass;
+
+    private boolean pushComments;
+
+    private boolean emailComments;
+
+    private boolean pushCoins;
+
+    private boolean emailCoins;
+
+    private boolean pushNews;
+
+    private boolean emailNews;
+
+    private boolean quietHours;
+
+    private short quietFrom;
+
+    private short quietTo;
+
+    private boolean dailyDigest;
 
     @UpdateTimestamp private Instant updatedAt;
 
@@ -53,8 +80,21 @@ public class UserSettings implements Persistable<UUID> {
         settings.readerTheme = "LIGHT";
         settings.readerFont = "SANS";
         settings.readerWideSpacing = true;
+        // Alert settings: src/lib/store.ts defaultNotifPrefs.
         settings.notifyNewEpisodes = true;
-        settings.notifyFastPass = false;
+        settings.emailNewEpisodes = false;
+        settings.notifyFastPass = true;
+        settings.emailFastPass = false;
+        settings.pushComments = true;
+        settings.emailComments = false;
+        settings.pushCoins = true;
+        settings.emailCoins = true;
+        settings.pushNews = false;
+        settings.emailNews = false;
+        settings.quietHours = true;
+        settings.quietFrom = 22;
+        settings.quietTo = 7;
+        settings.dailyDigest = false;
         settings.isNew = true;
         return settings;
     }
@@ -105,6 +145,84 @@ public class UserSettings implements Persistable<UUID> {
 
     public boolean isNotifyFastPass() {
         return notifyFastPass;
+    }
+
+    /** One alert type's push and email switches. */
+    public record Alert(boolean push, boolean email) {}
+
+    /**
+     * @param type {@code update}, {@code fastpass}, {@code comment}, {@code coins} or {@code news}
+     */
+    public Alert alert(String type) {
+        return switch (type) {
+            case "update" -> new Alert(notifyNewEpisodes, emailNewEpisodes);
+            case "fastpass" -> new Alert(notifyFastPass, emailFastPass);
+            case "comment" -> new Alert(pushComments, emailComments);
+            case "coins" -> new Alert(pushCoins, emailCoins);
+            case "news" -> new Alert(pushNews, emailNews);
+            default -> throw new IllegalArgumentException("Unknown alert type " + type);
+        };
+    }
+
+    /** Switches push and / or email of one alert type ({@code null}: unchanged). */
+    public void changeAlert(String type, @Nullable Boolean push, @Nullable Boolean email) {
+        switch (type) {
+            case "update" -> {
+                notifyNewEpisodes = push != null ? push : notifyNewEpisodes;
+                emailNewEpisodes = email != null ? email : emailNewEpisodes;
+            }
+            case "fastpass" -> {
+                notifyFastPass = push != null ? push : notifyFastPass;
+                emailFastPass = email != null ? email : emailFastPass;
+            }
+            case "comment" -> {
+                pushComments = push != null ? push : pushComments;
+                emailComments = email != null ? email : emailComments;
+            }
+            case "coins" -> {
+                pushCoins = push != null ? push : pushCoins;
+                emailCoins = email != null ? email : emailCoins;
+            }
+            case "news" -> {
+                pushNews = push != null ? push : pushNews;
+                emailNews = email != null ? email : emailNews;
+            }
+            default -> throw new IllegalArgumentException("Unknown alert type " + type);
+        }
+    }
+
+    public boolean isQuietHours() {
+        return quietHours;
+    }
+
+    public int getQuietFrom() {
+        return quietFrom;
+    }
+
+    public int getQuietTo() {
+        return quietTo;
+    }
+
+    public boolean isDailyDigest() {
+        return dailyDigest;
+    }
+
+    /** Quiet hours; {@code null}: unchanged. Hours are 0-23 (checked by the caller). */
+    public void changeQuietHours(
+            @Nullable Boolean on, @Nullable Integer from, @Nullable Integer to) {
+        if (on != null) {
+            quietHours = on;
+        }
+        if (from != null) {
+            quietFrom = from.shortValue();
+        }
+        if (to != null) {
+            quietTo = to.shortValue();
+        }
+    }
+
+    public void changeDailyDigest(boolean value) {
+        dailyDigest = value;
     }
 
     public void changeLanguage(Language value) {
