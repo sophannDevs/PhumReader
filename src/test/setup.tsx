@@ -14,6 +14,26 @@ MotionGlobalConfig.skipAnimations = true
 if (typeof globalThis.SVGGeometryElement === "undefined") {
   Object.defineProperty(globalThis, "SVGGeometryElement", { value: class SVGGeometryElement extends SVGElement {}, configurable: true })
 }
+// jsdom has no Web Animations API; Animate UI's OTP input runs its ring and slot animations through it.
+// The stand-in finishes at once (cancel, finished, currentTime and effect timing/keyframes are what it reads).
+if (typeof Element.prototype.animate !== "function") {
+  Element.prototype.animate = function () {
+    return {
+      cancel() {},
+      finish() {},
+      play() {},
+      pause() {},
+      currentTime: 0,
+      finished: Promise.resolve(),
+      effect: { getTiming: () => ({}), getKeyframes: () => [] },
+      addEventListener() {},
+      removeEventListener() {},
+    } as unknown as Animation
+  }
+}
+if (typeof Element.prototype.getAnimations !== "function") {
+  Element.prototype.getAnimations = () => []
+}
 
 // ---- routing: Next.js and next-intl need the Next.js runtime, so tests get plain stand-ins
 vi.mock("next/navigation", async () => {
