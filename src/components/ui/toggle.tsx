@@ -3,7 +3,7 @@
 import * as React from "react"
 import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "cn"
-import { Toggle as TogglePrimitive } from "radix-ui"
+import { Toggle as TogglePrimitive } from "@animate-ui/react/primitives/radix-ui"
 
 // Chips: round, outlined; pressed = dark fill (genre chips, filters).
 const toggleVariants = cva(
