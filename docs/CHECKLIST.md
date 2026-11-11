@@ -136,7 +136,7 @@ T32 → T33 → T34 → F24–F27 → T39–T42. A V2.1 task marked "→ Fnn" is
 - [x] T39 Khmer pass: every page in km at 390/768/1440; no clipped text; `lang="km"`; fix long strings
 - [x] T40 Accessibility pass (keyboard, focus, dialogs, labels, contrast) and reduced motion
 - [x] T41 Playwright e2e for the 6 key flows in Spec "Key flows to test end to end" (and update the V1 tests for the new routes)
-- [ ] T42 Final review: no "Toonwave"/"PhumReader" left in the UI, placeholders visible, all ?demo states work, README for running the demo
+- [x] T42 Final review: no "Toonwave"/"PhumReader" left in the UI, placeholders visible, all ?demo states work, README for running the demo
 
 ## Assumptions (V2.1)
 (V1 assumptions 1–110 are in docs/CHECKLIST-v1.md. Anything guessed for V2.1 goes here, with the task ID.)
@@ -330,3 +330,10 @@ T32 → T33 → T34 → F24–F27 → T39–T42. A V2.1 task marked "→ Fnn" is
 - V2-63 (T41) **e2e**: the 6 key flows are in e2e/flows.spec.ts (1, 2, 5, 6) and e2e/admin-flows.spec.ts (3, 4); the V1
   demo tests are rewritten for the V2.1 routes. e2e/real.spec.ts (real API, not run in CI) still describes V1 screens;
   updating it needs the backend running, which this office PC can't do.
+- V2-64 (T42) **Final review**: no "Toonwave"/"PhumReader" in the UI (the generated API types quote backend setting
+  names, which keep the old spelling); the service worker cache is now `phumireader-offline-v2`, so returning visitors
+  get the V2.1 offline page. Every placeholder in foundations §8 is on screen. `?demo=empty|error|slow` checked on every
+  data page. Settings and Help read only local data in the demo, so the flags change their writes: Save changes and
+  the password change now go through the fake API (delay, `?demo=error` fails them). Unused V1 leftovers removed
+  (password-rules, image-upload-field, empty message namespaces); unused shadcn/ui primitives stay as the kit. README
+  has a "Try the demo" section.

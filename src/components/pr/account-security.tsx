@@ -28,6 +28,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { useRouter } from "@/i18n/navigation"
 import * as account from "@/lib/api/account"
 import { DEMO_MODE } from "@/lib/api/config"
+import { withDemo } from "@/lib/demo-api"
 import { errorCode, fieldErrors, retryAfterSeconds } from "@/lib/api/errors"
 import { UploadError, uploadImage } from "@/lib/api/uploads"
 import { formatDate, initials } from "@/lib/format"
@@ -329,9 +330,10 @@ export function PasswordRow() {
   const [error, setError] = useState("")
 
   const save = useMutation({
-    mutationFn: () => account.changePassword(pw.cur, pw.nw),
+    // Demo: the fake API (delay, ?demo=error), nothing is stored.
+    mutationFn: () => (DEMO_MODE ? withDemo(() => undefined) : account.changePassword(pw.cur, pw.nw)),
     onSuccess: () => {
-      toast.success(t("passwordChanged"))
+      toast.success(t(DEMO_MODE ? "passwordUpdated" : "passwordChanged"))
       void qc.invalidateQueries({ queryKey: ["devices"] })
       toggle(false)
     },
@@ -361,11 +363,6 @@ export function PasswordRow() {
             ? t("pwSame")
             : ""
     if (problem) return setError(problem)
-    if (DEMO_MODE) {
-      toast.success(t("passwordUpdated"))
-      toggle(false)
-      return
-    }
     save.mutate()
   }
 

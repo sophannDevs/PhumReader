@@ -26,6 +26,7 @@ import { Link, usePathname, useRouter } from "@/i18n/navigation"
 import { type Locale } from "@/i18n/routing"
 import * as account from "@/lib/api/account"
 import { DEMO_MODE } from "@/lib/api/config"
+import { withDemo } from "@/lib/demo-api"
 import { fieldErrors } from "@/lib/api/errors"
 import { formatShortDate, ictDate, initials } from "@/lib/format"
 import { logOut, toUser } from "@/lib/session"
@@ -243,6 +244,8 @@ export function SettingsPage() {
     if (nameBad || !user) return
     setSaving(true)
     try {
+      // Demo: every write goes through the fake API (300–800 ms, ?demo=error fails it).
+      if (DEMO_MODE) await withDemo(() => undefined)
       if (nameTrim !== user.name) {
         if (DEMO_MODE) useAppStore.getState().login({ ...user, name: nameTrim })
         else useAppStore.getState().login(toUser(await account.patchProfile(nameTrim)))

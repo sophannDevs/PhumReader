@@ -15,7 +15,6 @@ import episodeForm from "./episodeForm.json"
 import episodes from "./episodes.json"
 import errors from "./errors.json"
 import footer from "./footer.json"
-import foundations from "./foundations.json"
 import genresPage from "./genresPage.json"
 import help from "./help.json"
 import home from "./home.json"
@@ -57,7 +56,6 @@ const messages = {
   "episodes": episodes,
   "errors": errors,
   "footer": footer,
-  "foundations": foundations,
   "genresPage": genresPage,
   "help": help,
   "home": home,
