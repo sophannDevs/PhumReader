@@ -124,10 +124,13 @@ class CatalogApiTest {
             assertThat(card.get("badges").get("isNew").asBoolean())
                     .as(slug + " NEW")
                     .isEqualTo(s.get("badges").get("isNew").asBoolean());
-            // UP: the series updates today (Thursday) and released an episode this week.
+            // UP: the series updates today (Thursday), released an episode this week and is still
+            // ongoing (completed series no longer update).
             assertThat(card.get("badges").get("up").asBoolean())
                     .as(slug + " UP")
-                    .isEqualTo(s.get("updateDay").asString().equals("Thu"));
+                    .isEqualTo(
+                            s.get("updateDay").asString().equals("Thu")
+                                    && s.get("status").asString().equals("ongoing"));
         }
     }
 
@@ -266,12 +269,14 @@ class CatalogApiTest {
 
     @Test
     void badgesFollowTheCalendar() throws Exception {
-        // Friday noon: Friday's series are UP, Thursday's no longer.
+        // Friday noon: Friday's ongoing series are UP, Thursday's no longer.
         clock.set(DEMO_NOON.plusSeconds(24 * 3600));
         for (JsonNode card : allSeriesCards()) {
             assertThat(card.get("badges").get("up").asBoolean())
                     .as(card.get("slug").asString())
-                    .isEqualTo(card.get("updateDay").asString().equals("Fri"));
+                    .isEqualTo(
+                            card.get("updateDay").asString().equals("Fri")
+                                    && card.get("status").asString().equals("ongoing"));
         }
 
         // 2026-11-22: the "new" series launched on 2026-10-22 are older than 30 days.
@@ -507,7 +512,14 @@ class CatalogApiTest {
 
         assertViewsNeverRise(
                 list(getJson("/api/v1/search?genre=sci-fi&sort=popular&limit=20").get("items")));
-        assertThat(list(getJson("/api/v1/search?status=completed").get("items"))).isEmpty();
+        // V2.1 demo data: some series are completed.
+        long completedInDemo =
+                list(demo().get("series")).stream()
+                        .filter(s -> s.get("status").asString().equals("completed"))
+                        .count();
+        assertThat(list(getJson("/api/v1/search?status=completed&limit=20").get("items")))
+                .hasSize((int) completedInDemo)
+                .allMatch(c -> c.get("status").asString().equals("completed"));
         assertThat(list(getJson("/api/v1/search?status=ongoing&limit=3").get("items"))).hasSize(3);
         assertThat(list(getJson("/api/v1/search?sort=newest&limit=5").get("items"))).hasSize(5);
 
