@@ -4,8 +4,8 @@ import { cn } from "cn"
 import { Slot } from "radix-ui"
 
 const badgeVariants = cva(
-  // 6 px radius, 14 px icons
-  "group/badge inline-flex h-5 w-fit shrink-0 items-center justify-center gap-1 overflow-hidden rounded-badge border border-transparent px-1.5 text-xs font-semibold whitespace-nowrap transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background [&>svg]:pointer-events-none [&>svg]:size-3.5",
+  // 22 px tall, 8 px side padding, 6 px radius, 14 px icons (prototype shared.css .badge)
+  "group/badge inline-flex h-[22px] w-fit shrink-0 items-center justify-center gap-1 overflow-hidden rounded-badge border border-transparent px-2 text-xs font-semibold whitespace-nowrap transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background [&>svg]:pointer-events-none [&>svg]:size-3.5",
   {
     variants: {
       variant: {
@@ -13,14 +13,14 @@ const badgeVariants = cva(
         secondary: "bg-secondary text-secondary-foreground",
         outline: "border-border bg-background text-foreground",
         // "Unlocked", "Recommended"
-        brand: "border-brand-soft-border bg-brand-soft text-brand-ink",
+        brand: "bg-brand-soft text-brand-ink",
         // new-episode "UP"
         up: "bg-up text-up-foreground",
         new: "bg-primary text-primary-foreground",
-        // Fast Pass price, warnings
-        warn: "border-warning-border bg-warning-soft text-warning-ink",
-        // failed payments
-        danger: "border-destructive-border bg-destructive-soft text-destructive-ink",
+        // Fast Pass price, warnings (#B45309 on #FFFBEB: 4.8:1)
+        warn: "bg-warning-soft text-warning",
+        // failed payments (not in the prototype; borderless like the others)
+        danger: "bg-destructive-soft text-destructive-ink",
         // on top of cover art
         dark: "bg-scrim text-surface-foreground",
       },

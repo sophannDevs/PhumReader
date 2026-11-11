@@ -249,7 +249,7 @@ export function CheckoutCard({
             <h2 id="co-title" className="type-h3">
               {t(kind === "khqr" ? "payTitleKhqr" : kind === "aba" ? "payTitleAba" : "payTitleCard")}
             </h2>
-            <Badge variant="outline" role="timer" aria-live="off" className="h-[22px] gap-1 px-2 tabular-nums">
+            <Badge variant="outline" role="timer" aria-live="off" className="tabular-nums">
               <ClockIcon className="size-3" aria-hidden />
               <span className="sr-only">{t("expiresIn")} </span>
               {mmss(remaining)}

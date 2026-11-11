@@ -149,7 +149,7 @@ export function ComicEndSection({
               <span className="text-xs leading-4 text-muted-foreground">{t("nextEpisodeCard")}</span>
               <span className="type-h4">{loc.title(next.title)}</span>
               {nextLocked ? (
-                <Badge variant="warn" className="h-auto min-h-5 whitespace-normal">
+                <Badge variant="warn" className="h-auto min-h-[22px] whitespace-normal">
                   <ZapIcon className="size-3" aria-hidden />
                   {t("nextFastPass", { price, date: loc.date(next.date) })}
                 </Badge>

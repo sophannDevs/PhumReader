@@ -142,7 +142,7 @@ when that Fix task is done.
 ## After V2.1 (added 2026-11-11)
 Follow-ups found after T42. The API work for V2.1 features that only save on the device is in
 docs/BACKEND_CHECKLIST.md, "V2.1 API additions" (V21-01 … V21-07).
-- [ ] T43 Badges 22 px tall with 8 px side padding, like the prototype's `.badge` (ours: 20 px, 6 px). Check the rows
+- [x] T43 Badges 22 px tall with 8 px side padding, like the prototype's `.badge` (ours: 20 px, 6 px). Check the rows
   and cards that line badges up with text at 390 and 1440 px.
 - [ ] T44 Khmer: native review of every `km` string (launch blocker A12), and decide the digits: numbers filled into
   messages print Latin digits, while the dictionary's fixed strings use Khmer digits (V2-61). Apply the decision
@@ -352,6 +352,10 @@ docs/BACKEND_CHECKLIST.md, "V2.1 API additions" (V21-01 … V21-07).
   the password change now go through the fake API (delay, `?demo=error` fails them). Unused V1 leftovers removed
   (password-rules, image-upload-field, empty message namespaces); unused shadcn/ui primitives stay as the kit. README
   has a "Try the demo" section.
+- V2-65 (T43) **Badges** follow the prototype's `.badge` exactly: 22 px tall, 8 px side padding (was 20 px / 6 px), and
+  the Fast Pass (`warn`) and `brand` badges have no border, like `.badge-warn` / `.badge-brand`; `warn` text is
+  `--warning` #B45309 (4.8:1 on #FFFBEB) instead of #92400E. `danger` (failed payments, not in the prototype) lost its
+  border too. The six per-page "h-[22px] px-2" overrides are gone.
 - V2-66 (T46) **Coin balance for guests**: the design and spec show the coin balance to everyone, so a logged-out demo
   visitor saw the device's demo wallet ("3"). On the owner's request (2026-11-11) the balance shows only when logged
   in, in both modes: the header chip, the series Fast Pass card's "N coins · Get more" link and the Coins page's "Your
