@@ -13,7 +13,8 @@ One task at a time, in order. Each task: build → `npm run lint && npm run type
 - Both frontend modes must keep working: demo (`NEXT_PUBLIC_DEMO=1`) and real (the API in `backend/`).
 
 **Work order:** F01–F04 → T14 → F05–F09 → T13 → F10 → T16 → F11 → T18 → F12 → F13 → T21 → F14–F19 → F20–F23 →
-T32 → T33 → T34 → F24–F27 → T39–T42. A V2.1 task marked "→ Fnn" is ticked when that Fix task is done.
+T32 → T33 → T34 → F24–F27 → T39–T42 (all done 2026-11-11) → T43 → T44 → T45. A V2.1 task marked "→ Fnn" is ticked
+when that Fix task is done.
 
 ## Fix: finished V1 work that differs from V2.1
 
@@ -137,6 +138,18 @@ T32 → T33 → T34 → F24–F27 → T39–T42. A V2.1 task marked "→ Fnn" is
 - [x] T40 Accessibility pass (keyboard, focus, dialogs, labels, contrast) and reduced motion
 - [x] T41 Playwright e2e for the 6 key flows in Spec "Key flows to test end to end" (and update the V1 tests for the new routes)
 - [x] T42 Final review: no "Toonwave"/"PhumReader" left in the UI, placeholders visible, all ?demo states work, README for running the demo
+
+## After V2.1 (added 2026-11-11)
+Follow-ups found after T42. The API work for V2.1 features that only save on the device is in
+docs/BACKEND_CHECKLIST.md, "V2.1 API additions" (V21-01 … V21-07).
+- [ ] T43 Badges 22 px tall with 8 px side padding, like the prototype's `.badge` (ours: 20 px, 6 px). Check the rows
+  and cards that line badges up with text at 390 and 1440 px.
+- [ ] T44 Khmer: native review of every `km` string (launch blocker A12), and decide the digits: numbers filled into
+  messages print Latin digits, while the dictionary's fixed strings use Khmer digits (V2-61). Apply the decision
+  everywhere (one formatter, not per page).
+- [ ] T45 Real-API e2e for the V2.1 screens: `e2e/real.spec.ts` still describes V1 (V2-63). Work started on branch
+  `p1-01-readme-and-startup-check` ("Port the real-API tests to the redesigned components"). Needs the backend
+  running (home PC). Key flows 3 and 4 also need V21-04 and V21-01. → P6-03
 
 ## Assumptions (V2.1)
 (V1 assumptions 1–110 are in docs/CHECKLIST-v1.md. Anything guessed for V2.1 goes here, with the task ID.)

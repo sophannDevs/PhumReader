@@ -1,6 +1,7 @@
 # PhumReader backend: implementation checklist (Spring Boot)
 
-Phase 2 of this repo. The frontend (docs/CHECKLIST.md, T01–T53) is finished and runs on demo data. This list follows
+Phase 2 of this repo. The frontend follows the V2.1 design (docs/CHECKLIST.md, F01–F27 and T01–T42, all done; the V1
+list T01–T53 is docs/CHECKLIST-v1.md); features it has that the API lacks are under "V2.1 API additions". This list follows
 the plan doc **"Toonwave V2 – Implementation plan"** (https://claude.ai/artifact/9bbCmhSxqAbRZeTbjU8QVT, 2026-11-05):
 same task ids, same "depends on" and the same acceptance criteria. "Toonwave" in the plan means PhumReader.
 It replaces the earlier B01–B52 list.
@@ -37,7 +38,7 @@ Sources of truth: the plan doc, `CLAUDE.md`, `docs/BACKEND.md` (decisions and lo
 - Money: balances change only through the ledger, in one transaction with a wallet row lock; every payment and
   unlock call is idempotent. Never build card number fields: cards use the PayWay hosted page.
 
-Progress: 30 / 51 tasks · Stage 1 done · Phase 5 complete · Milestone M5 complete (M1, M3, M4, M6, M7 pending formal verification)
+Progress: 32 / 51 plan tasks · 0 / 7 V2.1 API additions · Stage 1 done · Phase 5 complete · Milestone M5 complete (M1, M3, M4, M6, M7 pending formal verification)
 
 ---
 
@@ -831,6 +832,68 @@ wiring them are fixed in P5-07.
     4. Coin & Payment flow: PayWay simulator order creation, reload resilience, poll status settling, Fast Pass episode unlocking.
     5. Creator flow: "Become creator" onboarding, series creation with rules & uploads, 60-panel episode upload at 10 Mbps, chapter novel editor, publishing & 30s scheduler release.
     6. Moderation & Account flow: Admin content hiding, user suspension, refused refunds, audit log tracking, and 30-day grace account deletion.
+
+---
+
+## V2.1 API additions (local, not in the plan doc)
+
+Added 2026-11-11 after the V2.1 redesign (docs/CHECKLIST.md F01–F27, T01–T42). These V2.1 features have no API yet,
+so in real mode they only save to the browser's local store (CHECKLIST Assumptions V2-8, V2-53 … V2-58): nothing
+reaches other devices or users. Each task builds the API and switches the real-mode frontend over to it. Same rules
+as the plan tasks (tests, `./gradlew check`, OpenAPI + `npm run api:gen`); commit as `V21-0N: …`. Needs the home PC
+(Gradle can't fetch the libraries on the office PC). Order: V21-01 first (key flow 4), the rest in any order.
+
+- [ ] **V21-01 Series review workflow** (key flow 4)
+  - Build: series states draft → in review → changes requested → published (reject → draft). Creator "Submit for
+    review" and "Resubmit"; admin queue with the auto-check flags, approve / request changes (reasons + note) /
+    reject, each in the audit log; the reviewer's items show on Manage series. Today Submit publishes at once.
+  - Depends on: P3-14, P3-18
+  - Done when: key flow 4 (create series → admin requests changes → creator fixes and resubmits → admin approves →
+    upload episode 1) passes in `e2e/real.spec.ts`.
+
+- [ ] **V21-02 Series and episode fields from the V2.1 forms**
+  - Build: second genre, age 16+ / 18+, language "both" (two versions), several update days, release time (ICT),
+    series-wide Fast Pass (on/off, 1–5 episodes ahead) and comments switch, story status with a break message, hide
+    and show one episode, delete a series (owner only; soft delete if anyone unlocked an episode).
+  - Depends on: P3-14
+  - Done when: everything Create series and Manage series save is still there after a reload in real mode.
+
+- [ ] **V21-03 In-app notifications inbox**
+  - Build: a `notifications` table fed by the same outbox events as P3-16 (new episode, comment reply, coins and
+    payments, report outcome); `GET /me/notifications` with the V2.1 tabs (all, unread, episodes, comments, coins)
+    and a cursor; mark read / unread, mark all read, remove (restorable for the 6 s Undo); unread count for the
+    header bell; alert settings (per type, quiet hours, daily digest).
+  - Depends on: P3-16, P3-17
+  - Done when: the bell count and the Notifications page match in two browsers signed in to the same account.
+
+- [ ] **V21-04 Blocking and report outcomes**
+  - Build: block / unblock / list blocked accounts (their comments are hidden for the blocker); the V2.1 report
+    reasons per type with a case number (R-xxxxx); the reporter's "Your reports" list with status; admin actions
+    remove / warn / suspend (timed) / no violation.
+  - Depends on: P3-13, P3-18
+  - Done when: key flow 3 (comment → report → admin removes → the reporter sees "Removed" in Settings) passes in
+    real mode, and a block still applies on a new device.
+
+- [ ] **V21-05 Creator earnings and public profile**
+  - Build: earnings from coins spent on the creator's Fast Pass episodes (per series and month, `[REVENUE SHARE]`
+    stays a placeholder); payout settings without real bank fields (`[PAYOUT PROVIDER FORM]`); a unique creator
+    handle for `/creators/<handle>` with bio and public series, plus the owner view.
+  - Depends on: P3-10, P3-14
+  - Done when: Earnings and the public profile show API data in real mode.
+
+- [ ] **V21-06 Admin payments: refund requests and stuck payments**
+  - Build: readers request a refund (receipt / Help); the admin list shows eligibility (`[REFUND WINDOW]`) and
+    approves or denies with a reason (ledger reversal, audit log); a "paid but no coins" list from the P3-11
+    reconciliation with "Add coins".
+  - Depends on: P3-11, P3-18
+  - Done when: a refund requested in real mode shows in /admin/payments, and approving it reverses the coins once.
+
+- [ ] **V21-07 Smaller V2.1 fields**
+  - Build: welcome picks (genres, story languages) saved as account preferences and used by Home; birth year at
+    sign-up (for 16+ / 18+); the Help contact form creates a ticket (T-xxxxx) sent to `[SUPPORT EMAIL]`; "Was this
+    helpful?" votes.
+  - Depends on: P3-02, P3-17
+  - Done when: each one is still there after a reload and on a new device in real mode.
 
 ---
 
