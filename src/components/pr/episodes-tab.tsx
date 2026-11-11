@@ -16,7 +16,7 @@ import { formatShortDate } from "@/lib/format"
 import { useEpisodes } from "@/lib/queries"
 import { useSeriesViewer } from "@/lib/me"
 import { readerHref, seriesHref } from "@/lib/routes"
-import { useAppStore, useCoins } from "@/lib/store"
+import { useAppStore, useCoins, useUser } from "@/lib/store"
 
 const PAGE = 12
 
@@ -38,6 +38,7 @@ export function EpisodesTab({
   const locale = useLocale()
   const router = useRouter()
   const coins = useCoins()
+  const user = useUser()
   const { lastRead, unlocked } = useSeriesViewer(series)
   const query = useEpisodes(series.slug)
   const [newestFirst, setNewestFirst] = useState(true)
@@ -164,15 +165,18 @@ export function EpisodesTab({
                 {t("unlockAll", { count: lockedFast.length, cost: lockedFast.length * price })}
               </Button>
             ) : null}
-            <Button asChild variant="outline" size="sm">
-              <Link
-                href="/coins"
-                onClick={() => useAppStore.getState().setShopReturn({ page: seriesHref(series), episode: 0, title: series.title })}
-              >
-                <CoinIcon size={16} />
-                {t("coinsGetMore", { count: coins })}
-              </Link>
-            </Button>
+            {/* The balance is for logged-in readers only (assumption V2-66). */}
+            {user ? (
+              <Button asChild variant="outline" size="sm">
+                <Link
+                  href="/coins"
+                  onClick={() => useAppStore.getState().setShopReturn({ page: seriesHref(series), episode: 0, title: series.title })}
+                >
+                  <CoinIcon size={16} />
+                  {t("coinsGetMore", { count: coins })}
+                </Link>
+              </Button>
+            ) : null}
           </div>
         </div>
       ) : null}

@@ -21,7 +21,7 @@ import { useRouter } from "@/i18n/navigation"
 import { DEMO_MODE } from "@/lib/api/config"
 import { useAccountEmail } from "@/lib/me"
 import { useCoinsPage } from "@/lib/queries"
-import { isDemoOrder, useAppStore, useCoins } from "@/lib/store"
+import { isDemoOrder, useAppStore, useCoins, useUser } from "@/lib/store"
 import { cn } from "@/lib/utils"
 import { useWallet } from "@/lib/wallet"
 
@@ -50,10 +50,12 @@ function useShopReturn(packs: CoinPack[], offer: boolean) {
 }
 type ShopReturn = NonNullable<ReturnType<typeof useShopReturn>>
 
-/** Prototype `.card.bal`: coin, "Your balance", N coins, "≈ N Fast Pass episodes". */
+/** Prototype `.card.bal`: coin, "Your balance", N coins, "≈ N Fast Pass episodes". Logged in only (V2-66). */
 function BalanceCard({ price }: { price: number }) {
   const t = useTranslations("coins")
   const coins = useCoins()
+  const user = useUser()
+  if (!user) return null
   return (
     <div className="flex items-center gap-3 rounded-card border bg-card px-5 py-3.5 shadow-xs max-md:w-full">
       <CoinIcon size={32} className="size-9 text-[15px]" />

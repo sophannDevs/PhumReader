@@ -150,7 +150,8 @@ docs/BACKEND_CHECKLIST.md, "V2.1 API additions" (V21-01 … V21-07).
 - [ ] T45 Real-API e2e for the V2.1 screens: `e2e/real.spec.ts` (15 tests) still describes the V1 screens (V2-63); it
   hasn't changed since the V2.1 upgrade (c8b3193 ported the Vitest unit tests, not this file). Needs the backend
   running (home PC). Key flows 3 and 4 also need V21-04 and V21-01. → P6-03
-- [x] T46 No coin chip in the header for logged-out visitors (owner decision 2026-11-11; the design shows it). V2-66
+- [x] T46 No coin balance for logged-out visitors: header chip, series Fast Pass card and Coins page (owner decision
+  2026-11-11; the design shows them). V2-66
 
 ## Assumptions (V2.1)
 (V1 assumptions 1–110 are in docs/CHECKLIST-v1.md. Anything guessed for V2.1 goes here, with the task ID.)
@@ -351,7 +352,7 @@ docs/BACKEND_CHECKLIST.md, "V2.1 API additions" (V21-01 … V21-07).
   the password change now go through the fake API (delay, `?demo=error` fails them). Unused V1 leftovers removed
   (password-rules, image-upload-field, empty message namespaces); unused shadcn/ui primitives stay as the kit. README
   has a "Try the demo" section.
-- V2-66 (T46) **Coin chip for guests**: the design and spec show the header coin chip to everyone, so a logged-out demo
-  visitor saw the device's demo wallet ("3"). On the owner's request (2026-11-11) the chip shows only when logged in,
-  in both modes. The series Fast Pass card ("N coins · Get more") and the Coins page balance still show the balance to
-  guests (0 in real mode).
+- V2-66 (T46) **Coin balance for guests**: the design and spec show the coin balance to everyone, so a logged-out demo
+  visitor saw the device's demo wallet ("3"). On the owner's request (2026-11-11) the balance shows only when logged
+  in, in both modes: the header chip, the series Fast Pass card's "N coins · Get more" link and the Coins page's "Your
+  balance" card. Guests still see the Coins page packs and the Fast Pass card's "Unlock all" (it asks them to log in).
