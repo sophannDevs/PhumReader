@@ -1,5 +1,6 @@
 plugins {
     java
+    jacoco
     id("org.springframework.boot") version "4.1.2"
     id("io.spring.dependency-management") version "1.1.7"
     id("com.diffplug.spotless") version "8.11.0"
@@ -73,6 +74,46 @@ tasks.processResources {
 tasks.withType<Test> {
     useJUnitPlatform()
     systemProperty("openapi.file", layout.projectDirectory.file("openapi/openapi.json").asFile.absolutePath)
+}
+
+// Line coverage (P6-01): `./gradlew check` fails when auth, coin or payment fall below 80%. Report:
+// build/reports/jacoco/test/html/index.html
+jacoco {
+    toolVersion = "0.8.13"
+}
+
+tasks.jacocoTestReport {
+    dependsOn(tasks.test)
+    reports {
+        xml.required = true
+        html.required = true
+    }
+}
+
+// One check per feature (a bundle rule cannot select packages).
+val coverageChecks = listOf("auth", "coin", "payment").map { feature ->
+    tasks.register<JacocoCoverageVerification>("jacocoCoverage${feature.replaceFirstChar { it.uppercase() }}") {
+        group = "verification"
+        description = "Fails when line coverage of app.phumreader.$feature is below 80%."
+        dependsOn(tasks.test)
+        executionData(tasks.test.get())
+        classDirectories.setFrom(
+            sourceSets.main.get().output.asFileTree.matching { include("app/phumreader/$feature/**") }
+        )
+        violationRules {
+            rule {
+                limit {
+                    counter = "LINE"
+                    value = "COVEREDRATIO"
+                    minimum = "0.80".toBigDecimal()
+                }
+            }
+        }
+    }
+}
+
+tasks.check {
+    dependsOn(tasks.jacocoTestReport, coverageChecks)
 }
 
 // Rewrites openapi/openapi.json from the running code. `check` fails while the committed file is out of date.

@@ -1216,11 +1216,21 @@ as the plan tasks (tests, `./gradlew check`, OpenAPI + `npm run api:gen`); commi
 
 ## Phase 6: Functional testing, accessibility and performance
 
-- [ ] **P6-01 Backend tests**
+- [x] **P6-01 Backend tests**
   - Build: unit + integration tests on Zonky embedded PostgreSQL with Redis fakes (the plan's Testcontainers is
     replaced: no Docker), security rules, concurrency tests for unlocks and payment webhooks.
   - Depends on: Phase 3
   - Done when: 80%+ line coverage on auth, coin and payment; all tests green in CI.
+  - Done 2026-11-11: 352 tests, all green with `./gradlew check` (CI runs the same command). Gradle's built-in JaCoCo
+    plugin (0.8.13, added with the owner's OK) measures line coverage: report in
+    `backend/build/reports/jacoco/test/html/index.html`; `check` runs `jacocoCoverageAuth`, `jacocoCoverageCoin` and
+    `jacocoCoveragePayment` and fails below 80% each. Now: auth 85%, coin 95%, payment 91% (it was 73% because the real
+    PayWay client had no tests). New: `HttpPayWayGatewayTest` (13; the client against a local HTTP server standing in
+    for ABA: signed multipart and JSON, QR and hosted-page answers, every status code, errors) and `SecurityRulesTest`
+    (5; reads every endpoint from the running app: signed out gives 401 off the public lists, a reader gets 403 on
+    `/admin/**`, a write without the CSRF header is refused, so a new endpoint is covered the day it is added).
+    Already there: concurrency tests for unlocks and payment callbacks (`CoinConcurrencyTest`), the Redis stand-ins
+    (`RedisStandInsTest`), and the embedded PostgreSQL 17 base (`@IntegrationTest`).
 
 - [x] **P6-02 Frontend tests**
   - Build: Vitest + Testing Library for patterns and forms, MSW for API mocks.
