@@ -163,7 +163,7 @@ export function EmailField({ email }: { email: string }) {
       <span className={fieldLabel}>{t("email")}</span>
       <div className="flex h-9 min-w-0 items-center gap-2 rounded-control border bg-[#fafafa] px-3 text-sm">
         <span className="truncate">{email}</span>
-        <Badge variant="brand" className="h-[22px] px-2">
+        <Badge variant="brand">
           <CheckIcon className="size-3" aria-hidden />
           {t("verified")}
         </Badge>

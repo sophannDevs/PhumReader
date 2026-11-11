@@ -173,7 +173,7 @@ export function NotificationsPage() {
                   <TabsTrigger key={x.value} value={x.value} className="h-11 px-3 pt-0 pb-0">
                     {x.label}
                     {x.count ? (
-                      <Badge variant="secondary" className="h-[22px] px-2 tabular-nums">
+                      <Badge variant="secondary" className="tabular-nums">
                         {x.count}
                       </Badge>
                     ) : null}

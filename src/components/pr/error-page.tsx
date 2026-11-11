@@ -110,7 +110,7 @@ export function ErrorHero({
 
             <div className="flex min-w-0 flex-col gap-4">
               <div className="flex items-center justify-between gap-3">
-                <Badge variant={BADGE[kind]} className="h-[22px] px-2">
+                <Badge variant={BADGE[kind]}>
                   {t(`codes.${kind}`)}
                 </Badge>
                 <ErrorLangToggle />

@@ -635,7 +635,7 @@ export function SettingsPage() {
                           {t("reportMeta", { id: r.id, date: formatShortDate(ictDate(r.at), locale) })}
                         </span>
                       </span>
-                      <Badge variant={STATUS_BADGE[r.status]} className="h-[22px] px-2">
+                      <Badge variant={STATUS_BADGE[r.status]}>
                         {t(`status.${STATUS_KEY[r.status]}`)}
                       </Badge>
                     </li>
