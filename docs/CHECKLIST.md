@@ -325,7 +325,9 @@ docs/BACKEND_CHECKLIST.md, "V2.1 API additions" (V21-01 … V21-07).
   remove_warn, suspend = suspend (7 days), No violation = dismiss. Blocked accounts and "Your reports" come from the account
   (`ModerationSync`); reports on an account (profile) and the warning sent to the accused stay local until V21-05.
 - V2-55 (F27) **Payments**: demo rows come from the prototype (`src/lib/admin.ts`); Add coins adds to this device's wallet
-  (one device plays reader and admin). Real mode lists paid orders with eligibility and refunds after a reason;
+  (one device plays reader and admin). Real mode (V21-06): refund requests come from the receipt (POST
+  /coins/orders/{n}/refund-request), "Paid but no coins" from PayWay reconciliation (amount mismatch); Refund takes back the
+  coins still unused, the money is sent from PayWay's dashboard; `[REFUND WINDOW]` is not enforced. Real mode lists paid orders with eligibility and refunds after a reason;
   "Paid but no coins" is hidden (no such API list).
 - V2-56 (F21) **Create series** on `/creator/new` (V1 `/creator/series/new` redirects, keeping the query): the draft
   autosaves to store `draftSeries` ("new" or the work id; `?draft=C3` continues the dashboard draft). Demo: the cover

@@ -4,6 +4,7 @@ import app.phumreader.admin.domain.ContentType;
 import app.phumreader.admin.domain.FlagKind;
 import app.phumreader.series.domain.AgeRating;
 import app.phumreader.series.domain.SeriesType;
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -169,4 +170,64 @@ public final class AdminViews {
      * @param refundedCoins coins taken back from the wallet
      */
     public record RefundResult(AdminOrder order, int refundedCoins) {}
+
+    /** The order behind a refund request or a stuck payment. */
+    public record PayOrder(
+            UUID id,
+            String orderNumber,
+            UUID userId,
+            String email,
+            String displayName,
+            int coins,
+            String method,
+            @Nullable Instant paidAt) {}
+
+    /**
+     * What a refund request can get back, worked out from the reader's wallet now.
+     *
+     * @param kind unused (all the order's coins are still there), partial (some were spent) or
+     *     spent (none left: only Decline)
+     * @param duplicate the same pack was paid twice by this reader within an hour
+     * @param unused coins that would be taken back
+     * @param spent coins already spent
+     */
+    public record Eligibility(String kind, boolean duplicate, int unused, int spent) {}
+
+    /**
+     * A reader's request for a refund.
+     *
+     * @param status open, approved or declined
+     * @param note the admin's note to the reader (always there when declined)
+     * @param refundedCoins coins taken back when approved
+     */
+    public record AdminRefundRequest(
+            UUID id,
+            String status,
+            String reason,
+            Instant requestedAt,
+            @Nullable Instant decidedAt,
+            @Nullable String decidedBy,
+            @Nullable String note,
+            @Nullable Integer refundedCoins,
+            PayOrder order,
+            Eligibility eligibility) {}
+
+    /**
+     * "Paid but no coins": PayWay says the order was paid, the coins were not credited.
+     *
+     * @param status open or resolved
+     * @param paidAmount what PayWay says was paid
+     * @param orderStatus the order's own status (it is not paid here)
+     */
+    public record AdminStuckPayment(
+            UUID id,
+            String status,
+            PayOrder order,
+            @Nullable BigDecimal paidAmount,
+            @Nullable String currency,
+            String orderStatus,
+            Instant foundAt,
+            @Nullable Instant resolvedAt,
+            @Nullable String resolvedBy,
+            @Nullable String note) {}
 }

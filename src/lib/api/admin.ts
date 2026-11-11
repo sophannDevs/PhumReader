@@ -7,6 +7,10 @@ export type AdminUser = Schemas["AdminUser"];
 export type AdminContent = Schemas["AdminContent"];
 export type AdminReport = Schemas["AdminReport"];
 export type AdminOrder = Schemas["AdminOrder"];
+/** A reader's request for a refund, with what can be refunded (V21-06). */
+export type AdminRefundRequest = Schemas["AdminRefundRequest"];
+/** Paid at PayWay, no coins credited (V21-06). */
+export type AdminStuckPayment = Schemas["AdminStuckPayment"];
 export type AuditEntry = Schemas["AuditEntry"];
 /** A series waiting for review, with the automatic-check flags (V21-01). */
 export type ReviewQueueItem = Schemas["ReviewQueueItem"];
@@ -44,6 +48,10 @@ export const fetchContent = (
   );
 export const fetchReports = (status: string | undefined, cursor?: string) =>
   page<AdminReport>("/admin/reports", { status }, cursor);
+export const fetchRefundRequests = (status: string | undefined, cursor?: string) =>
+  page<AdminRefundRequest>("/admin/refund-requests", { status }, cursor);
+export const fetchStuckPayments = (status: string | undefined, cursor?: string) =>
+  page<AdminStuckPayment>("/admin/stuck-payments", { status }, cursor);
 export const fetchOrders = (f: ListFilter, cursor?: string) =>
   page<AdminOrder>("/admin/orders", { q: f.q, status: f.status }, cursor);
 export const fetchAudit = (action: string | undefined, cursor?: string) =>
@@ -66,6 +74,14 @@ export const settleReport = (id: string, action: ReportAction, note: string, day
     note: note.trim() || undefined,
     days,
   });
+/** Takes back the coins still in the wallet; 409 coins_spent when none are left, request_decided when another admin was first. */
+export const approveRefundRequest = (id: string, note?: string) =>
+  api.post<AdminRefundRequest>(`/admin/refund-requests/${id}/approve`, { note: note?.trim() || undefined });
+/** The reason is shown to the reader on the receipt. */
+export const declineRefundRequest = (id: string, reason: string) =>
+  api.post<AdminRefundRequest>(`/admin/refund-requests/${id}/decline`, { reason });
+export const addStuckCoins = (id: string, note?: string) =>
+  api.post<AdminStuckPayment>(`/admin/stuck-payments/${id}/add-coins`, { note: note?.trim() || undefined });
 export const refundOrder = (id: string, reason: string) =>
   api.post<Schemas["RefundResult"]>(`/admin/orders/${id}/refund`, { reason });
 

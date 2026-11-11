@@ -1,6 +1,7 @@
 package app.phumreader.admin.repository;
 
 import app.phumreader.admin.domain.ContentType;
+import java.math.BigDecimal;
 import java.sql.Array;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -506,6 +507,153 @@ public class AdminQueries {
                 .param("note", note, Types.VARCHAR)
                 .param("id", id)
                 .update();
+    }
+
+    // ---------- refund requests and stuck payments (V21-06) ----------
+
+    /** A refund request with its order and what the reader has left of the order's coins. */
+    public record RefundRequestRow(
+            UUID id,
+            String status,
+            String reason,
+            OffsetDateTime requestedAt,
+            @Nullable OffsetDateTime decidedAt,
+            @Nullable String decidedBy,
+            @Nullable String note,
+            @Nullable Integer refundedCoins,
+            UUID orderId,
+            String orderNumber,
+            UUID userId,
+            String email,
+            String displayName,
+            int total,
+            String method,
+            @Nullable OffsetDateTime paidAt,
+            int balance,
+            boolean duplicate) {}
+
+    private static final String REFUND_REQUEST_SELECT =
+            "select r.id, r.status, r.reason, r.requested_at, r.decided_at, r.decision_note,"
+                    + " r.refunded_coins, dec.display_name as decider, o.id as order_id,"
+                    + " o.order_number, o.user_id, u.email, u.display_name,"
+                    + " o.coins + o.bonus_coins + o.first_bonus_coins as total, o.method, o.paid_at,"
+                    + " coalesce(w.balance, 0) as balance,"
+                    + " exists (select 1 from payment_orders p where p.user_id = o.user_id"
+                    + "   and p.pack_id = o.pack_id and p.id <> o.id"
+                    + "   and p.status in ('PAID', 'REFUNDED')"
+                    + "   and abs(extract(epoch from p.paid_at - o.paid_at)) <= 3600) as duplicate"
+                    + " from refund_requests r join payment_orders o on o.id = r.order_id"
+                    + " join users u on u.id = o.user_id"
+                    + " left join coin_wallets w on w.user_id = o.user_id"
+                    + " left join users dec on dec.id = r.decided_by";
+
+    public List<RefundRequestRow> refundRequests(
+            @Nullable String status, @Nullable Key after, int limit) {
+        String sql =
+                REFUND_REQUEST_SELECT
+                        + " where true"
+                        + (status == null ? "" : " and r.status = :status")
+                        + (after == null ? "" : " and (r.requested_at, r.id) < (:t, :id)")
+                        + " order by r.requested_at desc, r.id desc limit :limit";
+        return page(jdbc.sql(sql), null, status, after, limit)
+                .query((rs, n) -> refundRequest(rs))
+                .list();
+    }
+
+    public Optional<RefundRequestRow> refundRequest(UUID id) {
+        return jdbc.sql(REFUND_REQUEST_SELECT + " where r.id = :id")
+                .param("id", id)
+                .query((rs, n) -> refundRequest(rs))
+                .optional();
+    }
+
+    private static RefundRequestRow refundRequest(ResultSet rs) throws SQLException {
+        return new RefundRequestRow(
+                rs.getObject("id", UUID.class),
+                rs.getString("status"),
+                rs.getString("reason"),
+                rs.getObject("requested_at", OffsetDateTime.class),
+                rs.getObject("decided_at", OffsetDateTime.class),
+                rs.getString("decider"),
+                rs.getString("decision_note"),
+                rs.getObject("refunded_coins", Integer.class),
+                rs.getObject("order_id", UUID.class),
+                rs.getString("order_number"),
+                rs.getObject("user_id", UUID.class),
+                rs.getString("email"),
+                rs.getString("display_name"),
+                rs.getInt("total"),
+                rs.getString("method"),
+                rs.getObject("paid_at", OffsetDateTime.class),
+                rs.getInt("balance"),
+                rs.getBoolean("duplicate"));
+    }
+
+    /** A paid-at-PayWay order whose coins were not credited. */
+    public record StuckRow(
+            UUID id,
+            @Nullable BigDecimal paidAmount,
+            @Nullable String currency,
+            OffsetDateTime foundAt,
+            @Nullable OffsetDateTime resolvedAt,
+            @Nullable String resolvedBy,
+            @Nullable String note,
+            UUID orderId,
+            String orderNumber,
+            UUID userId,
+            String email,
+            String displayName,
+            int total,
+            String method,
+            String orderStatus) {}
+
+    private static final String STUCK_SELECT =
+            "select s.id, s.paid_amount, s.currency, s.found_at, s.resolved_at, s.note,"
+                    + " res.display_name as resolver, o.id as order_id, o.order_number, o.user_id,"
+                    + " u.email, u.display_name, o.status as order_status,"
+                    + " o.coins + o.bonus_coins + o.first_bonus_coins as total, o.method"
+                    + " from payment_stuck s join payment_orders o on o.id = s.order_id"
+                    + " join users u on u.id = o.user_id"
+                    + " left join users res on res.id = s.resolved_by";
+
+    public List<StuckRow> stuckPayments(@Nullable String status, @Nullable Key after, int limit) {
+        String sql =
+                STUCK_SELECT
+                        + " where true"
+                        + (status == null
+                                ? ""
+                                : status.equals("OPEN")
+                                        ? " and s.resolved_at is null"
+                                        : " and s.resolved_at is not null")
+                        + (after == null ? "" : " and (s.found_at, s.id) < (:t, :id)")
+                        + " order by s.found_at desc, s.id desc limit :limit";
+        return page(jdbc.sql(sql), null, null, after, limit).query((rs, n) -> stuck(rs)).list();
+    }
+
+    public Optional<StuckRow> stuckPayment(UUID id) {
+        return jdbc.sql(STUCK_SELECT + " where s.id = :id")
+                .param("id", id)
+                .query((rs, n) -> stuck(rs))
+                .optional();
+    }
+
+    private static StuckRow stuck(ResultSet rs) throws SQLException {
+        return new StuckRow(
+                rs.getObject("id", UUID.class),
+                rs.getBigDecimal("paid_amount"),
+                rs.getString("currency"),
+                rs.getObject("found_at", OffsetDateTime.class),
+                rs.getObject("resolved_at", OffsetDateTime.class),
+                rs.getString("resolver"),
+                rs.getString("note"),
+                rs.getObject("order_id", UUID.class),
+                rs.getString("order_number"),
+                rs.getObject("user_id", UUID.class),
+                rs.getString("email"),
+                rs.getString("display_name"),
+                rs.getInt("total"),
+                rs.getString("method"),
+                rs.getString("order_status"));
     }
 
     // ---------- orders ----------

@@ -67,7 +67,21 @@ public final class PaymentViews {
             Instant createdAt,
             Instant expiresAt,
             @Nullable Instant paidAt,
+            @Nullable RefundRequestView refundRequest,
             PayWayGateway.@Nullable Checkout checkout) {}
+
+    /**
+     * The reader's request for a refund of an order (V21-06).
+     *
+     * @param status open (waiting for an admin), approved or declined
+     * @param note the admin's note to the reader, when there is one
+     * @param refundedCoins coins taken back when it was approved
+     */
+    public record RefundRequestView(
+            String status,
+            Instant requestedAt,
+            @Nullable String note,
+            @Nullable Integer refundedCoins) {}
 
     /** Stored for an order's Idempotency-Key: the order it created. */
     public record CreatedOrder(String orderNumber) {}

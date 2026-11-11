@@ -1793,6 +1793,10 @@ test("19. key flow 3: report a comment -> admin removes it -> the reporter sees 
     // Unblock there; the first browser sees it after a reload.
     await visible(dp.getByRole("button", { name: `Unblock ${otherName}` })).click();
     await expect(dp.getByRole("button", { name: `Unblock ${otherName}` })).toHaveCount(0);
+    // The button changes at once; wait until the account has saved it before the other browser reloads.
+    await expect
+      .poll(async () => ((await (await page.request.get("/api/v1/me/blocks")).json()) as unknown[]).length)
+      .toBe(0);
     await page.reload();
     await page.waitForLoadState("networkidle");
     await expect(page.getByRole("button", { name: `Unblock ${otherName}` })).toHaveCount(0);
@@ -1851,7 +1855,73 @@ test("20. creator earnings and public profile show API data: payout method, Edit
   }
 });
 
-test("21. delete the account: signed out everywhere, wrong password refused first", async () => {
+test("21. refund request: asked on the receipt, shown in /admin/payments, approving takes the coins back once", async ({
+  browser,
+}) => {
+  test.setTimeout(180_000);
+  // Buy the 10 pack again (the simulator), so there is a paid order whose coins are all unused.
+  await page.goto("/coins");
+  await expect(headerCoins()).toHaveText(/^\d+$/);
+  const before = Number(await headerCoins().textContent());
+  await page.locator("#pack-10").click();
+  await page.getByRole("button", { name: "Continue to payment" }).click();
+  await page.getByRole("button", { name: "I've paid (simulate)" }).click();
+  await expect(page.getByText(/coins added/).first()).toBeVisible();
+  const number = sql(
+    `select o.order_number from payment_orders o join users u on u.id = o.user_id where u.email = '${EMAIL}' order by o.created_at desc limit 1`,
+  ).trim();
+  const total = Number(
+    sql(`select coins + bonus_coins + first_bonus_coins from payment_orders where order_number = '${number}'`).trim(),
+  );
+  expect(total).toBeGreaterThan(0);
+
+  // The reader asks on the receipt; the request shows there as waiting.
+  const reason = `E2E refund ${stamp}`;
+  await page.goto(`/coins/orders/${number}`);
+  await visible(page.getByRole("button", { name: "Ask for a refund" })).click();
+  const dialog = visible(page.getByRole("dialog"));
+  await dialog.getByLabel("Why do you want a refund?").fill(reason);
+  await dialog.getByRole("button", { name: "Send request" }).click();
+  await expect(visible(page.getByText(/Refund requested on/))).toBeVisible();
+  await expect(page.getByRole("button", { name: "Ask for a refund" })).toHaveCount(0);
+
+  // The admin sees it with what can be refunded, and approves it.
+  const adminCtx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+  try {
+    const ap = await adminCtx.newPage();
+    await logIn(ap, NEW_PASSWORD);
+    await ap.goto("/admin/payments");
+    const row = visible(ap.locator("li", { hasText: number }).filter({ hasText: reason }));
+    await expect(row).toBeVisible();
+    // The same pack was paid twice within an hour (test 4 and this one): flagged as a double charge.
+    await expect(row).toContainText("Double charge");
+    await row.getByRole("button", { name: "Refund duplicate" }).click();
+
+    // Sent after the Undo window: the order is refunded, and the coins left the wallet through one REFUND row.
+    await expect
+      .poll(async () => ((await (await page.request.get(`/api/v1/coins/orders/${number}`)).json()) as { status: string }).status, {
+        timeout: 30_000,
+      })
+      .toBe("refunded");
+    expect(
+      sql(
+        `select count(*) || ':' || coalesce(sum(amount), 0) from coin_ledger l join payment_orders o on o.id = l.order_id where o.order_number = '${number}' and l.reason = 'REFUND'`,
+      ).trim(),
+    ).toBe(`1:-${total}`);
+    await page.goto("/coins");
+    await expect(headerCoins()).toHaveText(String(before));
+    await page.goto(`/coins/orders/${number}`);
+    await expect(visible(page.getByText("Refunded").first())).toBeVisible();
+
+    // Nothing left to decide, and a second approval is refused.
+    await ap.reload();
+    await expect(ap.locator("li", { hasText: reason })).toHaveCount(0);
+  } finally {
+    await adminCtx.close();
+  }
+});
+
+test("22. delete the account: signed out everywhere, wrong password refused first", async () => {
   await page.goto("/settings");
   await visible(page.getByRole("button", { name: "Delete account" })).click();
   // V2.1: type DELETE first; the button stays disabled until then.

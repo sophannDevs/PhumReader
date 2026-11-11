@@ -20,6 +20,7 @@ import app.phumreader.payment.service.PaymentViews.CoinPack;
 import app.phumreader.payment.service.PaymentViews.CoinShop;
 import app.phumreader.payment.service.PaymentViews.CreatedOrder;
 import app.phumreader.payment.service.PaymentViews.OrderView;
+import app.phumreader.payment.service.PaymentViews.RefundRequestView;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.math.BigDecimal;
 import java.security.SecureRandom;
@@ -327,6 +328,14 @@ public class PaymentService {
      */
     @Transactional
     public Refund refund(UUID orderId, String reason) {
+        return refund(orderId, reason, false);
+    }
+
+    /**
+     * @param partial refund only the coins still in the wallet when the reader spent some (a refund
+     *     request an admin approved); still refused when none are left
+     */
+    private Refund refund(UUID orderId, String reason, boolean partial) {
         UUID userId =
                 queries.ownerOf(orderId)
                         .orElseThrow(
@@ -341,7 +350,10 @@ public class PaymentService {
                             : "Only a paid order can be refunded.");
         }
         int total = order.coins() + order.bonusCoins() + order.firstBonusCoins();
-        if (balance < total) {
+        if (partial && balance > 0 && balance < total) {
+            total = balance;
+        }
+        if (balance < total || balance == 0) {
             throw ApiException.conflict(
                     "coins_spent",
                     "The reader already spent "
@@ -360,6 +372,109 @@ public class PaymentService {
         queries.markRefunded(orderId, now());
         inbox.orderRefunded(userId, orderId, order.orderNumber(), total);
         return new Refund(order.orderNumber(), userId, total);
+    }
+
+    // ---------- refund requests and stuck payments (V21-06) ----------
+
+    public static final int MIN_REASON = 10;
+    public static final int MAX_REASON = 500;
+
+    /**
+     * The reader asks for a refund of their paid order. 409 {@code not_paid} (only a paid order),
+     * {@code refund_requested} (one request per order); 400 {@code reason} (10-500 characters).
+     */
+    @Transactional
+    public OrderView requestRefund(CurrentUser user, String orderNumber, String reason) {
+        String text = reason == null ? "" : reason.strip();
+        if (text.length() < MIN_REASON || text.length() > MAX_REASON) {
+            throw ApiException.invalidField(
+                    "reason",
+                    text.length() < MIN_REASON ? "too_short" : "too_long",
+                    "Tell us why, in " + MIN_REASON + " to " + MAX_REASON + " characters.");
+        }
+        OrderRow order = queries.lock(ownOrder(user, orderNumber).id());
+        if (order.status() != OrderStatus.PAID) {
+            throw ApiException.conflict(
+                    "not_paid",
+                    order.status() == OrderStatus.REFUNDED
+                            ? "This order was already refunded."
+                            : "Only a paid order can be refunded.");
+        }
+        if (!queries.insertRefundRequest(order.id(), user.id(), text, now())) {
+            throw ApiException.conflict(
+                    "refund_requested", "You already asked for a refund of this order.");
+        }
+        return view(order);
+    }
+
+    /** What an approved refund request took back. */
+    public record RefundDecision(Refund refund, UUID orderId) {}
+
+    /**
+     * An admin approves a refund request: the coins still in the wallet (up to the order's coins)
+     * leave through one REFUND ledger row and the order is refunded. 409 {@code request_decided},
+     * {@code coins_spent} (none left).
+     */
+    @Transactional
+    public RefundDecision approveRefundRequest(
+            UUID requestId, UUID adminId, @Nullable String note) {
+        var request = lockRequest(requestId);
+        Refund refund = refund(request.orderId(), "Refund request approved", true);
+        queries.decideRefundRequest(
+                requestId, "APPROVED", adminId, blankToNull(note), refund.coins(), now());
+        return new RefundDecision(refund, request.orderId());
+    }
+
+    /** An admin declines a refund request; the reason is shown to the reader on the receipt. */
+    @Transactional
+    public UUID declineRefundRequest(UUID requestId, UUID adminId, String reason) {
+        String text = reason == null ? "" : reason.strip();
+        if (text.isEmpty()) {
+            throw ApiException.invalidField("reason", "required", "Write a reason for the reader.");
+        }
+        var request = lockRequest(requestId);
+        queries.decideRefundRequest(requestId, "DECLINED", adminId, text, null, now());
+        return request.orderId();
+    }
+
+    private PaymentQueries.RefundRequestRow lockRequest(UUID requestId) {
+        var request =
+                queries.lockRefundRequest(requestId)
+                        .orElseThrow(() ->
+                                ApiException.notFound(
+                                        "refund_request_not_found", "No such request."));
+        if (!request.status().equals("OPEN")) {
+            throw ApiException.conflict(
+                    "request_decided", "This request was already decided by another admin.");
+        }
+        return request;
+    }
+
+    /**
+     * An admin adds the coins of an order PayWay says was paid but reconciliation did not credit
+     * (the amount differed). Credits once; 409 {@code stuck_resolved}.
+     *
+     * @return the order number and the coins credited
+     */
+    @Transactional
+    public Refund addStuckCoins(UUID stuckId, UUID adminId, @Nullable String note) {
+        var stuck =
+                queries.lockStuck(stuckId)
+                        .orElseThrow(() ->
+                                ApiException.notFound(
+                                        "stuck_payment_not_found", "No such payment."));
+        if (stuck.resolvedAt() != null) {
+            throw ApiException.conflict(
+                    "stuck_resolved", "The coins were already added by another admin.");
+        }
+        OrderView paid = confirmPaid(stuck.orderId(), "ADMIN-" + stuckId, true);
+        queries.resolveStuck(stuckId, adminId, blankToNull(note), now());
+        UUID userId = queries.ownerOf(stuck.orderId()).orElseThrow();
+        return new Refund(paid.orderNumber(), userId, paid.totalCoins());
+    }
+
+    private static @Nullable String blankToNull(@Nullable String text) {
+        return text == null || text.isBlank() ? null : text.strip();
     }
 
     /** What a refund took back. */
@@ -425,6 +540,9 @@ public class PaymentService {
                             check.currency(),
                             price.amount(),
                             price.currency());
+                    // Paid at PayWay, no coins here: it shows in Admin > Payments > Paid but no
+                    // coins.
+                    queries.recordStuck(found.id(), check.paidAmount(), check.currency(), now());
                     return Settlement.CLOSED;
                 }
                 confirmPaid(found.id(), found.orderNumber(), true);
@@ -530,6 +648,15 @@ public class PaymentService {
     }
 
     private OrderView view(OrderRow o, PayWayGateway.@Nullable Checkout checkout) {
+        RefundRequestView request =
+                queries.refundRequestOf(o.id())
+                        .map(r ->
+                                new RefundRequestView(
+                                        r.status().toLowerCase(Locale.ROOT),
+                                        r.requestedAt().toInstant(),
+                                        r.decisionNote(),
+                                        r.refundedCoins()))
+                        .orElse(null);
         return new OrderView(
                 o.orderNumber(),
                 effectiveStatus(o),
@@ -545,6 +672,7 @@ public class PaymentService {
                 o.createdAt().toInstant(),
                 o.expiresAt().toInstant(),
                 o.paidAt() == null ? null : o.paidAt().toInstant(),
+                request,
                 checkout);
     }
 

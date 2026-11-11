@@ -282,6 +282,11 @@ Paths below are relative to `/api/v1`. "CSRF" applies to every write (see [CSRF]
 | POST | `/comments/{id}/report` | Signed in | Report a comment (`reason` is a key, `details` separate; 400 `invalid_reason`, `details_required`) |
 | GET | `/me/reports` | Signed in | Your reports with status in_review / removed / no_violation |
 | GET | `/me/blocks` | Signed in | Accounts you blocked |
+| POST | `/coins/orders/{number}/refund-request` | Signed in | Ask for a refund of a paid order (V21-06; the order then carries `refundRequest`) |
+| GET | `/admin/refund-requests` | Admin | Refund requests with eligibility (unused / partial / spent, double charge) |
+| POST | `/admin/refund-requests/{id}/approve` / `decline` | Admin | Take back the unused coins / decline with a reason |
+| GET | `/admin/stuck-payments` | Admin | Paid at PayWay, no coins credited |
+| POST | `/admin/stuck-payments/{id}/add-coins` | Admin | Credit the order once |
 | GET | `/creators/{handle}` | Public | A creator's profile with their published series (V21-05) |
 | PATCH | `/creator/profile` | Creator | Edit name, location (60) and bio (200) |
 | GET | `/creator/earnings` | Creator | Coins from Fast Pass unlocks, last 6 months, by series; history; payout method |

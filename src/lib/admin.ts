@@ -68,6 +68,12 @@ export const useReports = (status: string | undefined) =>
   usePaged("reports", [status], (c) => real.fetchReports(status, c));
 export const useOrders = (f: real.ListFilter) =>
   usePaged("orders", [f.q, f.status], (c) => real.fetchOrders(f, c));
+/** Real mode (V21-06): the readers' refund requests waiting for an admin. */
+export const useRefundRequests = (status: string | undefined) =>
+  usePaged("refund-requests", [status], (c) => real.fetchRefundRequests(status, c));
+/** Real mode (V21-06): orders PayWay says were paid but have no coins. */
+export const useStuckPayments = (status: string | undefined) =>
+  usePaged("stuck-payments", [status], (c) => real.fetchStuckPayments(status, c));
 export const useAudit = (action: string | undefined) =>
   usePaged("audit", [action], (c) => real.fetchAudit(action, c));
 /** Real mode: the series waiting for review (V21-01), oldest first. */

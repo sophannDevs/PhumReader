@@ -37,6 +37,8 @@ export type Receipt = {
   /** Demo refund dates (epoch ms); the API doesn't send them */
   refundRequestedAt?: number
   refundedAt?: number
+  /** Real API (V21-06): the reader's refund request, with the admin's note when declined */
+  refundRequest?: { status: "open" | "approved" | "declined"; note: string | null; at: number; coins: number | null }
 }
 
 const DAY_MS = 86_400_000
@@ -118,6 +120,17 @@ function fromApi(o: OrderView, rows: PaidRow[], balance: number): Receipt {
     priceUSD: o.priceUsdCents == null ? fallback.priceUSD : `$${(o.priceUsdCents / 100).toFixed(2)}`,
     priceKHR: o.priceKhr == null ? fallback.priceKHR : `${o.priceKhr.toLocaleString("en-US")} ៛`,
     spent: status === "Paid" ? o.totalCoins - unusedOf(o.orderNumber, o.totalCoins, rows, balance) : 0,
+    ...(o.refundRequest
+      ? {
+          refundRequest: {
+            status: o.refundRequest.status as "open" | "approved" | "declined",
+            note: o.refundRequest.note ?? null,
+            at: Date.parse(o.refundRequest.requestedAt),
+            coins: o.refundRequest.refundedCoins ?? null,
+          },
+          refundRequestedAt: Date.parse(o.refundRequest.requestedAt),
+        }
+      : {}),
   }
 }
 

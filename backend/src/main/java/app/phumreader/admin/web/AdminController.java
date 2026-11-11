@@ -5,7 +5,9 @@ import app.phumreader.admin.service.AdminService;
 import app.phumreader.admin.service.AdminService.ReportAction;
 import app.phumreader.admin.service.AdminViews.AdminContent;
 import app.phumreader.admin.service.AdminViews.AdminOrder;
+import app.phumreader.admin.service.AdminViews.AdminRefundRequest;
 import app.phumreader.admin.service.AdminViews.AdminReport;
+import app.phumreader.admin.service.AdminViews.AdminStuckPayment;
 import app.phumreader.admin.service.AdminViews.AdminUser;
 import app.phumreader.admin.service.AdminViews.AuditEntry;
 import app.phumreader.admin.service.AdminViews.Overview;
@@ -279,6 +281,72 @@ class AdminController {
             @Valid @RequestBody ReasonRequest body,
             @Parameter(hidden = true) @AuthenticationPrincipal CurrentUser user) {
         return admin.refund(user, id, body.reason());
+    }
+
+    // ---------- refund requests and stuck payments (V21-06) ----------
+
+    /**
+     * @param note optional; the reader sees it on the receipt
+     */
+    public record OptionalNoteRequest(@Nullable @Size(max = 500) String note) {}
+
+    @GetMapping("/refund-requests")
+    @Operation(summary = "Refund requests from readers, newest first, with what can be refunded")
+    CursorPage<AdminRefundRequest> refundRequests(
+            @RequestParam(required = false) @Parameter(description = "open, approved or declined")
+                    @Nullable String status,
+            @RequestParam(required = false) @Parameter(description = CURSOR)
+                    @Nullable String cursor,
+            @RequestParam(required = false) @Parameter(description = LIMIT)
+                    @Nullable Integer limit) {
+        return admin.refundRequests(status, cursor, limit);
+    }
+
+    @PostMapping("/refund-requests/{id}/approve")
+    @Operation(
+            summary = "Approve a refund request: the coins still in the wallet are taken back",
+            description =
+                    "409 request_decided (another admin decided first) and coins_spent (no coins"
+                            + " left). The money goes back in PayWay's dashboard.")
+    AdminRefundRequest approveRefundRequest(
+            @PathVariable UUID id,
+            @Valid @RequestBody(required = false) @Nullable OptionalNoteRequest body,
+            @Parameter(hidden = true) @AuthenticationPrincipal CurrentUser user) {
+        return admin.approveRefundRequest(user, id, body == null ? null : body.note());
+    }
+
+    @PostMapping("/refund-requests/{id}/decline")
+    @Operation(
+            summary = "Decline a refund request; the reason is shown to the reader",
+            description = "400 fields.reason required; 409 request_decided.")
+    AdminRefundRequest declineRefundRequest(
+            @PathVariable UUID id,
+            @Valid @RequestBody ReasonRequest body,
+            @Parameter(hidden = true) @AuthenticationPrincipal CurrentUser user) {
+        return admin.declineRefundRequest(user, id, body.reason());
+    }
+
+    @GetMapping("/stuck-payments")
+    @Operation(summary = "Paid at PayWay but no coins credited, newest first")
+    CursorPage<AdminStuckPayment> stuckPayments(
+            @RequestParam(required = false) @Parameter(description = "open or resolved")
+                    @Nullable String status,
+            @RequestParam(required = false) @Parameter(description = CURSOR)
+                    @Nullable String cursor,
+            @RequestParam(required = false) @Parameter(description = LIMIT)
+                    @Nullable Integer limit) {
+        return admin.stuckPayments(status, cursor, limit);
+    }
+
+    @PostMapping("/stuck-payments/{id}/add-coins")
+    @Operation(
+            summary = "Add the coins of a stuck payment (check PayWay's dashboard first)",
+            description = "Credits the order once; 409 stuck_resolved when it was done already.")
+    AdminStuckPayment addStuckCoins(
+            @PathVariable UUID id,
+            @Valid @RequestBody(required = false) @Nullable OptionalNoteRequest body,
+            @Parameter(hidden = true) @AuthenticationPrincipal CurrentUser user) {
+        return admin.addStuckCoins(user, id, body == null ? null : body.note());
     }
 
     // ---------- audit log ----------

@@ -1116,12 +1116,37 @@ as the plan tasks (tests, `./gradlew check`, OpenAPI + `npm run api:gen`); commi
     - **Not in this task.** Reports on an account (the profile's Report button): they need an account target in the
       admin queue and stay on this device for now.
 
-- [ ] **V21-06 Admin payments: refund requests and stuck payments**
+- [x] **V21-06 Admin payments: refund requests and stuck payments**
   - Build: readers request a refund (receipt / Help); the admin list shows eligibility (`[REFUND WINDOW]`) and
     approves or denies with a reason (ledger reversal, audit log); a "paid but no coins" list from the P3-11
     reconciliation with "Add coins".
   - Depends on: P3-11, P3-18
   - Done when: a refund requested in real mode shows in /admin/payments, and approving it reverses the coins once.
+  - Design (proposed 2026-11-11, not yet confirmed by the owner):
+    - **Migration V14.** `refund_requests` (one per order: the reader's reason up to 500, status open / approved /
+      declined, who decided, the admin's note, the coins taken back) and `payment_stuck` ("paid but no coins": the order,
+      what PayWay said was paid, found / resolved). Both with row level security.
+    - **Reader.** `POST /coins/orders/{number}/refund-request` `{ reason }` (10-500 characters) on their own paid
+      order: 409 `not_paid`, `refund_requested` (once per order). The order carries `refundRequest` (status, date,
+      the admin's note) so the receipt shows it.
+    - **Eligibility** is worked out when an admin looks: `unused` (all coins still in the wallet), `partial` (some spent:
+      the unused coins can be refunded), `spent` (none left: only Decline), and `double` (the same pack paid twice by the
+      same reader within an hour). `[REFUND WINDOW]` stays a placeholder; no time limit is enforced.
+    - **Admin.** `GET /admin/refund-requests?status=`, `POST …/{id}/approve` `{ note? }` (takes back the unused coins
+      through one REFUND ledger row, marks the order refunded, tells the reader; 409 `coins_spent` when none are left;
+      the money itself goes back in PayWay's dashboard) and `POST …/{id}/decline` `{ reason }`. Both are in the audit
+      log. The direct "Refund" on an order stays and still needs all coins unused.
+    - **Stuck payments.** Reconciliation writes a row when PayWay says an order was paid but the amount or currency does
+      not match, so the coins were not credited. `GET /admin/stuck-payments?status=`, `POST …/{id}/add-coins` `{ note }`
+      credits the order once (audit log, the reader gets the "payment received" item). Errors while asking PayWay are
+      only logged.
+    - **Not in this task.** A notice to the reader when a request is declined (the receipt shows it); no refund window.
+    - **Done 2026-11-11.** V14, the endpoints and tests (`RefundRequestsApiTest` 7, `PayWayPaymentTest` +1);
+      `./gradlew check` green, OpenAPI and `api:gen` updated. Website: the receipt's "Ask for a refund" (dialog, status,
+      the admin's reason), /admin/payments (refund requests, "Paid but no coins", paid orders) use the API
+      (`src/components/pr/payments-real.test.tsx`). `e2e/real.spec.ts` test 21 passes (asked on the receipt, shown in
+      /admin/payments, approved after the Undo window, one REFUND ledger row, balance back). Tests 15-18 were not run.
+      A second purchase of the same pack within an hour is flagged "Double charge" by design.
 
 - [ ] **V21-07 Smaller V2.1 fields**
   - Build: welcome picks (genres, story languages) saved as account preferences and used by Home; birth year at

@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
-import type { AdminOrder } from "@/lib/api/admin"
+import type { AdminOrder, AdminRefundRequest, AdminStuckPayment } from "@/lib/api/admin"
 import { DEMO_MODE } from "@/lib/api/config"
 import {
   actions,
@@ -18,6 +18,8 @@ import {
   decisionKey,
   useAdminQueues,
   useOrders,
+  useRefundRequests,
+  useStuckPayments,
   type PaymentMethod,
   type RefundRequest,
   type StuckPayment,
@@ -47,15 +49,24 @@ function useMethodLabel() {
 /**
  * /admin/payments (spec §22 Payments, screens 22-admin-payments): refund requests with eligibility (unused, double
  * charge, partly spent) and "Paid but no coins" with Add coins (demo: adds the coins to this device's wallet).
- * The API has neither queue: real mode lists the paid orders with a Refund for those whose coins are unused
- * (POST /admin/orders/{id}/refund after the Undo window).
+ * Real mode (V21-06): the readers' refund requests (Refund takes back the coins still unused, Decline asks for a reason the
+ * reader sees on the receipt), "Paid but no coins" from PayWay reconciliation (Add coins), and below them every paid order
+ * with a direct Refund for those whose coins are all unused. Each decision is sent after the Undo window.
  */
 export function AdminPayments() {
   const t = useTranslations("admin")
   return (
     <>
       <AdminHead title={t("nav_payments")} line={t("pay_line")} />
-      {DEMO_MODE ? <DemoPayments /> : <RealOrders />}
+      {DEMO_MODE ? (
+        <DemoPayments />
+      ) : (
+        <>
+          <RealRequests />
+          <RealStuck />
+          <RealOrders />
+        </>
+      )}
     </>
   )
 }
@@ -184,6 +195,174 @@ function DemoPayments() {
         )}
       </AdminCard>
     </>
+  )
+}
+
+/** Real mode (V21-06): refund requests waiting for an admin. */
+function RealRequests() {
+  const t = useTranslations("admin")
+  const locale = useLocale()
+  const decide = useDecide()
+  const method = useMethodLabel()
+  const list = useRefundRequests("open")
+  const log = useAppStore((s) => s.adminLog)
+  const [ask, setAsk] = useState<ReasonAsk | null>(null)
+  const handled = new Set(log.map((d) => d.id))
+  const items = list.items.filter((r) => !handled.has(decisionKey("refund", r.id)))
+
+  const approve = (r: AdminRefundRequest) =>
+    decide({
+      key: decisionKey("refund", r.id),
+      queue: "payments",
+      action: "refund",
+      label: r.order.orderNumber,
+      commit: () => actions.approveRefundRequest(r.id),
+      toast: t("toast_refundApproved"),
+    })
+  const decline = (r: AdminRefundRequest) =>
+    setAsk({
+      title: t("rf_declineTitle", { number: r.order.orderNumber }),
+      description: t("rf_declineDesc"),
+      confirm: t("rf_decline"),
+      required: true,
+      destructive: true,
+      run: async (reason) =>
+        decide({
+          key: decisionKey("refund", r.id),
+          queue: "payments",
+          action: "decline",
+          label: r.order.orderNumber,
+          commit: () => actions.declineRefundRequest(r.id, reason),
+          toast: t("toast_declined"),
+        }),
+    })
+  const elig = (r: AdminRefundRequest) =>
+    r.eligibility.duplicate ? (
+      <Badge variant="brand">{t("elig_double")}</Badge>
+    ) : r.eligibility.kind === "unused" ? (
+      <Badge variant="brand">{t("elig_unused")}</Badge>
+    ) : r.eligibility.kind === "partial" ? (
+      <Badge variant="warn">{t("elig_partial", { spent: r.eligibility.spent, unused: r.eligibility.unused })}</Badge>
+    ) : (
+      <Badge variant="warn">{t("elig_spent")}</Badge>
+    )
+  const approveLabel = (r: AdminRefundRequest) =>
+    r.eligibility.kind === "partial" ? t("rf_refundUnused", { count: r.eligibility.unused }) : r.eligibility.duplicate ? t("rf_refundDuplicate") : t("rf_refund")
+
+  return (
+    <AdminCard title={t("rf_title")} titleId="ad-refunds">
+      {list.isPending ? (
+        <div className="flex flex-col gap-3 py-2" aria-hidden>
+          {Array.from({ length: 2 }, (_, i) => (
+            <Skeleton key={i} className="h-14 rounded-control" />
+          ))}
+        </div>
+      ) : list.isError ? (
+        <AdminError onRetry={() => void list.refetch()} />
+      ) : items.length === 0 ? (
+        <p className="py-3 text-[13px] leading-[18px] text-muted-foreground">{t("rf_empty")}</p>
+      ) : (
+        <ul className="m-0 list-none p-0">
+          {items.map((r) => (
+            <Row
+              key={r.id}
+              fill
+              actions={
+                <>
+                  {r.eligibility.kind === "spent" ? null : (
+                    <Button variant="brand" size="sm" onClick={() => approve(r)}>
+                      {approveLabel(r)}
+                    </Button>
+                  )}
+                  <Button variant="ghost" size="sm" onClick={() => decline(r)}>
+                    {t("rf_decline")}
+                  </Button>
+                </>
+              }
+            >
+              <span className="flex flex-wrap items-center gap-1.5">
+                <span className="text-[13px] leading-[18px] font-semibold">{r.order.orderNumber}</span>
+                {elig(r)}
+              </span>
+              <span className="text-xs leading-4 break-words text-muted-foreground">
+                {r.order.displayName} · {r.order.email} · {t("pack", { count: r.order.coins })} · {method(r.order.method)} ·{" "}
+                {t("rf_requested", { date: formatShortDate(ictDate(Date.parse(r.requestedAt)), locale) })}
+              </span>
+              <span className="text-xs leading-4 break-words" lang="en">
+                “{r.reason}”
+              </span>
+            </Row>
+          ))}
+        </ul>
+      )}
+      {list.hasNextPage ? (
+        <Button variant="outline" className="self-center" loading={list.isFetchingNextPage} onClick={() => void list.fetchNextPage()}>
+          {t("loadMore")}
+        </Button>
+      ) : null}
+      <ReasonDialog ask={ask} onClose={() => setAsk(null)} />
+    </AdminCard>
+  )
+}
+
+/** Real mode (V21-06): orders PayWay says were paid but reconciliation did not credit. */
+function RealStuck() {
+  const t = useTranslations("admin")
+  const locale = useLocale()
+  const decide = useDecide()
+  const method = useMethodLabel()
+  const list = useStuckPayments("open")
+  const log = useAppStore((s) => s.adminLog)
+  const handled = new Set(log.map((d) => d.id))
+  const items = list.items.filter((s) => !handled.has(decisionKey("stuck", s.id)))
+
+  const addCoins = (s: AdminStuckPayment) =>
+    decide({
+      key: decisionKey("stuck", s.id),
+      queue: "payments",
+      action: "addCoins",
+      label: s.order.orderNumber,
+      commit: () => actions.addStuckCoins(s.id),
+      toast: t("toast_coinsAdded"),
+    })
+
+  return (
+    <AdminCard title={t("stuck_title")} titleId="ad-stuck" desc={t("stuck_desc")}>
+      {list.isPending ? (
+        <div className="flex flex-col gap-3 py-2" aria-hidden>
+          <Skeleton className="h-14 rounded-control" />
+        </div>
+      ) : list.isError ? (
+        <AdminError onRetry={() => void list.refetch()} />
+      ) : items.length === 0 ? (
+        <p className="py-3 text-[13px] leading-[18px] text-muted-foreground">{t("stuck_empty")}</p>
+      ) : (
+        <ul className="m-0 list-none p-0">
+          {items.map((s) => (
+            <Row
+              key={s.id}
+              actions={
+                <Button variant="brand" size="sm" onClick={() => addCoins(s)}>
+                  {t("addCoins")}
+                </Button>
+              }
+            >
+              <span className="text-[13px] leading-[18px] font-semibold">{s.order.orderNumber}</span>
+              <span className="text-xs leading-4 break-words text-muted-foreground">
+                {s.order.displayName} · {s.order.email} · {t("pack", { count: s.order.coins })} · {method(s.order.method)}
+                {s.paidAmount != null ? ` · ${t("stuck_paid", { amount: s.paidAmount.toFixed(2), currency: s.currency ?? "" })}` : ""} ·{" "}
+                {t("stuck_found", { date: formatShortDate(ictDate(Date.parse(s.foundAt)), locale) })}
+              </span>
+            </Row>
+          ))}
+        </ul>
+      )}
+      {list.hasNextPage ? (
+        <Button variant="outline" className="self-center" loading={list.isFetchingNextPage} onClick={() => void list.fetchNextPage()}>
+          {t("loadMore")}
+        </Button>
+      ) : null}
+    </AdminCard>
   )
 }
 

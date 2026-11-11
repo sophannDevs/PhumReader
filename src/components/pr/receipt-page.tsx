@@ -13,17 +13,25 @@ import {
   Undo2Icon,
   XIcon,
 } from "lucide-react"
+import { useQueryClient } from "@tanstack/react-query"
 import { useLocale } from "next-intl"
 import { useTranslations } from "@/i18n/translations"
+import { useState } from "react"
 import { toast } from "sonner"
 import { type Receipt, type ReceiptStatus, useReceipt } from "@/components/pr/receipt-data"
 import { Timeline, type TimelineStep } from "@/components/pr/receipt-timeline"
 import { StateBox } from "@/components/pr/v2-primitives"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Textarea } from "@/components/ui/textarea"
 import { Skeleton } from "@/components/ui/skeleton"
 import { paymentMethods } from "@/data"
 import { Link, usePathname, useRouter } from "@/i18n/navigation"
+import { DEMO_MODE } from "@/lib/api/config"
+import { requestRefund } from "@/lib/api/coins"
+import { useFailed, useAccountEmail } from "@/lib/me"
+import { orderKey } from "@/lib/wallet"
 import { formatDate, formatShortDate, formatTime, ictDate } from "@/lib/format"
 import { useLocalize } from "@/lib/localize"
 import { useAppStore } from "@/lib/store"
@@ -94,6 +102,75 @@ function Breadcrumb({ id }: { id: string }) {
   )
 }
 
+/** Real API (V21-06): the reader says why; an admin reads it in Admin > Payments. */
+function RefundDialog({ id, unused, onClose }: { id: string; unused: number; onClose: () => void }) {
+  const t = useTranslations("receipt")
+  const email = useAccountEmail()
+  const qc = useQueryClient()
+  const failed = useFailed()
+  const [reason, setReason] = useState("")
+  const [tried, setTried] = useState(false)
+  const [sending, setSending] = useState(false)
+  const short = reason.trim().length < 10
+
+  async function send(e: React.FormEvent) {
+    e.preventDefault()
+    if (short) {
+      setTried(true)
+      return
+    }
+    setSending(true)
+    try {
+      await requestRefund(id, reason.trim())
+      await qc.invalidateQueries({ queryKey: orderKey(email ?? "", id) })
+      toast.success(t("refundSent"))
+      onClose()
+    } catch (error) {
+      failed(error)
+    } finally {
+      setSending(false)
+    }
+  }
+
+  return (
+    <Dialog open onOpenChange={(open) => (open ? null : onClose())}>
+      <DialogContent>
+        <form className="flex flex-col gap-3.5" onSubmit={send} noValidate>
+          <DialogHeader>
+            <DialogTitle className="type-h3">{t("refundDialogTitle", { id })}</DialogTitle>
+            <DialogDescription>{t("refundDialogDesc", { count: unused })}</DialogDescription>
+          </DialogHeader>
+          <label htmlFor="rf-reason" className="text-sm leading-5 font-medium">
+            {t("refundReason")}
+          </label>
+          <Textarea
+            id="rf-reason"
+            rows={4}
+            maxLength={500}
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            aria-invalid={tried && short ? true : undefined}
+            aria-describedby={tried && short ? "rf-reason-error" : undefined}
+          />
+          {tried && short ? (
+            <p id="rf-reason-error" role="alert" className="text-[13px] font-medium text-destructive">
+              {t("refundReasonShort")}
+            </p>
+          ) : null}
+          <div className="flex justify-end gap-2">
+            <Button type="button" variant="ghost" onClick={onClose}>
+              {t("refundCancel")}
+            </Button>
+            <Button type="submit" variant="brand" loading={sending}>
+              {t("refundSend")}
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
 function ReceiptView({ r }: { r: Receipt }) {
   const t = useTranslations("receipt")
   const locale = useLocale()
@@ -105,7 +182,8 @@ function ReceiptView({ r }: { r: Receipt }) {
   const paid = r.status === "Paid"
   const notCharged = r.status === "Failed" || r.status === "Cancelled"
   const unused = Math.max(0, r.total - r.spent)
-  const canRefund = paid && unused > 0
+  const canRefund = paid && unused > 0 && !r.refundRequest
+  const [asking, setAsking] = useState(false)
 
   const rows: { k: string; v: React.ReactNode; copy?: boolean; total?: boolean }[] = [
     { k: t("rowOrder"), v: r.id, copy: true },
@@ -243,13 +321,34 @@ function ReceiptView({ r }: { r: Receipt }) {
           </Link>
         </Button>
         {canRefund ? (
-          <Button variant="ghost" className={action} asChild>
-            <Link href="/help#contact" onClick={help(t("refundMsg", { count: unused, id: r.id }))}>
+          DEMO_MODE ? (
+            <Button variant="ghost" className={action} asChild>
+              <Link href="/help#contact" onClick={help(t("refundMsg", { count: unused, id: r.id }))}>
+                {t("askRefund")}
+              </Link>
+            </Button>
+          ) : (
+            <Button variant="ghost" className={action} onClick={() => setAsking(true)}>
               {t("askRefund")}
-            </Link>
-          </Button>
+            </Button>
+          )
         ) : null}
       </div>
+
+      {r.refundRequest && r.status === "Paid" ? (
+        <p
+          role="status"
+          className={cn(
+            "m-0 rounded-control px-3 py-2 text-center text-[13px] leading-[18px]",
+            r.refundRequest.status === "declined" ? "bg-warning-soft text-warning-ink" : "bg-muted text-muted-foreground"
+          )}
+        >
+          {r.refundRequest.status === "declined"
+            ? t("refundDeclined", { note: r.refundRequest.note ?? "" })
+            : t("refundOpen", { date: shortDate(r.refundRequest.at) })}
+        </p>
+      ) : null}
+      {asking ? <RefundDialog id={r.id} unused={unused} onClose={() => setAsking(false)} /> : null}
 
       {paid ? (
         <p className="m-0 text-center text-xs leading-4 text-muted-foreground">

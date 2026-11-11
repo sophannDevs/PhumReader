@@ -123,6 +123,63 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/refund-requests": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Refund requests from readers, newest first, with what can be refunded */
+        get: operations["refundRequests"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/refund-requests/{id}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Approve a refund request: the coins still in the wallet are taken back
+         * @description 409 request_decided (another admin decided first) and coins_spent (no coins left). The money goes back in PayWay's dashboard.
+         */
+        post: operations["approveRefundRequest"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/refund-requests/{id}/decline": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Decline a refund request; the reason is shown to the reader
+         * @description 400 fields.reason required; 409 request_decided.
+         */
+        post: operations["declineRefundRequest"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/reports": {
         parameters: {
             query?: never;
@@ -231,6 +288,43 @@ export interface paths {
          * @description The creator marks each item fixed and submits again. 400 validation_failed for no items, more than 5 or a note over 300 characters, duplicate_item for a key given twice, malformed_request for an unknown key; 409 not_in_review when it no longer waits for a review; 404 series_not_found.
          */
         post: operations["requestChanges"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/stuck-payments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Paid at PayWay but no coins credited, newest first */
+        get: operations["stuckPayments"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/stuck-payments/{id}/add-coins": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Add the coins of a stuck payment (check PayWay's dashboard first)
+         * @description Credits the order once; 409 stuck_resolved when it was done already.
+         */
+        post: operations["addStuckCoins"];
         delete?: never;
         options?: never;
         head?: never;
@@ -678,6 +772,26 @@ export interface paths {
         put?: never;
         /** Cancel an open order */
         post: operations["cancel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/coins/orders/{number}/refund-request": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Ask for a refund of a paid order
+         * @description The order then carries refundRequest. 400 fields.reason (too_short, too_long); 409 not_paid and refund_requested (one request per order).
+         */
+        post: operations["requestRefund"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2078,6 +2192,22 @@ export interface components {
             /** Format: uuid */
             userId: string;
         };
+        AdminRefundRequest: {
+            /** Format: date-time */
+            decidedAt?: string | null;
+            decidedBy?: string | null;
+            eligibility: components["schemas"]["Eligibility"];
+            /** Format: uuid */
+            id: string;
+            note?: string | null;
+            order: components["schemas"]["PayOrder"];
+            reason: string;
+            /** Format: int32 */
+            refundedCoins?: number | null;
+            /** Format: date-time */
+            requestedAt: string;
+            status: string;
+        };
         AdminReport: {
             /** Format: uuid */
             accusedId?: string | null;
@@ -2098,6 +2228,21 @@ export interface components {
             resolvedBy?: string | null;
             status: string;
             target: components["schemas"]["ReportTarget"];
+        };
+        AdminStuckPayment: {
+            currency?: string | null;
+            /** Format: date-time */
+            foundAt: string;
+            /** Format: uuid */
+            id: string;
+            note?: string | null;
+            order: components["schemas"]["PayOrder"];
+            orderStatus: string;
+            paidAmount?: number | null;
+            /** Format: date-time */
+            resolvedAt?: string | null;
+            resolvedBy?: string | null;
+            status: string;
         };
         AdminUser: {
             /** Format: date-time */
@@ -2355,8 +2500,16 @@ export interface components {
             items: components["schemas"]["AdminOrder"][];
             nextCursor?: string | null;
         };
+        CursorPageAdminRefundRequest: {
+            items: components["schemas"]["AdminRefundRequest"][];
+            nextCursor?: string | null;
+        };
         CursorPageAdminReport: {
             items: components["schemas"]["AdminReport"][];
+            nextCursor?: string | null;
+        };
+        CursorPageAdminStuckPayment: {
+            items: components["schemas"]["AdminStuckPayment"][];
             nextCursor?: string | null;
         };
         CursorPageAdminUser: {
@@ -2456,6 +2609,14 @@ export interface components {
             unlocks: number;
             /** @enum {string} */
             visibility: "draft" | "review" | "changes" | "published" | "hidden";
+        };
+        Eligibility: {
+            duplicate: boolean;
+            kind: string;
+            /** Format: int32 */
+            spent: number;
+            /** Format: int32 */
+            unused: number;
         };
         EmailChangeResponse: {
             /** Format: int64 */
@@ -2725,6 +2886,9 @@ export interface components {
             /** @enum {string} */
             type: "paragraph" | "heading" | "quote" | "scene-break";
         };
+        OptionalNoteRequest: {
+            note?: string | null;
+        };
         OptionalReasonRequest: {
             reason?: string | null;
         };
@@ -2758,6 +2922,7 @@ export interface components {
             /** Format: int32 */
             priceUsdCents?: number | null;
             provider: string;
+            refundRequest?: components["schemas"]["RefundRequestView"];
             /** @enum {string} */
             status: "pending" | "paid" | "failed" | "cancelled" | "expired" | "refunded";
             /** Format: int32 */
@@ -2800,6 +2965,20 @@ export interface components {
         };
         PasswordRequest: {
             password: string;
+        };
+        PayOrder: {
+            /** Format: int32 */
+            coins: number;
+            displayName: string;
+            email: string;
+            /** Format: uuid */
+            id: string;
+            method: string;
+            orderNumber: string;
+            /** Format: date-time */
+            paidAt?: string | null;
+            /** Format: uuid */
+            userId: string;
         };
         PayoutMethodRequest: {
             method: string;
@@ -2871,6 +3050,17 @@ export interface components {
         };
         ReasonRequest: {
             reason: string;
+        };
+        RefundRequestBody: {
+            reason: string;
+        };
+        RefundRequestView: {
+            note?: string | null;
+            /** Format: int32 */
+            refundedCoins?: number | null;
+            /** Format: date-time */
+            requestedAt: string;
+            status: string;
         };
         RefundResult: {
             order: components["schemas"]["AdminOrder"];
@@ -3459,6 +3649,112 @@ export interface operations {
             };
         };
     };
+    refundRequests: {
+        parameters: {
+            query?: {
+                /** @description open, approved or declined */
+                status?: string | null;
+                /** @description nextCursor of the previous page; omit for the first page */
+                cursor?: string | null;
+                /** @description Page size, 1-100 (default 20) */
+                limit?: number | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CursorPageAdminRefundRequest"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    approveRefundRequest: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["OptionalNoteRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminRefundRequest"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    declineRefundRequest: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReasonRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminRefundRequest"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
     reports: {
         parameters: {
             query?: {
@@ -3647,6 +3943,77 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    stuckPayments: {
+        parameters: {
+            query?: {
+                /** @description open or resolved */
+                status?: string | null;
+                /** @description nextCursor of the previous page; omit for the first page */
+                cursor?: string | null;
+                /** @description Page size, 1-100 (default 20) */
+                limit?: number | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CursorPageAdminStuckPayment"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    addStuckCoins: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["OptionalNoteRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminStuckPayment"];
+                };
             };
             /** @description Error */
             default: {
@@ -4397,6 +4764,41 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OrderView"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    requestRefund: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                number: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RefundRequestBody"];
+            };
+        };
         responses: {
             /** @description OK */
             200: {

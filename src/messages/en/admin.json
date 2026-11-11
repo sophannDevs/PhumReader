@@ -272,5 +272,12 @@
   "error_not_hideable": "Only live content can be hidden.",
   "error_not_hidden": "This item is not hidden.",
   "error_report_closed": "Another admin already settled this report.",
-  "error_not_in_review": "Another admin already decided on this series."
+  "error_not_in_review": "Another admin already decided on this series.",
+  "stuck_paid": "PayWay says {amount} {currency} was paid",
+  "stuck_found": "Found {date}",
+  "rf_requested": "Asked {date}",
+  "toast_refundApproved": "Approved. The coins were taken back. Send the money from PayWay’s dashboard.",
+  "rf_declineTitle": "Decline {number}",
+  "rf_declineDesc": "The reader sees your reason on the receipt.",
+  "rf_noCoins": "No coins left to take back"
 }

@@ -377,6 +377,158 @@
         "tags" : [ "admin" ]
       }
     },
+    "/api/v1/admin/refund-requests" : {
+      "get" : {
+        "operationId" : "refundRequests",
+        "parameters" : [ {
+          "description" : "open, approved or declined",
+          "in" : "query",
+          "name" : "status",
+          "required" : false,
+          "schema" : {
+            "type" : [ "string", "null" ]
+          }
+        }, {
+          "description" : "nextCursor of the previous page; omit for the first page",
+          "in" : "query",
+          "name" : "cursor",
+          "required" : false,
+          "schema" : {
+            "type" : [ "string", "null" ]
+          }
+        }, {
+          "description" : "Page size, 1-100 (default 20)",
+          "in" : "query",
+          "name" : "limit",
+          "required" : false,
+          "schema" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int32"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CursorPageAdminRefundRequest"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Refund requests from readers, newest first, with what can be refunded",
+        "tags" : [ "admin" ]
+      }
+    },
+    "/api/v1/admin/refund-requests/{id}/approve" : {
+      "post" : {
+        "description" : "409 request_decided (another admin decided first) and coins_spent (no coins left). The money goes back in PayWay's dashboard.",
+        "operationId" : "approveRefundRequest",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/OptionalNoteRequest"
+              }
+            }
+          }
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AdminRefundRequest"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Approve a refund request: the coins still in the wallet are taken back",
+        "tags" : [ "admin" ]
+      }
+    },
+    "/api/v1/admin/refund-requests/{id}/decline" : {
+      "post" : {
+        "description" : "400 fields.reason required; 409 request_decided.",
+        "operationId" : "declineRefundRequest",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ReasonRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AdminRefundRequest"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Decline a refund request; the reason is shown to the reader",
+        "tags" : [ "admin" ]
+      }
+    },
     "/api/v1/admin/reports" : {
       "get" : {
         "operationId" : "reports",
@@ -640,6 +792,109 @@
           }
         },
         "summary" : "Send a series in review back with the changes to make",
+        "tags" : [ "admin" ]
+      }
+    },
+    "/api/v1/admin/stuck-payments" : {
+      "get" : {
+        "operationId" : "stuckPayments",
+        "parameters" : [ {
+          "description" : "open or resolved",
+          "in" : "query",
+          "name" : "status",
+          "required" : false,
+          "schema" : {
+            "type" : [ "string", "null" ]
+          }
+        }, {
+          "description" : "nextCursor of the previous page; omit for the first page",
+          "in" : "query",
+          "name" : "cursor",
+          "required" : false,
+          "schema" : {
+            "type" : [ "string", "null" ]
+          }
+        }, {
+          "description" : "Page size, 1-100 (default 20)",
+          "in" : "query",
+          "name" : "limit",
+          "required" : false,
+          "schema" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int32"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CursorPageAdminStuckPayment"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Paid at PayWay but no coins credited, newest first",
+        "tags" : [ "admin" ]
+      }
+    },
+    "/api/v1/admin/stuck-payments/{id}/add-coins" : {
+      "post" : {
+        "description" : "Credits the order once; 409 stuck_resolved when it was done already.",
+        "operationId" : "addStuckCoins",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/OptionalNoteRequest"
+              }
+            }
+          }
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AdminStuckPayment"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Add the coins of a stuck payment (check PayWay's dashboard first)",
         "tags" : [ "admin" ]
       }
     },
@@ -1537,6 +1792,54 @@
           }
         },
         "summary" : "Cancel an open order",
+        "tags" : [ "payments" ]
+      }
+    },
+    "/api/v1/coins/orders/{number}/refund-request" : {
+      "post" : {
+        "description" : "The order then carries refundRequest. 400 fields.reason (too_short, too_long); 409 not_paid and refund_requested (one request per order).",
+        "operationId" : "requestRefund",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "number",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/RefundRequestBody"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/OrderView"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Ask for a refund of a paid order",
         "tags" : [ "payments" ]
       }
     },
@@ -5368,6 +5671,46 @@
         },
         "required" : [ "coins", "createdAt", "displayName", "email", "id", "method", "orderNumber", "refundable", "status", "userId" ]
       },
+      "AdminRefundRequest" : {
+        "type" : "object",
+        "properties" : {
+          "decidedAt" : {
+            "type" : [ "string", "null" ],
+            "format" : "date-time"
+          },
+          "decidedBy" : {
+            "type" : [ "string", "null" ]
+          },
+          "eligibility" : {
+            "$ref" : "#/components/schemas/Eligibility"
+          },
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "note" : {
+            "type" : [ "string", "null" ]
+          },
+          "order" : {
+            "$ref" : "#/components/schemas/PayOrder"
+          },
+          "reason" : {
+            "type" : "string"
+          },
+          "refundedCoins" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int32"
+          },
+          "requestedAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "status" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "eligibility", "id", "order", "reason", "requestedAt", "status" ]
+      },
       "AdminReport" : {
         "type" : "object",
         "properties" : {
@@ -5420,6 +5763,45 @@
           }
         },
         "required" : [ "caseNumber", "createdAt", "id", "reason", "reporter", "status", "target" ]
+      },
+      "AdminStuckPayment" : {
+        "type" : "object",
+        "properties" : {
+          "currency" : {
+            "type" : [ "string", "null" ]
+          },
+          "foundAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "note" : {
+            "type" : [ "string", "null" ]
+          },
+          "order" : {
+            "$ref" : "#/components/schemas/PayOrder"
+          },
+          "orderStatus" : {
+            "type" : "string"
+          },
+          "paidAmount" : {
+            "type" : [ "number", "null" ]
+          },
+          "resolvedAt" : {
+            "type" : [ "string", "null" ],
+            "format" : "date-time"
+          },
+          "resolvedBy" : {
+            "type" : [ "string", "null" ]
+          },
+          "status" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "foundAt", "id", "order", "orderStatus", "status" ]
       },
       "AdminUser" : {
         "type" : "object",
@@ -6144,6 +6526,21 @@
         },
         "required" : [ "items" ]
       },
+      "CursorPageAdminRefundRequest" : {
+        "type" : "object",
+        "properties" : {
+          "items" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/AdminRefundRequest"
+            }
+          },
+          "nextCursor" : {
+            "type" : [ "string", "null" ]
+          }
+        },
+        "required" : [ "items" ]
+      },
       "CursorPageAdminReport" : {
         "type" : "object",
         "properties" : {
@@ -6151,6 +6548,21 @@
             "type" : "array",
             "items" : {
               "$ref" : "#/components/schemas/AdminReport"
+            }
+          },
+          "nextCursor" : {
+            "type" : [ "string", "null" ]
+          }
+        },
+        "required" : [ "items" ]
+      },
+      "CursorPageAdminStuckPayment" : {
+        "type" : "object",
+        "properties" : {
+          "items" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/AdminStuckPayment"
             }
           },
           "nextCursor" : {
@@ -6482,6 +6894,26 @@
           }
         },
         "required" : [ "coins", "id", "slug", "title", "unlocks", "visibility" ]
+      },
+      "Eligibility" : {
+        "type" : "object",
+        "properties" : {
+          "duplicate" : {
+            "type" : "boolean"
+          },
+          "kind" : {
+            "type" : "string"
+          },
+          "spent" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "unused" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        },
+        "required" : [ "duplicate", "kind", "spent", "unused" ]
       },
       "EmailChangeResponse" : {
         "type" : "object",
@@ -7222,6 +7654,16 @@
         },
         "required" : [ "type" ]
       },
+      "OptionalNoteRequest" : {
+        "type" : "object",
+        "properties" : {
+          "note" : {
+            "type" : [ "string", "null" ],
+            "maxLength" : 500,
+            "minLength" : 0
+          }
+        }
+      },
       "OptionalReasonRequest" : {
         "type" : "object",
         "properties" : {
@@ -7297,6 +7739,9 @@
           },
           "provider" : {
             "type" : "string"
+          },
+          "refundRequest" : {
+            "$ref" : "#/components/schemas/RefundRequestView"
           },
           "status" : {
             "type" : "string",
@@ -7398,6 +7843,40 @@
           }
         },
         "required" : [ "password" ]
+      },
+      "PayOrder" : {
+        "type" : "object",
+        "properties" : {
+          "coins" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "displayName" : {
+            "type" : "string"
+          },
+          "email" : {
+            "type" : "string"
+          },
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "method" : {
+            "type" : "string"
+          },
+          "orderNumber" : {
+            "type" : "string"
+          },
+          "paidAt" : {
+            "type" : [ "string", "null" ],
+            "format" : "date-time"
+          },
+          "userId" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        },
+        "required" : [ "coins", "displayName", "email", "id", "method", "orderNumber", "userId" ]
       },
       "PayoutMethodRequest" : {
         "type" : "object",
@@ -7588,6 +8067,37 @@
           }
         },
         "required" : [ "reason" ]
+      },
+      "RefundRequestBody" : {
+        "type" : "object",
+        "properties" : {
+          "reason" : {
+            "type" : "string",
+            "maxLength" : 2000,
+            "minLength" : 0
+          }
+        },
+        "required" : [ "reason" ]
+      },
+      "RefundRequestView" : {
+        "type" : "object",
+        "properties" : {
+          "note" : {
+            "type" : [ "string", "null" ]
+          },
+          "refundedCoins" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int32"
+          },
+          "requestedAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "status" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "requestedAt", "status" ]
       },
       "RefundResult" : {
         "type" : "object",

@@ -14,6 +14,7 @@ import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import org.jspecify.annotations.Nullable;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -80,6 +81,24 @@ class PaymentController {
             @PathVariable String number,
             @Parameter(hidden = true) @AuthenticationPrincipal CurrentUser user) {
         return payments.order(user, number);
+    }
+
+    /**
+     * @param reason why the reader wants the money back, 10-500 characters
+     */
+    public record RefundRequestBody(@NotNull @Size(max = 2000) String reason) {}
+
+    @PostMapping("/coins/orders/{number}/refund-request")
+    @Operation(
+            summary = "Ask for a refund of a paid order",
+            description =
+                    "The order then carries refundRequest. 400 fields.reason (too_short, too_long);"
+                            + " 409 not_paid and refund_requested (one request per order).")
+    OrderView requestRefund(
+            @PathVariable String number,
+            @Valid @RequestBody RefundRequestBody body,
+            @Parameter(hidden = true) @AuthenticationPrincipal CurrentUser user) {
+        return payments.requestRefund(user, number, body.reason());
     }
 
     @PostMapping("/coins/orders/{number}/cancel")

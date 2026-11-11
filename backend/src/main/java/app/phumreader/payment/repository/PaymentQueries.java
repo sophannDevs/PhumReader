@@ -3,6 +3,7 @@ package app.phumreader.payment.repository;
 import app.phumreader.payment.domain.OrderStatus;
 import app.phumreader.payment.domain.PackTag;
 import app.phumreader.payment.domain.PaymentMethod;
+import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
@@ -157,6 +158,145 @@ public class PaymentQueries {
                 .param("ref", providerRef)
                 .param("now", now)
                 .update();
+    }
+
+    // ---------- refund requests (V21-06) ----------
+
+    /** A reader's request for a refund of one order. */
+    public record RefundRequestRow(
+            UUID id,
+            UUID orderId,
+            UUID userId,
+            String reason,
+            String status,
+            OffsetDateTime requestedAt,
+            @Nullable String decisionNote,
+            @Nullable Integer refundedCoins) {}
+
+    private static final String REFUND_REQUEST =
+            "select id, order_id, user_id, reason, status, requested_at, decision_note,"
+                    + " refunded_coins from refund_requests";
+
+    /** Files the request; {@code false} when this order already has one. */
+    public boolean insertRefundRequest(
+            UUID orderId, UUID userId, String reason, OffsetDateTime now) {
+        return jdbc.sql(
+                                "insert into refund_requests (order_id, user_id, reason, requested_at)"
+                                        + " values (:o, :u, :r, :now) on conflict (order_id) do nothing")
+                        .param("o", orderId)
+                        .param("u", userId)
+                        .param("r", reason)
+                        .param("now", now)
+                        .update()
+                == 1;
+    }
+
+    public Optional<RefundRequestRow> refundRequestOf(UUID orderId) {
+        return jdbc.sql(REFUND_REQUEST + " where order_id = :o")
+                .param("o", orderId)
+                .query((rs, n) -> refundRequest(rs))
+                .optional();
+    }
+
+    public Optional<RefundRequestRow> lockRefundRequest(UUID id) {
+        return jdbc.sql(REFUND_REQUEST + " where id = :id for update")
+                .param("id", id)
+                .query((rs, n) -> refundRequest(rs))
+                .optional();
+    }
+
+    public void decideRefundRequest(
+            UUID id,
+            String status,
+            UUID admin,
+            @Nullable String note,
+            @Nullable Integer coins,
+            OffsetDateTime now) {
+        jdbc.sql(
+                        "update refund_requests set status = :s, decided_by = :a, decided_at = :now,"
+                                + " decision_note = :note, refunded_coins = :coins where id = :id")
+                .param("s", status)
+                .param("a", admin)
+                .param("now", now)
+                .param("note", note, Types.VARCHAR)
+                .param("coins", coins, Types.INTEGER)
+                .param("id", id)
+                .update();
+    }
+
+    private static RefundRequestRow refundRequest(ResultSet rs) throws SQLException {
+        return new RefundRequestRow(
+                rs.getObject("id", UUID.class),
+                rs.getObject("order_id", UUID.class),
+                rs.getObject("user_id", UUID.class),
+                rs.getString("reason"),
+                rs.getString("status"),
+                rs.getObject("requested_at", OffsetDateTime.class),
+                rs.getString("decision_note"),
+                rs.getObject("refunded_coins", Integer.class));
+    }
+
+    // ---------- stuck payments (V21-06) ----------
+
+    /** PayWay said an order was paid, but the coins were not credited. */
+    public void recordStuck(
+            UUID orderId,
+            @Nullable BigDecimal paidAmount,
+            @Nullable String currency,
+            OffsetDateTime now) {
+        jdbc.sql(
+                        "insert into payment_stuck (order_id, kind, paid_amount, currency, found_at)"
+                                + " values (:o, 'AMOUNT_MISMATCH', :amount, :cur, :now)"
+                                + " on conflict (order_id) do nothing")
+                .param("o", orderId)
+                .param("amount", paidAmount, Types.NUMERIC)
+                .param("cur", currency, Types.VARCHAR)
+                .param("now", now)
+                .update();
+    }
+
+    /**
+     * An open stuck payment, locked until the transaction ends: the order and whether it was
+     * resolved.
+     */
+    public record StuckRow(UUID id, UUID orderId, @Nullable OffsetDateTime resolvedAt) {}
+
+    public Optional<StuckRow> lockStuck(UUID id) {
+        return jdbc.sql(
+                        "select id, order_id, resolved_at from payment_stuck where id = :id for update")
+                .param("id", id)
+                .query((rs, n) ->
+                        new StuckRow(
+                                rs.getObject("id", UUID.class),
+                                rs.getObject("order_id", UUID.class),
+                                rs.getObject("resolved_at", OffsetDateTime.class)))
+                .optional();
+    }
+
+    public void resolveStuck(UUID id, UUID admin, @Nullable String note, OffsetDateTime now) {
+        jdbc.sql(
+                        "update payment_stuck set resolved_at = :now, resolved_by = :a, note = :note"
+                                + " where id = :id")
+                .param("now", now)
+                .param("a", admin)
+                .param("note", note, Types.VARCHAR)
+                .param("id", id)
+                .update();
+    }
+
+    /**
+     * Another paid order of the same reader and pack within an hour of this one (a double charge).
+     */
+    public boolean looksLikeDoubleCharge(UUID orderId) {
+        return jdbc.sql(
+                        "select exists (select 1 from payment_orders o join payment_orders p"
+                                + " on p.user_id = o.user_id and p.pack_id = o.pack_id and p.id <> o.id"
+                                + " and p.status in ('PAID', 'REFUNDED')"
+                                + " and abs(extract(epoch from p.paid_at - o.paid_at)) <= 3600"
+                                + " where o.id = :o)")
+                .param("o", orderId)
+                .query(Boolean.class)
+                .single();
     }
 
     public void markRefunded(UUID orderId, OffsetDateTime now) {

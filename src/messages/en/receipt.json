@@ -74,5 +74,14 @@
   "loginText": "Receipts are kept with your account.",
   "login": "Log in",
   "errorTitle": "This receipt didn’t load",
-  "errorText": "Check your connection and try again."
+  "errorText": "Check your connection and try again.",
+  "refundOpen": "Refund requested on {date}. An admin will look at it and you will see the answer here.",
+  "refundDeclined": "Refund declined: {note}",
+  "refundSent": "Refund requested. We’ll answer here.",
+  "refundDialogTitle": "Ask for a refund of {id}",
+  "refundDialogDesc": "{count} coins from this order are still unused. Tell us why you want the money back.",
+  "refundReason": "Why do you want a refund?",
+  "refundReasonShort": "Add a few more words (at least 10 characters).",
+  "refundCancel": "Cancel",
+  "refundSend": "Send request"
 }

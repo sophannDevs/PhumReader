@@ -242,6 +242,68 @@ class PayWayPaymentTest {
     }
 
     @Test
+    void aPaymentWithTheWrongAmountIsNotCreditedAndShowsAsStuckUntilAnAdminAddsTheCoins()
+            throws Exception {
+        UUID reader = sessions.newReader("Dara");
+        UUID admin = sessions.newReader("Admin Boran");
+        jdbc.sql("insert into user_roles (user_id, role) values (:id, 'ADMIN')")
+                .param("id", admin)
+                .update();
+        String number = orderNumber(createOrder(reader, 2, "khqr", "payway-key-0009"));
+        payWay.approve(number, "1.00", "USD"); // PayWay took $1.00, the order is $2.50
+
+        assertThat(reconciler.run(payments.unpaidOrderNumbers(), false)).isZero();
+        reconciler.run(payments.unpaidOrderNumbers(), false); // finding it again adds nothing
+        assertThat(balance(reader)).isZero();
+
+        String body =
+                mvc.perform(
+                                get("/api/v1/admin/stuck-payments?status=open")
+                                        .with(sessions.as(admin, "ADMIN")))
+                        .andExpect(status().isOk())
+                        .andExpect(jsonPath("$.items.length()").value(1))
+                        .andExpect(jsonPath("$.items[0].order.orderNumber").value(number))
+                        .andExpect(jsonPath("$.items[0].order.coins").value(63))
+                        .andExpect(jsonPath("$.items[0].paidAmount").value(1.0))
+                        .andExpect(jsonPath("$.items[0].currency").value("USD"))
+                        .andExpect(jsonPath("$.items[0].status").value("open"))
+                        .andReturn()
+                        .getResponse()
+                        .getContentAsString(java.nio.charset.StandardCharsets.UTF_8);
+        String id = json.readTree(body).get("items").get(0).get("id").asString();
+
+        mvc.perform(
+                        post("/api/v1/admin/stuck-payments/" + id + "/add-coins")
+                                .with(sessions.as(admin, "ADMIN"))
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(
+                                        "{\"note\":\"Checked in PayWay: $1.00 paid, pack at half price\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("resolved"))
+                .andExpect(jsonPath("$.resolvedBy").value("Admin Boran"));
+        assertThat(balance(reader)).isEqualTo(63);
+        mvc.perform(get("/api/v1/coins/orders/" + number).with(sessions.as(reader)))
+                .andExpect(jsonPath("$.status").value("paid"));
+        // Once only.
+        mvc.perform(
+                        post("/api/v1/admin/stuck-payments/" + id + "/add-coins")
+                                .with(sessions.as(admin, "ADMIN"))
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("{}"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.error.code").value("stuck_resolved"));
+        assertThat(balance(reader)).isEqualTo(63);
+        mvc.perform(
+                        get("/api/v1/admin/stuck-payments?status=open")
+                                .with(sessions.as(admin, "ADMIN")))
+                .andExpect(jsonPath("$.items.length()").value(0));
+        mvc.perform(
+                        get("/api/v1/admin/audit?action=order.add_coins")
+                                .with(sessions.as(admin, "ADMIN")))
+                .andExpect(jsonPath("$.items.length()").value(1));
+    }
+
+    @Test
     void aPackWithoutAPriceCannotBeBought() throws Exception {
         UUID reader = sessions.newReader("Dara");
         createOrder(reader, 1, "khqr", "payway-key-0006")

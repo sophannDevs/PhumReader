@@ -135,6 +135,10 @@ export const getOrder = async (number: string) => toState(await api.get<Order>(`
 
 export const cancelOrder = async (number: string) => toState(await api.post<Order>(`/coins/orders/${number}/cancel`))
 
+/** Ask for a refund of a paid order (V21-06). 400 fields.reason (10-500 characters); 409 not_paid, refund_requested. */
+export const requestRefund = async (number: string, reason: string) =>
+  api.post<Order>(`/coins/orders/${encodeURIComponent(number)}/refund-request`, { reason })
+
 /** Dev only: pay or fail the order without PayWay. */
 export const simulateOrder = async (number: string, outcome: "paid" | "failed") =>
   toState(await api.post<Order>(`/coins/orders/${number}/simulate`, { outcome }))

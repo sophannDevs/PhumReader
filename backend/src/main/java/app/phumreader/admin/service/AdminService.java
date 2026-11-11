@@ -9,15 +9,21 @@ import app.phumreader.admin.repository.AdminQueries.LiveTitle;
 import app.phumreader.admin.repository.AdminQueries.OpenReport;
 import app.phumreader.admin.repository.AdminQueries.OrderRow;
 import app.phumreader.admin.repository.AdminQueries.QueueRow;
+import app.phumreader.admin.repository.AdminQueries.RefundRequestRow;
 import app.phumreader.admin.repository.AdminQueries.ReportRow;
 import app.phumreader.admin.repository.AdminQueries.ReviewTarget;
+import app.phumreader.admin.repository.AdminQueries.StuckRow;
 import app.phumreader.admin.repository.AdminQueries.UserRow;
 import app.phumreader.admin.service.AdminViews.AdminContent;
 import app.phumreader.admin.service.AdminViews.AdminOrder;
+import app.phumreader.admin.service.AdminViews.AdminRefundRequest;
 import app.phumreader.admin.service.AdminViews.AdminReport;
+import app.phumreader.admin.service.AdminViews.AdminStuckPayment;
 import app.phumreader.admin.service.AdminViews.AdminUser;
 import app.phumreader.admin.service.AdminViews.AuditEntry;
+import app.phumreader.admin.service.AdminViews.Eligibility;
 import app.phumreader.admin.service.AdminViews.Overview;
+import app.phumreader.admin.service.AdminViews.PayOrder;
 import app.phumreader.admin.service.AdminViews.RefundResult;
 import app.phumreader.admin.service.AdminViews.ReportTarget;
 import app.phumreader.admin.service.AdminViews.ReviewQueueItem;
@@ -534,6 +540,156 @@ public class AdminService {
                         "coins",
                         refund.coins()));
         return new RefundResult(view(queries.order(orderId).orElseThrow()), refund.coins());
+    }
+
+    // ---------- refund requests (V21-06) ----------
+
+    public CursorPage<AdminRefundRequest> refundRequests(
+            @Nullable String status, @Nullable String cursor, @Nullable Integer limit) {
+        int size = Cursors.limit(limit);
+        List<RefundRequestRow> rows = queries.refundRequests(upper(status), key(cursor), size + 1);
+        return page(
+                rows,
+                size,
+                RefundRequestRow::requestedAt,
+                RefundRequestRow::id,
+                AdminService::view);
+    }
+
+    /**
+     * Approves a request: the coins still in the wallet (up to the order's coins) are taken back
+     * and the reader hears it. The money itself goes back in PayWay's dashboard.
+     */
+    @Transactional
+    public AdminRefundRequest approveRefundRequest(
+            CurrentUser admin, UUID id, @Nullable String note) {
+        RefundRequestRow before = requireRefundRequest(id);
+        var decision = payments.approveRefundRequest(id, admin.id(), note);
+        audit.record(
+                admin.id(),
+                "refund.approve",
+                "ORDER",
+                before.orderId().toString(),
+                details(
+                        "orderNumber",
+                        before.orderNumber(),
+                        "userId",
+                        before.userId().toString(),
+                        "coins",
+                        decision.refund().coins(),
+                        "note",
+                        note));
+        return view(requireRefundRequest(id));
+    }
+
+    @Transactional
+    public AdminRefundRequest declineRefundRequest(CurrentUser admin, UUID id, String reason) {
+        RefundRequestRow before = requireRefundRequest(id);
+        payments.declineRefundRequest(id, admin.id(), reason);
+        audit.record(
+                admin.id(),
+                "refund.decline",
+                "ORDER",
+                before.orderId().toString(),
+                details(
+                        "orderNumber",
+                        before.orderNumber(),
+                        "userId",
+                        before.userId().toString(),
+                        "reason",
+                        reason));
+        return view(requireRefundRequest(id));
+    }
+
+    private RefundRequestRow requireRefundRequest(UUID id) {
+        return queries.refundRequest(id)
+                .orElseThrow(() ->
+                        ApiException.notFound("refund_request_not_found", "No such request."));
+    }
+
+    // ---------- stuck payments (V21-06) ----------
+
+    public CursorPage<AdminStuckPayment> stuckPayments(
+            @Nullable String status, @Nullable String cursor, @Nullable Integer limit) {
+        int size = Cursors.limit(limit);
+        List<StuckRow> rows = queries.stuckPayments(upper(status), key(cursor), size + 1);
+        return page(rows, size, StuckRow::foundAt, StuckRow::id, AdminService::view);
+    }
+
+    /** Adds the coins of a payment PayWay says was made; once. */
+    @Transactional
+    public AdminStuckPayment addStuckCoins(CurrentUser admin, UUID id, @Nullable String note) {
+        StuckRow before =
+                queries.stuckPayment(id)
+                        .orElseThrow(() ->
+                                ApiException.notFound(
+                                        "stuck_payment_not_found", "No such payment."));
+        var credited = payments.addStuckCoins(id, admin.id(), note);
+        audit.record(
+                admin.id(),
+                "order.add_coins",
+                "ORDER",
+                before.orderId().toString(),
+                details(
+                        "orderNumber",
+                        before.orderNumber(),
+                        "userId",
+                        before.userId().toString(),
+                        "coins",
+                        credited.coins(),
+                        "paidAmount",
+                        before.paidAmount() == null ? null : before.paidAmount().toPlainString(),
+                        "currency",
+                        before.currency(),
+                        "note",
+                        note));
+        return view(queries.stuckPayment(id).orElseThrow());
+    }
+
+    private static AdminRefundRequest view(RefundRequestRow r) {
+        int unused = Math.min(r.balance(), r.total());
+        String kind = unused >= r.total() ? "unused" : unused > 0 ? "partial" : "spent";
+        return new AdminRefundRequest(
+                r.id(),
+                r.status().toLowerCase(Locale.ROOT),
+                r.reason(),
+                r.requestedAt().toInstant(),
+                r.decidedAt() == null ? null : r.decidedAt().toInstant(),
+                r.decidedBy(),
+                r.note(),
+                r.refundedCoins(),
+                new PayOrder(
+                        r.orderId(),
+                        r.orderNumber(),
+                        r.userId(),
+                        r.email(),
+                        r.displayName(),
+                        r.total(),
+                        r.method().toLowerCase(Locale.ROOT),
+                        r.paidAt() == null ? null : r.paidAt().toInstant()),
+                new Eligibility(kind, r.duplicate(), unused, r.total() - unused));
+    }
+
+    private static AdminStuckPayment view(StuckRow r) {
+        return new AdminStuckPayment(
+                r.id(),
+                r.resolvedAt() == null ? "open" : "resolved",
+                new PayOrder(
+                        r.orderId(),
+                        r.orderNumber(),
+                        r.userId(),
+                        r.email(),
+                        r.displayName(),
+                        r.total(),
+                        r.method().toLowerCase(Locale.ROOT),
+                        null),
+                r.paidAmount(),
+                r.currency(),
+                r.orderStatus().toLowerCase(Locale.ROOT),
+                r.foundAt().toInstant(),
+                r.resolvedAt() == null ? null : r.resolvedAt().toInstant(),
+                r.resolvedBy(),
+                r.note());
     }
 
     // ---------- audit log ----------
