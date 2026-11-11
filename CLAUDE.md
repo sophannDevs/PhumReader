@@ -1,99 +1,107 @@
-# PhumReader web – frontend only, demo data
+# PhumiReader web – V2.1 frontend (demo data) + Phase 2 backend
 
-PhumReader (ភូមិ "village" + Reader) is a webtoon-style site for comics and web novels,
-for readers in Cambodia (English + Khmer). This phase builds the complete FRONTEND only. There is no backend.
+PhumiReader (ភូមិReader: ភូមិ means "village") is a webtoon-style site for comics and web novels, for readers in
+Cambodia, in Khmer and English. The frontend follows the **V2.1 design pack** in `design/` (frontend only, demo data).
+A separate Spring Boot API lives in `backend/` (Phase 2, see "Scope rules").
 
-## Brand name
-- The site name is **PhumReader**. The design files still say "Toonwave" (old working name):
-  replace it with "PhumReader" everywhere in the UI, metadata, copy and code names.
-- Logo: green mark (same as the design) + wordmark "Phum" in --brand-ink/green and "Reader" in --foreground;
-  Khmer ភូមិ may appear small under it. Short name for the app icon: "Phum".
-- Tagline: "Read and share stories in Khmer and English."
-- localStorage keys use the prefix "phumreader." (not "toonwave.").
+## Brand
+- English name: **PhumiReader**. Khmer name: **ភូមិReader**. Never use "Toonwave" or "PhumReader" in the UI. Those are
+  old names; if you find them in UI code or copy, replace them. (The Java package `app.phumreader`, the backend
+  settings `phumreader.*` and the plan doc title keep the old spelling; renaming them is not part of V2.1.)
+- Logo: green mark + "Phumi" (foreground) + "Reader" (brand-ink green; `--primary` on dark bars). In Khmer: "ភូមិ" + "Reader".
+- Example domain: phumireader.app. localStorage keys use the prefix `phumireader.` (old `phumreader.` / `toonwave.`
+  keys are copied over once by `src/lib/storage-migration.ts`).
 
 ## Stack
-- Next.js (App Router) + TypeScript (strict)
-- Tailwind CSS + shadcn/ui (Radix) + lucide-react icons
-- next-intl (locales: en, km)
-- react-hook-form + zod for forms
-- TanStack Query for data loading (against the fake API)
-- zustand (+ persist to localStorage) for simulated app state
-- sonner for toasts
-- Fonts via next/font: Inter, Kantumruy Pro (Khmer), Noto Serif (novel reader option)
-- Package manager: npm (do NOT use pnpm or yarn). Node 22 LTS or newer (dev machine: Node 24, Windows).
-- Create the app with: npx create-next-app@latest . (TypeScript, ESLint, Tailwind, App Router, src/ dir)
-  If it refuses because the folder is not empty, create it in a temporary sibling folder and move
-  the generated files in. Never delete or overwrite CLAUDE.md, .claude/ or design/.
-- Add a "typecheck": "tsc --noEmit" script to package.json.
+- Next.js (App Router) + TypeScript (strict), Tailwind CSS, shadcn/ui (Radix), lucide-react.
+- next-intl with locales `en` and `km`. `src/messages/km.json` is built from `design/i18n/km-dictionary.json`
+  (draft; native review needed before launch).
+- react-hook-form + zod, TanStack Query (demo API or real API), zustand + persist, sonner.
+- Fonts via next/font: Inter, Kantumruy Pro (Khmer), Noto Serif (novel reader option).
+- Package manager: **npm** only (no pnpm or yarn). Node 22 LTS or newer. The dev machine runs Windows.
+- No new npm or Gradle libraries without asking (office PC: no downloads). shadcn components that are missing are
+  written by hand on top of the installed `radix-ui` package instead of `npx shadcn add`.
 
 ## Design source of truth (read before every UI task)
-- design/screens/*.png — V2 screens, desktop (1440 px) and phone (390 px), plus key states
-- design/foundations.md — colors, fonts, spacing, radius, shadows, component mapping, icons
-- design/spec.md — every page, every button, every state, routes, key flows
-- design/demo-data.json — the ONLY source of demo content
-- design/assets/ — cover and panel artwork (copy to public/covers and public/panels)
+- `design/spec.md`: the section for the page you are building (routes, states, flows).
+- `design/foundations.md`: tokens, components and patterns, including section 8 (V2.1 additions).
+- `design/screens/NN-*-desktop.png` and `-phone.png`: match these at 1440 px and 390 px.
+- `design/prototype-src/<Page>/`: exact markup (`body.html`), styles (`page.css`) and behaviour (`page.js`). When the
+  spec is unclear, the prototype wins. Rebuild in React; don't paste the prototype code.
+- `design/demo-data.json`: the **only** source of demo content. Copied to `src/data/`.
+- `design/assets/`: copied to `public/covers` and `public/panels`.
 
-Match layout, colors, typography, spacing and components exactly. Do not invent new colors,
-sizes or components. If something is missing from the design, use the closest existing
-pattern and list it under "Assumptions" in docs/CHECKLIST.md.
-
-Key tokens: --primary #00DC64, --primary-foreground #04210F (never white text on green),
---brand-ink #047A3A, zinc neutrals, --radius 10px, Inter + Kantumruy Pro.
+Match layout, colours, type and spacing exactly. Don't invent colours, sizes or components. If something is missing,
+use the closest existing pattern and add it under "Assumptions" in docs/CHECKLIST.md.
+Key tokens: `--primary #00DC64`, `--primary-foreground #04210F` (never white text on green), `--brand-ink #047A3A`,
+zinc neutrals, `--radius 10px`.
 
 ## Scope rules
-- Phase 1 (frontend, docs/CHECKLIST.md, finished): NO database, backend, real API, real payments, real auth or deployment.
-- Phase 2 (backend, docs/BACKEND_CHECKLIST.md, design in docs/BACKEND.md): follows the plan doc "Toonwave V2 –
-  Implementation plan" (https://claude.ai/artifact/9bbCmhSxqAbRZeTbjU8QVT; Toonwave = PhumReader). A separate
-  **Spring Boot** API (Java 21, Gradle; Supabase PostgreSQL, Redis, Meilisearch, Cloudflare R2, ABA PayWay) in `backend/`,
-  built one plan task (P1-01 … P7-05) at a time, starting with "Stage 1" in the checklist. No Docker anywhere in this
-  project: not on development machines (company policy), not in CI, no Dockerfile, no Testcontainers.
-  The Next.js frontend stays in the repo root. Demo mode (`NEXT_PUBLIC_DEMO=1`, demo-api.ts, local store) must keep
-  working until P5-07.
-  Backend commands (no Docker; settings in `backend/.env`, git-ignored): `cd backend && ./gradlew bootRun`, `cd backend && ./gradlew check`,
-  `npm run api:gen` (TypeScript types from backend/openapi/openapi.json).
-  A backend task is done when its acceptance criteria pass and `./gradlew check` passes (plus lint/typecheck/build if the
-  frontend changed), then commit "<task id>: <short description>", e.g. "P3-02: sign-in core".
-  The rules below that say "demo" describe Phase 1 and demo mode.
-- All content comes from design/demo-data.json (copied to src/data/). Keep it consistent everywhere.
-- Every "server" call goes through src/lib/demo-api.ts:
-  - adds a 300–800 ms delay
-  - supports URL flags ?demo=empty, ?demo=error, ?demo=slow so every state can be seen
-- Login, coins, subscriptions, unlocks, reading progress, purchases and reader settings live in a
-  zustand store persisted to localStorage (see "Simulated state" in design/spec.md).
-- Payments: simulate KHQR / ABA Pay / card. Show [PAYMENT PROVIDER FORM] and [KHQR PLACEHOLDER]
-  placeholders only. Never build real card number fields. Prices stay [PRICE USD] / [PRICE KHR].
-- Demo login: reader@toonwave.app / Toonwave1! — email code 123456.
+- **Frontend (V2.1, docs/CHECKLIST.md):** demo data, no real payments, no deployment.
+  - Every "server" call in demo mode goes through `src/lib/demo-api.ts`: 300–800 ms delay, plus the URL flags
+    `?demo=empty`, `?demo=error` and `?demo=slow`.
+  - All app state (user, coins, subs, unlocks, reading position, settings, reports, blocked, my works, admin
+    decisions…) lives in a zustand store persisted to localStorage. See "Simulated state" in design/spec.md.
+  - Payments: simulate KHQR, ABA Pay and card. Show only `[PAYMENT PROVIDER FORM]` and `[KHQR PLACEHOLDER]`. Never
+    build real card fields. Keep every placeholder listed in foundations.md §8 visible.
+  - Demo logins: reader@phumireader.app / PhumiReader1! · creator@phumireader.app / Creator1! ·
+    admin@phumireader.app / Admin1! (opens /admin) · email code 123456.
+  - Policy pages are draft templates. Keep the "have a lawyer review" warning.
+- **Backend (Phase 2, docs/BACKEND_CHECKLIST.md, design in docs/BACKEND.md):** follows the plan doc "Toonwave V2 –
+  Implementation plan" (https://claude.ai/artifact/9bbCmhSxqAbRZeTbjU8QVT; Toonwave = PhumiReader). A separate
+  **Spring Boot** API (Java 21, Gradle; Supabase PostgreSQL, Redis, Meilisearch, Cloudflare R2, ABA PayWay) in
+  `backend/`, built one plan task (P1-01 … P7-05) at a time. No Docker anywhere in this project: not on development
+  machines (company policy), not in CI, no Dockerfile, no Testcontainers.
+  - The frontend has two modes, chosen at build time: demo (`NEXT_PUBLIC_DEMO=1`: demo-api.ts and the local store)
+    and real (the API through `src/lib/api`). Both must keep working. V2.1 features that the API does not have yet
+    run on the local store in real mode too; list them under "Assumptions".
+  - Backend commands (settings in `backend/.env`, git-ignored): `cd backend && ./gradlew bootRun`,
+    `cd backend && ./gradlew check`, `npm run api:gen` (TypeScript types from backend/openapi/openapi.json).
+  - A backend task is done when its acceptance criteria pass and `./gradlew check` passes (plus lint/typecheck/build
+    if the frontend changed), then commit "<task id>: <short description>", e.g. "P3-02: sign-in core".
 
 ## Folder structure
-src/app/[locale]/(site)/        home, series/[slug], coins, library, settings, creator, …
-src/app/[locale]/(reader)/      read/[slug]/[episode], novel/[slug]/[chapter]
-src/app/[locale]/(auth)/        login
-src/components/ui/              shadcn components (generated)
-src/components/pr/              PhumReader patterns: SeriesCard, EpisodeRow, UnlockDialog, CoinChip …
-src/components/layout/          SiteHeader, SiteFooter, MobileTabBar, reader bars, AuthSplitLayout
-src/data/                       demo-data.json + typed helpers
-src/lib/                        demo-api.ts, store.ts, utils, formatters
-src/messages/                   en.json, km.json
-docs/CHECKLIST.md               implementation checklist (source of progress)
+```
+src/app/[locale]/(site)/       home, series, search, library, rankings, genres, coins, settings,
+                               notifications, help, legal, creators, welcome …
+src/app/[locale]/(reader)/     read/[slug]/[episode], novel/[slug]/[chapter]
+src/app/[locale]/(auth)/       login
+src/app/[locale]/(creator)/    creator, creator/new, creator/upload, creator/series/[id], creator/earnings
+src/app/[locale]/(admin)/      admin, admin/series, admin/reports, admin/payments
+src/components/ui/             shadcn (generated or hand-written on radix-ui)
+src/components/pr/             PhumiReader patterns (SeriesCard, EpisodeRow, UnlockDialog, ReportDialog,
+                               CommentThread, StepsBar, OptionCard, Timeline, FastPassLockCard, StatCard …)
+src/components/layout/         SiteHeader, SiteFooter, MobileTabBar, ReaderBars, CreatorNav, AdminShell, AuthSplitLayout
+src/data/                      demo-data.json + typed helpers
+src/lib/                       demo-api.ts, store.ts, utils, formatters (dates in ICT, Khmer month names)
+src/lib/api/                   the real API client (the only place that may call fetch)
+src/messages/                  en.json, km.json
+docs/CHECKLIST.md              the V2.1 task list and progress (docs/CHECKLIST-v1.md: the finished V1 list)
+e2e/                           Playwright tests for the key flows in design/spec.md
+backend/                       Spring Boot API (Phase 2)
+```
 
 ## Working rules
-- Work on ONE task from docs/CHECKLIST.md at a time, then stop and summarise.
-- Every page needs loading, empty, error and success states where relevant (design/spec.md).
-- Responsive: check every page at 390 px (phone), 768 px (tablet) and 1440 px (desktop).
-  No horizontal scrolling from 320 px to 1920 px.
-- Accessibility: visible focus ring, keyboard works for every control, dialogs trap focus,
-  images have alt text, Khmer text has lang="km".
-- After each task, all of these must pass:
-  npm run lint && npm run typecheck && npm run build
-- Then tick the task in docs/CHECKLIST.md and commit: "T05: <short description>".
-- Never delete or rewrite design/ files.
+- Work on ONE task from docs/CHECKLIST.md at a time, then stop and summarise (unless the user asks for a batch).
+- Every data page needs loading, empty, error and success states.
+- Responsive at 390, 768 and 1440 px, with no horizontal scrolling from 320 to 1920 px. Check the header at 390 px
+  while logged in.
+- Accessibility: visible focus, keyboard access for every control, dialogs that trap focus, alt text, `lang="km"` on
+  Khmer text, and contrast ≥ 4.5:1.
+- Every visible string goes through next-intl (en + km). No hard-coded UI text.
+- After each task, all of these must pass: `npm run lint && npm run typecheck && npm run build`.
+- Then tick the task in docs/CHECKLIST.md and commit: `T12: <short description>` (V2.1 task ids; `F01:` for the
+  "Fix:" tasks).
+- Never delete or rewrite anything in design/.
 
 ## Commands
-npm install          install dependencies
-npm run dev          start the dev server (http://localhost:3000)
-npm run lint         ESLint
-npm run typecheck    tsc --noEmit
-npm run build        production build
-npm run test:e2e     Playwright key flows in demo mode (dev server, NEXT_PUBLIC_DEMO=1)
+```
+npm install            install dependencies
+npm run dev            dev server (http://localhost:3000)
+npm run lint           ESLint
+npm run typecheck      tsc --noEmit
+npm run build          production build
+npm run test:e2e       Playwright key flows in demo mode (dev server, NEXT_PUBLIC_DEMO=1)
 npm run test:e2e:real  Playwright key flows against the local backend on :8080 (builds the app in real mode)
-npx shadcn@latest add <component>   add a shadcn/ui component
+npm run api:gen        TypeScript types from backend/openapi/openapi.json
+```

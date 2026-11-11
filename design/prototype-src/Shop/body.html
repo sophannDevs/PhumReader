@@ -1,0 +1,162 @@
+<div class="v2">
+<!--HEADER-->
+  <a ref="{{ goRef }}" href="{{ authHref }}" tabindex="-1" aria-hidden="true" style="display: none">Log in</a>
+  <a ref="{{ retRef }}" href="{{ retHref }}" tabindex="-1" aria-hidden="true" style="display: none">Back</a>
+  <main class="wrap col" style="gap: 28px; padding-top: 32px; padding-bottom: 72px">
+    <div class="sec-head">
+      <div class="col" style="gap: 4px"><h1 class="h1">Coins</h1><p class="lead" style="font-size: 15px">Unlock Fast Pass episodes and chapters before they’re free.</p></div>
+      <div class="card bal">
+        <span class="coin" style="width: 36px; height: 36px; font-size: 15px">C</span>
+        <div class="col"><span class="xs muted">Your balance</span><span class="h2 tnum">{{ coinCount }} coins</span><span class="xs muted">{{ balEq }}</span></div>
+      </div>
+    </div>
+
+    <sc-if value="{{ hasReturn }}" hint-placeholder-val="{{ false }}">
+      <div class="alert ret-alert"><span class="ink">[[i:zap]]</span><div class="col grow"><span class="alert-title">{{ retTitle }}</span><span class="alert-desc"><sc-if value="{{ hasNeed }}" hint-placeholder-val="{{ true }}"><strong style="color: var(--foreground)">{{ needLine }}</strong> </sc-if>{{ needSub }}</span></div><a class="btn btn-ghost btn-sm" href="{{ retHref }}">Go back</a></div>
+    </sc-if>
+    <sc-if value="{{ firstOffer }}" hint-placeholder-val="{{ true }}">
+      <div class="alert brand"><span class="ink">[[i:gift]]</span><div class="col"><span class="alert-title">First purchase: double coins</span><span class="alert-desc">Your first pack of any size comes with the same number of coins again, free.</span></div></div>
+    </sc-if>
+
+    <ol class="stepper" aria-label="Checkout progress">
+      <sc-for list="{{ steps }}" as="x" hint-placeholder-count="3">
+        <li class="st {{ x.cls }}" aria-current="{{ x.cur }}"><span class="st-n"><sc-if value="{{ x.isDone }}" hint-placeholder-val="{{ false }}">[[i:check:14]]</sc-if><sc-if value="{{ x.notDone }}" hint-placeholder-val="{{ true }}">{{ x.n }}</sc-if></span><span class="st-l">{{ x.label }}</span><sc-if value="{{ x.notLast }}" hint-placeholder-val="{{ true }}"><span class="st-sep {{ x.sepCls }}" aria-hidden="true"></span></sc-if></li>
+      </sc-for>
+    </ol>
+
+    <div class="sh-grid">
+      <!-- Packs -->
+      <section class="col" style="gap: 14px; min-width: 0" aria-labelledby="pk-h">
+        <h2 id="pk-h" class="h3">1. Choose a pack</h2>
+        <div class="pk-grid" role="radiogroup" aria-label="Coin packs">
+          <sc-for list="{{ packs }}" as="p" hint-placeholder-count="5">
+            <button type="button" role="radio" aria-checked="{{ p.on }}" class="radio-card {{ p.cls }}" onClick="{{ p.pick }}" disabled="{{ locked }}">
+              <span class="row" style="justify-content: space-between; width: 100%"><span class="rc-dot"></span><sc-if value="{{ p.hasTag }}" hint-placeholder-val="{{ false }}"><span class="badge {{ p.tagCls }}">{{ p.tag }}</span></sc-if></span>
+              <span class="row" style="gap: 8px"><span class="coin">C</span><span class="h2 tnum">{{ p.coins }}</span></span>
+              <span class="xs {{ p.bonusCls }}">{{ p.bonusLabel }}</span>
+              <span class="xs muted">{{ p.eq }}</span>
+              <span class="small" style="font-weight: 600; margin-top: auto">[PRICE USD]</span>
+              <span class="xs muted">[PRICE KHR]</span>
+            </button>
+          </sc-for>
+        </div>
+
+        <h2 class="h3" style="padding-top: 10px">2. Pay with</h2>
+        <div class="col" style="gap: 8px" role="radiogroup" aria-label="Payment method">
+          <sc-for list="{{ methods }}" as="m" hint-placeholder-count="3">
+            <button type="button" role="radio" aria-checked="{{ m.on }}" class="radio-card row-card {{ m.cls }}" onClick="{{ m.pick }}" disabled="{{ locked }}">
+              <span class="rc-dot"></span>
+              <span class="pm-ic">{{ m.ic }}</span>
+              <span class="col grow" style="text-align: left"><span class="h4">{{ m.label }}</span><span class="xs muted">{{ m.desc }}</span></span>
+              <sc-if value="{{ m.rec }}" hint-placeholder-val="{{ false }}"><span class="badge badge-brand">Recommended</span></sc-if>
+            </button>
+          </sc-for>
+        </div>
+      </section>
+
+      <!-- Checkout -->
+      <aside class="card sh-co" aria-labelledby="co-h" aria-live="polite">
+        <sc-if value="{{ stReview }}" hint-placeholder-val="{{ true }}">
+          <div class="card-head"><h2 id="co-h" class="h3">Order summary</h2></div>
+          <div class="card-body col" style="gap: 10px">
+            <div class="row small" style="justify-content: space-between"><span class="muted">{{ o.packLabel }}</span><span class="tnum">{{ o.base }} coins</span></div>
+            <sc-if value="{{ o.hasBonus }}" hint-placeholder-val="{{ true }}"><div class="row small" style="justify-content: space-between"><span class="muted">Pack bonus</span><span class="tnum ink">+{{ o.bonus }}</span></div></sc-if>
+            <sc-if value="{{ o.hasFirst }}" hint-placeholder-val="{{ true }}"><div class="row small" style="justify-content: space-between"><span class="muted">First-purchase bonus</span><span class="tnum ink">+{{ o.first }}</span></div></sc-if>
+            <div class="sep"></div>
+            <div class="row" style="justify-content: space-between"><span class="h4">You get</span><span class="h4 tnum">{{ o.total }} coins</span></div>
+            <div class="row small" style="justify-content: space-between"><span class="muted">Total</span><span style="text-align: right; font-weight: 600">[PRICE USD]<br><span class="xs muted">[PRICE KHR]</span></span></div>
+            <div class="row small" style="justify-content: space-between"><span class="muted">Paying with</span><span>{{ methodLabel }}</span></div>
+            <button type="button" class="btn btn-primary btn-lg btn-block" style="margin-top: 8px" onClick="{{ toPay }}">Continue to payment</button>
+            <p class="xs muted" style="text-align: center">Balance after: {{ o.after }} coins</p>
+            <ul class="trust">
+              <li>[[i:shield:14]]Secure payment through the provider. We never see your card.</li>
+              <li>[[i:clock:14]]Purchased coins never expire</li>
+              <li>[[i:message:14]]Coins missing? Help replies within a day</li>
+            </ul>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ stPay }}" hint-placeholder-val="{{ false }}">
+          <div class="card-head"><div class="row" style="justify-content: space-between"><h2 class="h3">{{ payTitle }}</h2><span class="badge badge-outline tnum">[[i:clock:12]]{{ countdown }}</span></div><p class="small muted">{{ payHint }}</p></div>
+          <div class="card-body col" style="gap: 14px">
+            <sc-if value="{{ isQr }}" hint-placeholder-val="{{ true }}">
+              <div class="qr-box">
+                <div class="qr-head">KHQR</div>
+                <div class="qr" aria-label="KHQR code placeholder"><sc-for list="{{ qrCells }}" as="q" hint-placeholder-count="20"><span class="{{ q.c }}"></span></sc-for></div>
+                <span class="xs muted">[KHQR PLACEHOLDER] · PhumiReader</span>
+                <span class="h4 tnum">[PRICE KHR]</span>
+              </div>
+              <ol class="xs muted" style="margin: 0; padding-left: 18px; line-height: 20px"><li>Open any Bakong-member banking app</li><li>Scan the code and confirm</li><li>Keep this page open — it updates on its own</li></ol>
+            </sc-if>
+            <sc-if value="{{ isAba }}" hint-placeholder-val="{{ false }}">
+              <div class="placeholder">[ABA PAY HANDOFF PLACEHOLDER]<span class="xs muted">Opens the ABA Mobile app to confirm</span></div>
+            </sc-if>
+            <sc-if value="{{ isCard }}" hint-placeholder-val="{{ false }}">
+              <div class="placeholder">[PAYMENT PROVIDER FORM]<span class="xs muted">Secure card fields from the payment provider go here</span></div>
+            </sc-if>
+            <button type="button" class="btn btn-primary btn-lg btn-block" onClick="{{ simulatePaid }}">{{ paidLabel }}</button>
+            <div class="row" style="justify-content: space-between">
+              <button type="button" class="btn btn-ghost btn-sm" onClick="{{ cancelPay }}">Cancel</button>
+              <button type="button" class="btn btn-ghost btn-sm muted" onClick="{{ simulateFail }}">Simulate failed payment</button>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ stProcessing }}" hint-placeholder-val="{{ false }}">
+          <div class="card-body col" style="gap: 12px; align-items: center; text-align: center; padding: 48px 20px" role="status"><span class="spin" style="width: 28px; height: 28px; color: var(--brand-ink)"></span><h2 class="h3">Confirming payment…</h2><p class="small muted">Waiting for the bank. This takes a few seconds.</p></div>
+        </sc-if>
+
+        <sc-if value="{{ stSuccess }}" hint-placeholder-val="{{ false }}">
+          <div class="card-body col" style="gap: 12px; align-items: center; text-align: center; padding: 36px 20px" role="status">
+            <span class="ok-ic">[[i:check:26]]</span>
+            <h2 class="h2">+{{ last.total }} coins</h2>
+            <p class="small muted">Payment received. Your balance is now <strong style="color: var(--foreground)">{{ coinCount }} coins</strong>.</p>
+            <span class="xs muted">Order {{ last.id }} · {{ last.methodLabel }}</span>
+            <sc-if value="{{ hasReturn }}" hint-placeholder-val="{{ false }}"><a class="btn btn-primary btn-lg btn-block" href="{{ retHref }}">Back to {{ retLabel }}[[i:arrow-right:14]]</a></sc-if>
+            <sc-if value="{{ autoBack }}" hint-placeholder-val="{{ false }}"><p class="xs muted" aria-live="off">Taking you back in {{ backIn }}s · <button type="button" class="au-link-sm" onClick="{{ stayHere }}">Stay here</button></p></sc-if>
+            <button type="button" class="btn btn-outline btn-block" onClick="{{ again }}">Buy more coins</button>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ stFailed }}" hint-placeholder-val="{{ false }}">
+          <div class="card-body col" style="gap: 12px; align-items: center; text-align: center; padding: 36px 20px" role="alert">
+            <span class="ok-ic bad">[[i:x:26]]</span>
+            <h2 class="h3">{{ failTitle }}</h2>
+            <p class="small muted">{{ failBody }}</p>
+            <button type="button" class="btn btn-primary btn-block" onClick="{{ toPay }}">Try again</button>
+            <button type="button" class="btn btn-ghost btn-block" onClick="{{ again }}">Choose another method</button>
+          </div>
+        </sc-if>
+      </aside>
+    </div>
+
+    <!-- History + FAQ -->
+    <div class="sh-grid" style="align-items: start">
+      <section class="col" style="gap: 12px; min-width: 0" aria-labelledby="hi-h">
+        <h2 id="hi-h" class="h3">Purchase history</h2>
+        <div class="card" style="overflow: hidden">
+          <div class="tbl" role="table" aria-label="Purchase history">
+            <div class="tr th" role="row"><span role="columnheader">Date</span><span role="columnheader">Item</span><span role="columnheader" class="only-desk-cell">Method</span><span role="columnheader" style="text-align: right">Coins</span><span role="columnheader">Status</span></div>
+            <sc-for list="{{ history }}" as="h" hint-placeholder-count="4"><div class="tr" role="row"><span role="cell" class="muted">{{ h.date }}</span><span role="cell"><a class="ink rc-link" href="{{ receiptHref }}" onClick="{{ h.open }}">{{ h.pack }}</a></span><span role="cell" class="muted only-desk-cell">{{ h.method }}</span><span role="cell" class="tnum" style="text-align: right">+{{ h.coins }}</span><span role="cell"><span class="badge {{ h.cls }}">{{ h.status }}</span></span></div></sc-for>
+          </div>
+          <sc-if value="{{ noHistory }}" hint-placeholder-val="{{ false }}"><p class="small muted" style="padding: 24px; text-align: center">No purchases yet.</p></sc-if>
+        </div>
+      </section>
+      <section class="col" style="gap: 12px; min-width: 0" aria-labelledby="fq-h">
+        <h2 id="fq-h" class="h3">Questions</h2>
+        <div class="card acc">
+          <sc-for list="{{ faq }}" as="f" hint-placeholder-count="4">
+            <div class="acc-item">
+              <button type="button" class="acc-trigger" onClick="{{ f.toggle }}" aria-expanded="{{ f.open }}"><span>{{ f.q }}</span><span class="acc-chev {{ f.cls }}">[[i:chevron-down]]</span></button>
+              <sc-if value="{{ f.open }}" hint-placeholder-val="{{ false }}"><p class="acc-body">{{ f.a }}</p></sc-if>
+            </div>
+          </sc-for>
+        </div>
+      </section>
+    </div>
+    <p class="xs muted">Prototype only: prices and payment screens are placeholders. No real payment is taken.</p>
+  </main>
+<!--FOOTER-->
+<!--MOBNAV-->
+<!--LAYERS-->
+</div>

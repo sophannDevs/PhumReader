@@ -1,21 +1,23 @@
 "use client"
 
-import { BookOpenIcon, CalendarIcon, CheckIcon, ChevronRightIcon, PlusIcon, Share2Icon } from "lucide-react"
+import { BookOpenIcon, CalendarIcon, ChevronRightIcon, ShareIcon } from "lucide-react"
 import Image from "next/image"
 import { useTranslations } from "next-intl"
+import { useEffect, useState } from "react"
 import { toast } from "sonner"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Link } from "@/i18n/navigation"
 import type { Series } from "@/data"
 import { initials } from "@/lib/format"
-import { genreHref, readerHref } from "@/lib/routes"
+import { creatorNameByHandle } from "@/lib/creator-profiles"
+import { creatorHandle, creatorHref, genreHref, readerHref } from "@/lib/routes"
 import { useSeriesViewer, useSubscribe } from "@/lib/me"
 import { useLocalize } from "@/lib/localize"
+import { cn } from "@/lib/utils"
 
 const ghostDark =
-  "border-surface-border-strong bg-surface-panel/60 text-surface-foreground hover:bg-surface-panel hover:text-surface-foreground focus-visible:ring-offset-surface"
+  "border-white/20 bg-white/10 text-surface-foreground shadow-none hover:bg-white/[0.18] hover:text-surface-foreground focus-visible:ring-offset-surface"
 
 /** Which episode the main button opens: 1, or "Continue" from the last read one (Assumption 7). */
 export function useContinueTarget(series: Series): { episode: number; continuing: boolean } {
@@ -24,6 +26,24 @@ export function useContinueTarget(series: Series): { episode: number; continuing
   const next = lastRead + 1
   const readable = next <= series.totalEpisodes && (next <= series.freeEpisodes || !!unlocked?.includes(next))
   return { episode: readable ? next : lastRead, continuing: true }
+}
+
+/** "You've read 20 of 65 free episodes" + "31%", or "65 free · 3 Fast Pass" + "Start with episode 1". */
+function useProgress(series: Series) {
+  const t = useTranslations("series")
+  const { lastRead } = useSeriesViewer(series)
+  const novel = series.type === "novel"
+  const free = Math.max(1, series.freeEpisodes)
+  const read = Math.min(lastRead, free)
+  const pct = lastRead > 0 ? Math.round((read / free) * 100) : 0
+  return {
+    pct,
+    line:
+      lastRead > 0
+        ? t(novel ? "progressReadChapters" : "progressRead", { read, free })
+        : t("progressNone", { free: series.freeEpisodes, fast: series.fastPassEpisodes }),
+    right: lastRead > 0 ? t("percent", { pct }) : t(novel ? "startChapter" : "startEpisode"),
+  }
 }
 
 export function SeriesHero({
@@ -40,6 +60,7 @@ export function SeriesHero({
   const tt = useTranslations("toasts")
   const { subscribed, toggle: toggleSubscribe } = useSubscribe(series)
   const { episode, continuing } = useContinueTarget(series)
+  const progress = useProgress(series)
   const novel = series.type === "novel"
 
   const readLabel = continuing
@@ -63,26 +84,21 @@ export function SeriesHero({
   }
 
   return (
-    <div className="relative isolate overflow-hidden bg-surface text-surface-foreground">
-      <Image
-        src={series.cover}
-        alt=""
-        fill
-        sizes="100vw"
-        priority
-        className="-z-20 scale-150 object-cover opacity-50 blur-[80px]"
-      />
-      <div className="absolute inset-0 -z-10 bg-gradient-to-b from-surface/60 via-surface/70 to-surface/95" />
+    <section className="relative isolate overflow-hidden bg-surface text-surface-foreground">
+      <div aria-hidden className="absolute -inset-[60px] -z-20">
+        <Image src={series.cover} alt="" fill sizes="100vw" priority className="object-cover opacity-50 blur-[48px] saturate-[1.3]" />
+      </div>
+      <div aria-hidden className="absolute inset-0 -z-10 bg-[linear-gradient(180deg,rgba(9,9,11,0.55),rgba(9,9,11,0.9))]" />
 
-      <div className="container flex flex-col gap-6 pt-6 pb-8 md:gap-8 md:pt-8 md:pb-10">
-        <nav aria-label={t("breadcrumb")}>
-          <ol className="flex flex-wrap items-center gap-1.5 text-sm text-surface-quiet">
+      <div className="container grid grid-cols-[minmax(0,1fr)] items-start gap-4 pt-4 pb-6 md:grid-cols-[240px_minmax(0,1fr)] md:items-end md:gap-x-10 md:gap-y-5 md:pt-6 md:pb-10">
+        <nav aria-label={t("breadcrumb")} className="md:col-span-2">
+          <ol className="flex flex-wrap items-center gap-1.5 text-xs leading-4 text-[#d4d4d8]">
             <li>
               <Link href="/" className="rounded-sm outline-none hover:text-surface-foreground focus-visible:ring-2 focus-visible:ring-ring">
                 {t("home")}
               </Link>
             </li>
-            <ChevronRightIcon className="size-3.5" aria-hidden />
+            <ChevronRightIcon className="size-3" aria-hidden />
             <li>
               <Link
                 href={genreHref(series.genre)}
@@ -91,83 +107,138 @@ export function SeriesHero({
                 {loc.genre(series.genre)}
               </Link>
             </li>
-            <ChevronRightIcon className="size-3.5" aria-hidden />
-            <li aria-current="page" className="text-surface-foreground">
+            <ChevronRightIcon className="size-3" aria-hidden />
+            <li aria-current="page" className="text-white">
               {series.title}
             </li>
           </ol>
         </nav>
 
-        <div className="flex flex-col gap-5 md:flex-row md:gap-10">
-          <div className="w-[132px] shrink-0 md:w-60">
-            <div className="aspect-[3/4] overflow-hidden rounded-card bg-surface-panel shadow-lg">
-              <Image
-                src={series.cover}
-                alt={`${series.title} cover`}
-                width={480}
-                height={640}
-                sizes="(min-width: 768px) 240px, 132px"
-                priority
-                className="size-full object-cover"
-              />
-            </div>
+        <div className="aspect-[3/4] w-[132px] overflow-hidden rounded-[10px] bg-surface-panel shadow-[0_20px_50px_rgba(0,0,0,0.5)] md:w-60 md:rounded-[14px]">
+          <Image
+            src={series.cover}
+            alt={t("coverAlt", { title: series.title })}
+            width={480}
+            height={640}
+            sizes="(min-width: 768px) 240px, 132px"
+            priority
+            className="size-full object-cover"
+          />
+        </div>
+
+        <div className="flex min-w-0 flex-col gap-3.5">
+          <div className="flex flex-wrap items-center gap-1.5">
+            <Badge variant="dark">{loc.genre(series.genre)}</Badge>
+            <Badge variant="dark">{t(novel ? "novel" : "comic")}</Badge>
+            {series.schedule ? (
+              <Badge variant="dark">
+                <CalendarIcon className="size-3" aria-hidden />
+                {loc.schedule(series.schedule)}
+              </Badge>
+            ) : null}
+            <Badge variant="new">{t(series.status === "completed" ? "completed" : "ongoing")}</Badge>
+          </div>
+          <h1 className="type-series-title">{series.title}</h1>
+          <p className="flex items-center gap-2 text-[13px] leading-[18px] text-[#e4e4e7]">
+            <span aria-hidden className="inline-flex size-6 items-center justify-center rounded-full bg-muted text-[10px] font-semibold text-foreground">
+              {initials(series.creator)}
+            </span>
+            {/* The creator's profile (/creators/[handle]) exists for the creators in the demo data. */}
+            {creatorNameByHandle(creatorHandle(series.creator)) ? (
+              <Link
+                href={creatorHref(series.creator)}
+                className="rounded-sm underline-offset-3 hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-surface focus-visible:outline-none"
+              >
+                {series.creator}
+              </Link>
+            ) : (
+              series.creator
+            )}
+          </p>
+          <p className="max-w-[62ch] text-[15px] leading-6 text-[#d4d4d8]">{synopsis}</p>
+
+          <dl className="flex flex-wrap gap-[18px] md:gap-7">
+            {statItems.map((s) => (
+              <div key={s.label} className="flex flex-col-reverse">
+                <dt className="text-xs text-surface-quiet">{s.label}</dt>
+                <dd className="text-lg leading-6 font-bold tabular-nums">{s.value}</dd>
+              </div>
+            ))}
+          </dl>
+
+          <div className="flex flex-wrap items-center gap-2 pt-1">
+            <Button asChild variant="brand" size="lg">
+              <Link href={readerHref(series, episode)}>
+                <BookOpenIcon />
+                {readLabel}
+              </Link>
+            </Button>
+            <Button variant="outline" size="lg" aria-pressed={subscribed} className={ghostDark} onClick={() => void toggleSubscribe()}>
+              {subscribed ? t("subscribedLabel") : t("subscribeLabel")}
+            </Button>
+            <Button variant="outline" size="icon" className={cn(ghostDark, "size-11 rounded-[10px]")} aria-label={t("copyLink")} onClick={share}>
+              <ShareIcon />
+            </Button>
           </div>
 
-          <div className="flex min-w-0 flex-1 flex-col items-start gap-4">
-            <div className="flex flex-wrap items-center gap-2">
-              <Badge variant="dark">{loc.genre(series.genre)}</Badge>
-              <Badge variant="dark">{t(novel ? "novel" : "comic")}</Badge>
-              {series.schedule ? (
-                <Badge variant="dark">
-                  <CalendarIcon /> {loc.schedule(series.schedule)}
-                </Badge>
-              ) : null}
-              <Badge variant="new">{t(series.status === "completed" ? "completed" : "ongoing")}</Badge>
+          <div className="flex max-w-[420px] flex-col gap-1.5 pt-0.5">
+            <div className="flex justify-between gap-3 text-xs leading-4 text-[#d4d4d8]">
+              <span>{progress.line}</span>
+              <span className="shrink-0 tabular-nums">{progress.right}</span>
             </div>
-            <h1 className="type-series-title">{series.title}</h1>
-            <p className="flex items-center gap-2 text-sm font-medium">
-              <Avatar size="sm" className="size-6">
-                <AvatarFallback className="bg-surface-foreground text-[10px] font-semibold text-surface">
-                  {initials(series.creator)}
-                </AvatarFallback>
-              </Avatar>
-              {series.creator}
-            </p>
-            <p className="type-lead max-w-2xl text-surface-foreground/80">{synopsis}</p>
-
-            <dl className="flex flex-wrap gap-x-8 gap-y-3">
-              {statItems.map((s) => (
-                <div key={s.label} className="flex flex-col">
-                  <dd className="text-xl leading-7 font-bold tabular-nums">{s.value}</dd>
-                  <dt className="type-small font-normal text-surface-quiet">{s.label}</dt>
-                </div>
-              ))}
-            </dl>
-
-            <div className="flex flex-wrap items-center gap-2">
-              <Button asChild variant="brand" size="lg">
-                <Link href={readerHref(series, episode)}>
-                  <BookOpenIcon />
-                  {readLabel}
-                </Link>
-              </Button>
-              <Button
-                variant="outline"
-                size="lg"
-                aria-pressed={subscribed}
-                className={ghostDark}
-                onClick={() => void toggleSubscribe()}
-              >
-                {subscribed ? <CheckIcon /> : <PlusIcon />}
-                {subscribed ? t("subscribed") : t("subscribe")}
-              </Button>
-              <Button variant="outline" size="icon" className={`${ghostDark} size-11`} aria-label={t("share")} onClick={share}>
-                <Share2Icon />
-              </Button>
+            <div
+              role="progressbar"
+              aria-label={t("progressLabel")}
+              aria-valuenow={progress.pct}
+              aria-valuemin={0}
+              aria-valuemax={100}
+              className="h-1.5 w-full overflow-hidden rounded-full bg-white/[0.18]"
+            >
+              <span className="block h-full rounded-full bg-primary" style={{ width: `${progress.pct}%` }} />
             </div>
           </div>
         </div>
       </div>
+    </section>
+  )
+}
+
+/**
+ * Phone only (prototype `.sr-sticky`): "Glass Compass / You've read …" + "Continue Ep. N" stuck above the tab bar once
+ * the hero has scrolled away (`heroRef`).
+ */
+export function SeriesStickyBar({ series, heroRef }: { series: Series; heroRef: React.RefObject<HTMLElement | null> }) {
+  const t = useTranslations("series")
+  const { episode, continuing } = useContinueTarget(series)
+  const progress = useProgress(series)
+  const [shown, setShown] = useState(false)
+  const novel = series.type === "novel"
+
+  useEffect(() => {
+    const el = heroRef.current
+    if (!el) return
+    const io = new IntersectionObserver(([entry]) => setShown(!entry.isIntersecting && entry.boundingClientRect.top < 0))
+    io.observe(el)
+    return () => io.disconnect()
+  }, [heroRef])
+
+  return (
+    <div
+      aria-hidden={!shown}
+      className={cn(
+        "sticky bottom-[62px] z-30 mx-3 mb-3 flex items-center gap-3 rounded-[14px] border bg-white/[0.97] py-2.5 pr-2.5 pl-3.5 shadow-md transition-[opacity,transform] duration-200 motion-reduce:transition-none md:hidden",
+        shown ? "opacity-100" : "pointer-events-none translate-y-3 opacity-0"
+      )}
+    >
+      <div className="flex min-w-0 flex-1 flex-col">
+        <span className="truncate text-[13px] leading-[18px] font-semibold">{series.title}</span>
+        <span className="truncate text-xs leading-4 text-muted-foreground">{progress.line}</span>
+      </div>
+      <Button asChild variant="brand" tabIndex={shown ? 0 : -1}>
+        <Link href={readerHref(series, episode)} tabIndex={shown ? 0 : -1}>
+          {continuing ? t(novel ? "continueShortChapter" : "continueShort", { n: episode }) : t(novel ? "readShortChapter" : "readShort")}
+        </Link>
+      </Button>
     </div>
   )
 }

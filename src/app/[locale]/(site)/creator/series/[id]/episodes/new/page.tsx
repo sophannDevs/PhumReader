@@ -1,31 +1,28 @@
-import type { Metadata } from "next"
-import { getTranslations, setRequestLocale } from "next-intl/server"
+import { setRequestLocale } from "next-intl/server"
 import { Suspense } from "react"
-import { SkeletonPage } from "@/components/pr/skeletons"
-import { NewEpisodePage } from "@/components/pr/episode-form-pages"
+import { redirect } from "@/i18n/navigation"
 import { routing } from "@/i18n/routing"
 
-// Series ids exist only in the database: one placeholder per language lets the page shell be built ahead.
 export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale, id: "00000000-0000-0000-0000-000000000000" }))
 }
 
-export async function generateMetadata({ params }: PageProps<"/[locale]/creator/series/[id]/episodes/new">): Promise<Metadata> {
-  const { locale } = await params
-  const t = await getTranslations({ locale, namespace: "episodeForm" })
-  return { title: t("pageTitle") }
-}
-
-async function Content({ params }: { params: PageProps<"/[locale]/creator/series/[id]/episodes/new">["params"] }) {
-  const { locale, id } = await params
+/** V1 route: episodes are uploaded on /creator/upload?series=<id> in V2.1 (spec §16). Keeps the query string. */
+async function Go({ params, searchParams }: PageProps<"/[locale]/creator/series/[id]/episodes/new">): Promise<never> {
+  const [{ locale, id }, query] = await Promise.all([params, searchParams])
   setRequestLocale(locale)
-  return <NewEpisodePage id={id} />
+  const next = new URLSearchParams({ series: id })
+  for (const [key, value] of Object.entries(query)) {
+    if (key === "series" || value === undefined) continue
+    for (const one of Array.isArray(value) ? value : [value]) next.append(key, one)
+  }
+  return redirect({ href: `/creator/upload?${next}`, locale })
 }
 
-export default function Page({ params }: PageProps<"/[locale]/creator/series/[id]/episodes/new">) {
+export default function Page(props: PageProps<"/[locale]/creator/series/[id]/episodes/new">) {
   return (
-    <Suspense fallback={<SkeletonPage />}>
-      <Content params={params} />
+    <Suspense fallback={null}>
+      <Go {...props} />
     </Suspense>
   )
 }

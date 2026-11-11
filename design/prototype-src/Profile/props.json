@@ -1,0 +1,1 @@
+{"demoView":{"editor":"enum","options":["reader","owner"],"default":"reader","section":"Prototype"},"demoReport":{"editor":"enum","options":["none","report","report-sent","block"],"default":"none","section":"Prototype"}}

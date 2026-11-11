@@ -1,36 +1,46 @@
 "use client"
 
-import { CheckIcon } from "lucide-react"
+import { CheckIcon, Loader2Icon } from "lucide-react"
 import { useTranslations } from "next-intl"
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
+import { usePlaceName } from "@/components/auth/use-place-name"
 import { useRouter } from "@/i18n/navigation"
+import type { Locale } from "@/i18n/routing"
 import { firstName } from "@/lib/format"
-import { useAppStore, useUser } from "@/lib/store"
+import { useAppStore } from "@/lib/store"
 
-/** "Welcome, <first name>" + "Taking you back…", then to `returnTo` (default Home) after 1.2 s. */
-export function DoneView() {
+/**
+ * "Welcome back, Sokha" / "Welcome to PhumiReader, Sokha" + "Taking you back to …", then after 1.4 s:
+ * existing accounts go to `returnTo` (default Home); new accounts go to /welcome (in the language they chose),
+ * which returns to `welcomeNext`.
+ */
+export function DoneView({ name, isNew, ui }: { name: string; isNew: boolean; ui: Locale | null }) {
   const t = useTranslations("auth")
   const router = useRouter()
-  const user = useUser()
+  const placeName = usePlaceName()
+  // Read once: the place stays the same while the step is shown.
+  const [place] = useState(() => placeName(useAppStore.getState().returnTo))
 
   useEffect(() => {
     const id = setTimeout(() => {
       const { returnTo, clearReturnTo } = useAppStore.getState()
       clearReturnTo()
-      router.replace(returnTo ?? "/")
-    }, 1200)
+      if (isNew) router.replace("/welcome", ui ? { locale: ui } : undefined)
+      else router.replace(returnTo ?? "/")
+    }, 1400)
     return () => clearTimeout(id)
-  }, [router])
+  }, [router, isNew, ui])
 
   return (
-    <div className="flex flex-col items-center gap-4 py-8 text-center" role="status" aria-live="polite">
-      <span className="flex size-14 items-center justify-center rounded-full bg-primary text-primary-foreground">
-        <CheckIcon className="size-7" strokeWidth={3} />
+    <div className="flex flex-col items-center gap-[18px] py-6 text-center" role="status">
+      <span aria-hidden className="inline-flex size-14 items-center justify-center rounded-full bg-primary text-primary-foreground">
+        <CheckIcon className="size-[22px]" strokeWidth={2.5} />
       </span>
-      <div className="flex flex-col gap-1">
-        <h1 className="type-h2">{t("welcome", { name: firstName(user?.name ?? "") })}</h1>
-        <p className="type-body text-muted-foreground">{t("taking")}</p>
-      </div>
+      <h1 id="auth-title" className="text-2xl leading-[30px] font-bold tracking-[-0.02em] max-md:text-[22px] max-md:leading-7">
+        {t(isNew ? "helloNew" : "welcomeBack", { name: firstName(name) || name })}
+      </h1>
+      <p className="text-sm leading-[21px] text-muted-foreground">{t("takingTo", { place })}</p>
+      <Loader2Icon aria-hidden className="mt-1.5 size-4 animate-spin text-muted-foreground" />
     </div>
   )
 }

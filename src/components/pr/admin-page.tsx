@@ -1,203 +1,307 @@
 "use client";
 
-import { LockIcon, LogInIcon, ShieldAlertIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { InfoIcon } from "lucide-react";
+import { useLocale, useTranslations } from "next-intl";
 import { useState } from "react";
+import {
+  AdminCard,
+  AdminError,
+  AdminHead,
+  useAge,
+  useDecisionTime,
+  useReasonLabel,
+  useReportText,
+} from "@/components/pr/admin-kit";
 import {
   AuditTab,
   ContentTab,
   OrdersTab,
-  ReportsTab,
   UsersTab,
 } from "@/components/pr/admin-lists";
-import { EmptyState } from "@/components/pr/empty-state";
-import { ErrorState } from "@/components/pr/error-state";
-import { Button } from "@/components/ui/button";
+import { StatCard } from "@/components/pr/patterns";
+import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Link, usePathname } from "@/i18n/navigation";
-import { ApiError } from "@/lib/api/client";
+import { Link } from "@/i18n/navigation";
 import { DEMO_MODE } from "@/lib/api/config";
-import { useOverview } from "@/lib/admin";
+import type { AuditEntry } from "@/lib/api/admin";
+import {
+  ADMIN_TODAY,
+  fromApiReport,
+  priorityOf,
+  sortReports,
+  useAdminQueues,
+  useAudit,
+  useOverview,
+  useReports,
+  type QueueReport,
+} from "@/lib/admin";
+import { formatShortDate, ictDate, weekdayOf } from "@/lib/format";
 import { useAppStore, useUser } from "@/lib/store";
 
-const TABS = [
-  "overview",
-  "reports",
-  "users",
-  "content",
-  "orders",
-  "audit",
-] as const;
-type Tab = (typeof TABS)[number];
+type Line = { text: string; meta: string; at: number };
 
-function Shell({ children }: { children: React.ReactNode }) {
-  const t = useTranslations("admin");
-  return (
-    <div className="container flex flex-col gap-6 py-8 md:py-10">
-      <div className="flex flex-col gap-1">
-        <p className="type-eyebrow">{t("eyebrow")}</p>
-        <h1 className="type-h1">{t("title")}</h1>
-      </div>
-      {children}
-    </div>
-  );
-}
-
-function Counts({ go }: { go: (tab: Tab) => void }) {
-  const t = useTranslations("admin");
-  const overview = useOverview();
-  if (!overview.data) return null;
-  const o = overview.data;
-  const cards: { label: string; value: number; tab: Tab }[] = [
-    { label: t("count_reports"), value: o.openReports, tab: "reports" },
-    { label: t("count_banned"), value: o.bannedUsers, tab: "users" },
-    {
-      label: t("count_hidden"),
-      value: o.hiddenSeries + o.hiddenEpisodes + o.hiddenComments,
-      tab: "content",
-    },
-    { label: t("count_refunds"), value: o.refundedOrders, tab: "orders" },
-  ];
-  return (
-    <ul className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-      {cards.map((c) => (
-        <li key={c.label} className="rounded-card border bg-card p-4 shadow-xs">
-          <button
-            type="button"
-            onClick={() => go(c.tab)}
-            className="flex w-full flex-col gap-1 text-left outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          >
-            <span className="type-small font-normal text-muted-foreground">
-              {c.label}
-            </span>
-            <span className="text-3xl font-semibold tabular-nums">
-              {c.value}
-            </span>
-          </button>
-        </li>
-      ))}
-    </ul>
-  );
-}
-
-/** /admin: users, content, the report queue, orders with refunds and the audit log (A8, A9). ADMIN only. */
+/**
+ * /admin (spec §22 Overview, screens 22-admin-overview): "Today" with the targets, four counts that open each queue,
+ * "Waiting longest" and recent decisions. Demo: the V2.1 queues and the decision log; real mode: the API's open
+ * reports and refunded orders, suspended users and the audit log (series review stays on demo data).
+ */
 export function AdminPage() {
   const t = useTranslations("admin");
+  const td = useTranslations("data");
+  const locale = useLocale();
   const user = useUser();
-  const pathname = usePathname();
+  const [now] = useState(() => Date.now());
+  const queues = useAdminQueues();
   const overview = useOverview();
-  const [tab, setTab] = useState<Tab>("overview");
+  const realReports = useReports(DEMO_MODE ? undefined : "open");
+  const audit = useAudit(undefined);
+  const decisions = useAppStore((s) => s.adminLog);
+  const age = useAge();
+  const when = useDecisionTime();
+  const reasonLabel = useReasonLabel();
+  const text = useReportText();
 
-  if (!user) {
+  const todayIso = DEMO_MODE ? ADMIN_TODAY : ictDate(now);
+  const dateLabel = `${td(`dayFull.${weekdayOf(todayIso)}`)}${locale === "km" ? " " : ", "}${formatShortDate(todayIso, locale)}`;
+
+  const loading = queues.query.isPending || (!DEMO_MODE && overview.isPending);
+  const failed = queues.query.isError || (!DEMO_MODE && overview.isError);
+
+  const series = queues.series;
+  const reports: QueueReport[] = DEMO_MODE
+    ? queues.reports
+    : sortReports(realReports.items.map((r) => fromApiReport(r, now)));
+  const urgent = reports.filter((r) => priorityOf(r.reason) === "urgent").length;
+  const oldest = series.reduce((m, q) => Math.max(m, q.hours), 0);
+  const stuckLeft = queues.stuck.filter((s) => !s.done).length;
+
+  const head = <AdminHead title={t("today")} line={t("todayLine", { date: dateLabel })} />;
+  if (loading) {
     return (
-      <Shell>
-        <EmptyState
-          icon={LogInIcon}
-          title={t("loginTitle")}
-          description={t("loginDesc")}
-          className="py-16"
-          action={
-            <Button asChild variant="brand" size="lg">
-              <Link
-                href="/login"
-                onClick={() => useAppStore.getState().setReturnTo(pathname)}
-              >
-                {t("login")}
-              </Link>
-            </Button>
-          }
-        />
-      </Shell>
-    );
-  }
-  if (DEMO_MODE) {
-    return (
-      <Shell>
-        <EmptyState
-          icon={LockIcon}
-          title={t("demoTitle")}
-          description={t("demoDesc")}
-          className="py-16"
-        />
-      </Shell>
-    );
-  }
-  if (overview.isPending) {
-    return (
-      <Shell>
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4" aria-hidden>
+      <>
+        {head}
+        <div className="grid grid-cols-2 gap-2.5 md:gap-4 lg:grid-cols-4" aria-hidden>
           {Array.from({ length: 4 }, (_, i) => (
-            <Skeleton key={i} className="h-24 rounded-card" />
+            <Skeleton key={i} className="h-[104px] rounded-card max-md:h-[92px]" />
           ))}
         </div>
-      </Shell>
+        <div className="grid gap-4 md:grid-cols-2" aria-hidden>
+          <Skeleton className="h-64 rounded-card" />
+          <Skeleton className="h-64 rounded-card" />
+        </div>
+      </>
     );
   }
-  if (overview.isError) {
-    // The API decides who is an admin: anybody else gets 403.
-    if (overview.error instanceof ApiError && overview.error.status === 403) {
-      return (
-        <Shell>
-          <EmptyState
-            icon={ShieldAlertIcon}
-            title={t("noAccessTitle")}
-            description={t("noAccessDesc")}
-            className="py-16"
-            action={
-              <Button asChild variant="outline">
-                <Link href="/">{t("home")}</Link>
-              </Button>
-            }
-          />
-        </Shell>
-      );
-    }
+  if (failed) {
     return (
-      <Shell>
-        <ErrorState onRetry={() => void overview.refetch()} />
-      </Shell>
+      <>
+        {head}
+        <AdminError
+          onRetry={() => {
+            void queues.query.refetch();
+            if (!DEMO_MODE) void overview.refetch();
+          }}
+        />
+      </>
     );
   }
 
+  const light = (s: string) => <span className="font-normal">{s}</span>;
+  const kpis = DEMO_MODE
+    ? [
+        {
+          label: t("kpi_series"),
+          value: series.length,
+          change: series.length ? t("kpi_oldest", { age: age(oldest) }) : t("kpi_allDone"),
+          tone: "muted" as const,
+          href: "/admin/series",
+        },
+        {
+          label: t("kpi_reports"),
+          value: reports.length,
+          change: t("kpi_urgent", { count: urgent }),
+          tone: urgent ? ("down" as const) : ("muted" as const),
+          href: "/admin/reports",
+        },
+        {
+          label: t("kpi_refunds"),
+          value: queues.refunds.length,
+          change: t("kpi_refundTarget"),
+          tone: "muted" as const,
+          href: "/admin/payments",
+        },
+        {
+          label: t("kpi_stuck"),
+          value: stuckLeft,
+          change: stuckLeft ? t("kpi_fixToday") : t("kpi_allDone"),
+          tone: stuckLeft ? ("down" as const) : ("muted" as const),
+          href: "/admin/payments",
+        },
+      ]
+    : [
+        {
+          label: t("kpi_series"),
+          value: series.length,
+          change: series.length ? t("kpi_oldest", { age: age(oldest) }) : t("kpi_allDone"),
+          tone: "muted" as const,
+          href: "/admin/series",
+        },
+        {
+          label: t("kpi_reports"),
+          value: overview.data?.openReports ?? reports.length,
+          change: t("kpi_urgent", { count: urgent }),
+          tone: urgent ? ("down" as const) : ("muted" as const),
+          href: "/admin/reports",
+        },
+        {
+          label: t("kpi_refunded"),
+          value: overview.data?.refundedOrders ?? 0,
+          change: undefined,
+          tone: "muted" as const,
+          href: "/admin/payments",
+        },
+        {
+          label: t("kpi_banned"),
+          value: overview.data?.bannedUsers ?? 0,
+          change: undefined,
+          tone: "muted" as const,
+          href: "/admin/users",
+        },
+      ];
+
+  // Waiting longest: the two oldest series, then the first two reports (urgent first).
+  const waiting = [
+    ...[...series]
+      .sort((a, b) => b.hours - a.hours)
+      .slice(0, 2)
+      .map((q) => ({
+        key: `s-${q.id}`,
+        title: q.title,
+        meta: t("wait_series", { creator: q.creator }),
+        age: age(q.hours),
+        hot: q.hours > 24,
+        href: `/admin/series?id=${encodeURIComponent(q.id)}`,
+      })),
+    ...reports.slice(0, 2).map((r) => ({
+      key: `r-${r.id}`,
+      title: reasonLabel(r.kind, r.reason),
+      meta: t("wait_report", { target: text.target(r) || t(`kind_${r.kind}`) }),
+      age: age(r.hours),
+      hot: priorityOf(r.reason) === "urgent",
+      href: `/admin/reports?id=${encodeURIComponent(r.id)}`,
+    })),
+  ];
+
+  // Recent decisions: the ones made here (newest first), then the demo team's (demo) or the audit log (real mode).
+  const realToday = ictDate(now);
+  const own: Line[] = decisions
+    .filter((d) => DEMO_MODE || d.queue === "series")
+    .map((d) => ({
+      text: t(`log_${d.action}` as "log_approve", { label: d.label }),
+      meta: t("decisionMeta", { name: user?.name ?? "", time: when(d.at, realToday) }),
+      at: d.at,
+    }));
+  const others: Line[] = DEMO_MODE
+    ? queues.log.map((l) => ({
+        text: t(l.key as "demoLog_1"),
+        meta: t("decisionMeta", { name: l.name, time: when(l.at, ADMIN_TODAY) }),
+        at: l.at,
+      }))
+    : audit.items.slice(0, 6).map((e: AuditEntry) => {
+        const at = Date.parse(e.createdAt);
+        const k = `audit_${e.action.replace(".", "_")}`;
+        return {
+          text: t.has(k as "audit_user_ban") ? t(k as "audit_user_ban") : e.action,
+          meta: t("decisionMeta", { name: e.actorName ?? "–", time: when(at, realToday) }),
+          at,
+        };
+      });
+  const lines = DEMO_MODE ? [...own, ...others].slice(0, 4) : [...own, ...others].sort((a, b) => b.at - a.at).slice(0, 4);
+
   return (
-    <Shell>
-      <Tabs
-        value={tab}
-        onValueChange={(v) => setTab(v as Tab)}
-        className="gap-5"
-      >
-        <div className="max-w-full overflow-x-auto">
-          <TabsList aria-label={t("title")}>
-            {TABS.map((v) => (
-              <TabsTrigger key={v} value={v}>
-                {t(`tab_${v}`)}
-              </TabsTrigger>
-            ))}
-          </TabsList>
+    <>
+      {head}
+      <div className="grid grid-cols-2 gap-2.5 md:gap-4 lg:grid-cols-4">
+        {kpis.map((k) => (
+          <StatCard
+            key={k.label}
+            label={k.label}
+            value={k.value}
+            change={k.change ? light(k.change) : undefined}
+            tone={k.tone}
+            href={k.href}
+          />
+        ))}
+      </div>
+      <div className="grid gap-4 md:grid-cols-2">
+        <AdminCard title={t("waiting")} titleId="ad-waiting">
+          {waiting.length ? (
+            <ul className="m-0 flex list-none flex-col gap-3 p-0">
+              {waiting.map((w) => (
+                <li key={w.key} className="flex items-center justify-between gap-3">
+                  <span className="flex min-w-0 flex-col gap-px">
+                    <Link
+                      href={w.href}
+                      className="truncate rounded-sm text-[13px] leading-[18px] font-semibold outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring"
+                    >
+                      {w.title}
+                    </Link>
+                    <span className="truncate text-xs leading-4 text-muted-foreground">{w.meta}</span>
+                  </span>
+                  <Badge variant={w.hot ? "up" : "secondary"} className="tabular-nums">
+                    {w.age}
+                  </Badge>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-[13px] leading-[18px] text-muted-foreground">{t("waitingEmpty")}</p>
+          )}
+        </AdminCard>
+        <AdminCard title={t("decisions")} titleId="ad-decisions">
+          {lines.length ? (
+            <ul className="m-0 flex list-none flex-col gap-3 p-0">
+              {lines.map((l, i) => (
+                <li key={i} className="flex min-w-0 flex-col gap-px">
+                  <span className="truncate text-[13px] leading-[18px]">{l.text}</span>
+                  <span className="truncate text-xs leading-4 text-muted-foreground">{l.meta}</span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-[13px] leading-[18px] text-muted-foreground">{t("decisionsEmpty")}</p>
+          )}
+        </AdminCard>
+      </div>
+    </>
+  );
+}
+
+const V1: Record<"users" | "content" | "orders" | "audit", { title: string; body: () => React.ReactNode }> = {
+  users: { title: "nav_users", body: () => <UsersTab /> },
+  content: { title: "nav_content", body: () => <ContentTab /> },
+  orders: { title: "nav_orders", body: () => <OrdersTab /> },
+  audit: { title: "nav_audit", body: () => <AuditTab /> },
+};
+
+/**
+ * Real mode: the V1 screens with no V2.1 design (users, content hide / restore, every order, the audit log) inside
+ * the admin shell. Their actions run at once, as in V1. The demo has no data for them.
+ */
+export function AdminV1Page({ section }: { section: keyof typeof V1 }) {
+  const t = useTranslations("admin");
+  const page = V1[section];
+  return (
+    <>
+      <AdminHead title={t(page.title as "nav_users")} line={DEMO_MODE ? undefined : t("v1Note")} />
+      {DEMO_MODE ? (
+        <div className="flex items-start gap-3 rounded-card border bg-card p-4 text-[13px] leading-[18px] text-muted-foreground shadow-xs">
+          <InfoIcon className="mt-px size-4 shrink-0" aria-hidden />
+          <p>{t("v1DemoNote")}</p>
         </div>
-        <TabsContent value="overview" className="flex flex-col gap-4">
-          <Counts go={setTab} />
-          <p className="type-small font-normal text-muted-foreground">
-            {t("overviewHint")}
-          </p>
-        </TabsContent>
-        <TabsContent value="reports">
-          <ReportsTab />
-        </TabsContent>
-        <TabsContent value="users">
-          <UsersTab />
-        </TabsContent>
-        <TabsContent value="content">
-          <ContentTab />
-        </TabsContent>
-        <TabsContent value="orders">
-          <OrdersTab />
-        </TabsContent>
-        <TabsContent value="audit">
-          <AuditTab />
-        </TabsContent>
-      </Tabs>
-    </Shell>
+      ) : (
+        page.body()
+      )}
+    </>
   );
 }

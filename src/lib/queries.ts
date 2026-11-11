@@ -78,9 +78,13 @@ export const useGenre = (genre: Genre) => {
   return useQuery({ queryKey: ["genre", genre, flag], queryFn: () => catalog.fetchGenre(genre) })
 }
 
-export const useSearchSeries = (query: string) => {
+/** `limit` defaults to 8 (the API allows up to 20). */
+export const useSearchSeries = (query: string, limit = 8) => {
   const flag = useDemoFlag()
-  return useQuery({ queryKey: ["search", query.trim().toLowerCase(), flag], queryFn: () => catalog.search(query) })
+  return useQuery({
+    queryKey: ["search", query.trim().toLowerCase(), limit, flag],
+    queryFn: () => catalog.search(query, limit),
+  })
 }
 
 /** The Coins page: the demo's, or the API's packs plus the reader's own purchase history. */

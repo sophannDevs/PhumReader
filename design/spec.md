@@ -1,138 +1,363 @@
-# Toonwave V2 – Page and behaviour spec (frontend, demo data)
+# PhumiReader (ភូមិReader) V2 – Page and behaviour spec
 
-What every page shows and what every control does. Screens are in `screens/`, tokens in `foundations.md`, data in `demo-data.json`.
-Scope: frontend only. Anything a server would do is simulated with demo data, a fake API with delay, and browser state.
+Frontend only, demo data. Everything a server would do is simulated: demo data, a fake API with a delay, and state saved in the browser.
 
-## 0. Global rules
+- Screens: `screens/` (desktop 1440 px and phone 390 px, plus key states).
+- Tokens and components: `foundations.md`.
+- Data: `demo-data.json`.
+- Khmer text: `i18n/km-dictionary.json`.
+- Exact behaviour: `prototype-src/<Page>/page.js` (logic), `body.html` (markup) and `page.css` (styles). When this spec and the prototype disagree, the prototype wins. Do not copy its code as-is; rebuild it in React.
 
-### Routes
+## 0. Global
+
+### Brand
+- Name: **PhumiReader** in English and **ភូមិReader** in Khmer. Logo = green mark + "Phumi" (foreground) + "Reader" (brand-ink green).
+- Domain in examples: phumireader.app. Storage prefix: `phumireader.` (the prototype still uses `toonwave.`; rename it).
+
+### Routes (Next.js App Router, under `/[locale]`)
 | Page | Route | Screens |
 |---|---|---|
-| Home | `/` | 01-home-* |
-| Series | `/series/[slug]` | 02-series-* |
-| Comic reader | `/read/[slug]/[episode]` | 03-episode-viewer-* |
-| Novel reader | `/novel/[slug]/[chapter]` | 04-novel-reader-* |
-| Log in / Sign up | `/login` (`?mode=signup`) | 05-* |
+| Home | `/` | 01-* |
+| Series | `/series/[slug]` | 02-* |
+| Comic reader | `/read/[slug]/[episode]` | 03-* |
+| Novel reader | `/novel/[slug]/[chapter]` | 04-* |
+| Log in / Sign up / Forgot | `/login` (`?mode=signup`, `?mode=forgot`) | 05-* |
 | Coins | `/coins` | 06-* |
-| Not designed in V2 yet (link targets) | `/library`, `/settings`, `/creator`, `/rankings`, `/genres/[genre]`, `/search` | Build as simple pages in V2 style, or "Coming soon" |
+| Search | `/search?q=` | 07-* |
+| My library | `/library` | 08-* |
+| Errors | `not-found.tsx`, `error.tsx`, `/offline`, `/maintenance`, unavailable series inside `/series/[slug]` | 09-* |
+| Rankings | `/rankings` | 10-* |
+| Genres / Web novels | `/genres?g=&format=` | 11-* |
+| Settings | `/settings` | 12-* |
+| Notifications | `/notifications` | 13-* |
+| Creator dashboard | `/creator` | 14-* |
+| Create series | `/creator/new` | 15-* |
+| Upload episode | `/creator/upload?series=` | 16-* |
+| Creator profile | `/creators/[handle]` (`?view=owner`) | 17-* |
+| Earnings | `/creator/earnings` | 18-* |
+| Help center | `/help` (`#contact`) | 19-* |
+| Policies | `/legal/[doc]` (terms, privacy, refund, community, creator) | 20-* |
+| Manage series | `/creator/series/[id]` (tabs: episodes, details, fast-pass, settings) | 21-* |
+| Admin | `/admin`, `/admin/series`, `/admin/reports`, `/admin/payments` | 22-* |
+| Comments | `/series/[slug]/comments` (`?ep=`) | 23-* |
+| First-time setup | `/welcome` | 24-* |
+| Receipt | `/coins/orders/[id]` | 25-* |
+| Become a creator | `/creators/join` | 26-* |
 
-Home nav items: Home → `/`, Rankings → `/#rank`, Genres → `/#genres`, Web novels → `/#novels` (until those pages exist).
-Comics open in the comic reader; series whose `type` is `novel` open in the novel reader.
+Locales: `en` (default) and `km`. The Khmer strings are in `i18n/km-dictionary.json`. Build them into `messages/km.json` keyed by message id. Do not translate the page after it renders the way the prototype does.
 
-### Simulated state (zustand + localStorage)
-| State | Default | Changed by |
+### Simulated state (zustand + persist, prefix `phumireader.`)
+| Key | Default | Changed by |
 |---|---|---|
-| `user` (name) or null | null (logged out) | Log in, sign up, social buttons, Log out |
-| `coins` | 3 | Unlock (−5), purchase (+pack total) |
-| `subscriptions` (series ids) | [] | Subscribe buttons |
-| `unlocked[seriesId]` (episode numbers) | [] | Unlock dialog |
-| `lastRead[seriesId]` | 0 | Opening an episode/chapter |
-| `purchases` | 2 rows from demo data | Checkout (Paid / Failed / Cancelled) |
-| `returnTo` | — | Set before going to Log in |
-| `shopReturn` {page, episode, title} | — | Set before going to Coins from a locked episode |
-| `pendingUnlock` {seriesId, episode} | — | Reopens the unlock dialog after log in / coins |
-| `novelSettings` {size 18, theme light, font sans, wide true} | — | Novel reader settings |
-| `lang` en / km | en | Language switch |
-| `accounts` (signed-up users) | — | Sign up |
+| `user` | null | Log in / sign up / social buttons / log out / delete account |
+| `accounts` | demo accounts | Sign up |
+| `lang` | `en` | Header language button, Settings, setup, Log in toggle |
+| `coins` | 3 | Unlock (−5 each), purchase (+pack total), admin "Add coins" |
+| `purchases` | 2 demo rows (TW-48213377 paid, TW-48190012 failed) | Checkout |
+| `subs` | demo list | Subscribe buttons, Library edit, setup picks |
+| `unlocked[seriesId]` | [] | Unlock (single or bundle) |
+| `read[seriesId]` | 0 | Opening an episode |
+| `pos[seriesId][ep]` | – | Reader scroll position (0.05–0.95 shows "You stopped at N%") |
+| `settings` | `{mode:'scroll', quality:'auto', theme:'system', size:'m', autoNext:true, saveData:false, region:'KH', langs:['en','km'], publicLib:false, mature:false, google:true, facebook:false}` | Settings, reader settings panel |
+| `readerBg` / `readerWidth` | dark / fit | Comic reader settings |
+| `novel` | `{size:18, theme:'light', font:'sans', wide:true}` | Novel reader settings |
+| `prefs` (genres) | null | Home picker, setup |
+| `notifRead` / `notifGone` / `notifPrefs` | demo | Notifications page |
+| `blocked` (names) | [] | Block |
+| `reports` | [] | Report dialog. Status changes when an admin decides. |
+| `myWorks` | 3 demo series | Create series, upload, manage, admin decisions |
+| `reviewNotes[seriesId]` | – | Admin "Request changes" |
+| `returnTo`, `welcomeNext`, `shopReturn`, `pendingUnlock`, `helpPrefill`, `receipt`, `legalDoc` | – | Hand-offs between pages (see flows) |
 
 ### Fake API (`lib/demo-api.ts`)
-Every read/write goes through it: 300–800 ms delay. URL flags for reviewing states: `?demo=empty` returns empty lists, `?demo=error` throws, `?demo=slow` adds 3 s.
+- Every read and write goes through it, with a 300–800 ms delay.
+- URL flags: `?demo=empty`, `?demo=error`, `?demo=slow` (adds 3 s).
 
-### Header (all site pages; not on readers or Log in)
-Logo → Home · nav links (current one bold) · search trigger "Search series, creators…" with ⌘K hint (icon button on phone) · coin chip "C 3" → Coins · logged out: "Log in" (ghost) + "Sign up" (brand); phone shows only "Log in" · logged in: avatar with initials → menu: name + coins, My library, Get coins, Creator dashboard, Settings, Log out (toast "You’re logged out").
-Log in / Sign up links first save `returnTo` = current page.
+### Header (site pages)
+- **Left:** logo → Home; nav Home / Rankings / Genres / Web novels. Web novels opens Genres with format=novel, and the current item is bold.
+- **Right:**
+  - Search trigger (⌘K; an icon on phone).
+  - Language button: shows "ខ្មែរ" in English and "EN" in Khmer.
+  - Coin chip → Coins.
+  - Logged out: Log in + Sign up.
+  - Logged in: bell with a red unread count → Notifications, and an avatar menu: My library, Notifications, Get coins, Creator dashboard, Settings, Log out.
+- **Phone:** the header must fit in 390 px with everything shown. Tighten the gaps at ≤420 px.
 
-### Search (⌘K / Ctrl+K / search icon)
-Command dialog near the top. Empty query: "Popular now" (first 6 series). Typing filters by title, creator or genre (max 8). Each result: 28×36 cover, title, "creator · genre", "Novel" badge. Click → series page. No results: "No results. Try a title, creator or genre." Esc / click outside closes.
+### Phone tab bar
+Home, Search, Library, Coins, Me (or Log in). Sticky at the bottom.
 
 ### Footer
-Brand + one-line description + 3 social buttons · columns Read / Create / Help · bottom line "© 2026 Toonwave · [YOUR COMPANY NAME]…" + language note.
+- **Read:** Originals, Rankings, Genres, Web novels.
+- **Create:** Become a creator, Creator dashboard, Creator guidelines, Earnings.
+- **Help:** Help center, Community guidelines, Terms, Privacy, Coins and refunds, Contact us.
+- **Bottom line:** "© 2026 PhumiReader · [YOUR COMPANY NAME]" and a language switch.
 
-### Phone tab bar (< 768 px)
-Home, Search (opens command search), Library, Coins, Me (logged in → Settings) / Log in. Current tab dark, others muted.
+### Report and block (shared dialog, any page)
+- **Opened from:** Report on comments, profiles, the series About tab, and episode or chapter ends.
+- **Reasons depend on what is reported:**
+  - Comment: spam, harassment, hate, sexual, violence, spoiler, something else.
+  - Series or episode: stolen work first, then the common reasons, plus wrong age rating and something else.
+  - Account: spam or fake, pretending to be someone, harassment, something else.
+- **Details field:** required (at least 10 characters) for "Something else", "Stolen work" (asks for a link to the original) and "Pretending to be someone".
+- **Footer note:** "In Cambodia: police 117, ambulance 119."
+- **After sending:** show case number R-xxxxx, say the report is reviewed within 24 h, and offer "Also block [name]".
+- **Blocking:** a confirm dialog. Blocked people's comments are hidden, with a "1 comment from people you blocked hidden · Show" line. Settings lists blocked accounts and your reports with their status (In review / Removed / No violation found).
 
-### Toasts
-White card with green check dot, auto-hide after 2.6 s.
+### Every data page
+- States: loading skeletons, empty (with a next step), error (with Try again), success.
+- No horizontal scrolling at 320–1920 px. Focus rings, keyboard access, dialogs that trap focus, `lang="km"` on Khmer text.
 
-## 1. Home `/`
+## 1. Home
+- Spotlight: a main hero and a "Featured this week" list. No autoplay.
+- Rows:
+  - Continue reading.
+  - "What do you like to read?" genre picker → "Recommended for you", saved to `prefs`.
+  - Daily updates: day tabs with counts, a type filter, "New today", and at most 6 cards with "Show all N".
+  - Trending, with the top 3 shown larger.
+  - Browse by genre with counts and "Surprise me".
+  - Web novels.
+  - Creator call to action → Become a creator.
+- Demo states: live, loading, empty, error.
 
-1. **Hero carousel** (dark banner, 20 px radius): 3 slides from `homeHero`. Blurred cover background, badges (tag in green, genre, "Web novel" for novels), title, blurb, creator · likes · schedule, buttons: "Read episode 1"/"Read chapter 1" (brand, lg) → reader at 1 · "+ Subscribe"/"✓ Subscribed" toggle (toast) · "Series details →" link. Cover art on the right (desktop, tilted 2°). Dots + prev/next buttons. Autoplay every 7 s; any manual control stops autoplay. Phone: cover on top, text below.
-2. **Continue reading**: 4 ContinueCards (from `continueReading`) → reader at that episode. Subtitle: logged in "Pick up where you left off." / logged out "Your reading history on this device." "My library ›" link. Hidden when empty.
-3. **Daily updates**: pill tabs Mon–Sun with Thursday labelled "Today" (selected by default). Grid of 6 SeriesCards for that day (fill with UP series if fewer than 6).
-4. **Trending now** card (left): tabs Comics / Web novels; ranked list of 8 with movement.
-5. **Browse by genre** (right): 8 chips (Fantasy selected); "N series in <genre>"; 3×2 grid of that genre.
-6. **Web novels**: 6 NovelCards (84 px cover, genre badge, title, "creator · N chapters"), 3 columns desktop, 1 on phone.
-7. **Creator call-to-action** card (green-to-white gradient): eyebrow "For creators", "Publish your own series", "Start publishing" (brand) + "Creator guidelines" (outline) → `/creator`; 3 fanned covers on desktop.
+## 2. Series
+- **Hero:**
+  - Breadcrumb, cover, badges, creator, synopsis and stats.
+  - Read / Continue Ep N, + Subscribe, Share.
+  - Progress line: "You've read 20 of 65 free episodes · 31%", or "65 free · 3 Fast Pass".
+- **Episodes tab:**
+  - Fast Pass card: "read N before everyone", 5 coins each, the next free date with a countdown, "Unlock all N · 15 coins", and "N coins · Get more".
+  - Toolbar: Episode 1, Latest free, Go to # (shows an error outside 1–max), and Newest/Oldest.
+  - Grouped list: "Fast Pass · read before everyone" and "Free to read".
+  - Locked rows show "Free Nov 26 · in 21 days".
+  - Badges: UP, Read, Up next, Unlocked.
+  - "Show 12 more".
+- **Unlock dialog:**
+  - Choose single (5) or "All 3 Fast Pass episodes" (15).
+  - Shows price, balance and "after unlocking".
+  - Not logged in → Log in. Short of coins → "You need N more coins" → Coins, which saves `shopReturn` and `pendingUnlock`. The dialog reopens when they come back.
+- **About tab:** details, tags, and "Something wrong with this series? Report it".
+- **Comments tab:** a preview, Report / Block on others' comments, and "See all 2.4K comments" → Comments.
+- **Phone:** a sticky "Continue Ep. N" bar appears after scrolling past the hero.
 
-States: loading skeletons for hero, cards and lists; `?demo=empty` → sections show EmptyState; `?demo=error` → ErrorState with Retry.
+## 3. Comic reader
+- **Top bar:** back, series and episode title, episode list popover, settings (gear), previous/next. A progress bar shows the position within the episode.
+- **Settings panel:**
+  - Scroll / Page by page, Dark / Light background, Full / Narrow width.
+  - Auto-open next episode and Data saver switches.
+  - Everything saves to `settings`.
+- **Page by page:** tap the left or right third, or use ← →. The last page leads to the next episode.
+- **Resume:** "You stopped at 40% · Continue / Start over".
+- **Locked episode:**
+  - A blurred first panel with a "Fast Pass" card: free date, unlock for 5, "Get coins · you need N more" (return here after buying), "Unlock all N", and back to the previous episode.
+- **End of episode:**
+  - Like, Subscribe, Share, Report this episode.
+  - Auto-next countdown of 5 s with Cancel.
+  - Next episode card (shows the unlock price if it's Fast Pass).
+  - Top comments with Report / Block and "See all".
+- Arrow keys change episode.
 
-## 2. Series `/series/[slug]`
+## 4. Novel reader
+- **Settings popover:** size, theme (light / sepia / dark), font, line spacing. The first visit takes size and theme from Settings.
+- Shows reading progress, a resume chip, and arrow keys change chapter.
+- **Locked chapter:** two teaser paragraphs fading out, then the unlock card.
+- **End of chapter:** like, bookmark, share, creator's note, previous / next, and "Report this chapter".
 
-**Hero** (dark, blurred cover behind): breadcrumb Home › Genre › Title · 240 px cover (132 px on phone) · badges genre, Comic/Web novel, schedule, "Ongoing" · title · creator avatar + name · synopsis (`synopsisByGenre`) · stats Views, Likes, Subscribers, Episodes (total incl. Fast Pass) · buttons: "Read episode 1" or "Continue episode N" (brand lg) · Subscribe toggle · Share icon (toast "Link copied").
+## 5. Log in / Sign up
+Split layout: a mint panel and a card.
+- **Card top:** context line ("Log in to unlock Ep. 66 · Glass Compass") and an English / ខ្មែរ toggle.
+- **Log in:**
+  - Fields: email and password (with Show and a Caps Lock warning), Remember me, Forgot.
+  - Social: Google / Facebook / Apple.
+  - Demo account: reader@phumireader.app / PhumiReader1!
+- **Sign up:**
+  - Fields: name, email (creator@phumireader.app is already taken), password with strength meter and rules, confirm password, app language, birth year (under 13 blocked; 13–17 gets a note), terms.
+  - Then a 6-digit code (123456) with resend after 30 s.
+- **Forgot:** code → new password → back to log in with a success message.
+- **New accounts:** go to `/welcome` and then back to `returnTo`. Existing accounts go straight back to `returnTo`.
 
-**Tabs** (underline style): Episodes [count] · About · Comments [2.4K].
-- Episodes: brand Alert "Fast Pass: read 3 episodes early — Unlock for 5 coins each, or wait — one becomes free every week. You have N coins." + "Get coins". Row "68 episodes · new every Sun" + sort button (Newest first ⇄ Oldest first). List of EpisodeRows, 12 at a time, "Show 12 more". Locked rows: dimmed thumb with lock, warn badge "⚡ 5 coins". Unlocked Fast Pass: "Unlocked" badge. Read free episodes: grey title + "✓ Read". The latest free episode has "UP".
-- About: synopsis + "New episodes every …" · details list (Genre, Format, Schedule, Status, Language, Age rating) · tags.
-- Comments: composer card (500 chars, counter, "Post"; logged out → toast "Log in to comment") · comments with avatar, name · time, "Top" badge, text, like toggle (count +1), Reply.
+## 6. Coins
+- **Steps bar:** 1 Choose pack · 2 Pay · 3 Done.
+- **Balance:** "≈ N Fast Pass episodes".
+- **From a locked episode:** "Almost there · You need N more coins to unlock …". The smallest pack that covers it is pre-selected and marked "Covers it".
+- **Packs:** 10/0, 30/+3, 60/+8, 120/+20 (Popular), 300/+60 (Best value). Each shows its bonus % and "You get N · ≈ N episodes". The first purchase doubles the coins.
+- **Methods:** KHQR (recommended) / ABA Pay / card.
+- **Pay step:**
+  - 10-minute countdown and a QR placeholder.
+  - [PAYMENT PROVIDER FORM] for cards. Never build real card fields.
+  - Prices stay [PRICE USD] / [PRICE KHR].
+- **Processing → success:** "+N coins". If they came from an episode, it goes back there automatically after 5 s, with "Stay here".
+- **Failed or expired:** Try again / change method.
+- **Trust notes:** secure provider, coins never expire, help within a day.
+- **History:** each row opens its Receipt. Plus an FAQ.
 
-**Sidebar** (below content on phone): About the creator (avatar, "3 series on Toonwave", Follow/Following toggle + toast) · You may also like (4 same-genre series).
+## 7. Search
+- Before typing: recent searches and trending searches.
+- Results: tabs All / Comics / Web novels / Creators with counts, and filters for genre, day and sort.
+- Matches highlighted; Subscribe on each result; Follow on creators.
+- "Show more" (6 at a time), "Did you mean", plus loading, error and no-results states.
 
-**Unlock dialog** (click a locked row): thumb, "⚡ Fast Pass", "Unlock Episode N", "Free for everyone on <date>", Price / Your balance box, then one of:
-- Logged out: info alert + "Log in to unlock" → Log in (saves `returnTo` + `pendingUnlock`).
-- Enough coins: "Unlock for 5 coins" → spinner 0.7 s → coins −5, episode added to unlocked, toast "Episode N unlocked", opens the reader.
-- Not enough: warning "You need N more coins." + "Get coins" → Coins (saves `shopReturn` + `pendingUnlock`).
-- Always: "Wait for the free release" (closes).
-Returning after log in / purchase with enough coins reopens the dialog automatically.
+## 8. My library
+- Tabs: Subscribed / Recently read / Unlocked.
+- "New episodes" filter, sort, and edit mode with select all and remove, plus an Undo bar for 6 s.
+- Guest banner, empty states.
 
-## 3. Comic reader `/read/[slug]/[n]`
+## 9. Error pages
+404, 500, offline, maintenance, series unavailable. Each has its own illustration, a code badge, and an English / ខ្មែរ toggle.
+- **404:** shows the address they tried, "Did you mean", search, and popular series.
+- **500:** retry (the first retry fails, the second works), reference number with copy.
+- **Offline:** tips, retry, and it returns automatically when the connection is back.
+- **Maintenance:** [MAINTENANCE START/END], "Notify me".
+- **Unavailable:** remove from library, plus similar series.
 
-Dark page. Sticky bar: back arrow → series · series title (small) + episode title · "Episodes" popover (9 nearby episodes, newest first; current marked "Now"; locked show a lock; header "N episodes · N coins") · previous / next buttons (disabled at ends) · 2 px green progress line (episode n / total).
-Image strip: `comicPanels`, 800 px max, white background, lazy loaded.
-End section: card "END OF EPISODE N" + title + pills Like (count, heart fills red) · Subscribe (bell) · Share · Next-episode card (thumb, title, Fast Pass badge if locked, "Read next →" or "Unlock") · "You’re all caught up" when last · Comments card (input + Post, 3 comments) · "All episodes of <series>".
-Going to a locked episode (next, list, keyboard → ) opens the same unlock dialog (light). Opening an episode records `lastRead`.
-Keyboard: ← / → previous / next.
+## 10. Rankings
+- Lists: Trending / Popular / New / Rising.
+- Filters: format, genre, and period (Today / This week / This month).
+- Top 3 as large cards, then rows with movement (▲▼ NEW –), reads for the period (Rising shows +% instead), likes and + Add.
+- "How rankings work", "Show more", and an empty state.
 
-## 4. Novel reader `/novel/[slug]/[n]`
+## 11. Genres / Web novels
+- Genre chips with counts and a coloured banner (description, count, 3 covers).
+- Filters: format, status, update day, sort. "Clear filters (N)".
+- Grid of 6 / 4 / 3 columns, plus "Show more" and an empty state.
 
-Same structure as the comic reader but light by default. Bar: back · titles · "Chapters" popover · "Aa" settings popover:
-- Text size − / + (14, 16, 18, 20, 22, 24 px) with a progress bar showing the level.
-- Theme: Light / Sepia / Dark.
-- Font: Sans / Serif.
-- Wide line spacing switch.
-Settings apply instantly and persist.
-Article (720 px column): eyebrow "CHAPTER N", chapter name, "creator · date · 6 min read", body from `novelChapterText` (paragraphs, quotes with green left border, centred "* * *" scene breaks).
-End: "END OF CHAPTER N" card with Like · Bookmark (toast) · Share · Creator’s note card · Previous / Next chapter buttons (Next shows "Next · 5 coins" when locked) · "All chapters of …". Locked chapters use the unlock dialog.
+## 12. Settings
+- Side menu, with one card per section: Account, Reading, Language and region, Notifications, Privacy and safety, Coins and payments, Account actions.
+- **Account:** display name (2–30 characters), change password inline (8+ characters with a letter and a number; must match; must differ from the old one), Google / Facebook connect.
+- **Reading:** mode cards, quality, theme, novel text size with a live preview, auto-next, data saver.
+- **Language and region:** app language, region, story languages (at least one).
+- **Privacy and safety:** public library and mature switches, blocked accounts with Unblock, your reports with status, download your data.
+- **Account actions:** log out everywhere; delete account (type DELETE to confirm).
+- **Save bar:** "You have unsaved changes · Discard / Save changes".
 
-## 5. Log in / Sign up `/login`
+## 13. Notifications
+- **Inbox:**
+  - Tabs: All / Unread (N) / New episodes / Comments / Coins.
+  - Groups: Today / This week / Earlier, with an unread dot.
+  - Click marks it read and opens the series or Coins. Mark read/unread, remove with Undo, mark all as read.
+- **Alert settings:** push and email for each type, quiet hours (from / to, ICT), daily digest. Saves automatically.
+- The header bell shows the unread count.
 
-Desktop: left 46% dark panel (rotated collage of covers, logo, creator quote) · right: "← Back to Toonwave" + EN / ខ្មែរ switch, centred 380 px form. Phone: logo + language switch, form only.
-- **Log in**: title "Welcome back", tabs Log in / Sign up, Google + Facebook buttons (spinner 1 s → logged in as Sokha Chan), "OR WITH EMAIL", Email, Password (show/hide eye), "Forgot password?" link, "Keep me logged in" checkbox (on), "Log in" (brand lg, spinner 0.9 s), demo hint line. Errors: empty/invalid email, empty password, wrong credentials → red alert "Email or password is incorrect". Demo: reader@toonwave.app / Toonwave1! or any account created by sign up.
-- **Sign up**: Display name (2+ chars), Email, Password with 4-segment strength bar (amber under 3 rules, green at 3+) and live rule list (8+ characters, Upper and lower case, A number, A symbol), Terms checkbox (required), "Create account" → Verify.
-- **Verify**: mail icon, "Check your email", "We sent a 6-digit code to <email>", 6 OTP slots, "Verify email", "Didn’t get it? Resend in 30s" countdown → "Resend code" (toast), demo code 123456, wrong code → red slots + "That code isn’t right…", "Use a different email".
-- **Forgot**: email → "Send reset link" → "Check your inbox… It expires in 30 minutes." → "Back to log in".
-- **Done**: green check, "Welcome, <first name>", "Taking you back…", then go to `returnTo` (default Home) after 1.2 s.
-- Language switch translates all page text (English/Khmer strings in the V2 design file).
+## 14. Creator dashboard
+- Creator menu: Dashboard, New series, Upload episode, Earnings, Public profile.
+- Four stat cards, a 14-day views chart, My series filters.
+- Each row has a status badge (Published / In review / Changes requested / Draft) and a main button:
+  - Upload episode.
+  - "Fix and resubmit" → Manage.
+  - "Continue setup" → Create.
+  - Plus "Manage" on every row.
+- To do list, and new comments with an inline reply and like.
+- New-creator state: a 3-step guide.
 
-## 6. Coins `/coins`
+## 15. Create series
+- Four steps (Basics / Story / Cover / Publishing), with an error summary and drafts saved automatically.
+- **Basics:**
+  - Format cards and title: 2–60 characters, and must not match an existing title.
+  - Main and second genre.
+  - Age rating with a hint: All / 13+ / 16+ / 18+.
+  - Language: ខ្មែរ / English / both.
+- **Story:** summary of 50–500 characters, up to 5 tags (Enter or comma adds, Backspace removes), popular tag suggestions.
+- **Cover:** pick a cover, a requirements checklist, square thumbnail preview.
+- **Publishing:** update days, release time, Fast Pass switch, original-work checkbox.
+- Submit → "in review" screen. Status becomes `review`, and the series appears in the admin queue.
 
-Header row: "Coins" + "Unlock Fast Pass episodes and chapters before they’re free." + balance card (coin icon, "N coins").
-Alerts: "Get coins for episode N of <title>" + "Go back" (when `shopReturn` set) · "First purchase: double coins" (until a Paid purchase exists).
-**1. Choose a pack**: 5 radio cards (coins, bonus line incl. "+N first" during first-purchase offer, Popular (green) / Best value (dark) badges, [PRICE USD] / [PRICE KHR]); 120 selected by default; 2 columns on phone.
-**2. Pay with**: KHQR (Recommended), ABA Pay, Credit or debit card.
-**Checkout card** (right column; below on phone) steps:
-1. Review: pack, pack bonus, first-purchase bonus, You get, Total placeholders, Paying with, "Continue to payment", "Balance after: N coins · Coins don’t expire". Logged out → go to Log in (returns here).
-2. Pay: title by method ("Scan to pay" / "Confirm in ABA Mobile" / "Card details"), 10:00 countdown badge. KHQR: red "KHQR" header, QR placeholder, "[KHQR PLACEHOLDER] · Toonwave", [PRICE KHR], 3 steps. ABA: "[ABA PAY HANDOFF PLACEHOLDER]". Card: "[PAYMENT PROVIDER FORM]" placeholder — never real card fields. Buttons: "I’ve paid (simulate)" / "Pay now", "Cancel" (toast "Payment cancelled", back to review, recorded Cancelled), "Simulate failed payment".
-3. Confirming: spinner 1.5 s.
-4. Success: green check, "+N coins", new balance, order id + method, "Back to <episode>" (when returning) + "Buy more coins"; toast "+N coins added".
-5. Failed: red X; "Payment didn’t go through" (declined) or "The code expired" (countdown hit 0); "Try again" / "Choose another method".
-Pack and method cards are disabled during Pay/Confirming.
-**Purchase history** table (Date, Item, Method [hidden on phone], Coins, Status badge Paid/Failed/Cancelled) · **Questions** accordion (first open) · prototype note line.
+## 16. Upload episode
+- Choose the series; the episode number fills in automatically.
+- Title is required.
+- **Comics:** an image list with progress, reorder ↑↓, remove, and a size error ("Too wide: 2400 px. Use 690–1600 px."). Rules: JPG / PNG, 690–1600 px wide, up to 20 MB each, up to 100 images.
+- **Novels:** text with a word count; at least 300 words.
+- **Release:** now or scheduled (date and time ICT), Fast Pass switch ("free for everyone on …"), comments switch, creator's note (up to 300 characters).
+- Checklist and phone preview on the side. Sticky Save draft / Publish bar.
+- Success: "Episode N is scheduled".
 
-## 7. Key flows to test
+## 17. Creator profile
+- Banner, avatar, verified badge, bio and stats.
+- **Reader view:** Follow, Share, Report, Block / Unblock.
+- **Owner view:** creator menu, a "This is your public profile" note, Edit profile (name, location, bio up to 200 characters).
+- Tabs: Series / Updates / About.
 
-1. Home → series card → Series → Read episode 1 → Next.
-2. Locked episode (logged out) → Log in → back to Series, dialog reopens → Unlock → reader.
-3. Locked episode with 3 coins → Get coins → buy 120 pack with KHQR (simulate) → Back to episode → Unlock.
-4. Sign up → code 123456 → returns to the page you came from, logged in.
-5. Novel: change size / Sepia / Serif → reload → settings kept.
-6. ⌘K → type "gl" → Glass Compass → Series.
+## 18. Earnings
+- Period: 30 days / 3 months / 6 months.
+- Stat cards; money shows as [USD AMOUNT] at [REVENUE SHARE]%.
+- Coins-by-month chart with a "Show as table" switch, plus a by-series breakdown.
+- **Payouts:** available amount, ABA [PAYOUT ACCOUNT], next payout [PAYOUT DATE], minimum [MIN PAYOUT].
+- **No payout method:** a warning, and history shows "On hold". The add-method dialog shows a [PAYOUT PROVIDER FORM] placeholder.
+
+## 19. Help center
+- Search with popular searches, and 6 topic cards that filter.
+- 17 articles (in `helpArticles`), each with a link and "Was this helpful?".
+- **Contact form:** topic, email, order number (TW-12345678 format, shown only for payments), message (20+ characters), screenshot, ticket number T-xxxxx.
+- Opening from a receipt fills in the form. Other contact options are placeholders.
+
+## 20. Policies
+- Side menu: Terms, Privacy, Coins and refunds, Community guidelines, Creator guidelines.
+- Each has "The short version", "On this page", numbered sections and a contact footer.
+- Terms, Privacy and Refunds are **draft templates** with placeholders and a warning to have a lawyer review them.
+- The Khmer button shows "coming before launch" until a professional translation exists.
+
+## 21. Manage series
+- Header: cover, status, "View as reader", Upload.
+- **Episodes:**
+  - Filters: All / Published / Scheduled / Drafts and hidden, plus sort and "Show more".
+  - Edit dialog: title; scheduled episodes can move their release slot.
+  - Hide / Show. Hiding a Fast Pass episode warns that coins aren't refunded automatically.
+  - Delete drafts.
+- **Series details:** title (changing it triggers a quick review), summary (no contact details), genre, status (Ongoing / On break with a message / Completed), update days, cover.
+- **Fast Pass:** on/off, 1–5 episodes ahead, and the current queue.
+- **Settings:**
+  - Comments on/off.
+  - Hide series from readers (type the title to confirm).
+  - Delete is blocked while there are published episodes.
+- **Changes requested:** a red list of the reviewer's items, each with Fix / Mark fixed. Resubmit unlocks when all are fixed; status goes back to `review` and the series returns to the admin queue.
+
+## 22. Admin (moderators)
+Its own dark top bar and a side menu. Every decision has a 6-second Undo.
+- **Overview:** four counts that open each queue, "Waiting longest", recent decisions.
+- **Series review:**
+  - Queue with how long each has waited and automatic-check flags (contact details, watermark, similar title).
+  - Detail view with a 4-item checklist; Approve stays disabled until everything is ticked.
+  - "Request changes" pre-ticks reasons from the flags and adds a note; saves `reviewNotes`, and the creator sees it in Manage.
+  - Reject.
+- **Reports:**
+  - Urgent (violence, sexual) first, then high, then normal.
+  - Detail: content, reporter note, history.
+  - Actions: remove / remove and warn / suspend 7 days / no violation.
+  - The reporter's status updates in their Settings.
+- **Payments:** refund requests with eligibility (unused / double charge / partly spent), and "Paid but no coins" with Add coins.
+
+## 23. Comments
+- Breadcrumb, header with count and "Back to episode N".
+- **Composer:** 500 characters, "Contains spoilers", guidelines link.
+- Sort Top / Newest, "Only threads with a creator reply".
+- **Comments:**
+  - The creator's pinned comment stays first.
+  - Spoilers are hidden until tapped.
+  - Replies one level deep ("View N replies · includes the creator").
+  - Like, Reply, Report and Block on others' comments; Edit (marked edited) and Delete on your own.
+- Blocked people's comments are hidden.
+
+## 24. First-time setup
+- Shown once, after sign-up. "Skip for now" at any time.
+- **Step 1:** app language (switches the UI immediately) and story languages.
+- **Step 2:** genre picture cards (at least 1) and format.
+- **Step 3:** alerts → "Turn on alerts" (real browser permission request; if denied, explain) or "Not now".
+- **Done:** 4 matching series with + Add, then "Start reading". Saves prefs, subs and settings, then returns to `welcomeNext`.
+
+## 25. Receipt
+- Status icon and badge, timeline, and rows: order number (copy), date ICT, pack, bonus lines, method, provider reference placeholder, total.
+- **Paid:** shows spent and unused coins, Download receipt (PDF placeholder), "Ask for a refund" when coins are unused.
+- **Failed:** "No money was taken" and Try again.
+- "Get help with this order" fills in the Help contact form.
+
+## 26. Become a creator
+- Hero (Start creating / Creator guidelines), How it works in 4 steps.
+- **Earnings calculator:** readers × episodes × 5 coins.
+- What you get, Before you start (rules), FAQ, final call to action.
+- Logged-out start → sign up with `returnTo` = Create series.
+
+## Key flows to test end to end (Playwright)
+1. Sign up → setup → returns to the series → Home shows the chosen genres.
+2. Series → locked episode → not enough coins → Coins (pack pre-selected) → pay → back to the episode → the unlock dialog reopens → unlock.
+3. Comment → Report → Admin removes it → reporter sees "Removed" in Settings.
+4. Create series → Admin requests changes → creator fixes and resubmits → Admin approves → upload episode 1.
+5. Switch to Khmer anywhere → every page follows.
+6. Receipt → Get help → contact form already filled in.

@@ -1,0 +1,181 @@
+<div class="v2">
+  <div class="fd">
+    <header class="fd-hero">
+      <div class="row" style="gap: 10px"><span class="logo-mark" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M3 4.5h10M3 8h10M3 11.5h6"></path></svg></span><span class="eyebrow">PhumiReader V2 · Design concept</span></div>
+      <h1 class="h1" style="font-size: 44px; line-height: 50px">Foundations: shadcn/ui + PhumiReader green</h1>
+      <p class="lead" style="max-width: 70ch">Built for Next.js + Tailwind + shadcn/ui. Neutral zinc surfaces, thin borders and 10 px corners; PhumiReader green is reserved for primary actions, progress and highlights. Every pattern below maps to a shadcn component so it can be implemented as-is.</p>
+      <div class="row" style="gap: 8px; flex-wrap: wrap"><span class="badge badge-outline">Next.js</span><span class="badge badge-outline">Tailwind CSS</span><span class="badge badge-outline">shadcn/ui (Radix)</span><span class="badge badge-outline">lucide-react icons</span><span class="badge badge-outline">Inter + Kantumruy Pro</span></div>
+    </header>
+
+    <!-- Colors -->
+    <section class="fd-sec">
+      <div class="fd-h"><h2 class="h2">Color tokens</h2><p class="small muted">CSS variables in <code>globals.css</code>, same names as shadcn’s theme.</p></div>
+      <div class="sw-grid">
+        <sc-for list="{{ colors }}" as="c" hint-placeholder-count="12">
+          <div class="sw"><span class="sw-chip" style="background: {{ c.hex }}"></span><div class="col" style="gap: 2px"><span class="small" style="font-weight: 600">{{ c.name }}</span><code class="xs muted">{{ c.v }}</code><span class="xs muted">{{ c.use }}</span></div></div>
+        </sc-for>
+      </div>
+      <div class="alert brand"><span class="ink">[[i:info]]</span><div class="col"><span class="alert-title">Green on dark text</span><span class="alert-desc">#00DC64 is too light for white text, so primary buttons use dark green text (#04210F, 12:1). Green text on white uses --brand-ink #047A3A (5.6:1).</span></div></div>
+    </section>
+
+    <!-- Type -->
+    <section class="fd-sec">
+      <div class="fd-h"><h2 class="h2">Typography</h2><p class="small muted">Inter for Latin, Kantumruy Pro for Khmer (falls back automatically). Reading text in the novel reader can switch to Noto Serif.</p></div>
+      <div class="card">
+        <sc-for list="{{ type }}" as="t" hint-placeholder-count="7">
+          <div class="ty-row"><span class="xs muted" style="width: 160px; flex: 0 0 160px">{{ t.name }}<br>{{ t.spec }}</span><span class="{{ t.cls }}">{{ t.sample }}</span></div>
+        </sc-for>
+        <div class="ty-row"><span class="xs muted" style="width: 160px; flex: 0 0 160px">Khmer · body<br>Kantumruy Pro 16/26</span><span lang="km" style="font-size: 16px; line-height: 26px">រឿងកំប្លែង និងប្រលោមលោកពីកម្ពុជា ជាភាសាខ្មែរ និងអង់គ្លេស។</span></div>
+      </div>
+    </section>
+
+    <!-- Buttons -->
+    <section class="fd-sec">
+      <div class="fd-h"><h2 class="h2">Button <code class="xs muted">components/ui/button</code></h2><p class="small muted">Variants: default, primary (brand), secondary, outline, ghost, link, destructive. Sizes: sm 32, default 36, lg 44, icon.</p></div>
+      <div class="card card-pad col" style="gap: 18px">
+        <div class="row" style="gap: 10px; flex-wrap: wrap">
+          <button type="button" class="btn btn-primary">[[i:book]]Read episode 1</button>
+          <button type="button" class="btn">Default</button>
+          <button type="button" class="btn btn-secondary">Secondary</button>
+          <button type="button" class="btn btn-outline">Outline</button>
+          <button type="button" class="btn btn-ghost">Ghost</button>
+          <button type="button" class="btn btn-link">Link</button>
+          <button type="button" class="btn btn-destructive">Delete</button>
+        </div>
+        <div class="row" style="gap: 10px; flex-wrap: wrap; align-items: center">
+          <button type="button" class="btn btn-primary btn-sm">Small</button>
+          <button type="button" class="btn btn-primary">Default</button>
+          <button type="button" class="btn btn-primary btn-lg">Large</button>
+          <button type="button" class="btn btn-outline btn-icon" aria-label="Share">[[i:share]]</button>
+          <button type="button" class="btn btn-primary" disabled="disabled">Disabled</button>
+          <button type="button" class="btn btn-primary"><span class="spin"></span>Loading</button>
+          <span class="chip on">Chip · on</span><span class="chip">Chip</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Badges + feedback -->
+    <section class="fd-two">
+      <div class="fd-sec">
+        <div class="fd-h"><h2 class="h2">Badge</h2><p class="small muted">Status on covers and episode rows.</p></div>
+        <div class="card card-pad row" style="gap: 8px; flex-wrap: wrap">
+          <span class="badge badge-up">UP</span><span class="badge badge-new">NEW</span><span class="badge badge-warn">[[i:zap:12]]Fast Pass · 5 coins</span><span class="badge badge-brand">Unlocked</span><span class="badge badge-secondary">[[i:check:12]]Read</span><span class="badge badge-outline">Fantasy</span><span class="badge badge-default">Best value</span><span class="badge badge-dark">Novel</span>
+        </div>
+      </div>
+      <div class="fd-sec">
+        <div class="fd-h"><h2 class="h2">Alert · Toast · Progress</h2><p class="small muted">Alert, Sonner, Progress, Skeleton.</p></div>
+        <div class="card card-pad col" style="gap: 12px">
+          <div class="alert bad"><span>[[i:alert]]</span><div class="col"><span class="alert-title">Email or password is incorrect</span><span class="alert-desc">Check them and try again.</span></div></div>
+          <div class="toast" style="position: static; transform: none; align-self: flex-start"><span class="dot">[[i:check:12]]</span>Episode 49 unlocked</div>
+          <div class="progress"><span style="width: 62%"></span></div>
+          <div class="row" style="gap: 10px"><div class="skeleton" style="width: 48px; height: 64px"></div><div class="col grow" style="gap: 8px"><div class="skeleton" style="height: 12px; width: 70%"></div><div class="skeleton" style="height: 12px; width: 40%"></div></div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Forms -->
+    <section class="fd-sec">
+      <div class="fd-h"><h2 class="h2">Forms</h2><p class="small muted">Input, Label, Textarea, Checkbox, Switch, RadioGroup, InputOTP, Tabs. Errors show under the field in red with aria-invalid.</p></div>
+      <div class="fd-forms">
+        <div class="card card-pad col" style="gap: 14px">
+          <div class="field"><label class="label" for="fd-a">Email</label><input id="fd-a" class="input" placeholder="you@example.com"></div>
+          <div class="field"><label class="label" for="fd-b">Email (error)</label><input id="fd-b" class="input bad" value="reader@" aria-invalid="true"><span class="err">Enter a valid email, like you@example.com.</span></div>
+          <div class="field"><label class="label" for="fd-c">Creator’s note</label><textarea id="fd-c" class="textarea" placeholder="Optional message shown after the episode"></textarea><span class="hint">Up to 300 characters</span></div>
+        </div>
+        <div class="card card-pad col" style="gap: 16px">
+          <label class="row small" style="gap: 8px"><button type="button" role="checkbox" aria-checked="{{ chk }}" class="checkbox {{ chkCls }}" onClick="{{ toggleChk }}">[[i:check:12]]</button>Keep me logged in</label>
+          <div class="row" style="justify-content: space-between"><span class="small">New-episode alerts</span><button type="button" role="switch" aria-checked="{{ sw }}" aria-label="New-episode alerts" class="switch {{ swCls }}" onClick="{{ toggleSw }}"></button></div>
+          <div class="tabs-list" role="tablist"><sc-for list="{{ tabs }}" as="t" hint-placeholder-count="3"><button type="button" role="tab" aria-selected="{{ t.on }}" class="tabs-trigger {{ t.cls }}" onClick="{{ t.pick }}">{{ t.label }}</button></sc-for></div>
+          <div class="line-tabs"><button type="button" class="line-tab on">Episodes</button><button type="button" class="line-tab">About</button><button type="button" class="line-tab">Comments</button></div>
+          <div class="au-otp-demo"><span>1</span><span>2</span><span>3</span><span class="cur"></span><span></span><span></span></div>
+        </div>
+        <div class="col" style="gap: 10px">
+          <button type="button" class="radio-card-demo on"><span class="rc-dot-demo"></span><span class="col" style="text-align: left"><span class="h4">KHQR</span><span class="xs muted">Scan with any Bakong-member bank app</span></span><span class="badge badge-brand" style="margin-left: auto">Recommended</span></button>
+          <button type="button" class="radio-card-demo"><span class="rc-dot-demo"></span><span class="col" style="text-align: left"><span class="h4">ABA Pay</span><span class="xs muted">Confirm in the ABA Mobile app</span></span></button>
+          <p class="xs muted">RadioGroup rendered as selectable cards (coin packs, payment methods).</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Patterns -->
+    <section class="fd-sec">
+      <div class="fd-h"><h2 class="h2">PhumiReader patterns</h2><p class="small muted">Composed from the primitives above; reused on every V2 screen.</p></div>
+      <div class="fd-pat">
+        <div class="col" style="gap: 10px"><span class="xs muted">SeriesCard</span>
+          <div class="s-card" style="width: 170px"><div class="cover"><img src="{{ demo.cover }}" alt=""><div class="tl"><span class="badge badge-up">UP</span></div></div><div class="col" style="gap: 2px"><span class="t">{{ demo.title }}</span><span class="m">{{ demo.creator }} · {{ demo.genre }}</span></div></div>
+        </div>
+        <div class="col" style="gap: 10px; flex: 1 1 0; min-width: 0"><span class="xs muted">EpisodeRow (free · read · Fast Pass)</span>
+          <div class="card" style="overflow: hidden">
+            <sc-for list="{{ rows }}" as="r" hint-placeholder-count="3">
+              <div class="fd-ep {{ r.cls }}"><img src="{{ r.thumb }}" alt=""><span class="col grow"><span class="h4">{{ r.title }}</span><span class="xs muted">{{ r.date }}</span></span><sc-if value="{{ r.fp }}" hint-placeholder-val="{{ false }}"><span class="badge badge-warn">[[i:lock:12]]5 coins</span></sc-if><sc-if value="{{ r.read }}" hint-placeholder-val="{{ false }}"><span class="badge badge-secondary">[[i:check:12]]Read</span></sc-if></div>
+            </sc-for>
+          </div>
+        </div>
+        <div class="col" style="gap: 10px; flex: 1 1 0; min-width: 0"><span class="xs muted">Dialog (unlock)</span>
+          <div class="dialog" style="position: static; transform: none; width: 100%; box-shadow: var(--shadow-md)">
+            <div class="col" style="gap: 6px"><span class="badge badge-warn" style="align-self: flex-start">[[i:zap:12]]Fast Pass</span><h3 class="h3">Unlock Episode 49</h3><p class="small muted">Free for everyone on Nov 12, 2026.</p></div>
+            <button type="button" class="btn btn-primary btn-lg btn-block">Unlock for 5 coins</button>
+            <button type="button" class="btn btn-ghost btn-block">Wait for the free release</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Added after the first round -->
+    <section class="fd-sec">
+      <div class="fd-h"><h2 class="h2">Brand and language</h2><p class="small muted">Name: <strong>PhumiReader</strong> in English, <strong lang="km" style="font-family: 'Kantumruy Pro', sans-serif">ភូមិReader</strong> in Khmer. “Reader” stays Latin and green in both. Every page has a language button in the header; the choice is saved and shared by all pages.</p></div>
+      <div class="fd2-grid">
+        <div class="card card-body col" style="gap: 14px"><span class="xs muted">Logo</span><span class="logo"><span class="logo-mark" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M3 4.5h10M3 8h10M3 11.5h6"></path></svg></span><span class="logo-t">Phumi<span class="logo-r">Reader</span></span></span><span class="logo" data-no-tr="1"><span class="logo-mark" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M3 4.5h10M3 8h10M3 11.5h6"></path></svg></span><span class="logo-t" lang="km" style="font-family: 'Kantumruy Pro', sans-serif">ភូមិ<span class="logo-r">Reader</span></span></span></div>
+        <div class="card card-body col" style="gap: 14px"><span class="xs muted">Header actions (right side)</span><div class="row" style="gap: 8px" data-no-tr="1"><button type="button" class="lang-btn" lang="km">ខ្មែរ</button><span class="coin-chip"><span class="coin" aria-hidden="true">C</span><span class="tnum">12</span></span><span class="btn btn-ghost btn-icon bell" aria-label="Notifications, 3 unread">[[i:bell:18]]<span class="bell-dot">3</span></span><span class="avatar brand">SC</span></div><span class="xs muted">Language button shows the other language. The bell badge counts unread alerts.</span></div>
+        <div class="card card-body col" style="gap: 10px" data-no-tr="1"><span class="xs muted">Khmer type (Kantumruy Pro, 1.45–1.6 line height, no letter-spacing)</span><span lang="km" class="fd2-km h2">តើអ្នកចូលចិត្តអានអ្វី?</span><span lang="km" class="fd2-km small">ដោះសោភាគ Fast Pass មុនពេលវាឥតគិតថ្លៃ។ មួយភាគក្លាយជាឥតគិតថ្លៃរៀងរាល់សប្តាហ៍។</span><span class="xs muted">Dictionary: i18n/*.tsv → km-dictionary.json (557+ strings)</span></div>
+      </div>
+    </section>
+
+    <section class="fd-sec">
+      <div class="fd-h"><h2 class="h2">Status badges</h2><p class="small muted">One meaning per colour across reader, creator and admin screens.</p></div>
+      <div class="row" style="gap: 8px; flex-wrap: wrap"><span class="badge badge-brand">Published</span><span class="badge badge-brand">Paid</span><span class="badge badge-warn">[[i:zap:12]]Fast Pass</span><span class="badge badge-warn">In review</span><span class="badge badge-default">Scheduled</span><span class="badge badge-secondary">Draft</span><span class="badge badge-outline">Hidden</span><span class="badge badge-up">Changes requested</span><span class="badge badge-up">Failed</span><span class="badge badge-up">UP</span><span class="badge badge-new">New</span><span class="badge badge-brand">Creator</span></div>
+    </section>
+
+    <section class="fd-sec">
+      <div class="fd-h"><h2 class="h2">Patterns added later</h2><p class="small muted">Live copies of parts used on the newer screens. Class names match the page CSS.</p></div>
+      <div class="fd2-grid">
+        <div class="card card-body col" style="gap: 12px"><span class="xs muted">Steps bar · Coins, Create series, setup</span>
+          <ol class="fd2-steps"><li class="done"><span>✓</span>Choose a pack</li><li class="cur"><span>2</span>Pay</li><li><span>3</span>Done</li></ol></div>
+        <div class="card card-body col" style="gap: 10px"><span class="xs muted">Radio option · report reasons, unlock choice, payout method</span>
+          <button type="button" class="rp-opt on"><span class="cs-dot"></span><span class="col" style="gap: 1px; text-align: left"><span class="small" style="font-weight: 600">Spoilers without warning</span><span class="xs muted">Reveals later episodes</span></span></button>
+          <button type="button" class="rp-opt"><span class="cs-dot"></span><span class="col" style="gap: 1px; text-align: left"><span class="small" style="font-weight: 600">Something else</span><span class="xs muted">Tell us what’s wrong</span></span></button></div>
+        <div class="card card-body col" style="gap: 10px"><span class="xs muted">Comment thread · pinned, creator reply, spoiler</span>
+          <div class="fd2-cm pin"><span class="xs ink" style="font-weight: 600">Pinned by the creator</span><span class="small"><strong>Owen Blake</strong> <span class="badge badge-brand">Creator</span> <span class="muted">· 1d</span></span><span class="small">Episode 66 has a small cameo…</span></div>
+          <div class="fd2-cm"><span class="small"><strong>Vibol K.</strong> <span class="muted">· 9h</span></span><span class="fd2-spoiler">Spoiler hidden · Tap to show</span><span class="xs muted">♡ 97 · Reply · Report · Block</span></div></div>
+        <div class="card card-body col" style="gap: 10px"><span class="xs muted">List row with actions · upload images, manage episodes, admin queue</span>
+          <div class="fd2-row"><span class="tnum xs muted">1</span><span class="fd2-th"></span><span class="col grow"><span class="small" style="font-weight: 500">ep25_01.jpg</span><span class="xs muted">800 × 2400 px · 1.4 MB</span></span><span class="xs muted">↑ ↓ ✕</span></div>
+          <div class="fd2-row bad"><span class="tnum xs muted">2</span><span class="fd2-th"></span><span class="col grow"><span class="small" style="font-weight: 500">ep25_06.jpg</span><span class="xs err">Too wide: 2400 px. Use 690–1600 px.</span></span><span class="xs muted">↑ ↓ ✕</span></div>
+          <div class="fd2-row on"><span class="fd2-pri"></span><span class="col grow"><span class="small" style="font-weight: 600">Violence or threats</span><span class="xs muted">4 reports · 2h ago</span></span></div></div>
+        <div class="card card-body col" style="gap: 10px"><span class="xs muted">Timeline · receipt, review history</span>
+          <ol class="fd2-tl"><li><span></span><span class="small">Order created <span class="xs muted">· 2:05 PM</span></span></li><li><span></span><span class="small">Payment confirmed by KHQR</span></li><li class="bad"><span></span><span class="small">Bank declined the payment</span></li></ol></div>
+        <div class="fd2-lock col" style="gap: 10px"><span class="badge badge-warn" style="align-self: center">[[i:zap:12]]Fast Pass</span><span class="h4" style="text-align: center">Episode 66 is in Fast Pass</span><span class="xs" style="color: #a1a1aa; text-align: center">Read now for 5 coins, or free on Nov 12 (in 7 days).</span><span class="btn btn-primary btn-sm">Unlock for 5 coins</span></div>
+      </div>
+    </section>
+
+    <!-- Layout + mapping -->
+    <section class="fd-two">
+      <div class="fd-sec">
+        <div class="fd-h"><h2 class="h2">Layout & spacing</h2></div>
+        <div class="card card-pad col small" style="gap: 10px">
+          <div class="row" style="justify-content: space-between"><span class="muted">Desktop container</span><span>1280 max · 32 px gutters · 6-col card grid</span></div><div class="sep"></div>
+          <div class="row" style="justify-content: space-between"><span class="muted">Phone</span><span>16 px gutters · 3-col grid · bottom tab bar</span></div><div class="sep"></div>
+          <div class="row" style="justify-content: space-between"><span class="muted">Spacing scale</span><span>4 · 8 · 12 · 16 · 20 · 24 · 32 · 56</span></div><div class="sep"></div>
+          <div class="row" style="justify-content: space-between"><span class="muted">Radius</span><span>--radius 10 · inputs/buttons 8 · cards 12 · hero 20</span></div><div class="sep"></div>
+          <div class="row" style="justify-content: space-between"><span class="muted">Touch targets</span><span>36 px min desktop · 44 px primary actions</span></div><div class="sep"></div>
+          <div class="row" style="justify-content: space-between"><span class="muted">Readers</span><span>Comic 800 px strip · novel 720 px column</span></div>
+        </div>
+      </div>
+      <div class="fd-sec">
+        <div class="fd-h"><h2 class="h2">V1 → V2 component map</h2></div>
+        <div class="card" style="overflow: hidden">
+          <div class="fd-tbl"><div class="fd-tr th"><span>V1 (HeroUI)</span><span>V2 (shadcn/ui)</span></div><sc-for list="{{ map }}" as="m" hint-placeholder-count="8"><div class="fd-tr"><span>{{ m.a }}</span><code>{{ m.b }}</code></div></sc-for></div>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>

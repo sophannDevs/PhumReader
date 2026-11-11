@@ -1,0 +1,32 @@
+.mg-head{display:flex;align-items:center;gap:18px}
+.mg-head>img{width:84px;aspect-ratio:3/4;object-fit:cover;border-radius:10px;flex:0 0 84px;border:1px solid var(--border)}
+.mg-hacts{flex:0 0 auto}
+.mg-review{align-items:flex-start}
+.mg-fixes{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.mg-fixes li{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;background:#fff;border:1px solid #fecaca;color:#3f3f46}
+.mg-fixes li.ok{border-color:#c9f1da}
+.mg-fixes li.ok .cs-tick{background:var(--primary);color:var(--primary-foreground)}
+.mg-tools{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.gn-count2{font-size:11px;font-weight:600;opacity:.6}
+.mg-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.mg-ep{display:flex;align-items:center;gap:14px;padding:10px 14px;background:var(--background)}
+.mg-ep+.mg-ep{border-top:1px solid var(--border)}
+.mg-ep.hidden .mg-th,.mg-ep.hidden .small{opacity:.5}
+.mg-th{width:48px;height:48px;border-radius:8px;object-fit:cover;flex:0 0 48px}
+.mg-stats{display:flex;gap:18px;font-size:12px;color:var(--muted-foreground);flex:0 0 auto}
+.mg-stats strong{color:var(--foreground);font-weight:600}
+.mg-acts{display:flex;gap:4px;flex:0 0 auto}
+.mg-del{color:var(--destructive)}
+.mg-cover{width:96px;aspect-ratio:3/4;object-fit:cover;border-radius:10px;border:1px solid var(--border)}
+.mg-cover.bad{outline:2px solid var(--destructive);outline-offset:2px}
+.st-mini2{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;border:1px solid var(--border);border-radius:10px}
+.st-mini2 li{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 12px}
+.st-mini2 li+li{border-top:1px solid var(--border)}
+@container page (max-width: 760px){
+  .mg-head{flex-wrap:wrap;gap:12px}
+  .mg-head>img{width:64px;flex-basis:64px}
+  .mg-hacts{width:100%}
+  .mg-hacts .btn{flex:1 1 0}
+  .mg-ep{flex-wrap:wrap;padding:10px 12px}
+  .mg-acts{width:100%;padding-left:62px}
+}

@@ -1,0 +1,246 @@
+<div class="v2">
+<!--HEADER-->
+  <a ref="{{ goRef }}" href="{{ goHref }}" tabindex="-1" aria-hidden="true" style="display: none">Open series</a>
+  <main class="col" style="gap: 48px; padding: 24px 0 72px" id="main">
+    <h1 class="sr-only">PhumiReader: comics and web novels in Khmer and English</h1>
+
+    <!-- ============ Spotlight: all featured picks visible, no autoplay ============ -->
+    <section class="wrap" aria-labelledby="sp-h">
+      <h2 id="sp-h" class="sr-only">Featured this week</h2>
+      <div class="sp">
+        <article class="sp-main" aria-live="polite">
+          <img class="sp-bg" src="{{ feat.cover }}" alt="">
+          <div class="sp-text">
+            <div class="row" style="gap: 6px; flex-wrap: wrap">
+              <span class="badge badge-new">{{ feat.tag }}</span>
+              <span class="badge badge-dark">{{ feat.genre }}</span>
+              <span class="badge badge-dark">{{ feat.kindLabel2 }}</span>
+            </div>
+            <h3 class="sp-title">{{ feat.title }}</h3>
+            <p class="sp-blurb">{{ feat.blurb }}</p>
+            <div class="row xs sp-meta">
+              <span class="row" style="gap: 4px">[[i:user:14]]{{ feat.creator }}</span>
+              <span class="row" style="gap: 4px">[[i:heart:14]]{{ feat.likes }}</span>
+              <span class="row" style="gap: 4px">[[i:calendar:14]]{{ feat.schedule }}</span>
+            </div>
+            <div class="row" style="gap: 8px; padding-top: 6px; flex-wrap: wrap">
+              <a class="btn btn-primary btn-lg" href="{{ feat.readHref }}" onClick="{{ feat.read }}">[[i:book:16]]{{ feat.readLabel }}</a>
+              <button type="button" class="btn btn-lg sp-ghost" onClick="{{ feat.toggleSub }}" aria-pressed="{{ feat.subbed }}">{{ feat.subLabel }}</button>
+              <a class="btn btn-lg btn-link sp-link" href="{{ feat.href }}" onClick="{{ feat.open }}">Series details[[i:arrow-right:14]]</a>
+            </div>
+            <span class="xs sp-free">{{ feat.freeLine }}</span>
+          </div>
+          <a class="sp-art only-desk" href="{{ feat.href }}" onClick="{{ feat.open }}" aria-label="Open {{ feat.title }}"><img src="{{ feat.cover }}" alt="{{ feat.title }} cover"></a>
+        </article>
+        <div class="sp-side" role="tablist" aria-label="Featured this week">
+          <span class="eyebrow only-desk" style="padding: 4px 4px 2px">Featured this week</span>
+          <sc-for list="{{ feats }}" as="f" hint-placeholder-count="3">
+            <button type="button" role="tab" class="sp-pick {{ f.cls }}" aria-selected="{{ f.on }}" onClick="{{ f.pick }}">
+              <img src="{{ f.cover }}" alt="">
+              <span class="col grow" style="gap: 2px; text-align: left; min-width: 0">
+                <span class="xs ink" style="font-weight: 600">{{ f.tag }}</span>
+                <span class="h4 trunc">{{ f.title }}</span>
+                <span class="xs muted trunc only-desk">{{ f.meta }}</span>
+              </span>
+            </button>
+          </sc-for>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ Continue reading ============ -->
+    <section class="wrap col" style="gap: 14px" aria-labelledby="cr-h">
+      <div class="sec-head">
+        <div class="col" style="gap: 2px"><h2 id="cr-h" class="h3">Continue reading</h2><p class="small muted">{{ continueSub }}</p></div>
+        <a class="btn btn-ghost btn-sm" href="{{ libraryHref }}">My library[[i:chevron-right:14]]</a>
+      </div>
+      <div class="hrow cr-row">
+        <sc-for list="{{ continueList }}" as="c" hint-placeholder-count="4">
+          <a class="card cr-card" href="{{ c.readHref }}" onClick="{{ c.read }}">
+            <img src="{{ c.cover }}" alt="">
+            <div class="col grow" style="gap: 6px; min-width: 0">
+              <span class="h4 trunc">{{ c.title }}</span>
+              <span class="xs muted">{{ c.epLabel }}</span>
+              <div class="progress" role="progressbar" aria-label="{{ c.title }} progress" aria-valuenow="{{ c.pctNum }}" aria-valuemin="0" aria-valuemax="100"><span style="width: {{ c.pct }}"></span></div>
+            </div>
+            <span class="cr-go" aria-hidden="true">[[i:chevron-right:14]]</span>
+          </a>
+        </sc-for>
+      </div>
+    </section>
+
+    <!-- ============ For you: genre picks, then recommendations ============ -->
+    <section class="wrap" aria-labelledby="fy-h">
+      <sc-if value="{{ noPrefs }}" hint-placeholder-val="{{ false }}">
+        <div class="card fy-pick">
+          <div class="col" style="gap: 4px">
+            <span class="eyebrow">Personalise</span>
+            <h2 id="fy-h" class="h3">What do you like to read?</h2>
+            <p class="small muted">Pick a few genres and we’ll show stories you’ll like first. You can change this anytime.</p>
+          </div>
+          <div class="row" style="gap: 8px; flex-wrap: wrap" role="group" aria-label="Genres">
+            <sc-for list="{{ prefChips }}" as="g" hint-placeholder-count="8"><button type="button" class="chip {{ g.cls }}" aria-pressed="{{ g.on }}" onClick="{{ g.pick }}"><sc-if value="{{ g.on }}" hint-placeholder-val="{{ false }}">[[i:check:12]]</sc-if>{{ g.label }}</button></sc-for>
+          </div>
+          <div class="row" style="gap: 8px; flex-wrap: wrap">
+            <button type="button" class="btn btn-primary" onClick="{{ savePrefs }}" disabled="{{ prefNone }}">{{ saveLabel }}</button>
+            <button type="button" class="btn btn-ghost" onClick="{{ skipPrefs }}">Skip, show popular</button>
+          </div>
+        </div>
+      </sc-if>
+      <sc-if value="{{ hasPrefs }}" hint-placeholder-val="{{ true }}">
+        <div class="col" style="gap: 14px">
+          <div class="sec-head">
+            <div class="col" style="gap: 2px"><h2 id="fy-h" class="h3 row" style="gap: 8px">[[i:sparkles:18]]{{ recTitle }}</h2><p class="small muted">{{ recWhy }}</p></div>
+            <button type="button" class="btn btn-ghost btn-sm" onClick="{{ editPrefs }}">[[i:settings:14]]Edit genres</button>
+          </div>
+          <div class="hrow rec-row">
+            <sc-for list="{{ recList }}" as="s" hint-placeholder-count="6">
+              <a class="s-card" href="{{ s.href }}" onClick="{{ s.open }}">
+                <div class="cover"><img src="{{ s.cover }}" alt="" loading="lazy"><div class="tl"><sc-if value="{{ s.isNovelCard }}" hint-placeholder-val="{{ false }}"><span class="badge badge-dark">Novel</span></sc-if></div></div>
+                <div class="col" style="gap: 3px"><span class="t">{{ s.title }}</span><span class="hook">{{ s.hook }}</span><span class="m">{{ s.meta }}</span></div>
+              </a>
+            </sc-for>
+          </div>
+        </div>
+      </sc-if>
+    </section>
+
+    <!-- ============ Daily updates ============ -->
+    <section class="wrap col" style="gap: 16px" id="daily" aria-labelledby="du-h">
+      <div class="sec-head">
+        <div class="col" style="gap: 2px"><h2 id="du-h" class="h2">Daily updates</h2><p class="small muted">{{ dayLine }}</p></div>
+        <div class="tabs-list" role="radiogroup" aria-label="Type">
+          <sc-for list="{{ typeTabs }}" as="t" hint-placeholder-count="3"><button type="button" role="radio" class="tabs-trigger {{ t.cls }}" aria-checked="{{ t.on }}" onClick="{{ t.pick }}">{{ t.label }}</button></sc-for>
+        </div>
+      </div>
+      <div class="day-tabs" role="tablist" aria-label="Day of the week">
+        <sc-for list="{{ dayTabs }}" as="d" hint-placeholder-count="7">
+          <button type="button" role="tab" class="day-tab {{ d.cls }}" aria-selected="{{ d.on }}" onClick="{{ d.pick }}"><span class="dl">{{ d.label }}</span><span class="dc">{{ d.count }}</span></button>
+        </sc-for>
+      </div>
+      <sc-if value="{{ dayLoading }}" hint-placeholder-val="{{ false }}">
+        <div class="hrow day-row" aria-busy="true" aria-label="Loading">
+          <sc-for list="{{ skel6 }}" as="k" hint-placeholder-count="6"><div class="col" style="gap: 8px"><div class="skeleton" style="aspect-ratio: 3/4"></div><div class="skeleton" style="height: 12px; width: 80%"></div><div class="skeleton" style="height: 10px; width: 55%"></div></div></sc-for>
+        </div>
+      </sc-if>
+      <sc-if value="{{ dayError }}" hint-placeholder-val="{{ false }}">
+        <div class="state" role="alert"><span class="state-ic bad">[[i:alert:20]]</span><span class="h4">Couldn’t load today’s updates</span><span class="small muted">Check your connection and try again.</span><button type="button" class="btn btn-outline btn-sm" onClick="{{ retry }}">[[i:refresh:14]]Try again</button></div>
+      </sc-if>
+      <sc-if value="{{ dayEmpty }}" hint-placeholder-val="{{ false }}">
+        <div class="state"><span class="state-ic">[[i:calendar:20]]</span><span class="h4">{{ emptyTitle }}</span><span class="small muted">{{ emptyText }}</span><button type="button" class="btn btn-outline btn-sm" onClick="{{ showAllTypes }}">Show all series</button></div>
+      </sc-if>
+      <sc-if value="{{ dayReady }}" hint-placeholder-val="{{ true }}">
+        <div class="hrow day-row">
+          <sc-for list="{{ dayList }}" as="s" hint-placeholder-count="6">
+            <a class="s-card" href="{{ s.href }}" onClick="{{ s.open }}">
+              <div class="cover"><img src="{{ s.cover }}" alt="" loading="lazy">
+                <div class="tl"><sc-if value="{{ s.up }}" hint-placeholder-val="{{ false }}"><span class="badge badge-up">UP</span></sc-if><sc-if value="{{ s.isNew }}" hint-placeholder-val="{{ false }}"><span class="badge badge-new">NEW</span></sc-if><sc-if value="{{ s.isNovelCard }}" hint-placeholder-val="{{ false }}"><span class="badge badge-dark">Novel</span></sc-if></div>
+              </div>
+              <div class="col" style="gap: 2px"><span class="t">{{ s.title }}</span><span class="m">{{ s.meta }}</span><span class="m row" style="gap: 6px"><span class="{{ s.updCls }}">{{ s.upd }}</span><span class="row" style="gap: 3px">[[i:heart:12]]{{ s.likes }}</span></span></div>
+            </a>
+          </sc-for>
+        </div>
+        <sc-if value="{{ dayMore }}" hint-placeholder-val="{{ true }}"><button type="button" class="btn btn-outline btn-block only-desk" onClick="{{ showDayAll }}">{{ dayMoreLabel }}[[i:chevron-down:14]]</button></sc-if>
+      </sc-if>
+    </section>
+
+    <!-- ============ Rankings + genres ============ -->
+    <section class="wrap rk-split">
+      <div class="card col" id="rank" style="overflow: hidden" aria-labelledby="rk-h">
+        <div class="card-head" style="padding-bottom: 12px">
+          <div class="sec-head" style="align-items: center">
+            <div class="col" style="gap: 2px"><h2 id="rk-h" class="h3 row" style="gap: 8px">[[i:trending:18]]Trending now</h2><p class="small muted">Most read in the last 24 hours</p></div>
+            <div class="tabs-list" role="tablist" aria-label="Ranking type">
+              <sc-for list="{{ rankTabs }}" as="t" hint-placeholder-count="2"><button type="button" role="tab" class="tabs-trigger {{ t.cls }}" aria-selected="{{ t.on }}" onClick="{{ t.pick }}">{{ t.label }}</button></sc-for>
+            </div>
+          </div>
+        </div>
+        <sc-if value="{{ listLoading }}" hint-placeholder-val="{{ false }}">
+          <div class="col" style="gap: 10px; padding: 8px 20px 20px" aria-busy="true"><sc-for list="{{ skel6 }}" as="k" hint-placeholder-count="6"><div class="row" style="gap: 12px"><div class="skeleton" style="width: 22px; height: 16px"></div><div class="skeleton" style="width: 40px; height: 52px"></div><div class="col grow" style="gap: 6px"><div class="skeleton" style="height: 12px; width: 60%"></div><div class="skeleton" style="height: 10px; width: 40%"></div></div></div></sc-for></div>
+        </sc-if>
+        <sc-if value="{{ listError }}" hint-placeholder-val="{{ false }}">
+          <div class="state" role="alert" style="margin: 0 20px 20px"><span class="state-ic bad">[[i:alert:20]]</span><span class="h4">Rankings didn’t load</span><button type="button" class="btn btn-outline btn-sm" onClick="{{ retry }}">[[i:refresh:14]]Try again</button></div>
+        </sc-if>
+        <sc-if value="{{ listReady }}" hint-placeholder-val="{{ true }}">
+          <ol class="rk-list">
+            <sc-for list="{{ rankList }}" as="r" hint-placeholder-count="8">
+              <li><a class="rk-row {{ r.topCls }}" href="{{ r.href }}" onClick="{{ r.open }}">
+                <span class="rk-no">{{ r.no }}</span>
+                <img src="{{ r.cover }}" alt="">
+                <span class="col grow" style="min-width: 0"><span class="h4 trunc">{{ r.title }}</span><span class="xs muted trunc">{{ r.meta }}</span></span>
+                <span class="rk-move {{ r.moveCls }}" aria-label="{{ r.moveAria }}">{{ r.move }}</span>
+              </a></li>
+            </sc-for>
+          </ol>
+        </sc-if>
+      </div>
+
+      <div class="col" id="genres" style="gap: 14px" aria-labelledby="gn-h">
+        <div class="sec-head" style="align-items: center">
+          <div class="col" style="gap: 2px"><h2 id="gn-h" class="h3">Browse by genre</h2><p class="small muted">{{ genreCount }} series in {{ genre }}</p></div>
+          <button type="button" class="btn btn-outline btn-sm" onClick="{{ surprise }}">[[i:sparkles:14]]Surprise me</button>
+        </div>
+        <div class="chip-row" role="radiogroup" aria-label="Genre">
+          <sc-for list="{{ genreChips }}" as="g" hint-placeholder-count="8"><button type="button" role="radio" class="chip {{ g.cls }}" aria-checked="{{ g.on }}" onClick="{{ g.pick }}">{{ g.label }} <span class="chip-n">{{ g.n }}</span></button></sc-for>
+        </div>
+        <sc-if value="{{ listError }}" hint-placeholder-val="{{ false }}">
+          <div class="state" role="alert"><span class="state-ic bad">[[i:alert:20]]</span><span class="h4">Genres didn’t load</span><button type="button" class="btn btn-outline btn-sm" onClick="{{ retry }}">[[i:refresh:14]]Try again</button></div>
+        </sc-if>
+        <sc-if value="{{ listLoading }}" hint-placeholder-val="{{ false }}">
+          <div class="hrow gen-row" aria-busy="true"><sc-for list="{{ skel6 }}" as="k" hint-placeholder-count="6"><div class="skeleton" style="aspect-ratio: 3/4"></div></sc-for></div>
+        </sc-if>
+        <sc-if value="{{ listReady }}" hint-placeholder-val="{{ true }}">
+          <div class="hrow gen-row">
+            <sc-for list="{{ genreList }}" as="s" hint-placeholder-count="6">
+              <a class="s-card" href="{{ s.href }}" onClick="{{ s.open }}">
+                <div class="cover"><img src="{{ s.cover }}" alt="" loading="lazy"><div class="tl"><sc-if value="{{ s.isNovelCard }}" hint-placeholder-val="{{ false }}"><span class="badge badge-dark">Novel</span></sc-if></div></div>
+                <div class="col" style="gap: 2px"><span class="t">{{ s.title }}</span><span class="m">{{ s.creator }}</span></div>
+              </a>
+            </sc-for>
+          </div>
+        </sc-if>
+      </div>
+    </section>
+
+    <!-- ============ Web novels ============ -->
+    <section class="wrap col" id="novels" style="gap: 16px" aria-labelledby="nv-h">
+      <div class="sec-head">
+        <div class="col" style="gap: 2px"><h2 id="nv-h" class="h2">Web novels</h2><p class="small muted">Read in Khmer or English, with adjustable text size and night mode.</p></div>
+      </div>
+      <div class="nv-grid">
+        <sc-for list="{{ novels }}" as="s" hint-placeholder-count="6">
+          <a class="card nv-card" href="{{ s.href }}" onClick="{{ s.open }}">
+            <div class="cover" style="width: 84px; flex: 0 0 84px"><img src="{{ s.cover }}" alt="" loading="lazy"></div>
+            <div class="col grow" style="gap: 5px; min-width: 0">
+              <span class="badge badge-secondary" style="align-self: flex-start">{{ s.genre }}</span>
+              <span class="h4 trunc">{{ s.title }}</span>
+              <span class="hook">{{ s.hook }}</span>
+              <span class="xs muted">{{ s.creator }} · {{ s.episodes }} chapters</span>
+            </div>
+          </a>
+        </sc-for>
+      </div>
+    </section>
+
+    <!-- ============ Creator call-to-action ============ -->
+    <section class="wrap">
+      <div class="card cta">
+        <div class="col" style="gap: 8px; max-width: 520px">
+          <span class="eyebrow">For creators</span>
+          <h2 class="h2">Publish your own series</h2>
+          <p class="small muted" style="font-size: 15px; line-height: 24px">Upload comics or write web novels, grow your readers, and earn from Fast Pass episodes.</p>
+          <div class="row" style="gap: 8px; padding-top: 6px; flex-wrap: wrap">
+            <a class="btn btn-primary" href="{{ joinHref }}">[[i:pen:14]]Start publishing</a>
+            <a class="btn btn-outline" href="{{ creatorHref }}">Creator guidelines</a>
+          </div>
+        </div>
+        <div class="cta-art only-desk" aria-hidden="true">
+          <sc-for list="{{ ctaArt }}" as="c" hint-placeholder-count="3"><img src="{{ c.cover }}" alt=""></sc-for>
+        </div>
+      </div>
+    </section>
+  </main>
+<!--FOOTER-->
+<!--MOBNAV-->
+<!--LAYERS-->
+</div>

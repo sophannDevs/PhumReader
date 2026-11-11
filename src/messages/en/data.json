@@ -1,0 +1,71 @@
+{
+  "genres": {
+    "Action": "Action",
+    "Comedy": "Comedy",
+    "Drama": "Drama",
+    "Fantasy": "Fantasy",
+    "Romance": "Romance",
+    "Sci-fi": "Sci-fi",
+    "Slice of life": "Slice of life",
+    "Superhero": "Superhero"
+  },
+  "every": {
+    "Mon": "Every Mon",
+    "Tue": "Every Tue",
+    "Wed": "Every Wed",
+    "Thu": "Every Thu",
+    "Fri": "Every Fri",
+    "Sat": "Every Sat",
+    "Sun": "Every Sun"
+  },
+  "episode": "Episode {n}",
+  "episodeS2": "(S2) Episode {n}",
+  "chapter": "Chapter {n}",
+  "coinPack": "{count} coin pack",
+  "tags": {
+    "New episode": "New episode",
+    "Web novel": "Web novel"
+  },
+  "methods": {
+    "khqr": {
+      "label": "KHQR",
+      "desc": "Scan with any Bakong-member bank app"
+    },
+    "aba": {
+      "label": "ABA Pay",
+      "desc": "Confirm in the ABA Mobile app"
+    },
+    "card": {
+      "label": "Credit or debit card",
+      "desc": "Visa, Mastercard, UnionPay, JCB"
+    }
+  },
+  "faq": [
+    {
+      "q": "What can I use coins for?",
+      "a": "Coins unlock Fast Pass episodes and chapters before they become free. Unlocked episodes stay in your library."
+    },
+    {
+      "q": "Do coins expire?",
+      "a": "No. Purchased coins never expire. Bonus coins from events may have an end date, shown when you get them."
+    },
+    {
+      "q": "Which payment methods work?",
+      "a": "KHQR works with any Bakong-member bank app. You can also pay with ABA Pay or a credit or debit card."
+    },
+    {
+      "q": "I paid but didn’t get coins",
+      "a": "Most payments confirm in seconds. If it takes longer than 10 minutes, contact Help with your order number."
+    }
+  ],
+  "hookFallback": "An ongoing {genre} story, new every {day}.",
+  "dayFull": {
+    "Mon": "Monday",
+    "Tue": "Tuesday",
+    "Wed": "Wednesday",
+    "Thu": "Thursday",
+    "Fri": "Friday",
+    "Sat": "Saturday",
+    "Sun": "Sunday"
+  }
+}

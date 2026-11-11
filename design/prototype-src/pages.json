@@ -1,0 +1,164 @@
+[
+ {
+  "name": "Foundations",
+  "title": "PhumiReader V2 \u2013 shadcn/ui foundations",
+  "h": 5000,
+  "chrome": false
+ },
+ {
+  "name": "Home",
+  "title": "PhumiReader V2 \u2013 Home",
+  "h": 3800,
+  "mh": 4700
+ },
+ {
+  "name": "Series",
+  "title": "PhumiReader V2 \u2013 Series",
+  "h": 2300,
+  "mh": 3650
+ },
+ {
+  "name": "Viewer",
+  "title": "PhumiReader V2 \u2013 Episode viewer",
+  "h": 6300,
+  "mh": 3650
+ },
+ {
+  "name": "Novel",
+  "title": "PhumiReader V2 \u2013 Web novel reader",
+  "h": 2200,
+  "mh": 3000
+ },
+ {
+  "name": "Auth",
+  "title": "PhumiReader V2 \u2013 Log in / Sign up",
+  "h": 1550,
+  "mh": 1950
+ },
+ {
+  "name": "Shop",
+  "title": "PhumiReader V2 \u2013 Coins",
+  "h": 1760,
+  "mh": 3460
+ },
+ {
+  "name": "Search",
+  "title": "PhumiReader V2 \u2013 Search",
+  "h": 1700,
+  "mh": 2300
+ },
+ {
+  "name": "Library",
+  "title": "PhumiReader V2 \u2013 My library",
+  "h": 1600,
+  "mh": 2400
+ },
+ {
+  "name": "Error",
+  "title": "PhumiReader V2 \u2013 Error pages",
+  "h": 1440,
+  "mh": 2010
+ },
+ {
+  "name": "Rankings",
+  "title": "PhumiReader V2 \u2013 Rankings",
+  "h": 2360,
+  "mh": 3260
+ },
+ {
+  "name": "Genres",
+  "title": "PhumiReader V2 \u2013 Genres",
+  "h": 1790,
+  "mh": 2690
+ },
+ {
+  "name": "Settings",
+  "title": "PhumiReader V2 \u2013 Settings",
+  "h": 2600,
+  "mh": 3670
+ },
+ {
+  "name": "Notifications",
+  "title": "PhumiReader V2 \u2013 Notifications",
+  "h": 1400,
+  "mh": 2540
+ },
+ {
+  "name": "Creator",
+  "title": "PhumiReader V2 \u2013 Creator dashboard",
+  "h": 1530,
+  "mh": 3070
+ },
+ {
+  "name": "CreateSeries",
+  "title": "PhumiReader V2 \u2013 Create a series",
+  "h": 1210,
+  "mh": 1920
+ },
+ {
+  "name": "Upload",
+  "title": "PhumiReader V2 \u2013 Upload an episode",
+  "h": 2300,
+  "mh": 3120
+ },
+ {
+  "name": "Profile",
+  "title": "PhumiReader V2 \u2013 Creator profile",
+  "h": 1000,
+  "mh": 1760
+ },
+ {
+  "name": "Earnings",
+  "title": "PhumiReader V2 \u2013 Earnings",
+  "h": 1360,
+  "mh": 2460
+ },
+ {
+  "name": "Help",
+  "title": "PhumiReader V2 \u2013 Help center",
+  "h": 2000,
+  "mh": 3390
+ },
+ {
+  "name": "Legal",
+  "title": "PhumiReader V2 \u2013 Policies",
+  "h": 2180,
+  "mh": 3250
+ },
+ {
+  "name": "Manage",
+  "title": "PhumiReader V2 \u2013 Manage series",
+  "h": 1500,
+  "mh": 2660
+ },
+ {
+  "name": "Admin",
+  "title": "PhumiReader V2 \u2013 Admin",
+  "h": 1000,
+  "mh": 1060
+ },
+ {
+  "name": "Comments",
+  "title": "PhumiReader V2 \u2013 Comments",
+  "h": 2000,
+  "mh": 2600
+ },
+ {
+  "name": "Welcome",
+  "title": "PhumiReader V2 \u2013 First-time setup",
+  "h": 900,
+  "mh": 844
+ },
+ {
+  "name": "Receipt",
+  "title": "PhumiReader V2 \u2013 Receipt",
+  "h": 1510,
+  "mh": 1970
+ },
+ {
+  "name": "Join",
+  "title": "PhumiReader V2 \u2013 Become a creator",
+  "h": 2820,
+  "mh": 4520
+ }
+]

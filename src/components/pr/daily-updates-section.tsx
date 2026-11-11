@@ -1,73 +1,188 @@
 "use client"
 
+import { AlertCircleIcon, CalendarIcon, ChevronDownIcon, HeartIcon, RefreshCwIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
-import { useState } from "react"
-import { ScrollRow } from "@/components/pr/scroll-row"
-import { SectionEmpty } from "@/components/pr/section-empty"
-import { SectionHeader } from "@/components/pr/section-header"
+import { useEffect, useRef, useState } from "react"
 import { SeriesCard } from "@/components/pr/series-card"
-import { SkeletonCard } from "@/components/pr/skeletons"
-import { ViewAllLink } from "@/components/pr/view-all-link"
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { phoneSwipeRow, SectionHead, Segmented, StateBox } from "@/components/pr/v2-primitives"
+import { Button } from "@/components/ui/button"
+import { Skeleton } from "@/components/ui/skeleton"
 import type { Series, Weekday } from "@/data"
 import { today, weekdayOf } from "@/lib/format"
+import { cn } from "@/lib/utils"
 
 const DAYS: Weekday[] = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+type Kind = "all" | "comic" | "novel"
 
-export const seriesGridClass = "grid grid-cols-3 gap-3 md:grid-cols-4 md:gap-4 lg:grid-cols-6 lg:gap-5"
+const grid = cn("grid grid-cols-4 gap-5 min-[1100px]:grid-cols-6", phoneSwipeRow, "max-md:auto-cols-[38%]")
 
-/** Daily updates: pill tabs Mon-Sun (today is labelled "Today" and selected) and a 6-card grid. */
-export function DailyUpdatesSection({ daily }: { daily: Record<Weekday, Series[]> }) {
+/**
+ * Daily updates (spec §1, prototype Home `#daily`): type filter, day tabs with counts (today outlined in green),
+ * at most 6 cards with "Show all N", "New today" on today's UP series. A short skeleton when the day changes.
+ * `state` comes from the home query: loading, error (Try again), empty (?demo=empty) or ready.
+ */
+export function DailyUpdatesSection({
+  daily,
+  state,
+  onRetry,
+}: {
+  daily: Record<Weekday, Series[]>
+  state: "loading" | "error" | "empty" | "ready"
+  onRetry: () => void
+}) {
   const t = useTranslations("home")
   const todayDay = weekdayOf(today)
   const [day, setDay] = useState<Weekday>(todayDay)
+  const [kind, setKind] = useState<Kind>("all")
+  const [showAll, setShowAll] = useState(false)
+  const [busy, setBusy] = useState(false)
+  const timer = useRef<ReturnType<typeof setTimeout>>(undefined)
+  useEffect(() => () => clearTimeout(timer.current), [])
+
+  const match = (s: Series) => kind === "all" || s.type === kind
+  const list = (daily[day] ?? []).filter(match)
+  const dayName = t(`dayFull.${day}`)
+  const isToday = day === todayDay
+
+  const pickDay = (d: Weekday) => {
+    setDay(d)
+    setShowAll(false)
+    setBusy(true)
+    clearTimeout(timer.current)
+    timer.current = setTimeout(() => setBusy(false), 350)
+  }
+
+  const loading = state === "loading" || (state !== "error" && busy)
+  const empty = !loading && state !== "error" && (state === "empty" || list.length === 0)
+  const shown = showAll ? list : list.slice(0, 6)
 
   return (
-    <section aria-labelledby="daily-title" className="flex flex-col gap-5">
-      <div className="flex flex-col gap-4">
-        <SectionHeader
-          action={<ViewAllLink href="/genres" label={t("viewAll")} />}
-          id="daily-title"
-          title={t("dailyTitle")}
-          subtitle={t("dailySubtitle", { day: t(`dayFull.${todayDay}`) })}
-        />
-        <Tabs value={day} onValueChange={(v) => setDay(v as Weekday)} className="max-w-full">
-          <div className="overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            <TabsList className="w-max">
-              {DAYS.map((d) => (
-                <TabsTrigger key={d} value={d} className="px-3.5" aria-controls={undefined}>
-                  {d === todayDay ? t("today") : t(`days.${d}`)}
-                </TabsTrigger>
-              ))}
-            </TabsList>
-          </div>
-        </Tabs>
+    <section id="daily" aria-labelledby="du-h" className="flex scroll-mt-20 flex-col gap-4">
+      <SectionHead
+        id="du-h"
+        size="h2"
+        title={t("dailyTitle")}
+        subtitle={
+          state === "ready" ? t("dayLine", { count: list.length, type: kind, day: dayName, today: isToday ? "yes" : "no" }) : undefined
+        }
+        action={
+          <Segmented
+            label={t("typeLabel")}
+            value={kind}
+            onChange={(k) => {
+              setKind(k)
+              setShowAll(false)
+            }}
+            options={[
+              { value: "all", label: t("typeAll") },
+              { value: "comic", label: t("typeComics") },
+              { value: "novel", label: t("typeNovels") },
+            ]}
+          />
+        }
+      />
+
+      <div
+        role="tablist"
+        aria-label={t("dayLabel")}
+        className="grid grid-cols-7 gap-1.5 max-md:-mx-4 max-md:flex max-md:overflow-x-auto max-md:px-4 max-md:[scrollbar-width:none]"
+      >
+        {DAYS.map((d) => {
+          const on = d === day
+          const n = (daily[d] ?? []).filter(match).length
+          return (
+            <button
+              key={d}
+              type="button"
+              role="tab"
+              aria-selected={on}
+              onClick={() => pickDay(d)}
+              className={cn(
+                "flex flex-col items-center gap-0.5 rounded-[10px] border px-1 py-2 transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background max-md:w-[52px] max-md:shrink-0",
+                on
+                  ? "border-foreground bg-foreground text-[#fafafa]"
+                  : d === todayDay
+                    ? "border-primary bg-background text-brand-ink hover:bg-accent"
+                    : "bg-background text-muted-foreground hover:bg-accent hover:text-foreground"
+              )}
+            >
+              <span className="text-sm font-semibold">{d === todayDay ? t("today") : t(`days.${d}`)}</span>
+              <span className="text-[11px] tabular-nums">{state === "ready" ? t("dayCount", { count: n }) : " "}</span>
+            </button>
+          )
+        })}
       </div>
-      {(daily[day] ?? []).length === 0 ? (
-        <SectionEmpty />
-      ) : (
-        <ScrollRow itemClassName="w-[132px] sm:w-[160px] lg:w-[190px]">
-          {daily[day].map((s) => (
-            <SeriesCard key={s.id} series={s} sizes="190px" />
+
+      {state === "error" ? (
+        <StateBox
+          icon={AlertCircleIcon}
+          tone="bad"
+          title={t("dayErrorTitle")}
+          text={t("dayErrorText")}
+          action={
+            <Button variant="outline" size="sm" onClick={onRetry}>
+              <RefreshCwIcon className="size-3.5" />
+              {t("tryAgain")}
+            </Button>
+          }
+        />
+      ) : loading ? (
+        <div className={grid} aria-busy="true" aria-label={t("loading")}>
+          {Array.from({ length: 6 }, (_, i) => (
+            <div key={i} className="flex flex-col gap-2">
+              <Skeleton className="aspect-[3/4] rounded-[10px]" />
+              <Skeleton className="h-3 w-4/5" />
+              <Skeleton className="h-2.5 w-[55%]" />
+            </div>
           ))}
-        </ScrollRow>
+        </div>
+      ) : empty ? (
+        <StateBox
+          icon={CalendarIcon}
+          title={state === "empty" ? t("dayEmptyNone") : t("dayEmptyTitle", { type: kind, day: dayName })}
+          text={state === "empty" ? t("dayEmptyNoneText") : t("dayEmptyText")}
+          action={
+            state === "empty" ? undefined : (
+              <Button variant="outline" size="sm" onClick={() => setKind("all")}>
+                {t("showAllSeries")}
+              </Button>
+            )
+          }
+        />
+      ) : (
+        <>
+          <div className={grid}>
+            {shown.map((s) => {
+              const fresh = isToday && s.badges.up
+              return (
+                <SeriesCard
+                  key={s.id}
+                  series={s}
+                  footer={
+                    <p className="flex items-center gap-1.5 text-[13px] leading-[18px] text-muted-foreground max-md:text-xs">
+                      <span className={cn(fresh && "font-semibold text-brand-ink")}>
+                        {fresh
+                          ? t("newToday")
+                          : t(s.type === "novel" ? "chShort" : "epShort", { n: s.freeEpisodes })}
+                      </span>
+                      <span className="inline-flex items-center gap-[3px] tabular-nums">
+                        <HeartIcon className="size-3" aria-hidden />
+                        {s.likes}
+                      </span>
+                    </p>
+                  }
+                />
+              )
+            })}
+          </div>
+          {!showAll && list.length > 6 ? (
+            <Button variant="outline" className="w-full max-md:hidden" onClick={() => setShowAll(true)}>
+              {t("showAllDay", { count: list.length, type: kind })}
+              <ChevronDownIcon className="size-3.5" />
+            </Button>
+          ) : null}
+        </>
       )}
     </section>
-  )
-}
-
-export function DailyUpdatesSkeleton() {
-  return (
-    <div className="flex flex-col gap-5" aria-hidden>
-      <div className="flex flex-col gap-2">
-        <div className="h-6 w-40 animate-pulse rounded-md bg-muted" />
-        <div className="h-4 w-64 animate-pulse rounded-md bg-muted" />
-      </div>
-      <div className={seriesGridClass}>
-        {Array.from({ length: 6 }, (_, i) => (
-          <SkeletonCard key={i} />
-        ))}
-      </div>
-    </div>
   )
 }

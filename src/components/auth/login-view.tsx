@@ -2,75 +2,102 @@
 
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useMutation } from "@tanstack/react-query"
-import { useLocale, useTranslations } from "next-intl"
+import { AlertCircleIcon } from "lucide-react"
 import { useSearchParams } from "next/navigation"
-import { useEffect, useRef } from "react"
-import { Controller, useForm } from "react-hook-form"
+import { useLocale, useTranslations } from "next-intl"
+import { useEffect, useRef, useState } from "react"
+import { Controller, useForm, useWatch } from "react-hook-form"
 import { toast } from "sonner"
-import { FacebookIcon, GoogleIcon } from "@/components/auth/social-icons"
+import { authDraft } from "@/components/auth/auth-draft"
 import { loginSchema, type LoginValues } from "@/components/auth/auth-schemas"
-import { PasswordInput } from "@/components/auth/password-input"
+import { AuthHead, AuthNote, authInput, authLink, FieldError, OrDivider, PasswordField, SubmitButton } from "@/components/auth/auth-ui"
+import { AppleIcon, FacebookIcon, GoogleIcon } from "@/components/auth/social-icons"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { demoData } from "@/data"
+import { DEMO_MODE } from "@/lib/api/config"
 import { errorCode, retryAfterSeconds } from "@/lib/api/errors"
-import { currentUser, logIn, socialLogIn, type PendingCode } from "@/lib/session"
-import { useAppStore, type StoredUser } from "@/lib/store"
+import { currentUser, logIn, socialLogIn, socialReady, type SocialProvider } from "@/lib/session"
+import type { StoredUser } from "@/lib/store"
 import { useWaitText } from "@/lib/use-wait-text"
 
-/** Log in: social buttons, email + password form, wrong-credentials alert, demo hint. */
+/** The demo locks the form after 3 wrong passwords (prototype); the real API answers 429 after 5. */
+const DEMO_TRIES = 3
+
+const SOCIALS: { id: SocialProvider; icon: React.ComponentType<{ className?: string }> }[] = [
+  { id: "google", icon: GoogleIcon },
+  { id: "facebook", icon: FacebookIcon },
+  { id: "apple", icon: AppleIcon },
+]
+
+type FormAlert = { title: string; text?: string; reset?: boolean }
+
+/** Log in: email + password (Show, Caps Lock), Remember me, Forgot, wrong-password alert, social buttons, demo note. */
 export function LoginView({
   onForgot,
+  onSignup,
   onDone,
   onNeedsCode,
 }: {
-  onForgot: () => void
-  /** Called after the store has the user; the flow shows the Done view. */
-  onDone: () => void
-  /** The email is not confirmed yet: the API sent a new code, the flow shows Verify. */
-  onNeedsCode: (pending: PendingCode) => void
+  onForgot: (email: string) => void
+  onSignup: () => void
+  /** The account is known: the flow logs it in and shows "Welcome back". */
+  onDone: (user: StoredUser) => void
+  /** The email is not confirmed yet: the API sent a new code, the flow shows the code step. */
+  onNeedsCode: (email: string) => void
 }) {
   const t = useTranslations("auth")
   const ts = useTranslations("states")
+  const locale = useLocale()
   const waitText = useWaitText()
   const form = useForm<LoginValues>({
     resolver: zodResolver(loginSchema),
-    defaultValues: { email: "", password: "", remember: true },
+    defaultValues: { email: authDraft.login?.email ?? "", password: "", remember: authDraft.login?.remember ?? true },
   })
   const { errors } = form.formState
+  const [email, remember] = useWatch({ control: form.control, name: ["email", "remember"] })
+  useEffect(() => {
+    authDraft.login = { email, remember }
+  }, [email, remember])
 
-  const finish = (user: StoredUser) => {
-    useAppStore.getState().login(user)
-    onDone()
-  }
+  const [show, setShow] = useState(false)
+  const [caps, setCaps] = useState(false)
+  const [alert, setAlert] = useState<FormAlert | null>(null)
+  const [tries, setTries] = useState(0)
+  const locked = DEMO_MODE && tries >= DEMO_TRIES
 
   const emailLogin = useMutation({
     mutationFn: (v: LoginValues) => logIn(v.email, v.password, v.remember),
-    onSuccess: finish,
+    onSuccess: onDone,
     onError: (e, v) => {
       const code = errorCode(e)
       const wait = retryAfterSeconds(e)
       if (code === "invalid_credentials") {
-        toast.error(t("errorTitle"), { description: t("errorBody"), duration: 5000 })
+        const n = tries + 1
+        setTries(n)
+        setAlert(DEMO_MODE && n >= DEMO_TRIES ? { title: t("locked"), reset: true } : { title: t("wrongCredentials") })
+        // Prototype: the password is cleared and the field asks for it again.
+        form.resetField("password")
+        form.setError("password", { message: "passwordRequired" }, { shouldFocus: true })
       } else if (code === "email_not_verified") {
         toast.info(t("unverified"), { duration: 5000 })
-        onNeedsCode({ email: v.email.trim().toLowerCase(), resendAfterSeconds: 30 })
+        onNeedsCode(v.email.trim().toLowerCase())
       } else if (wait !== undefined) {
-        toast.error(t("tooManyTitle"), { description: waitText(wait), duration: 5000 })
+        setAlert({ title: t("tooManyTitle"), text: waitText(wait), reset: true })
       } else if (code === "account_banned") {
-        toast.error(t("banned"), { duration: 5000 })
+        setAlert({ title: t("banned") })
       } else {
-        toast.error(ts("errorTitle"), { description: ts("errorDescription"), duration: 5000 })
+        setAlert({ title: ts("errorTitle"), text: ts("errorDescription") })
       }
     },
   })
-  const locale = useLocale()
+
   const social = useMutation({
-    mutationFn: (provider: "google" | "facebook") => socialLogIn(provider, locale),
-    onSuccess: finish,
-    onError: () => toast.error(ts("errorTitle"), { description: ts("errorDescription"), duration: 5000 }),
+    mutationFn: (provider: SocialProvider) => socialLogIn(provider, locale),
+    onSuccess: onDone,
+    onError: () => setAlert({ title: ts("errorTitle"), text: t("socialFailed") }),
   })
 
   // Back from Google / Facebook: the API redirected here with `?social=<result>` (cookies already set).
@@ -86,7 +113,7 @@ export function LoginView({
     const failed = () => toast.error(ts("errorTitle"), { description: t("socialFailed"), duration: 5000 })
     if (result === "done") {
       currentUser()
-        .then((user) => (user ? finish(user) : failed()))
+        .then((user) => (user ? onDone(user) : failed()))
         .catch(failed)
     } else if (result === "cancelled") toast.info(t("socialCancelled"), { duration: 5000 })
     else if (result === "unavailable") toast.info(t("socialSoon"), { duration: 5000 })
@@ -95,110 +122,161 @@ export function LoginView({
     else if (result === "account_banned") toast.error(t("banned"), { duration: 5000 })
     else if (result === "too_many_requests") toast.error(t("tooManyTitle"), { duration: 5000 })
     else failed()
-    // finish only calls the store and onDone; it is safe to leave out of the dependencies.
+    // onDone only logs in and moves the flow on; it is safe to leave out of the dependencies.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params])
+
   const busy = emailLogin.isPending || social.isPending
+  const forgot = () => onForgot(form.getValues("email").trim())
+  const accounts = demoData.demoAccounts
 
   return (
-    <div className="flex flex-col gap-5">
-      <div className="grid grid-cols-2 gap-3">
-        <Button
-          type="button"
-          variant="outline"
-          size="lg"
-          disabled={busy && !(social.isPending && social.variables === "google")}
-          loading={social.isPending && social.variables === "google"}
-          onClick={() => social.mutate("google")}
-        >
-          {!(social.isPending && social.variables === "google") && <GoogleIcon className="size-[18px]" />}
-          {t("google")}
-        </Button>
-        <Button
-          type="button"
-          variant="outline"
-          size="lg"
-          disabled={busy && !(social.isPending && social.variables === "facebook")}
-          loading={social.isPending && social.variables === "facebook"}
-          onClick={() => social.mutate("facebook")}
-        >
-          {!(social.isPending && social.variables === "facebook") && <FacebookIcon className="size-[18px]" />}
-          {t("facebook")}
-        </Button>
-      </div>
+    <div className="flex flex-col gap-[18px]">
+      <AuthHead title={t("loginTitle")} sub={t("loginSub")} />
 
-      <div className="flex items-center gap-3 text-xs font-medium tracking-wider text-muted-foreground uppercase">
-        <span className="h-px flex-1 bg-border" />
-        {t("orEmail")}
-        <span className="h-px flex-1 bg-border" />
-      </div>
+      {alert ? (
+        <Alert variant="destructive" className="rounded-[10px] px-4 py-3.5">
+          <AlertCircleIcon aria-hidden />
+          <AlertTitle className="text-sm leading-5">{alert.title}</AlertTitle>
+          {alert.text || alert.reset ? (
+            <AlertDescription className="flex flex-col items-start gap-1 text-[13px]">
+              {alert.text ? <span>{alert.text}</span> : null}
+              {alert.reset ? (
+                <button type="button" className={authLink} onClick={forgot}>
+                  {t("resetNow")}
+                </button>
+              ) : null}
+            </AlertDescription>
+          ) : null}
+        </Alert>
+      ) : null}
 
-      <form noValidate className="flex flex-col gap-4" onSubmit={form.handleSubmit((v) => emailLogin.mutate(v))}>
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="login-email">{t("email")}</Label>
+      <form
+        noValidate
+        className="flex flex-col gap-4"
+        onSubmit={form.handleSubmit((v) => {
+          if (locked) return
+          setAlert(null)
+          emailLogin.mutate(v)
+        })}
+      >
+        <div className="flex flex-col gap-2">
+          <label htmlFor="login-email" className="text-sm leading-5 font-medium">
+            {t("email")}
+          </label>
           <Input
             id="login-email"
             type="email"
             autoComplete="email"
             inputMode="email"
             placeholder={t("emailPlaceholder")}
+            className={authInput}
             aria-invalid={!!errors.email}
             aria-describedby={errors.email ? "login-email-error" : undefined}
-            {...form.register("email")}
+            {...form.register("email", { onChange: () => setAlert((a) => (a?.reset ? a : null)) })}
           />
-          {errors.email ? (
-            <p id="login-email-error" className="text-[13px] text-destructive">
-              {t(errors.email.message as "emailRequired")}
-            </p>
-          ) : null}
+          {errors.email ? <FieldError id="login-email-error">{t(errors.email.message as "emailRequired")}</FieldError> : null}
         </div>
 
-        <div className="flex flex-col gap-1.5">
-          <div className="flex items-center justify-between">
-            <Label htmlFor="login-password">{t("password")}</Label>
-            <button
-              type="button"
-              onClick={onForgot}
-              className="rounded-sm text-[13px] font-medium text-brand-ink underline underline-offset-4 outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            >
-              {t("forgot")}
-            </button>
-          </div>
-          <PasswordInput
+        <div className="flex flex-col gap-2">
+          <label htmlFor="login-password" className="text-sm leading-5 font-medium">
+            {t("password")}
+          </label>
+          <PasswordField
             id="login-password"
             autoComplete="current-password"
+            placeholder={t("passwordPlaceholder")}
+            visible={show}
+            onVisibleChange={setShow}
+            onCapsLock={setCaps}
             aria-invalid={!!errors.password}
-            aria-describedby={errors.password ? "login-password-error" : undefined}
+            aria-describedby={[caps ? "login-caps" : "", errors.password ? "login-password-error" : ""].join(" ").trim() || undefined}
             {...form.register("password")}
           />
-          {errors.password ? (
-            <p id="login-password-error" className="text-[13px] text-destructive">
-              {t(errors.password.message as "passwordRequired")}
+          {caps ? (
+            <p id="login-caps" className="text-[13px] leading-[18px] font-medium text-warning">
+              {t("caps")}
             </p>
+          ) : null}
+          {errors.password ? (
+            <FieldError id="login-password-error">{t(errors.password.message as "passwordRequired")}</FieldError>
           ) : null}
         </div>
 
-        <div className="flex items-center gap-2">
-          <Controller
-            control={form.control}
-            name="remember"
-            render={({ field }) => (
-              <Checkbox id="login-remember" checked={field.value} onCheckedChange={(c) => field.onChange(c === true)} />
-            )}
-          />
-          <Label htmlFor="login-remember" className="font-normal">
-            {t("remember")}
-          </Label>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <Controller
+              control={form.control}
+              name="remember"
+              render={({ field }) => (
+                <Checkbox
+                  id="login-remember"
+                  className="border-[#a1a1aa]"
+                  checked={field.value}
+                  onCheckedChange={(c) => field.onChange(c === true)}
+                />
+              )}
+            />
+            <label htmlFor="login-remember" className="cursor-pointer text-[13px] leading-[18px]">
+              {t("remember")}
+            </label>
+          </div>
+          <button type="button" className={authLink} onClick={forgot}>
+            {t("forgot")}
+          </button>
         </div>
 
-        <Button type="submit" variant="brand" size="lg" loading={emailLogin.isPending} disabled={busy && !emailLogin.isPending}>
-          {t("login")}
-        </Button>
+        <SubmitButton loading={emailLogin.isPending}>{t("login")}</SubmitButton>
       </form>
 
-      <p className="type-small text-center font-normal text-muted-foreground">
-        {t("demoHint", { email: demoData.demoAccount.email, password: demoData.demoAccount.password })}
+      <OrDivider>{t("or")}</OrDivider>
+
+      <div className="flex flex-col gap-2.5">
+        {SOCIALS.map(({ id, icon: Icon }) => {
+          const pending = social.isPending && social.variables === id
+          return (
+            <Button
+              key={id}
+              type="button"
+              variant="outline"
+              disabled={busy && !pending}
+              loading={pending}
+              className="h-11 w-full gap-2.5 rounded-full text-sm font-semibold shadow-none hover:border-[#d4d4d8]"
+              onClick={() => {
+                setAlert(null)
+                if (socialReady(id)) social.mutate(id)
+                else toast.info(t("appleSoon"), { duration: 5000 })
+              }}
+            >
+              {pending ? null : <Icon className="size-[18px]" />}
+              {t(id)}
+            </Button>
+          )
+        })}
+      </div>
+
+      <p className="text-center text-sm leading-[21px] text-muted-foreground">
+        {t("noAccount")}{" "}
+        <button type="button" className={authLink} onClick={onSignup}>
+          {t("createAccount")}
+        </button>
       </p>
+
+      {DEMO_MODE ? (
+        <AuthNote>
+          <span>{t("demoLogin", { email: accounts[0].email, password: accounts[0].password })}</span>
+          {accounts.length > 2 ? (
+            <span>
+              {t("demoMore", {
+                creator: accounts[1].email,
+                creatorPassword: accounts[1].password,
+                admin: accounts[2].email,
+                adminPassword: accounts[2].password,
+              })}
+            </span>
+          ) : null}
+        </AuthNote>
+      ) : null}
     </div>
   )
 }

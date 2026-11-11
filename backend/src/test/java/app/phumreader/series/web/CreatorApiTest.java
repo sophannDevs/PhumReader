@@ -145,7 +145,7 @@ class CreatorApiTest {
 
     @Test
     void readersGetAnEmptyDashboard() throws Exception {
-        UUID demoReader = sessions.userId("reader@toonwave.app");
+        UUID demoReader = sessions.userId("reader@phumireader.app");
         mvc.perform(get(DASHBOARD).with(sessions.as(demoReader)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.creator").value(false))

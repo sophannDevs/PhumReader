@@ -1,33 +1,28 @@
-import type { Metadata } from "next"
-import { getTranslations, setRequestLocale } from "next-intl/server"
+import { setRequestLocale } from "next-intl/server"
 import { Suspense } from "react"
-import { SkeletonPage } from "@/components/pr/skeletons"
-import { EditSeriesPage } from "@/components/pr/series-form-pages"
+import { redirect } from "@/i18n/navigation"
 import { routing } from "@/i18n/routing"
 
-// Series ids exist only in the database. One placeholder id per language lets the page shell be built
-// ahead; every real id is rendered when it is first opened.
 export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale, id: "00000000-0000-0000-0000-000000000000" }))
 }
 
-export async function generateMetadata({ params }: PageProps<"/[locale]/creator/series/[id]/edit">): Promise<Metadata> {
-  const { locale } = await params
-  const t = await getTranslations({ locale, namespace: "seriesForm" })
-  return { title: t("editTitle") }
-}
-
-async function Content({ params }: { params: PageProps<"/[locale]/creator/series/[id]/edit">["params"] }) {
-  const { locale, id } = await params
+/** V1 route: a series is edited in Manage series > Series details in V2.1 (spec §21). Keeps the query string. */
+async function Go({ params, searchParams }: PageProps<"/[locale]/creator/series/[id]/edit">): Promise<never> {
+  const [{ locale, id }, query] = await Promise.all([params, searchParams])
   setRequestLocale(locale)
-  return <EditSeriesPage id={id} />
+  const next = new URLSearchParams({ tab: "details" })
+  for (const [key, value] of Object.entries(query)) {
+    if (key === "tab" || value === undefined) continue
+    for (const one of Array.isArray(value) ? value : [value]) next.append(key, one)
+  }
+  return redirect({ href: `/creator/series/${encodeURIComponent(id)}?${next}`, locale })
 }
 
-// The id is only known at request time, so it is read inside Suspense.
-export default function Page({ params }: PageProps<"/[locale]/creator/series/[id]/edit">) {
+export default function Page(props: PageProps<"/[locale]/creator/series/[id]/edit">) {
   return (
-    <Suspense fallback={<SkeletonPage />}>
-      <Content params={params} />
+    <Suspense fallback={null}>
+      <Go {...props} />
     </Suspense>
   )
 }

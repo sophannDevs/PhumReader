@@ -1,0 +1,124 @@
+{
+  "title": {
+    "comment": "Report comment",
+    "series": "Report series",
+    "episode": "Report episode",
+    "user": "Report account"
+  },
+  "why": {
+    "comment": "Why are you reporting this comment? Your report is anonymous. The person won’t know it was you.",
+    "series": "Why are you reporting this series? Your report is anonymous. The creator won’t know it was you.",
+    "episode": "Why are you reporting this episode? Your report is anonymous. The creator won’t know it was you.",
+    "user": "Why are you reporting this account? Your report is anonymous. The person won’t know it was you."
+  },
+  "reason": "Reason",
+  "detailsCopyright": "Link to the original work and who made it",
+  "detailsImpersonate": "Who are they pretending to be?",
+  "detailsOther": "What’s wrong?",
+  "detailsCopyrightPh": "e.g. https://… original by @artist",
+  "detailsPh": "A short description helps us review faster",
+  "chooseReason": "Choose a reason.",
+  "moreDetails": "Add a few more details (at least 10 characters).",
+  "urgent": "If someone is in danger right now, call local emergency services. In Cambodia: police 117, ambulance 119.",
+  "cancel": "Cancel",
+  "send": "Send report",
+  "sentTitle": "Thanks. We’ll review it.",
+  "sentText": "Our team checks reports within 24 hours. If it breaks our <link>community guidelines</link>, we’ll remove it. You can follow it in Settings → Privacy and safety.",
+  "case": "Case {id}",
+  "alsoBlock": "Also block {name}",
+  "alsoBlockText": "You won’t see their comments, and they can’t reply to you.",
+  "done": "Done",
+  "blockTitle": "Block {name}?",
+  "blockText": "You won’t see their comments or replies, and they can’t reply to you or follow you. They aren’t told that you blocked them. You can unblock them in Settings.",
+  "block": "Block",
+  "unblock": "Unblock",
+  "blocked": "{name} is blocked",
+  "unblocked": "{name} is unblocked",
+  "report": "Report",
+  "hiddenLine": "{count, plural, one {# comment from people you blocked hidden} other {# comments from people you blocked hidden}}",
+  "show": "Show",
+  "reasons": {
+    "comment": {
+      "spam": {
+        "label": "Spam or scam",
+        "desc": "Ads, fake links, repeated posts"
+      },
+      "harass": {
+        "label": "Harassment or bullying",
+        "desc": "Insults or attacks on a person"
+      },
+      "hate": {
+        "label": "Hate speech",
+        "desc": "Attacks on a group of people"
+      },
+      "sexual": {
+        "label": "Sexual content",
+        "desc": "Nudity or sexual content that isn’t allowed"
+      },
+      "violence": {
+        "label": "Violence or threats",
+        "desc": "Threats, or content that encourages harm"
+      },
+      "spoiler": {
+        "label": "Spoilers without warning",
+        "desc": "Reveals later episodes"
+      },
+      "other": {
+        "label": "Something else",
+        "desc": "Tell us what’s wrong"
+      }
+    },
+    "series": {
+      "copyright": {
+        "label": "Stolen or copied work",
+        "desc": "This is someone else’s comic or story"
+      },
+      "spam": {
+        "label": "Spam or scam",
+        "desc": "Ads, fake links, repeated posts"
+      },
+      "harass": {
+        "label": "Harassment or bullying",
+        "desc": "Insults or attacks on a person"
+      },
+      "hate": {
+        "label": "Hate speech",
+        "desc": "Attacks on a group of people"
+      },
+      "sexual": {
+        "label": "Sexual content",
+        "desc": "Nudity or sexual content that isn’t allowed"
+      },
+      "violence": {
+        "label": "Violence or threats",
+        "desc": "Threats, or content that encourages harm"
+      },
+      "rating": {
+        "label": "Wrong age rating",
+        "desc": "Should be 16+ or 18+"
+      },
+      "other": {
+        "label": "Something else",
+        "desc": "Tell us what’s wrong"
+      }
+    },
+    "user": {
+      "spam": {
+        "label": "Spam or fake account",
+        "desc": "Bots, scams or fake profiles"
+      },
+      "impersonate": {
+        "label": "Pretending to be someone",
+        "desc": "Uses another creator’s name or work"
+      },
+      "harass": {
+        "label": "Harassment or bullying",
+        "desc": "Targets me or someone else"
+      },
+      "other": {
+        "label": "Something else",
+        "desc": "Tell us what’s wrong"
+      }
+    }
+  }
+}

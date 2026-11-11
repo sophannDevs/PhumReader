@@ -1,10 +1,10 @@
 {
-  "_note": "Demo data for the PhumReader V2 frontend. Images map to files in design/assets/ (covers/<id>.svg, panels/<id>.svg). Prices are placeholders.",
+  "_note": "Demo content for PhumiReader (ភូមិReader) V2 frontend. The ONLY source of demo data. Generated from the design prototype on 2026-11-10.",
   "today": "2026-11-05",
   "timezone": "Asia/Phnom_Penh",
   "demoAccount": {
-    "email": "reader@toonwave.app",
-    "password": "Toonwave1!",
+    "email": "reader@phumireader.app",
+    "password": "PhumiReader1!",
     "name": "Sokha Chan",
     "startingCoins": 3,
     "verificationCode": "123456"
@@ -143,7 +143,7 @@
         "up": false,
         "isNew": false
       },
-      "status": "ongoing",
+      "status": "completed",
       "language": [
         "en",
         "km"
@@ -273,7 +273,7 @@
         "up": true,
         "isNew": true
       },
-      "status": "ongoing",
+      "status": "completed",
       "language": [
         "en",
         "km"
@@ -403,7 +403,7 @@
         "up": false,
         "isNew": false
       },
-      "status": "ongoing",
+      "status": "completed",
       "language": [
         "en",
         "km"
@@ -533,7 +533,7 @@
         "up": false,
         "isNew": false
       },
-      "status": "ongoing",
+      "status": "completed",
       "language": [
         "en",
         "km"
@@ -663,7 +663,7 @@
         "up": false,
         "isNew": true
       },
-      "status": "ongoing",
+      "status": "completed",
       "language": [
         "en",
         "km"
@@ -793,7 +793,7 @@
         "up": true,
         "isNew": false
       },
-      "status": "ongoing",
+      "status": "completed",
       "language": [
         "en",
         "km"
@@ -923,7 +923,7 @@
         "up": false,
         "isNew": false
       },
-      "status": "ongoing",
+      "status": "completed",
       "language": [
         "en",
         "km"
@@ -1053,7 +1053,7 @@
         "up": false,
         "isNew": true
       },
-      "status": "ongoing",
+      "status": "completed",
       "language": [
         "en",
         "km"
@@ -1183,7 +1183,7 @@
         "up": false,
         "isNew": false
       },
-      "status": "ongoing",
+      "status": "completed",
       "language": [
         "en",
         "km"
@@ -4364,7 +4364,7 @@
   },
   "loginPageStrings": {
     "en": {
-      "back": "Back to PhumReader",
+      "back": "Back to PhumiReader",
       "login": "Log in",
       "signup": "Sign up",
       "orEmail": "or with email",
@@ -4392,11 +4392,11 @@
       "sentSub": "We sent a reset link to",
       "sentSub2": "It expires in 30 minutes.",
       "taking": "Taking you back…",
-      "legal": "By continuing you agree to PhumReader’s Terms and Privacy Policy.",
+      "legal": "By continuing you agree to PhumiReader’s Terms and Privacy Policy.",
       "quote": "I posted my first episode on a Tuesday night. By Friday, readers in Battambang and Seoul were asking for the next one."
     },
     "km": {
-      "back": "ត្រឡប់ទៅ PhumReader",
+      "back": "ត្រឡប់ទៅ PhumiReader",
       "login": "ចូល",
       "signup": "ចុះឈ្មោះ",
       "orEmail": "ឬប្រើអ៊ីមែល",
@@ -4424,8 +4424,906 @@
       "sentSub": "យើងបានផ្ញើតំណទៅ",
       "sentSub2": "វាផុតកំណត់ក្នុង ៣០ នាទី។",
       "taking": "កំពុងនាំអ្នកត្រឡប់…",
-      "legal": "ដោយបន្ត អ្នកយល់ព្រមលើលក្ខខណ្ឌ និងគោលការណ៍ឯកជនភាពរបស់ PhumReader។",
+      "legal": "ដោយបន្ត អ្នកយល់ព្រមលើលក្ខខណ្ឌ និងគោលការណ៍ឯកជនភាពរបស់ PhumiReader។",
       "quote": "ខ្ញុំបានបង្ហោះភាគដំបូងនៅយប់ថ្ងៃអង្គារ។ ត្រឹមថ្ងៃសុក្រ អ្នកអាននៅបាត់ដំបង និងសេអ៊ូល បានសួររកភាគបន្ទាប់។"
     }
+  },
+  "brand": {
+    "name": "PhumiReader",
+    "nameKm": "ភូមិReader",
+    "domain": "phumireader.app",
+    "storagePrefix": "phumireader."
+  },
+  "demoAccounts": [
+    {
+      "email": "reader@phumireader.app",
+      "password": "PhumiReader1!",
+      "name": "Sokha Chan",
+      "role": "reader"
+    },
+    {
+      "email": "creator@phumireader.app",
+      "password": "Creator1!",
+      "name": "Dara Vann",
+      "role": "creator"
+    },
+    {
+      "email": "admin@phumireader.app",
+      "password": "Admin1!",
+      "name": "Dara M.",
+      "role": "moderator"
+    }
+  ],
+  "emailCode": "123456",
+  "notifications": [
+    {
+      "id": "n1",
+      "kind": "update",
+      "when": "Today",
+      "time": "9:12 AM",
+      "title": "Glass Compass · Episode 65 is out",
+      "body": "New episode from Owen Blake. 1 more is waiting in Fast Pass.",
+      "series": "Glass Compass"
+    },
+    {
+      "id": "n2",
+      "kind": "comment",
+      "when": "Today",
+      "time": "8:40 AM",
+      "title": "Linh T. replied to your comment",
+      "body": "“Same! The rain panels were beautiful.”",
+      "series": "Glass Compass"
+    },
+    {
+      "id": "n3",
+      "kind": "coins",
+      "when": "Today",
+      "time": "7:05 AM",
+      "title": "Payment received · +33 coins",
+      "body": "Order TW-48213377 paid with KHQR. Your balance was updated.",
+      "series": ""
+    },
+    {
+      "id": "n4",
+      "kind": "update",
+      "when": "This week",
+      "time": "Mon",
+      "title": "Midnight Courier · Episode 41 is out",
+      "body": "Your subscribed series has a new episode.",
+      "series": "Midnight Courier"
+    },
+    {
+      "id": "n5",
+      "kind": "update",
+      "when": "This week",
+      "time": "Sun",
+      "title": "Letters to Tuesday · Chapter 88",
+      "body": "A new chapter is ready to read.",
+      "series": "Letters to Tuesday"
+    },
+    {
+      "id": "n6",
+      "kind": "system",
+      "when": "This week",
+      "time": "Sat",
+      "title": "Fast Pass episode is now free",
+      "body": "Glass Compass Episode 64 is free for everyone.",
+      "series": "Glass Compass"
+    },
+    {
+      "id": "n7",
+      "kind": "comment",
+      "when": "Earlier",
+      "time": "Oct 28",
+      "title": "12 people liked your comment",
+      "body": "On Midnight Courier · Episode 39",
+      "series": "Midnight Courier"
+    },
+    {
+      "id": "n8",
+      "kind": "system",
+      "when": "Earlier",
+      "time": "Oct 20",
+      "title": "Welcome to PhumiReader",
+      "body": "Subscribe to series to get new-episode alerts here.",
+      "series": ""
+    }
+  ],
+  "notificationsReadByDefault": [
+    "n4",
+    "n5",
+    "n6",
+    "n7",
+    "n8"
+  ],
+  "myWorks": [
+    {
+      "id": "C1",
+      "title": "River Lantern",
+      "format": "comic",
+      "genre": "Fantasy",
+      "status": "published",
+      "eps": 24,
+      "day": "Sat",
+      "cover": "/covers/4420116177e800d3ec12f59b2f82c097.svg",
+      "views": "182K",
+      "subs": "12.4K",
+      "likes": "24K",
+      "summary": "A ferry girl on the Mekong carries a lantern that shows the way home to lost spirits."
+    },
+    {
+      "id": "C2",
+      "title": "Night Market Detectives",
+      "format": "comic",
+      "genre": "Comedy",
+      "status": "review",
+      "eps": 3,
+      "day": "Wed",
+      "cover": "/covers/de51168d1dc0da7fa1222b3ed42364b9.svg",
+      "views": "0",
+      "subs": "0",
+      "likes": "0",
+      "summary": "Two noodle-stall cousins solve tiny mysteries at the Russian Market."
+    },
+    {
+      "id": "C3",
+      "title": "Monsoon Letters",
+      "format": "novel",
+      "genre": "Romance",
+      "status": "draft",
+      "eps": 0,
+      "day": "Sun",
+      "cover": "/covers/d2e211c44b547d83e3a5fb39e2fcedf8.svg",
+      "views": "0",
+      "subs": "0",
+      "likes": "0",
+      "summary": ""
+    }
+  ],
+  "reportReasons": {
+    "comment": [
+      [
+        "spam",
+        "Spam or scam",
+        "Ads, fake links, repeated posts"
+      ],
+      [
+        "harass",
+        "Harassment or bullying",
+        "Insults or attacks on a person"
+      ],
+      [
+        "hate",
+        "Hate speech",
+        "Attacks on a group of people"
+      ],
+      [
+        "sexual",
+        "Sexual content",
+        "Nudity or sexual content that isn’t allowed"
+      ],
+      [
+        "violence",
+        "Violence or threats",
+        "Threats, or content that encourages harm"
+      ],
+      [
+        "spoiler",
+        "Spoilers without warning",
+        "Reveals later episodes"
+      ],
+      [
+        "other",
+        "Something else",
+        "Tell us what’s wrong"
+      ]
+    ],
+    "series": [
+      [
+        "copyright",
+        "Stolen or copied work",
+        "This is someone else’s comic or story"
+      ],
+      [
+        "spam",
+        "Spam or scam",
+        "Ads, fake links, repeated posts"
+      ],
+      [
+        "harass",
+        "Harassment or bullying",
+        "Insults or attacks on a person"
+      ],
+      [
+        "hate",
+        "Hate speech",
+        "Attacks on a group of people"
+      ],
+      [
+        "sexual",
+        "Sexual content",
+        "Nudity or sexual content that isn’t allowed"
+      ],
+      [
+        "violence",
+        "Violence or threats",
+        "Threats, or content that encourages harm"
+      ],
+      [
+        "rating",
+        "Wrong age rating",
+        "Should be 16+ or 18+"
+      ],
+      [
+        "other",
+        "Something else",
+        "Tell us what’s wrong"
+      ]
+    ],
+    "user": [
+      [
+        "spam",
+        "Spam or fake account",
+        "Bots, scams or fake profiles"
+      ],
+      [
+        "impersonate",
+        "Pretending to be someone",
+        "Uses another creator’s name or work"
+      ],
+      [
+        "harass",
+        "Harassment or bullying",
+        "Targets me or someone else"
+      ],
+      [
+        "other",
+        "Something else",
+        "Tell us what’s wrong"
+      ]
+    ]
+  },
+  "commentThreads": [
+    {
+      "id": "c0",
+      "name": "Owen Blake",
+      "creator": true,
+      "pinned": true,
+      "when": "1d",
+      "ago": 24,
+      "likes": 2140,
+      "text": "Thank you for 1 million likes! Episode 66 has a small cameo from someone you met in episode 3. 👀",
+      "replies": []
+    },
+    {
+      "id": "c1",
+      "name": "Sokha P.",
+      "when": "2h",
+      "ago": 2,
+      "likes": 412,
+      "text": "That last page!! I did not see that coming. Waiting a whole week is going to hurt.",
+      "replies": [
+        {
+          "name": "Owen Blake",
+          "creator": true,
+          "when": "1h",
+          "likes": 318,
+          "text": "Sorry not sorry 😄 Next week is worth it."
+        },
+        {
+          "name": "Dara K.",
+          "when": "1h",
+          "likes": 22,
+          "text": "Same, I refreshed the page three times."
+        }
+      ]
+    },
+    {
+      "id": "c2",
+      "name": "Linh T.",
+      "when": "5h",
+      "ago": 5,
+      "likes": 168,
+      "text": "The colors in this series keep getting better. The rain panels were beautiful.",
+      "replies": [
+        {
+          "name": "Mai L.",
+          "when": "4h",
+          "likes": 9,
+          "text": "The rain panels made me want to go outside."
+        }
+      ]
+    },
+    {
+      "id": "c3",
+      "name": "Vibol K.",
+      "when": "9h",
+      "ago": 9,
+      "likes": 97,
+      "spoiler": true,
+      "text": "So the compass was pointing at her brother the whole time. Rereading from episode 1 with that in mind is wild.",
+      "replies": []
+    },
+    {
+      "id": "c4",
+      "name": "Chenda P.",
+      "when": "1d",
+      "ago": 26,
+      "likes": 54,
+      "text": "Reading this in Khmer on the bus every morning. Thank you for the translation!",
+      "replies": []
+    },
+    {
+      "id": "c5",
+      "name": "Rithy S.",
+      "when": "2d",
+      "ago": 50,
+      "likes": 31,
+      "text": "Who else thinks the guild master is not the real villain?",
+      "replies": [
+        {
+          "name": "Sophea R.",
+          "when": "2d",
+          "likes": 12,
+          "text": "Yes! Look at the background in episode 40."
+        }
+      ]
+    },
+    {
+      "id": "c6",
+      "name": "Nary M.",
+      "when": "3d",
+      "ago": 72,
+      "likes": 12,
+      "text": "First time commenting. This is my favourite series on the app.",
+      "replies": []
+    }
+  ],
+  "helpArticles": [
+    {
+      "topic": "coins",
+      "q": "What is Fast Pass?",
+      "a": "Fast Pass lets you read the newest episodes before they’re free. Each Fast Pass episode costs 5 coins. Every episode becomes free for everyone 7 days after it comes out.",
+      "link": "",
+      "linkLabel": ""
+    },
+    {
+      "topic": "coins",
+      "q": "How do I buy coins?",
+      "a": "Go to Coins, pick a pack, and pay with KHQR, ABA Pay or a card. Your first purchase gives you double coins. Coins arrive in a few seconds.",
+      "link": "Shop",
+      "linkLabel": "Go to Coins"
+    },
+    {
+      "topic": "coins",
+      "q": "Do coins expire?",
+      "a": "No. Coins you buy never expire. Bonus coins from events may have an end date, which we show when you get them.",
+      "link": "",
+      "linkLabel": ""
+    },
+    {
+      "topic": "coins",
+      "q": "I paid but didn’t get my coins",
+      "a": "Most payments confirm within seconds. If it’s been more than 10 minutes, send us a message with your order number (it starts with TW-). We’ll check with the bank and add your coins or refund you.",
+      "link": "",
+      "linkLabel": ""
+    },
+    {
+      "topic": "coins",
+      "q": "Can I get a refund?",
+      "a": "Coins you haven’t spent can be refunded within the refund period. Coins already spent on episodes can’t be refunded. If you were charged twice or a payment failed, we refund it in full.",
+      "link": "Legal",
+      "linkLabel": "Read the coins and refunds policy"
+    },
+    {
+      "topic": "account",
+      "q": "I forgot my password",
+      "a": "On the Log in page, tap “Forgot password?”, enter your email, and we’ll send you a 6-digit code to set a new password.",
+      "link": "Auth",
+      "linkLabel": "Go to Log in"
+    },
+    {
+      "topic": "account",
+      "q": "How do I change my name or language?",
+      "a": "Open Settings. Your display name is under Account, and the app language (English or ខ្មែរ) is under Language and region.",
+      "link": "Settings",
+      "linkLabel": "Open Settings"
+    },
+    {
+      "topic": "account",
+      "q": "How do I delete my account?",
+      "a": "Open Settings → Account actions → Delete account. This deletes your library, comments and unused coins, and can’t be undone.",
+      "link": "Settings",
+      "linkLabel": "Open Settings"
+    },
+    {
+      "topic": "reading",
+      "q": "Images load slowly or look blurry",
+      "a": "Check your connection, then set Image quality to Automatic in Settings → Reading. On mobile data, “Data saver” loads smaller images.",
+      "link": "Settings",
+      "linkLabel": "Open reading settings"
+    },
+    {
+      "topic": "reading",
+      "q": "How do I get alerts for new episodes?",
+      "a": "Subscribe to a series. You’ll get a notification when a new episode comes out. Choose push or email in Notifications → Alert settings.",
+      "link": "Notifications",
+      "linkLabel": "Alert settings"
+    },
+    {
+      "topic": "creators",
+      "q": "How do I publish my comic or novel?",
+      "a": "Open Creator studio → New series, add the details, summary and cover, then submit it for review. We check new series within 1–2 days. Then upload your first episode.",
+      "link": "CreateSeries",
+      "linkLabel": "Create a series"
+    },
+    {
+      "topic": "creators",
+      "q": "What image size should episodes be?",
+      "a": "Use JPG or PNG, 690–1600 px wide, up to 20 MB per image. Upload them in reading order; you can reorder before publishing.",
+      "link": "Upload",
+      "linkLabel": "Upload an episode"
+    },
+    {
+      "topic": "creators",
+      "q": "How do creators get paid?",
+      "a": "You earn when readers spend coins on your Fast Pass episodes. Add a payout method in Earnings. Payout amounts and dates follow the creator agreement.",
+      "link": "Earnings",
+      "linkLabel": "Go to Earnings"
+    },
+    {
+      "topic": "safety",
+      "q": "How do I report a comment or series?",
+      "a": "Tap “Report” next to a comment, or “Report it” on a series’ About tab. Choose a reason and send. We review reports within 24 hours. Reports are anonymous.",
+      "link": "Legal",
+      "linkLabel": "Read the community guidelines"
+    },
+    {
+      "topic": "safety",
+      "q": "How do I block someone?",
+      "a": "Tap “Block” next to their comment or on their profile. You won’t see their comments and they can’t reply to you. Unblock them any time in Settings → Privacy and safety.",
+      "link": "Settings",
+      "linkLabel": "Blocked accounts"
+    },
+    {
+      "topic": "tech",
+      "q": "The app shows “You’re offline”",
+      "a": "Turn airplane mode off, then turn Wi-Fi or mobile data off and on again. The page reconnects by itself when you’re back online.",
+      "link": "",
+      "linkLabel": ""
+    },
+    {
+      "topic": "tech",
+      "q": "Something isn’t working",
+      "a": "Try refreshing the page or updating your browser. If it still doesn’t work, send us a message with a screenshot and what you were trying to do.",
+      "link": "",
+      "linkLabel": ""
+    }
+  ],
+  "policies": {
+    "terms": {
+      "label": "Terms of service",
+      "kind": "Legal",
+      "title": "Terms of service",
+      "tpl": true,
+      "summary": [
+        "You need to be at least 13 to use PhumiReader. Readers 13–17 need a parent’s permission.",
+        "Creators own their stories. You give us permission to show them on PhumiReader.",
+        "Coins are for unlocking Fast Pass episodes. They have no cash value.",
+        "Break the community guidelines and we may remove content or close accounts."
+      ],
+      "sections": [
+        [
+          "Who we are",
+          [
+            "PhumiReader is run by [COMPANY NAME], registered in the Kingdom of Cambodia at [ADDRESS]. “We” means [COMPANY NAME]. “You” means anyone who uses PhumiReader."
+          ]
+        ],
+        [
+          "Your account",
+          [
+            "You must be at least 13 years old. If you are 13–17, a parent or guardian must agree to these terms for you.",
+            "Keep your password safe. You are responsible for what happens on your account. Tell us right away if you think someone else used it."
+          ]
+        ],
+        [
+          "Content and ownership",
+          [
+            "Creators keep ownership of the comics and stories they publish. By publishing, a creator gives [COMPANY NAME] a non-exclusive licence to host, show, translate for display, and promote that work on PhumiReader, as set out in the creator agreement.",
+            "Don’t copy, download or share series outside PhumiReader unless the creator allows it."
+          ]
+        ],
+        [
+          "Coins and Fast Pass",
+          [
+            "Coins are a virtual item used to unlock Fast Pass episodes early. Coins have no cash value and can’t be exchanged, sold or transferred.",
+            "Refunds follow our Coins and refunds policy."
+          ]
+        ],
+        [
+          "Rules",
+          [
+            "Follow the community guidelines. Don’t post illegal content, harass people, spam, or upload work that isn’t yours.",
+            "We may remove content, limit features or close accounts that break these rules. You can appeal by contacting us."
+          ]
+        ],
+        [
+          "Changes and ending",
+          [
+            "We may update these terms. If changes are important, we’ll tell you in the app at least [NOTICE PERIOD] days before they apply.",
+            "You can delete your account at any time in Settings."
+          ]
+        ],
+        [
+          "Liability and law",
+          [
+            "[LIABILITY TERMS — to be written by your lawyer.]",
+            "These terms are governed by [GOVERNING LAW]. Disputes go to [DISPUTE VENUE]."
+          ]
+        ]
+      ]
+    },
+    "privacy": {
+      "label": "Privacy policy",
+      "kind": "Legal",
+      "title": "Privacy policy",
+      "tpl": true,
+      "summary": [
+        "We collect what we need to run your account, show you series, and process payments.",
+        "We don’t sell your personal information.",
+        "Payment details go to the payment provider. We never see your full card number.",
+        "You can download or delete your data in Settings."
+      ],
+      "sections": [
+        [
+          "What we collect",
+          [
+            "Account details: name, email, birth year and app language.",
+            "Reading activity: series you subscribe to, episodes you read, likes and comments.",
+            "Purchases: order numbers, coin amounts and payment status. Card and bank details are handled by [PAYMENT PROVIDER].",
+            "Device information: browser, app version and approximate location from your IP address, used for security and region availability."
+          ]
+        ],
+        [
+          "How we use it",
+          [
+            "To run your account and library, send the alerts you choose, process coin purchases, keep PhumiReader safe, and improve the service.",
+            "Creators see totals (views, likes, subscribers), not who you are."
+          ]
+        ],
+        [
+          "Who we share it with",
+          [
+            "Service providers who help us run PhumiReader: hosting ([HOSTING PROVIDER]), email ([EMAIL PROVIDER]) and payments ([PAYMENT PROVIDER]).",
+            "Authorities, when the law requires it."
+          ]
+        ],
+        [
+          "How long we keep it",
+          [
+            "We keep your data while your account is open. After you delete your account, we remove personal data within [RETENTION PERIOD], except records we must keep by law, such as payment records."
+          ]
+        ],
+        [
+          "Your choices",
+          [
+            "Download your data or delete your account in Settings → Privacy and safety.",
+            "Turn notifications on or off in Notifications → Alert settings."
+          ]
+        ],
+        [
+          "Children",
+          [
+            "PhumiReader isn’t for children under 13. If we learn an account belongs to a child under 13, we close it."
+          ]
+        ],
+        [
+          "Contact",
+          [
+            "Questions or requests: [PRIVACY EMAIL]."
+          ]
+        ]
+      ]
+    },
+    "refund": {
+      "label": "Coins and refunds",
+      "kind": "Policy",
+      "title": "Coins and refunds",
+      "tpl": true,
+      "summary": [
+        "Coins you buy never expire.",
+        "Unused coins can be refunded within [REFUND WINDOW] days of purchase.",
+        "Coins already spent on episodes can’t be refunded.",
+        "Double charges and failed payments are always refunded in full."
+      ],
+      "sections": [
+        [
+          "How coins work",
+          [
+            "You buy coins in packs and spend them to unlock Fast Pass episodes (5 coins each). Every Fast Pass episode becomes free for everyone after 7 days. Unlocked episodes stay in your library."
+          ]
+        ],
+        [
+          "Refunds for unused coins",
+          [
+            "If you haven’t spent the coins from a purchase, you can ask for a refund within [REFUND WINDOW] days. Bonus and first-purchase coins are removed when the pack is refunded."
+          ]
+        ],
+        [
+          "Payment problems",
+          [
+            "If you were charged but didn’t get coins, or were charged twice, contact us with your order number (TW-…). We check with the bank and either add the coins or refund the payment to the same method, usually within [REFUND TIME]."
+          ]
+        ],
+        [
+          "How to ask for a refund",
+          [
+            "Go to Help center → Contact us, choose “Coins or payment”, and add your order number. You’ll find it in Coins → Purchase history."
+          ]
+        ],
+        [
+          "What we can’t refund",
+          [
+            "Coins already spent, coins from events or promotions, and purchases older than [REFUND WINDOW] days, unless the law requires it."
+          ]
+        ]
+      ]
+    },
+    "community": {
+      "label": "Community guidelines",
+      "kind": "Guidelines",
+      "title": "Community guidelines",
+      "tpl": false,
+      "summary": [
+        "Be kind. Disagree with ideas, not people.",
+        "Warn before spoilers.",
+        "Only post work you made or have the right to share.",
+        "Report anything that breaks these rules. Reports are anonymous."
+      ],
+      "sections": [
+        [
+          "Be respectful",
+          [
+            "No harassment, bullying, threats or insults. No hate speech against anyone’s ethnicity, religion, gender, disability or any other part of who they are."
+          ]
+        ],
+        [
+          "Keep it safe",
+          [
+            "Never post sexual content involving anyone under 18. We remove it and report it to the authorities.",
+            "No content that encourages self-harm, violence or dangerous acts.",
+            "No sharing other people’s private information, like phone numbers or addresses."
+          ]
+        ],
+        [
+          "Respect creators",
+          [
+            "Don’t re-upload or claim someone else’s work. Don’t post leaks of Fast Pass episodes.",
+            "Give feedback that helps. Creators read your comments."
+          ]
+        ],
+        [
+          "Spoilers and spam",
+          [
+            "Don’t reveal what happens in later episodes without a warning.",
+            "No ads, link spam, repeated comments or fake accounts."
+          ]
+        ],
+        [
+          "What happens if rules are broken",
+          [
+            "Depending on how serious it is, we may remove the content, give a warning, limit commenting, or close the account. Very serious cases, like content harming children, lead to an immediate ban.",
+            "If you think we made a mistake, contact us and we’ll look again."
+          ]
+        ],
+        [
+          "How to report",
+          [
+            "Tap “Report” next to a comment, on a profile, or on a series’ About tab. Choose a reason and send. We review reports within 24 hours. You can follow your reports in Settings → Privacy and safety.",
+            "If someone is in danger right now, contact local emergency services. In Cambodia: police 117, ambulance 119."
+          ]
+        ]
+      ]
+    },
+    "creator": {
+      "label": "Creator guidelines",
+      "kind": "Guidelines",
+      "title": "Creator guidelines",
+      "tpl": false,
+      "summary": [
+        "Publish only your original work, or work you have the rights to.",
+        "Choose an honest age rating.",
+        "Covers and summaries can’t contain contact details, ads or watermarks.",
+        "New series are reviewed within 1–2 days before they go live."
+      ],
+      "sections": [
+        [
+          "Original work",
+          [
+            "Only publish comics and stories you made, or have written permission to publish. Fan works must follow [FAN WORK POLICY].",
+            "Use of AI-generated images or text: [AI CONTENT POLICY]."
+          ]
+        ],
+        [
+          "Age ratings",
+          [
+            "All ages: fine for everyone. 13+: mild violence or language. 16+: stronger themes. 18+: only shown to adults who turn on mature series. Sexual content involving anyone under 18 is never allowed."
+          ]
+        ],
+        [
+          "Covers, titles and summaries",
+          [
+            "Covers must be 3:4, at least 1080 × 1440 px, with no borders or watermarks. Titles and summaries can’t include phone numbers, social handles, links or ads."
+          ]
+        ],
+        [
+          "Episodes",
+          [
+            "Comics: JPG or PNG, 690–1600 px wide, up to 20 MB per image. Web novels: at least 300 words per chapter.",
+            "Keep your schedule. If you need a break, set the series to hiatus so readers know."
+          ]
+        ],
+        [
+          "Review and changes requested",
+          [
+            "We review new series within 1–2 days. If something needs fixing, we’ll tell you exactly what, and you can resubmit right away."
+          ]
+        ],
+        [
+          "Earnings",
+          [
+            "You earn from coins readers spend on your Fast Pass episodes, at [REVENUE SHARE]% as set out in the creator agreement. Payouts follow [PAYOUT SCHEDULE]."
+          ]
+        ]
+      ]
+    }
+  },
+  "adminSeriesQueue": [
+    {
+      "id": "C2",
+      "title": "Night Market Detectives",
+      "creator": "Sokha Chan",
+      "format": "Comic",
+      "genre": "Comedy",
+      "age": "All ages",
+      "lang": "ខ្មែរ",
+      "eps": "3 episodes",
+      "when": "Nov 9, 4:12 PM",
+      "hours": 27,
+      "cover": "/covers/de51168d1dc0da7fa1222b3ed42364b9.svg",
+      "summary": "Two noodle-stall cousins solve tiny mysteries at the Russian Market. Follow us on Telegram @nightmarket_kh for extras!",
+      "flags": [
+        "Summary may contain a social handle (“@nightmarket_kh”)",
+        "Cover may have a watermark (bottom-right corner)"
+      ]
+    },
+    {
+      "id": "Q2",
+      "title": "Steel Monsoon",
+      "creator": "Phirun S.",
+      "format": "Comic",
+      "genre": "Action",
+      "age": "13+",
+      "lang": "English",
+      "eps": "4 episodes",
+      "when": "Nov 9, 9:30 PM",
+      "hours": 22,
+      "cover": "/covers/4130b324173b6805d1b480c075065d3f.svg",
+      "summary": "A street racer in Phnom Penh builds a motorbike that can outrun the rain, and the gang that wants it.",
+      "flags": [
+        "Title is similar to an existing series: “Neon Monsoon”"
+      ]
+    },
+    {
+      "id": "Q3",
+      "title": "Moonlight Tuk-Tuk",
+      "creator": "Rina T.",
+      "format": "Web novel",
+      "genre": "Romance",
+      "age": "All ages",
+      "lang": "ខ្មែរ",
+      "eps": "5 chapters",
+      "when": "Nov 10, 8:05 AM",
+      "hours": 6,
+      "cover": "/covers/d09cf84c4b69e7c909de0c7ddcbd4403.svg",
+      "summary": "Every night at 11, the same passenger asks to be driven nowhere in particular. Tonight, the driver asks why.",
+      "flags": []
+    }
+  ],
+  "adminReportQueue": [
+    {
+      "id": "R-20470",
+      "kind": "comment",
+      "reason": "violence",
+      "target": "Comment by night_owl_22",
+      "who": "night_owl_22",
+      "where": "Midnight Courier · Episode 41",
+      "text": "If the creator kills off Vee I will find where you live.",
+      "count": 4,
+      "hours": 2,
+      "details": "",
+      "history": "1 earlier warning (Oct 3) for harassment."
+    },
+    {
+      "id": "R-20466",
+      "kind": "series",
+      "reason": "copyright",
+      "target": "Series “Glass Kompass”",
+      "who": "artlover99",
+      "where": "Series page",
+      "text": "A series using the same art and story as Glass Compass, with a changed name.",
+      "count": 7,
+      "hours": 9,
+      "details": "This is Owen Blake’s Glass Compass re-uploaded. Original: phumireader.app/series/glass-compass",
+      "history": "New account (3 days old). No other series."
+    },
+    {
+      "id": "R-20461",
+      "kind": "comment",
+      "reason": "spam",
+      "target": "Comment by free_coins_kh",
+      "who": "free_coins_kh",
+      "where": "Crown of Ash · Episode 12",
+      "text": "FREE 1000 COINS!!! click t.me/freecoinskh",
+      "count": 12,
+      "hours": 15,
+      "details": "",
+      "history": "38 comments in 1 hour, all with the same link."
+    },
+    {
+      "id": "R-20455",
+      "kind": "comment",
+      "reason": "spoiler",
+      "target": "Comment by Mai L.",
+      "who": "Mai L.",
+      "where": "Letters to Tuesday · Chapter 88",
+      "text": "Can’t believe the letters were from her brother all along.",
+      "count": 2,
+      "hours": 20,
+      "details": "",
+      "history": "No earlier reports."
+    }
+  ],
+  "genreInfo": {
+    "Drama": [
+      "Family secrets, second chances and stories that stay with you.",
+      "#fef3c7",
+      "#92400e"
+    ],
+    "Fantasy": [
+      "Magic, quests and worlds with their own rules.",
+      "#ede9fe",
+      "#5b21b6"
+    ],
+    "Comedy": [
+      "Quick laughs, chaotic friends and very small dragons.",
+      "#fee2e2",
+      "#991b1b"
+    ],
+    "Action": [
+      "Chases, fights and heroes who never miss a delivery.",
+      "#ffedd5",
+      "#9a3412"
+    ],
+    "Slice of life": [
+      "Quiet, warm stories about everyday people.",
+      "#e0f2fe",
+      "#075985"
+    ],
+    "Romance": [
+      "Slow burns, sweet notes and big feelings.",
+      "#fce7f3",
+      "#9d174d"
+    ],
+    "Superhero": [
+      "Capes, secret identities and rent that’s still due.",
+      "#dbeafe",
+      "#1e40af"
+    ],
+    "Sci-fi": [
+      "Signals from space, strange tech and the near future.",
+      "#dcfce7",
+      "#166534"
+    ]
   }
 }

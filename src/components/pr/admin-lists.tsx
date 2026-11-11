@@ -19,17 +19,14 @@ import {
   useAudit,
   useContent,
   useOrders,
-  useReports,
   useUsers,
 } from "@/lib/admin";
 import type {
   AdminContent,
   AdminOrder,
-  AdminReport,
   AdminUser,
   AuditEntry,
   ContentType,
-  ReportAction,
 } from "@/lib/api/admin";
 
 type Variant =
@@ -416,115 +413,6 @@ export function ContentTab() {
                 </Button>
               ) : null}
             </Buttons>
-          </>
-        )}
-      />
-      <ReasonDialog ask={ask} onClose={() => setAsk(null)} />
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------- reports
-
-export function ReportsTab() {
-  const t = useTranslations("admin");
-  const when = useWhen();
-  const [status, setStatus] = useState("open");
-  const list = useReports(status || undefined);
-  const [ask, setAsk] = useState<ReasonAsk | null>(null);
-  const settle = useAdminAction(
-    (v: { id: string; action: ReportAction; note: string }) =>
-      actions.settleReport(v.id, v.action, v.note),
-  );
-
-  const settleWith = (r: AdminReport, action: ReportAction) =>
-    setAsk({
-      title: t(`settleTitle_${action}`),
-      description: t(`settleDesc_${action}`),
-      confirm: t(`settle_${action}`),
-      required: false,
-      destructive: action === "hide",
-      done: t(`settled_${action}`),
-      run: (note) => settle.mutateAsync({ id: r.id, action, note }),
-    });
-
-  return (
-    <div className="flex flex-col gap-4">
-      <Filter
-        label={t("filterStatus")}
-        value={status}
-        onChange={setStatus}
-        options={[
-          { value: "open", label: t("state_open") },
-          { value: "resolved", label: t("state_resolved") },
-          { value: "dismissed", label: t("state_dismissed") },
-          { value: "", label: t("allStatuses") },
-        ]}
-      />
-      <Listing
-        query={list}
-        items={list.items}
-        filtering={status !== "open"}
-        label={t("tab_reports")}
-        row={(r: AdminReport) => (
-          <>
-            <Main>
-              <p className="flex flex-wrap items-center gap-2 font-semibold">
-                <span>{r.reason}</span>
-                <Badge variant="outline">{t(`type_${r.target.type}`)}</Badge>
-              </p>
-              <p className="line-clamp-2 text-sm">
-                {r.target.title ?? t("targetGone")}
-              </p>
-              <Sub>
-                {t("reportedBy", { name: r.reporter, date: when(r.createdAt) })}
-                {r.details ? ` · ${r.details}` : ""}
-              </Sub>
-              {r.status !== "open" ? (
-                <Sub>
-                  {t("settledBy", { name: r.resolvedBy ?? "–" })}
-                  {r.note ? ` · ${r.note}` : ""}
-                </Sub>
-              ) : null}
-            </Main>
-            {r.target.status ? <StateBadge state={r.target.status} /> : null}
-            <StateBadge state={r.status} />
-            {r.status === "open" ? (
-              <Buttons>
-                {r.target.seriesSlug ? (
-                  <Button asChild variant="ghost" size="sm">
-                    <Link href={`/series/${r.target.seriesSlug}`}>
-                      {t("view")}
-                    </Link>
-                  </Button>
-                ) : null}
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => settleWith(r, "dismiss")}
-                >
-                  {t("settle_dismiss")}
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => settleWith(r, "resolve")}
-                >
-                  {t("settle_resolve")}
-                </Button>
-                {r.target.status &&
-                r.target.status !== "hidden" &&
-                r.target.status !== "deleted" ? (
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => settleWith(r, "hide")}
-                  >
-                    {t("settle_hide")}
-                  </Button>
-                ) : null}
-              </Buttons>
-            ) : null}
           </>
         )}
       />

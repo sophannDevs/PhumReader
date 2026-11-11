@@ -24,8 +24,8 @@ export type ReasonAsk = {
   required: boolean;
   destructive?: boolean;
   run: (reason: string) => Promise<unknown>;
-  /** Toast after success. */
-  done: string;
+  /** Toast after success; leave it out when the caller shows its own feedback (the admin Undo bar). */
+  done?: string;
 };
 
 /** The message for an error code the API can answer (409 coins_spent, …), else a general one. */
@@ -60,7 +60,7 @@ function ReasonForm({ ask, onClose }: { ask: ReasonAsk; onClose: () => void }) {
     setError(null);
     try {
       await ask.run(reason.trim());
-      toast.success(ask.done);
+      if (ask.done) toast.success(ask.done);
       onClose();
     } catch (err) {
       setError(message(err));

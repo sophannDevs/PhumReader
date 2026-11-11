@@ -14,8 +14,8 @@ export default async function LoginPage({ params }: PageProps<"/[locale]/login">
   const { locale } = await params
   setRequestLocale(locale)
   return (
-    // useSearchParams (?mode=signup) needs a Suspense boundary.
-    <Suspense fallback={<Skeleton className="h-96 rounded-card" />}>
+    // useSearchParams (?mode=signup|forgot|verify) needs a Suspense boundary.
+    <Suspense fallback={<Skeleton className="h-[480px] rounded-[10px]" />}>
       <AuthFlow />
     </Suspense>
   )

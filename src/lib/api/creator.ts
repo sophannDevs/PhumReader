@@ -60,3 +60,5 @@ export const fetchEpisodeEdit = (seriesId: string, n: number) => api.get<Episode
 export const createEpisode = (seriesId: string, input: EpisodeInput) => api.post<EpisodeEdit>(`/creator/series/${seriesId}/episodes`, input)
 export const updateEpisode = (seriesId: string, n: number, input: EpisodeInput) =>
   api.put<EpisodeEdit>(`/creator/series/${seriesId}/episodes/${n}`, input)
+/** A draft or scheduled episode only (409 episode_published for a live one). */
+export const deleteEpisode = (seriesId: string, n: number) => api.delete<void>(`/creator/series/${seriesId}/episodes/${n}`)

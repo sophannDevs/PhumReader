@@ -1,0 +1,103 @@
+<div class="v2 ad">
+  <header class="ad-top">
+    <div class="ad-top-in">
+      <a class="logo" href="{{ homeHref }}"><span class="logo-mark" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M3 4.5h10M3 8h10M3 11.5h6"></path></svg></span><span class="logo-t">Phumi<span class="logo-r">Reader</span></span></a>
+      <span class="badge badge-dark">Admin</span>
+      <span class="badge badge-warn only-desk">Prototype data</span>
+      <span class="row small" style="gap: 8px; margin-left: auto"><span class="avatar" style="width: 28px; height: 28px; font-size: 11px">DM</span><span class="only-desk">Dara M. · Moderator</span></span>
+    </div>
+  </header>
+  <div class="ad-wrap">
+    <nav class="ad-nav" aria-label="Admin">
+      <sc-for list="{{ nav }}" as="n" hint-placeholder-count="4"><button type="button" class="ad-nav-a {{ n.cls }}" aria-current="{{ n.cur }}" onClick="{{ n.pick }}"><span class="grow" style="text-align: left">{{ n.label }}</span><sc-if value="{{ n.hasCount }}" hint-placeholder-val="{{ true }}"><span class="badge {{ n.badgeCls }}">{{ n.count }}</span></sc-if></button></sc-for>
+      <div class="sep only-desk" style="margin: 10px 0"></div>
+      <a class="ad-nav-a only-desk" href="{{ legalHref }}" onClick="{{ rpLegal }}">Community guidelines</a>
+    </nav>
+    <main class="col ad-main" style="gap: 20px; min-width: 0">
+
+      <sc-if value="{{ tOverview }}" hint-placeholder-val="{{ true }}">
+        <div class="col" style="gap: 4px"><h1 class="h2">Today</h1><p class="small muted">Tuesday, Nov 10 · Targets: series reviewed in 2 days, reports in 24 hours.</p></div>
+        <div class="ad-kpis"><sc-for list="{{ kpis }}" as="k" hint-placeholder-count="4"><button type="button" class="card stat ad-kpi" onClick="{{ k.go }}"><span class="small muted">{{ k.label }}</span><span class="v tnum">{{ k.v }}</span><span class="xs {{ k.dCls }}">{{ k.d }}</span></button></sc-for></div>
+        <div class="ad-two">
+          <section class="card" aria-labelledby="sla-h"><div class="card-head"><h2 id="sla-h" class="h3">Waiting longest</h2></div><ul class="card-body ad-mini"><sc-for list="{{ oldest }}" as="o" hint-placeholder-count="3"><li><span class="col" style="gap: 1px; min-width: 0"><span class="small trunc" style="font-weight: 600">{{ o.t }}</span><span class="xs muted">{{ o.d }}</span></span><span class="badge {{ o.cls }}">{{ o.age }}</span></li></sc-for></ul></section>
+          <section class="card" aria-labelledby="act-h"><div class="card-head"><h2 id="act-h" class="h3">Recent decisions</h2></div><ul class="card-body ad-mini"><sc-for list="{{ log }}" as="l" hint-placeholder-count="4"><li><span class="col" style="gap: 1px; min-width: 0"><span class="small trunc">{{ l.t }}</span><span class="xs muted">{{ l.d }}</span></span></li></sc-for></ul></section>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ tSeries }}" hint-placeholder-val="{{ false }}">
+        <div class="col" style="gap: 4px"><h1 class="h2">Series review</h1><p class="small muted">{{ srLine }}</p></div>
+        <sc-if value="{{ srEmpty }}" hint-placeholder-val="{{ false }}"><div class="card col" style="align-items: center; text-align: center; gap: 8px; padding: 40px 20px"><span class="ok-ic2" style="width: 44px; height: 44px">[[i:check:20]]</span><h2 class="h3">Queue is empty</h2><p class="small muted">Every new series has been reviewed.</p></div></sc-if>
+        <sc-if value="{{ srHas }}" hint-placeholder-val="{{ true }}">
+        <div class="ad-split">
+          <ul class="ad-queue" aria-label="Series waiting"><sc-for list="{{ srQueue }}" as="q" hint-placeholder-count="3"><li><button type="button" class="ad-qi {{ q.cls }}" aria-current="{{ q.cur }}" onClick="{{ q.pick }}"><img src="{{ q.cover }}" alt=""><span class="col grow" style="gap: 2px; min-width: 0; text-align: left"><span class="small trunc" style="font-weight: 600">{{ q.title }}</span><span class="xs muted trunc">{{ q.creator }} · {{ q.age }}</span><sc-if value="{{ q.hasFlags }}" hint-placeholder-val="{{ true }}"><span class="xs ad-flagtxt">{{ q.flagCount }} auto-check{{ q.plural }}</span></sc-if></span></button></li></sc-for></ul>
+          <section class="card ad-detail" aria-labelledby="sd-h">
+            <div class="card-body col" style="gap: 16px">
+              <div class="row" style="gap: 14px; align-items: flex-start"><img class="ad-cover" src="{{ sr.cover }}" alt="Cover of {{ sr.title }}"><div class="col grow" style="gap: 6px; min-width: 0"><div class="row" style="gap: 6px; flex-wrap: wrap"><span class="badge badge-outline">{{ sr.format }}</span><span class="badge badge-outline">{{ sr.genre }}</span><span class="badge badge-outline">{{ sr.age }}</span><span class="badge badge-outline">{{ sr.lang }}</span></div><h2 id="sd-h" class="h3">{{ sr.title }}</h2><span class="xs muted">by {{ sr.creator }} · {{ sr.eps }} · submitted {{ sr.when }}</span></div></div>
+              <sc-if value="{{ sr.hasFlags }}" hint-placeholder-val="{{ true }}"><div class="alert warn"><span>[[i:alert]]</span><div class="col" style="gap: 4px"><span class="alert-title">Auto-checks found {{ sr.flagCount }} possible problem{{ sr.plural }}</span><sc-for list="{{ sr.flags }}" as="f" hint-placeholder-count="2"><span class="alert-desc">• {{ f.t }}</span></sc-for></div></div></sc-if>
+              <div class="col" style="gap: 6px"><span class="label">Summary</span><p class="small ad-quote">{{ sr.summary }}</p></div>
+              <div class="col" style="gap: 8px"><span class="label">Checklist</span><sc-for list="{{ srChecks }}" as="c" hint-placeholder-count="4"><label class="ad-check"><button type="button" role="checkbox" class="checkbox {{ c.cls }}" aria-checked="{{ c.on }}" onClick="{{ c.toggle }}">[[i:check:12]]</button><span class="small">{{ c.t }}</span></label></sc-for></div>
+              <sc-if value="{{ srAsking }}" hint-placeholder-val="{{ false }}">
+                <div class="col ad-ask" style="gap: 10px"><span class="label">What should the creator change?</span>
+                  <sc-for list="{{ changeOpts }}" as="o" hint-placeholder-count="5"><label class="ad-check"><button type="button" role="checkbox" class="checkbox {{ o.cls }}" aria-checked="{{ o.on }}" onClick="{{ o.toggle }}">[[i:check:12]]</button><span class="small">{{ o.t }}</span></label></sc-for>
+                  <div class="field"><label class="label" for="sr-note">Note to the creator <span class="xs muted">(optional)</span></label><textarea id="sr-note" class="textarea" rows="2" maxlength="300" value="{{ srNote }}" onChange="{{ onSrNote }}" placeholder="Be specific and kind. The creator sees this."></textarea></div>
+                  <sc-if value="{{ srAskErr }}" hint-placeholder-val="{{ false }}"><span class="err" role="alert">Choose at least one change.</span></sc-if>
+                  <div class="row" style="gap: 8px"><button type="button" class="btn btn-primary btn-sm" onClick="{{ sendChanges }}">Send to creator</button><button type="button" class="btn btn-ghost btn-sm" onClick="{{ cancelAsk }}">Cancel</button></div>
+                </div>
+              </sc-if>
+              <sc-if value="{{ srNotAsking }}" hint-placeholder-val="{{ true }}">
+                <div class="ad-decide"><button type="button" class="btn btn-primary" onClick="{{ approve }}" disabled="{{ cantApprove }}">[[i:check:16]]Approve</button><button type="button" class="btn btn-outline" onClick="{{ askChanges }}">Request changes</button><button type="button" class="btn btn-ghost ad-red" onClick="{{ rejectSr }}">Reject</button></div>
+                <span class="xs muted">{{ approveHint }}</span>
+              </sc-if>
+            </div>
+          </section>
+        </div>
+        </sc-if>
+      </sc-if>
+
+      <sc-if value="{{ tReports }}" hint-placeholder-val="{{ false }}">
+        <div class="col" style="gap: 4px"><h1 class="h2">Reports</h1><p class="small muted">{{ rpLine }}</p></div>
+        <div class="row" style="gap: 6px; flex-wrap: wrap" role="group" aria-label="Filter"><sc-for list="{{ rpFilters }}" as="f" hint-placeholder-count="3"><button type="button" class="chip {{ f.cls }}" aria-pressed="{{ f.on }}" onClick="{{ f.pick }}">{{ f.label }} <span class="gn-count2">{{ f.count }}</span></button></sc-for></div>
+        <sc-if value="{{ rqEmpty }}" hint-placeholder-val="{{ false }}"><div class="card col" style="align-items: center; text-align: center; gap: 8px; padding: 40px 20px"><span class="ok-ic2" style="width: 44px; height: 44px">[[i:check:20]]</span><h2 class="h3">No open reports</h2></div></sc-if>
+        <sc-if value="{{ rqHas }}" hint-placeholder-val="{{ true }}">
+        <div class="ad-split">
+          <ul class="ad-queue" aria-label="Open reports"><sc-for list="{{ rq }}" as="q" hint-placeholder-count="4"><li><button type="button" class="ad-qi {{ q.cls }}" aria-current="{{ q.cur }}" onClick="{{ q.pick }}"><span class="ad-pri {{ q.priCls }}" aria-label="{{ q.priLabel }}"></span><span class="col grow" style="gap: 2px; min-width: 0; text-align: left"><span class="small trunc" style="font-weight: 600">{{ q.reasonLabel }}</span><span class="xs muted trunc">{{ q.target }}</span><span class="xs muted">{{ q.count }} · {{ q.age }}{{ q.fromYou }}</span></span></button></li></sc-for></ul>
+          <section class="card ad-detail" aria-labelledby="rd-h">
+            <div class="card-body col" style="gap: 16px">
+              <div class="row" style="gap: 8px; flex-wrap: wrap"><span class="badge {{ rd.priBadge }}">{{ rd.priLabel }}</span><span class="badge badge-outline">{{ rd.kindLabel }}</span><span class="xs muted">{{ rd.id }} · {{ rd.count }}</span></div>
+              <h2 id="rd-h" class="h3">{{ rd.reasonLabel }}</h2>
+              <div class="col" style="gap: 6px"><span class="label">Reported content</span><div class="ad-content"><span class="xs muted">{{ rd.where }}</span><p class="small" style="margin: 0">{{ rd.text }}</p></div></div>
+              <sc-if value="{{ rd.hasDetails }}" hint-placeholder-val="{{ false }}"><div class="col" style="gap: 4px"><span class="label">Reporter’s note</span><p class="small ad-quote">{{ rd.details }}</p></div></sc-if>
+              <div class="col" style="gap: 4px"><span class="label">About {{ rd.who }}</span><span class="small muted">{{ rd.history }}</span></div>
+              <div class="col" style="gap: 8px"><span class="label">Action</span>
+                <div class="ad-acts" role="radiogroup" aria-label="Action"><sc-for list="{{ rdActs }}" as="a" hint-placeholder-count="4"><button type="button" role="radio" aria-checked="{{ a.on }}" class="rp-opt {{ a.cls }}" onClick="{{ a.pick }}"><span class="cs-dot"></span><span class="col" style="gap: 1px; text-align: left"><span class="small" style="font-weight: 600">{{ a.label }}</span><span class="xs muted">{{ a.desc }}</span></span></button></sc-for></div>
+              </div>
+              <sc-if value="{{ rdErr }}" hint-placeholder-val="{{ false }}"><span class="err" role="alert">Choose an action.</span></sc-if>
+              <div class="row" style="gap: 8px; flex-wrap: wrap"><button type="button" class="btn btn-primary" onClick="{{ resolve }}">Confirm</button><span class="xs muted">The reporter is told the outcome. The reported person isn’t told who reported them.</span></div>
+            </div>
+          </section>
+        </div>
+        </sc-if>
+      </sc-if>
+
+      <sc-if value="{{ tPayments }}" hint-placeholder-val="{{ false }}">
+        <div class="col" style="gap: 4px"><h1 class="h2">Payments and refunds</h1><p class="small muted">Refund rules: unused coins within [REFUND WINDOW] days; double charges always.</p></div>
+        <section class="card" aria-labelledby="rf-h"><div class="card-head"><h2 id="rf-h" class="h3">Refund requests</h2></div>
+          <div class="card-body col" style="gap: 0">
+            <sc-if value="{{ rfEmpty }}" hint-placeholder-val="{{ false }}"><p class="small muted">No refund requests waiting.</p></sc-if>
+            <sc-for list="{{ refunds }}" as="r" hint-placeholder-count="3">
+              <div class="ad-rf">
+                <div class="col grow" style="gap: 3px; min-width: 0"><div class="row" style="gap: 6px; flex-wrap: wrap"><span class="small" style="font-weight: 600">{{ r.order }}</span><span class="badge {{ r.eligCls }}">{{ r.elig }}</span></div><span class="xs muted">{{ r.user }} · {{ r.pack }} · {{ r.method }} · {{ r.when }}</span><span class="xs">{{ r.reason }}</span></div>
+                <div class="row ad-rf-acts" style="gap: 6px"><button type="button" class="btn btn-primary btn-sm" onClick="{{ r.approve }}">{{ r.approveLabel }}</button><button type="button" class="btn btn-ghost btn-sm" onClick="{{ r.decline }}">Decline</button></div>
+              </div>
+            </sc-for>
+          </div>
+        </section>
+        <section class="card" aria-labelledby="fp-h"><div class="card-head"><h2 id="fp-h" class="h3">Paid but no coins</h2><p class="small muted">The bank confirmed payment but coins weren’t added.</p></div>
+          <div class="card-body col" style="gap: 0"><sc-for list="{{ stuck }}" as="r" hint-placeholder-count="2"><div class="ad-rf"><div class="col grow" style="gap: 3px"><span class="small" style="font-weight: 600">{{ r.order }}</span><span class="xs muted">{{ r.user }} · {{ r.pack }} · {{ r.method }} · {{ r.when }}</span></div><button type="button" class="btn btn-sm {{ r.btnCls }}" onClick="{{ r.fix }}" disabled="{{ r.done }}">{{ r.label }}</button></div></sc-for></div>
+        </section>
+      </sc-if>
+    </main>
+  </div>
+  <sc-if value="{{ hasUndo }}" hint-placeholder-val="{{ false }}"><div class="ad-undo" role="status"><span class="small">{{ undoText }}</span><button type="button" class="btn btn-sm ad-undo-btn" onClick="{{ undo }}">Undo</button></div></sc-if>
+<!--LAYERS-->
+</div>

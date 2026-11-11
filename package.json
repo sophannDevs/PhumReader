@@ -1,5 +1,5 @@
 {
-  "name": "phumreader-web",
+  "name": "phumireader-web",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -14,7 +14,10 @@
     "services:start": "bash scripts/services.sh start",
     "services:stop": "bash scripts/services.sh stop",
     "services:check": "node scripts/check-services.mjs",
-    "api:check": "openapi-typescript backend/openapi/openapi.json -o src/lib/api/schema.d.ts --check"
+    "api:check": "openapi-typescript backend/openapi/openapi.json -o src/lib/api/schema.d.ts --check",
+    "i18n:km": "node scripts/i18n-km.mjs",
+    "data:sync": "node scripts/sync-demo-data.mjs",
+    "i18n:index": "node scripts/i18n-index.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^7.0.3",

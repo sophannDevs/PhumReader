@@ -1,0 +1,21 @@
+{
+  "nav": "Policies",
+  "docs": {
+    "terms": "Terms of service",
+    "privacy": "Privacy policy",
+    "refund": "Coins and refunds",
+    "community": "Community guidelines",
+    "creator": "Creator guidelines"
+  },
+  "helpCenter": "Help center",
+  "updated": "Last updated [EFFECTIVE DATE] · Applies to PhumiReader on the web and in the app",
+  "language": "Policy language",
+  "english": "English",
+  "kmSoon": "Khmer version coming before launch",
+  "draftTitle": "Draft template, not legal advice",
+  "draftText": "Have a lawyer in Cambodia review this before launch, and fill in every [PLACEHOLDER].",
+  "short": "The short version",
+  "toc": "On this page",
+  "footer": "Questions about this policy? Write to [LEGAL EMAIL] or use the Help center.",
+  "contact": "Contact us"
+}

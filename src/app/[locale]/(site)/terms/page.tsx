@@ -1,15 +1,6 @@
-import type { Metadata } from "next"
-import { getTranslations, setRequestLocale } from "next-intl/server"
-import { LegalPage } from "@/components/pr/legal-page"
+import { LegalRedirect } from "@/components/pr/legal-redirect"
 
-export async function generateMetadata({ params }: PageProps<"/[locale]/terms">): Promise<Metadata> {
-  const { locale } = await params
-  const t = await getTranslations({ locale, namespace: "legal" })
-  return { title: t("terms.title") }
-}
-
-export default async function Page({ params }: PageProps<"/[locale]/terms">) {
-  const { locale } = await params
-  setRequestLocale(locale)
-  return <LegalPage kind="terms" />
+// V1 route: now /legal/terms, query string kept.
+export default function TermsPage({ params, searchParams }: PageProps<"/[locale]/terms">) {
+  return <LegalRedirect params={params} searchParams={searchParams} doc="terms" />
 }

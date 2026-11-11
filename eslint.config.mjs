@@ -18,6 +18,8 @@ const eslintConfig = defineConfig([
     "backend/**",
     // Cloudflare Worker with its own package and tests (node --test).
     "infra/**",
+    // Design pack (reference only): the V2.1 prototype source is plain browser JS, not app code.
+    "design/**",
   ]),
 
   // Import rules for the website's API client (P1-06). The API side has the same kind of rules in

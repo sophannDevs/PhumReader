@@ -1,4 +1,4 @@
-# Toonwave V2 – Foundations
+# PhumiReader V2 – Foundations
 
 Source of truth for colors, type, spacing and components. Matches `screens/00-foundations-desktop.png`.
 Built for Next.js + Tailwind CSS + shadcn/ui (Radix) + lucide-react icons. Light theme only (the comic reader is always dark; the novel reader has its own themes).
@@ -73,7 +73,7 @@ Numbers that change (coins, counts, timers) use `tabular-nums`.
 
 ## 4. Components (shadcn/ui) and how V2 uses them
 
-| shadcn component | Toonwave use | Notes |
+| shadcn component | PhumiReader use | Notes |
 |---|---|---|
 | Button | All actions | Variants: `default` (dark), `brand` (green, 600 weight), `secondary`, `outline`, `ghost`, `link` (brand-ink, underline), `destructive`. Sizes: `sm` 32, default 36, `lg` 44, `icon` 36/32 |
 | Badge | UP, NEW, Fast Pass, Unlocked, Read, genre, Novel, Popular, Best value | Variants: default, secondary, outline, brand, up, new, warn, dark (`rgba(9,9,11,.72)` on covers) |
@@ -97,7 +97,7 @@ Numbers that change (coins, counts, timers) use `tabular-nums`.
 | Avatar | Header, comments, creator | Brand avatar = green with dark initials |
 | Separator, Breadcrumb, Carousel, Tooltip, ScrollArea | As needed | |
 
-## 5. Toonwave patterns (build once in `components/tw/`)
+## 5. PhumiReader patterns (build once in `components/pr/`)
 
 SeriesCard (3:4 cover, top-left badges, title, "creator · genre", likes) · ContinueCard (48×64 cover, title, "Episode N · 62%", progress) · RankRow (rank number green for top 3, 40×52 cover, title, meta, movement ▲/▼/NEW/—) · HeroCarousel · NovelCard · EpisodeRow (64 px thumb, title, UP badge, date, likes, right badge: Fast Pass price / Unlocked / Read) · UnlockDialog (three states: log in, enough coins, not enough coins) · CoinChip · PackCard · PaymentMethodCard · CommentList + Composer · EmptyState · ErrorState · CreatorCTA · SiteHeader · SiteFooter · MobileTabBar · ComicReaderBar · NovelReaderBar · AuthSplitLayout.
 
@@ -110,3 +110,51 @@ lucide-react, 16 px default (14 in badges, 18–20 in bars), stroke 2: search, m
 - Transitions 150 ms for color/background; 200 ms for switches; cover hover zoom 1.04 over 300 ms; respect `prefers-reduced-motion`.
 - Visible focus ring on every interactive element; dialogs trap focus; toasts announced politely.
 - Khmer text gets `lang="km"`. Contrast ≥ 4.5:1 for text (green text uses `--brand-ink`).
+
+## 8. Brand, language and patterns added in V2.1
+
+See `screens/00-foundations-desktop.png` (bottom sections).
+
+### Brand
+- Name: **PhumiReader** in English, **ភូមិReader** in Khmer. Wordmark: "Phumi" (or "ភូមិ") in `--foreground` + "Reader" in `--brand-ink`, beside the green mark. On dark bars "Reader" uses `--primary`.
+- Domain in examples: phumireader.app.
+
+### Khmer typography
+- Font: Kantumruy Pro for all Khmer UI (and for the novel reader when the story is Khmer).
+- Line height 1.45 for headings and 1.6 for body; no negative letter-spacing; eyebrows are not uppercase.
+- Put `lang="km"` on Khmer text. Khmer strings are longer: allow wrapping, never fixed widths on buttons.
+
+### Header actions (right side, in order)
+Search · language button (pill, 32 px, shows the *other* language: "ខ្មែរ" or "EN") · coin chip · bell (ghost icon button, red count badge `#EF4444`, 16 px, white 2 px ring) · avatar menu.
+At ≤420 px: 4 px gaps, language button padding 0 8 px.
+
+### Status badges (one meaning per colour)
+| Badge | Variant |
+|---|---|
+| Published, Paid, Creator, Unlocked | brand (green tint) |
+| Fast Pass, In review, Covers it | warn (amber) |
+| Scheduled | default (dark) |
+| Draft, Read | secondary (grey) |
+| Hidden | outline |
+| Changes requested, Failed, UP | up (red tint) |
+| New, Up next, Popular | new (solid green) |
+
+### Patterns added (build in `components/pr/`)
+| Pattern | Where | Notes |
+|---|---|---|
+| StepsBar | Coins, Create series, Welcome | Numbered circles; current = dark fill, done = green with ✓ |
+| OptionCard (radio as card) | Unlock choice, report reasons, payout method, reading mode | Selected = green border + 1 px ring + `#F6FEF9` |
+| ReportDialog / BlockDialog | Global | Reasons per content type; case number; "Also block" |
+| CommentThread | Series, Viewer, Comments | Pinned creator comment, spoiler blur button, replies indented 44 px with a 2 px left line |
+| ListRowActions | Upload images, Manage episodes, Admin queue | 48 px thumb, title + meta, actions on the right; error rows `#FEF2F2`; selected queue row = brand tint + 3 px left bar |
+| Timeline | Receipt | 12 px dots: green done, red failed, grey waiting |
+| FastPassLockCard | Comic and novel readers | Dark card over a blurred first panel, or a fading text teaser |
+| ResumeChip | Readers | Sticky pill under the bar: "You stopped at 40% · Continue / Start over" |
+| SaveBar | Settings | Dark sticky bar: "You have unsaved changes · Discard / Save changes" |
+| UndoBar | Library, Notifications, Admin | Dark toast with Undo, 6 s |
+| CreatorNav | Creator pages | Grey band under the header with underline tabs |
+| AdminShell | Admin | Dark top bar, 240 px white side menu with counts |
+| StatCard | Dashboard, Earnings, Admin | Label, 26 px number, coloured change line |
+
+### Placeholders that must stay visible until real values exist
+[PRICE USD], [PRICE KHR], [PAYMENT PROVIDER FORM], [KHQR PLACEHOLDER], [USD AMOUNT], [REVENUE SHARE], [PAYOUT ACCOUNT], [PAYOUT DATE], [MIN PAYOUT], [PAYOUT PROVIDER FORM], [REFUND WINDOW], [SUPPORT EMAIL], [SUPPORT TELEGRAM], [SUPPORT HOURS], [SUPPORT RESPONSE TIME], [PROVIDER TRANSACTION ID], [MAINTENANCE START], [MAINTENANCE END], [EFFECTIVE DATE], [COMPANY NAME] and the other legal placeholders.

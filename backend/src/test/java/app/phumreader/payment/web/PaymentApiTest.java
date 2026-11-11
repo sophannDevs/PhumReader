@@ -242,7 +242,7 @@ class PaymentApiTest {
     @Test
     void theDemoFlowBuyTenCoinsThenUnlock() throws Exception {
         // Spec flow 3: the demo reader has 3 coins, buys the 10 pack (+10 first bonus), unlocks.
-        UUID demoReader = sessions.userId("reader@toonwave.app");
+        UUID demoReader = sessions.userId("reader@phumireader.app");
         mvc.perform(
                         post("/api/v1/series/glass-compass/episodes/66/unlock")
                                 .with(sessions.as(demoReader))

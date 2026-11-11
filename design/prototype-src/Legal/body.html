@@ -1,0 +1,29 @@
+<div class="v2">
+<!--HEADER-->
+  <main class="wrap lg-grid" style="padding-top: 28px; padding-bottom: 64px">
+    <nav class="lg-nav" aria-label="Policies">
+      <span class="xs muted lg-navh">Policies</span>
+      <sc-for list="{{ docs }}" as="d" hint-placeholder-count="5"><button type="button" class="lg-nav-a {{ d.cls }}" aria-current="{{ d.cur }}" onClick="{{ d.pick }}">{{ d.label }}</button></sc-for>
+      <div class="sep" style="margin: 10px 0"></div>
+      <a class="lg-nav-a" href="{{ helpHref }}">[[i:info:14]]Help center</a>
+    </nav>
+    <article class="col lg-doc" style="gap: 20px; min-width: 0">
+      <header class="col" style="gap: 8px">
+        <span class="eyebrow">{{ doc.kind }}</span>
+        <h1 class="h1">{{ doc.title }}</h1>
+        <span class="small muted">Last updated [EFFECTIVE DATE] · Applies to PhumiReader on the web and in the app</span>
+        <div class="row" style="gap: 6px; flex-wrap: wrap"><button type="button" class="chip on" aria-pressed="true">English</button><button type="button" class="chip" onClick="{{ kmSoon }}" lang="km" style="font-family: 'Kantumruy Pro', sans-serif">ខ្មែរ</button></div>
+      </header>
+      <sc-if value="{{ doc.isTemplate }}" hint-placeholder-val="{{ true }}"><div class="alert warn"><span>[[i:alert]]</span><div class="col"><span class="alert-title">Draft template, not legal advice</span><span class="alert-desc">Have a lawyer in Cambodia review this before launch, and fill in every [PLACEHOLDER].</span></div></div></sc-if>
+      <section class="lg-sum" aria-labelledby="sum-h"><h2 id="sum-h" class="h4">The short version</h2><ul><sc-for list="{{ doc.summary }}" as="x" hint-placeholder-count="4"><li>{{ x.t }}</li></sc-for></ul></section>
+      <nav class="lg-toc" aria-label="On this page"><span class="xs muted" style="font-weight: 600">On this page</span><ol><sc-for list="{{ doc.sections }}" as="x" hint-placeholder-count="5"><li><a href="{{ x.anchor }}">{{ x.h }}</a></li></sc-for></ol></nav>
+      <sc-for list="{{ doc.sections }}" as="x" hint-placeholder-count="5">
+        <section class="lg-sec" id="{{ x.id }}"><h2 class="h3">{{ x.n }}. {{ x.h }}</h2><sc-for list="{{ x.ps }}" as="p" hint-placeholder-count="2"><p>{{ p.t }}</p></sc-for></section>
+      </sc-for>
+      <footer class="card card-body row lg-foot" style="gap: 12px; justify-content: space-between"><span class="small">Questions about this policy? Write to [LEGAL EMAIL] or use the Help center.</span><a class="btn btn-outline btn-sm" href="{{ helpHref }}" onClick="{{ hpContact }}">Contact us</a></footer>
+    </article>
+  </main>
+<!--FOOTER-->
+<!--MOBNAV-->
+<!--LAYERS-->
+</div>
