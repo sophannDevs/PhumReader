@@ -172,7 +172,7 @@ export function CommentThread({
     <li
       className={cn(
         "flex flex-col gap-2",
-        c.pinned ? "mb-2 rounded-xl border border-[#c9f1da] bg-[#f6fef9] p-4" : "border-b py-4",
+        c.pinned ? "mb-2 rounded-xl border border-brand-soft-border bg-selected p-4" : "border-b py-4",
         className
       )}
     >

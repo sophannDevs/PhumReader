@@ -9,7 +9,9 @@ import { loadMessages } from "@/i18n/messages";
 import { routing } from "@/i18n/routing";
 import { ServiceWorker } from "@/components/pr/service-worker";
 import { Providers } from "@/lib/query";
+import { MotionProvider } from "@/components/ui/motion";
 import { cn } from "@/lib/utils";
+import { ACCENT_BOOT_SCRIPT } from "@/lib/accent";
 
 // Self-hosted by next/font. Latin falls to Inter, Khmer falls to Kantumruy Pro
 // (see --font-sans in globals.css). Noto Serif is only for the novel reader.
@@ -77,9 +79,14 @@ export default async function LocaleLayout({
       className={cn("h-full antialiased font-sans", inter.variable, kantumruy.variable, notoSerif.variable)}
       style={{ colorScheme: "light" }}
     >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: ACCENT_BOOT_SCRIPT }} />
+      </head>
       <body className="min-h-full flex flex-col">
         <NextIntlClientProvider locale={locale} messages={messages}>
-          <Providers>{children}</Providers>
+          <MotionProvider>
+            <Providers>{children}</Providers>
+          </MotionProvider>
           <ServiceWorker />
         </NextIntlClientProvider>
       </body>

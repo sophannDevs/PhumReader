@@ -51,7 +51,7 @@ export function Spotlight({ slides }: { slides: HeroSlideView[] }) {
                 className={cn(
                   "flex min-w-0 flex-1 basis-0 items-center gap-3 rounded-card border p-2 text-left transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
                   "max-md:w-auto max-md:flex-none max-md:basis-auto max-md:rounded-full max-md:border-border max-md:py-1.5 max-md:pr-2.5 max-md:pl-1.5",
-                  on ? "border-[#bbf0d0] bg-brand-soft" : "border-transparent hover:bg-accent"
+                  on ? "border-brand-soft-border bg-brand-soft" : "border-transparent hover:bg-accent"
                 )}
               >
                 <Image

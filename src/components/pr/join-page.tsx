@@ -251,7 +251,7 @@ function Range({
           value={value}
           aria-valuetext={valueText}
           onChange={(e) => onChange(Number(e.target.value) || min)}
-          className="h-6 min-w-0 flex-1 cursor-pointer rounded-full accent-[#00a650] outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          className="h-6 min-w-0 flex-1 cursor-pointer rounded-full accent-primary outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         />
         <strong className="min-w-12 text-right text-sm tabular-nums"><Num>{fmt(value)}</Num></strong>
       </div>

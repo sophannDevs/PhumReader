@@ -626,7 +626,7 @@ function CommentsCard({ live, talk, onTalk }: { live: Row; talk: Talk; onTalk: (
               </div>
               <p className="text-[13px] leading-[19px] text-[#3f3f46]">{c.text}</p>
               {reply ? (
-                <p className="rounded-r-md border-l-2 border-primary bg-[#f6fef9] px-2.5 py-1.5 text-xs leading-4 text-[#3f3f46]">{t("you", { text: reply })}</p>
+                <p className="rounded-r-md border-l-2 border-primary bg-selected px-2.5 py-1.5 text-xs leading-4 text-[#3f3f46]">{t("you", { text: reply })}</p>
               ) : open === c.id ? (
                 <form
                   className="flex gap-1.5"

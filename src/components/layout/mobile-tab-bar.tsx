@@ -1,6 +1,7 @@
 "use client"
 
 import { BookOpenIcon, CoinsIcon, HomeIcon, SearchIcon, UserIcon } from "lucide-react"
+import { motion } from "motion/react"
 import { useTranslations } from "@/i18n/translations"
 import { Link, usePathname } from "@/i18n/navigation"
 import { cn } from "@/lib/utils"
@@ -48,7 +49,13 @@ export function MobileTabBar({
               onClick={key === "me" && !loggedIn ? onLogin : undefined}
               className={cn(itemClass, current ? "text-foreground" : "text-muted-foreground")}
             >
-              <Icon className="size-5" aria-hidden />
+              <motion.span
+                animate={{ scale: current ? 1.15 : 1, y: current ? -1 : 0 }}
+                transition={{ type: "spring", stiffness: 400, damping: 20 }}
+                className="inline-flex"
+              >
+                <Icon className="size-5" aria-hidden />
+              </motion.span>
               {label}
             </Link>
           </li>

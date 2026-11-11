@@ -28,7 +28,7 @@ export function AuthSplitLayout({ children }: { children: React.ReactNode }) {
       <div className="mx-auto grid w-full max-w-[1120px] grid-cols-[minmax(0,1fr)_460px] items-stretch gap-7 px-8 max-lg:grid-cols-[minmax(0,1fr)_420px] max-lg:px-6 max-md:grid-cols-1 max-md:px-4">
         <section
           aria-labelledby="auth-panel-title"
-          className="flex min-h-[560px] flex-col justify-between gap-8 overflow-hidden rounded-[20px] border border-[#c9f1da] bg-[linear-gradient(160deg,#e8fbf0_0%,#d9f7e6_100%)] p-10 max-md:hidden"
+          className="flex min-h-[560px] flex-col justify-between gap-8 overflow-hidden rounded-[20px] border border-brand-soft-border bg-brand-soft p-10 max-md:hidden"
         >
           <div className="flex flex-col gap-3.5">
             <span className="type-eyebrow">{t("panelEyebrow")}</span>

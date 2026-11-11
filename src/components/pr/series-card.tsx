@@ -2,8 +2,8 @@ import { HeartIcon } from "lucide-react"
 import Image from "next/image"
 import { useTranslations } from "@/i18n/translations"
 import { Badge } from "@/components/ui/badge"
+import { HoverLift, MotionLink } from "@/components/ui/motion"
 import type { Series } from "@/data/types"
-import { Link } from "@/i18n/navigation"
 import { seriesHref } from "@/lib/routes"
 import { cn } from "@/lib/utils"
 import { useLocalize } from "@/lib/localize"
@@ -47,15 +47,20 @@ export function SeriesCard({
   const novel = badges !== "none" && series.type === "novel"
 
   return (
-    <Link
+    <MotionLink
       href={seriesHref(series)}
       onClick={onClick}
+      // Cards above the fold (priority) render visible right away so they never flash or delay LCP.
+      initial={priority ? false : { opacity: 0, y: 12 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "0px 0px -40px 0px" }}
+      transition={{ duration: 0.35, ease: "easeOut" }}
       className={cn(
         "group flex min-w-0 flex-col gap-2.5 rounded-[10px] outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
         className
       )}
     >
-      <div className="relative aspect-[3/4] w-full overflow-hidden rounded-[10px] bg-muted">
+      <HoverLift lift={4} className="relative aspect-[3/4] w-full overflow-hidden rounded-[10px] bg-muted">
         <Image
           src={series.cover}
           alt={t("cover", { title: series.title })}
@@ -72,7 +77,7 @@ export function SeriesCard({
             {novel ? <Badge variant="dark">{t("novel")}</Badge> : null}
           </div>
         ) : null}
-      </div>
+      </HoverLift>
       <div className={cn("flex min-w-0 flex-col", hook ? "gap-[3px]" : "gap-0.5")}>
         <h3 className="truncate text-sm leading-5 font-semibold max-md:text-[13px] max-md:leading-[18px]">{series.title}</h3>
         {hook ? <p className="line-clamp-2 text-[12.5px] leading-[17px] text-[#52525b]">{hook}</p> : null}
@@ -88,6 +93,6 @@ export function SeriesCard({
           </p>
         )}
       </div>
-    </Link>
+    </MotionLink>
   )
 }

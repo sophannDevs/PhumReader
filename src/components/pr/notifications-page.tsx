@@ -418,7 +418,7 @@ export function NotificationsPage() {
                               key={n.id}
                               className={cn(
                                 "group flex items-start gap-3 py-3.5 pr-3 pl-4 max-md:gap-2.5 max-md:py-3 max-md:pr-2 max-md:pl-3",
-                                n.read ? "bg-background" : "bg-[#f6fef9]"
+                                n.read ? "bg-background" : "bg-selected"
                               )}
                             >
                               <KindIcon kind={n.kind} />

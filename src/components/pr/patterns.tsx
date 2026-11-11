@@ -98,7 +98,7 @@ export function OptionCard({
       onClick={onSelect}
       className={cn(
         "flex w-full items-start gap-2.5 rounded-[10px] border bg-background px-3.5 py-3 text-left transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50",
-        selected ? "border-primary bg-[#f6fef9] shadow-[0_0_0_1px_var(--primary)]" : "hover:bg-[#fafafa]",
+        selected ? "border-primary bg-selected shadow-[0_0_0_1px_var(--primary)]" : "hover:bg-[#fafafa]",
         className
       )}
     >

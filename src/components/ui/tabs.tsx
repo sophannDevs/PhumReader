@@ -3,6 +3,7 @@
 import * as React from "react"
 import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "cn"
+import { motion, useReducedMotion } from "motion/react"
 import { Tabs as TabsPrimitive } from "radix-ui"
 
 function Tabs({
@@ -38,16 +39,60 @@ const tabsListVariants = cva(
 function TabsList({
   className,
   variant = "pill",
+  children,
   ...props
 }: React.ComponentProps<typeof TabsPrimitive.List> &
   VariantProps<typeof tabsListVariants>) {
+  const ref = React.useRef<HTMLDivElement | null>(null)
+  const reduce = useReducedMotion()
+  const [box, setBox] = React.useState<{ x: number; w: number; h: number } | null>(null)
+  const ready = box !== null
+
+  // Follow the active tab: measure it now, and again when tabs change state or resize.
+  React.useEffect(() => {
+    const list = ref.current
+    if (!list) return
+    const measure = () => {
+      const active = list.querySelector<HTMLElement>('[data-slot="tabs-trigger"][data-state="active"]')
+      setBox(active ? { x: active.offsetLeft, w: active.offsetWidth, h: active.offsetHeight } : null)
+    }
+    measure()
+    const mo = new MutationObserver(measure)
+    mo.observe(list, { attributes: true, attributeFilter: ["data-state"], subtree: true, childList: true })
+    const ro = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(measure)
+    ro?.observe(list)
+    return () => {
+      mo.disconnect()
+      ro?.disconnect()
+    }
+  }, [])
+
   return (
     <TabsPrimitive.List
+      ref={ref}
       data-slot="tabs-list"
       data-variant={variant}
-      className={cn(tabsListVariants({ variant }), className)}
+      data-ind={ready ? "on" : "off"}
+      className={cn(tabsListVariants({ variant }), "relative", className)}
       {...props}
-    />
+    >
+      {ready && box ? (
+        <motion.span
+          aria-hidden
+          data-slot="tabs-indicator"
+          initial={false}
+          animate={{ x: box.x, width: box.w }}
+          transition={reduce ? { duration: 0 } : { type: "spring", stiffness: 500, damping: 38 }}
+          className={cn(
+            "pointer-events-none absolute left-0",
+            variant === "line"
+              ? "bottom-0 h-0.5 bg-foreground"
+              : "top-[3px] h-[30px] rounded-md bg-background shadow-xs"
+          )}
+        />
+      ) : null}
+      {children}
+    </TabsPrimitive.List>
   )
 }
 
@@ -59,11 +104,11 @@ function TabsTrigger({
     <TabsPrimitive.Trigger
       data-slot="tabs-trigger"
       className={cn(
-        "relative inline-flex items-center justify-center gap-1.5 text-sm font-medium whitespace-nowrap transition-colors outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+        "relative z-10 inline-flex items-center justify-center gap-1.5 text-sm font-medium whitespace-nowrap transition-colors outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
         // pill
-        "group-data-[variant=pill]/tabs-list:h-[30px] group-data-[variant=pill]/tabs-list:flex-1 group-data-[variant=pill]/tabs-list:rounded-md group-data-[variant=pill]/tabs-list:px-3 group-data-[variant=pill]/tabs-list:data-active:bg-background group-data-[variant=pill]/tabs-list:data-active:text-foreground group-data-[variant=pill]/tabs-list:data-active:shadow-xs",
+        "group-data-[variant=pill]/tabs-list:h-[30px] group-data-[variant=pill]/tabs-list:flex-1 group-data-[variant=pill]/tabs-list:rounded-md group-data-[variant=pill]/tabs-list:px-3 group-data-[variant=pill]/tabs-list:data-active:text-foreground group-data-[variant=pill]/tabs-list:group-data-[ind=off]/tabs-list:data-active:bg-background group-data-[variant=pill]/tabs-list:group-data-[ind=off]/tabs-list:data-active:shadow-xs",
         // line
-        "group-data-[variant=line]/tabs-list:-mb-px group-data-[variant=line]/tabs-list:rounded-sm group-data-[variant=line]/tabs-list:border-b-2 group-data-[variant=line]/tabs-list:border-transparent group-data-[variant=line]/tabs-list:pt-2 group-data-[variant=line]/tabs-list:pb-3 group-data-[variant=line]/tabs-list:data-active:border-foreground group-data-[variant=line]/tabs-list:data-active:text-foreground",
+        "group-data-[variant=line]/tabs-list:-mb-px group-data-[variant=line]/tabs-list:rounded-sm group-data-[variant=line]/tabs-list:border-b-2 group-data-[variant=line]/tabs-list:border-transparent group-data-[variant=line]/tabs-list:pt-2 group-data-[variant=line]/tabs-list:pb-3 group-data-[variant=line]/tabs-list:group-data-[ind=off]/tabs-list:data-active:border-foreground group-data-[variant=line]/tabs-list:data-active:text-foreground",
         className
       )}
       {...props}

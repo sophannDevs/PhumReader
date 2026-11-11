@@ -1,8 +1,10 @@
+"use client"
+
 import { useTranslations } from "@/i18n/translations"
 import { CoinIcon } from "@/components/pr/coin-icon"
 import { Link } from "@/i18n/navigation"
 import { cn } from "@/lib/utils"
-import { Num } from "@/i18n/num"
+import { AnimatedNumber } from "@/components/ui/motion"
 
 /** Pill with the coin balance. Links to /coins. */
 export function CoinChip({ count, className }: { count: number; className?: string }) {
@@ -16,7 +18,7 @@ export function CoinChip({ count, className }: { count: number; className?: stri
       )}
     >
       <CoinIcon size={20} />
-      <span aria-hidden><Num>{count}</Num></span>
+      <span aria-hidden><AnimatedNumber value={count} /></span>
       <span className="sr-only">{t("balanceLabel", { count })}</span>
     </Link>
   )
