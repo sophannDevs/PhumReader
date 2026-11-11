@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { cn } from "cn"
-import { Switch as SwitchPrimitive } from "radix-ui"
+import { Switch as SwitchPrimitive } from "@animate-ui/react/primitives/radix-ui"
 
 // Green when on, round, 200 ms thumb motion.
 function Switch({
@@ -20,7 +20,7 @@ function Switch({
     >
       <SwitchPrimitive.Thumb
         data-slot="switch-thumb"
-        className="pointer-events-none block size-5 rounded-full bg-background shadow-xs ring-0 transition-transform duration-200 data-[state=checked]:translate-x-[22px] data-[state=unchecked]:translate-x-0.5"
+        className="pointer-events-none block size-5 rounded-full bg-background shadow-xs ring-0 duration-200 data-[state=checked]:translate-x-[22px] data-[state=unchecked]:translate-x-0.5"
       />
     </SwitchPrimitive.Root>
   )
