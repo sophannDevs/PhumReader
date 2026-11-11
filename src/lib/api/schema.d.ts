@@ -1222,6 +1222,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/me/blocks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The accounts you blocked, newest first */
+        get: operations["list_2"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/me/coins": {
         parameters: {
             query?: never;
@@ -1495,6 +1512,23 @@ export interface paths {
         post?: never;
         /** Forgets this browser's push token (the reader turned push off) */
         delete: operations["unregister"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/reports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Your reports with their status, newest first (at most 50) */
+        get: operations["myReports"];
+        put?: never;
+        post?: never;
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -1872,7 +1906,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Report a series to the admins */
+        /** Report a series to the admins; returns the case number */
         post: operations["reportSeries"];
         delete?: never;
         options?: never;
@@ -1893,6 +1927,27 @@ export interface paths {
         post?: never;
         /** Unsubscribe from a series */
         delete: operations["unsubscribe"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/users/{id}/block": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Block an account (blocking again changes nothing)
+         * @description 400 cannot_block_self, 404 user_not_found.
+         */
+        put: operations["block"];
+        post?: never;
+        /** Unblock an account (unblocking again changes nothing) */
+        delete: operations["unblock"];
         options?: never;
         head?: never;
         patch?: never;
@@ -1943,6 +1998,12 @@ export interface components {
             userId: string;
         };
         AdminReport: {
+            /** Format: uuid */
+            accusedId?: string | null;
+            accusedName?: string | null;
+            action?: string | null;
+            /** Format: int32 */
+            caseNumber: number;
             /** Format: date-time */
             createdAt: string;
             details?: string | null;
@@ -2030,6 +2091,14 @@ export interface components {
             text?: string | null;
             type: string;
         };
+        BlockedAccount: {
+            avatarUrl?: string | null;
+            /** Format: date-time */
+            blockedAt: string;
+            name: string;
+            /** Format: uuid */
+            userId: string;
+        };
         BookmarkState: {
             bookmarked: boolean;
         };
@@ -2080,6 +2149,8 @@ export interface components {
         };
         CommentAuthor: {
             avatarUrl?: string | null;
+            /** Format: uuid */
+            id: string;
             name: string;
         };
         CommentLikeState: {
@@ -2092,6 +2163,7 @@ export interface components {
         };
         CommentView: {
             author: components["schemas"]["CommentAuthor"];
+            blocked: boolean;
             body: string;
             canDelete: boolean;
             /** Format: date-time */
@@ -2467,6 +2539,19 @@ export interface components {
             id: string;
             roles: string[];
         };
+        MyReport: {
+            accusedName?: string | null;
+            /** Format: int32 */
+            caseNumber: number;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: int32 */
+            episodeNumber?: number | null;
+            reason: string;
+            seriesTitle?: string | null;
+            status: string;
+            targetType: string;
+        };
         NotificationItem: {
             /** Format: date-time */
             createdAt: string;
@@ -2682,6 +2767,13 @@ export interface components {
         RemovedSubscriptions: {
             items: components["schemas"]["RemovedSubscription"][];
         };
+        ReportReceipt: {
+            /** Format: uuid */
+            accusedId?: string | null;
+            accusedName?: string | null;
+            /** Format: int32 */
+            caseNumber: number;
+        };
         ReportRequest: {
             details?: string | null;
             reason: string;
@@ -2883,7 +2975,9 @@ export interface components {
         };
         SettleRequest: {
             /** @enum {string} */
-            action: "dismiss" | "resolve" | "hide";
+            action: "dismiss" | "resolve" | "hide" | "remove_warn" | "suspend";
+            /** Format: int32 */
+            days?: number | null;
             note?: string | null;
         };
         SignupRequest: {
@@ -4361,7 +4455,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["ReportReceipt"];
+                };
             };
             /** @description Error */
             default: {
@@ -5349,6 +5445,35 @@ export interface operations {
             };
         };
     };
+    list_2: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BlockedAccount"][];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
     wallet: {
         parameters: {
             query?: never;
@@ -5869,6 +5994,35 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    myReports: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MyReport"][];
+                };
             };
             /** @description Error */
             default: {
@@ -6614,7 +6768,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["ReportReceipt"];
+                };
             };
             /** @description Error */
             default: {
@@ -6746,7 +6902,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["ReportReceipt"];
+                };
             };
             /** @description Error */
             default: {
@@ -6809,6 +6967,64 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["SubscriptionState"];
                 };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    block: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    unblock: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Error */
             default: {

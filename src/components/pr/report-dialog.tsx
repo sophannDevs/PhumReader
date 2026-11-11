@@ -1,5 +1,6 @@
 "use client"
 
+import { useQueryClient } from "@tanstack/react-query"
 import { CheckIcon } from "lucide-react"
 import { useTranslations } from "@/i18n/translations"
 import { createContext, useCallback, useContext, useMemo, useState } from "react"
@@ -12,6 +13,10 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { demoData, type ReportTarget } from "@/data"
 import { Link } from "@/i18n/navigation"
+import { meKeys } from "@/lib/api/keys"
+import type { ReportReceipt } from "@/lib/api/me"
+import { blockUser } from "@/lib/moderation"
+import { useAccountEmail } from "@/lib/me"
 import { useAppStore } from "@/lib/store"
 import { cn } from "@/lib/utils"
 
@@ -30,12 +35,21 @@ export type ReportRequest = {
   target: string
   /** The person behind it (offers "Also block"); empty for series and episodes */
   who?: string
-  onSend?: (reason: string, details: string) => Promise<void> | void
+  /** Real API: that person's account */
+  whoId?: string
+  /**
+   * Real API: sends the report and returns the receipt (case number, and the account to block). A failure keeps the
+   * dialog open with an error; without it the report stays on this device (demo).
+   */
+  onSend?: (reason: string, details: string) => Promise<ReportReceipt | void> | ReportReceipt | void
 }
 
-type Open = { step: "reason"; req: ReportRequest } | { step: "sent"; req: ReportRequest; caseId: string } | { step: "block"; who: string }
+type Open =
+  | { step: "reason"; req: ReportRequest }
+  | { step: "sent"; req: ReportRequest; caseId: string; whoId?: string }
+  | { step: "block"; who: string; whoId?: string }
 
-const ReportContext = createContext<{ openReport: (r: ReportRequest) => void; openBlock: (who: string) => void }>({
+const ReportContext = createContext<{ openReport: (r: ReportRequest) => void; openBlock: (who: string, whoId?: string) => void }>({
   openReport: () => {},
   openBlock: () => {},
 })
@@ -47,7 +61,7 @@ const NEEDS_DETAILS = ["other", "copyright", "impersonate"]
 export function ReportProvider({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState<Open | null>(null)
   const openReport = useCallback((req: ReportRequest) => setOpen({ step: "reason", req }), [])
-  const openBlock = useCallback((who: string) => setOpen({ step: "block", who }), [])
+  const openBlock = useCallback((who: string, whoId?: string) => setOpen({ step: "block", who, whoId }), [])
   const value = useMemo(() => ({ openReport, openBlock }), [openReport, openBlock])
 
   return (
@@ -56,11 +70,11 @@ export function ReportProvider({ children }: { children: React.ReactNode }) {
       <Dialog open={open !== null} onOpenChange={(o) => (o ? null : setOpen(null))}>
         <DialogContent className="max-h-[calc(100dvh-40px)] overflow-y-auto sm:max-w-[440px]">
           {open?.step === "reason" ? (
-            <ReasonStep key={open.req.target} req={open.req} onSent={(caseId) => setOpen({ step: "sent", req: open.req, caseId })} onCancel={() => setOpen(null)} />
+            <ReasonStep key={open.req.target} req={open.req} onSent={(caseId, whoId) => setOpen({ step: "sent", req: open.req, caseId, whoId })} onCancel={() => setOpen(null)} />
           ) : open?.step === "sent" ? (
-            <SentStep req={open.req} caseId={open.caseId} onDone={() => setOpen(null)} />
+            <SentStep req={open.req} caseId={open.caseId} whoId={open.whoId} onDone={() => setOpen(null)} />
           ) : open?.step === "block" ? (
-            <BlockStep who={open.who} onDone={() => setOpen(null)} />
+            <BlockStep who={open.who} whoId={open.whoId} onDone={() => setOpen(null)} />
           ) : null}
         </DialogContent>
       </Dialog>
@@ -68,8 +82,12 @@ export function ReportProvider({ children }: { children: React.ReactNode }) {
   )
 }
 
-function ReasonStep({ req, onSent, onCancel }: { req: ReportRequest; onSent: (caseId: string) => void; onCancel: () => void }) {
+function ReasonStep({ req, onSent, onCancel }: { req: ReportRequest; onSent: (caseId: string, whoId?: string) => void; onCancel: () => void }) {
   const t = useTranslations("report")
+  const tt = useTranslations("toasts")
+  const qc = useQueryClient()
+  const email = useAccountEmail()
+  const [sendFailed, setSendFailed] = useState(false)
   const [reason, setReason] = useState("")
   const [details, setDetails] = useState("")
   const [tried, setTried] = useState(false)
@@ -88,14 +106,23 @@ function ReasonStep({ req, onSent, onCancel }: { req: ReportRequest; onSent: (ca
       return
     }
     setSending(true)
+    setSendFailed(false)
+    let receipt: ReportReceipt | void
     try {
-      await req.onSend?.(reason, details.trim())
+      receipt = await req.onSend?.(reason, details.trim())
     } catch {
-      // The local report still counts; the API copy is best effort.
+      // Real API: nothing was filed, so don't say it was.
+      setSending(false)
+      setSendFailed(true)
+      return
     }
-    const caseId = useAppStore.getState().addReport({ kind: listKind, target: req.target, who: req.who ?? "", reason, details: details.trim() })
+    const caseId = useAppStore.getState().addReport(
+      { kind: listKind, target: req.target, who: req.who ?? "", reason, details: details.trim() },
+      receipt ? `R-${receipt.caseNumber}` : undefined
+    )
+    if (receipt && email) void qc.invalidateQueries({ queryKey: meKeys.reports(email) })
     setSending(false)
-    onSent(caseId)
+    onSent(caseId, receipt?.accusedId ?? req.whoId)
   }
 
   return (
@@ -136,6 +163,11 @@ function ReasonStep({ req, onSent, onCancel }: { req: ReportRequest; onSent: (ca
           {!reason ? t("chooseReason") : t("moreDetails")}
         </p>
       ) : null}
+      {sendFailed ? (
+        <p role="alert" className="text-[13px] font-medium text-destructive">
+          {tt("actionFailed")}
+        </p>
+      ) : null}
       <p className="m-0 rounded-control bg-muted px-2.5 py-2 text-xs text-muted-foreground">{t("urgent")}</p>
       <div className="flex justify-end gap-2">
         <Button type="button" variant="ghost" onClick={onCancel}>
@@ -149,8 +181,9 @@ function ReasonStep({ req, onSent, onCancel }: { req: ReportRequest; onSent: (ca
   )
 }
 
-function SentStep({ req, caseId, onDone }: { req: ReportRequest; caseId: string; onDone: () => void }) {
+function SentStep({ req, caseId, whoId, onDone }: { req: ReportRequest; caseId: string; whoId?: string; onDone: () => void }) {
   const t = useTranslations("report")
+  const tt = useTranslations("toasts")
   const blocked = useAppStore((s) => (req.who ? s.blocked.includes(req.who) : true))
   const [alsoBlock, setAlsoBlock] = useState(false)
 
@@ -185,8 +218,10 @@ function SentStep({ req, caseId, onDone }: { req: ReportRequest; caseId: string;
         variant="brand"
         onClick={() => {
           if (alsoBlock && req.who) {
-            useAppStore.getState().block(req.who)
-            toast.success(t("blocked", { name: req.who }))
+            const name = req.who
+            void blockUser(name, whoId, tt("actionFailed")).then((ok) => {
+              if (ok) toast.success(t("blocked", { name }))
+            })
           }
           onDone()
         }}
@@ -197,8 +232,9 @@ function SentStep({ req, caseId, onDone }: { req: ReportRequest; caseId: string;
   )
 }
 
-function BlockStep({ who, onDone }: { who: string; onDone: () => void }) {
+function BlockStep({ who, whoId, onDone }: { who: string; whoId?: string; onDone: () => void }) {
   const t = useTranslations("report")
+  const tt = useTranslations("toasts")
   return (
     <div className="flex flex-col gap-3.5">
       <div className="flex flex-col gap-1.5 pr-6">
@@ -212,9 +248,11 @@ function BlockStep({ who, onDone }: { who: string; onDone: () => void }) {
         <Button
           variant="destructive"
           onClick={() => {
-            useAppStore.getState().block(who)
+            // The store changes at once; real mode saves it and goes back with a toast when that fails.
+            void blockUser(who, whoId, tt("actionFailed")).then((ok) => {
+              if (ok) toast.success(t("blocked", { name: who }))
+            })
             onDone()
-            toast.success(t("blocked", { name: who }))
           }}
         >
           {t("block")}

@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/button"
 import type { NovelChapter, Series } from "@/data"
 import { Link } from "@/i18n/navigation"
 import { initials } from "@/lib/format"
+import { DEMO_MODE } from "@/lib/api/config"
+import * as real from "@/lib/api/me"
 import { useAskToLogin, useEpisodeReactions } from "@/lib/me"
 import { seriesHref } from "@/lib/routes"
 import { useUser } from "@/lib/store"
@@ -107,7 +109,11 @@ export function NovelEndSection({
       </Button>
       <button
         type="button"
-        onClick={() => (user ? openReport({ kind: "episode", target: `${series.title} · ${chapter.title}` }) : askToLogin())}
+        onClick={() => (user ? openReport({
+                  kind: "episode",
+                  target: `${series.title} · ${chapter.title}`,
+                  onSend: DEMO_MODE ? undefined : (reason, details) => real.reportEpisode(series.slug, chapter.n, reason, details),
+                }) : askToLogin())}
         className="self-center rounded-sm text-[13px] leading-[18px] text-reader-quiet underline underline-offset-[3px] outline-none hover:text-reader-text focus-visible:ring-2 focus-visible:ring-ring"
       >
         {t("reportChapter")}

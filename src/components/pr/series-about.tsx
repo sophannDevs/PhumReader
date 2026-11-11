@@ -5,6 +5,8 @@ import { useTranslations } from "@/i18n/translations"
 import { useReport } from "@/components/pr/report-dialog"
 import { Badge } from "@/components/ui/badge"
 import type { Series } from "@/data"
+import { DEMO_MODE } from "@/lib/api/config"
+import * as real from "@/lib/api/me"
 import { useAskToLogin } from "@/lib/me"
 import { useLocalize } from "@/lib/localize"
 import { useUser } from "@/lib/store"
@@ -76,7 +78,11 @@ export function SeriesAbout({ series, synopsis, secondGenre }: { series: Series;
         <button
           type="button"
           className="rounded-sm font-medium text-brand-ink underline underline-offset-4 outline-none hover:text-brand-ink/80 focus-visible:ring-2 focus-visible:ring-ring"
-          onClick={() => (user ? openReport({ kind: "series", target: series.title }) : askToLogin())}
+          onClick={() => (user ? openReport({
+                  kind: "series",
+                  target: series.title,
+                  onSend: DEMO_MODE ? undefined : (reason, details) => real.reportSeries(series.slug, reason, details),
+                }) : askToLogin())}
         >
           {t("reportIt")}
         </button>

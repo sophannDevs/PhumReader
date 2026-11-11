@@ -136,12 +136,11 @@ export function AdminReports() {
   )
 }
 
-/** The API action for a decision: remove = hide the content (or resolve when it is already gone). */
-function apiAction(act: Act, r: QueueReport): ReportAction {
-  if (act === "dismiss") return "dismiss"
-  const status = r.api?.target.status
-  return status && status !== "hidden" && status !== "deleted" ? "hide" : "resolve"
-}
+/** The API action for a decision (the API leaves content that is already gone as it is and still closes the report). */
+const API_ACTION: Record<Act, ReportAction> = { remove: "hide", warn: "remove_warn", suspend: "suspend", dismiss: "dismiss" }
+
+/** Suspend 7 days, as the button says. */
+const SUSPEND_DAYS = 7
 
 function ReportDetail({ report: r, innerRef }: { report: QueueReport; innerRef: React.Ref<HTMLElement> }) {
   const t = useTranslations("admin")
@@ -167,17 +166,14 @@ function ReportDetail({ report: r, innerRef }: { report: QueueReport; innerRef: 
       key: decisionKey("report", r.id),
       queue: "reports",
       action: act as AdminAction,
-      label: api ? `#${r.id.slice(0, 8)}` : r.id,
+      label: api ? `R-${api.caseNumber}` : r.id,
       apply: () => {
         if (r.mine) useAppStore.getState().setReportStatus(r.id, status)
       },
       revert: () => {
         if (r.mine) useAppStore.getState().setReportStatus(r.id, "In review")
       },
-      // The API has no warnings or 7-day suspensions: the note records the choice in the audit log.
-      commit: api
-        ? () => actions.settleReport(api.id, apiAction(act, r), act === "warn" || act === "suspend" ? t(`act_${act}`) : "")
-        : undefined,
+      commit: api ? () => actions.settleReport(api.id, API_ACTION[act], "", act === "suspend" ? SUSPEND_DAYS : undefined) : undefined,
       toast: t("toast_reportDone"),
     })
   }
@@ -194,7 +190,7 @@ function ReportDetail({ report: r, innerRef }: { report: QueueReport; innerRef: 
         <Badge variant={PRI_BADGE[p]}>{t(`pri_${p}`)}</Badge>
         <Badge variant="outline">{t(`kind_${r.kind}`)}</Badge>
         <span className="text-xs leading-4 text-muted-foreground">
-          {r.api ? `#${r.id.slice(0, 8)}` : r.id} · {t("rp_count", { count: r.count })}
+          {r.api ? `R-${r.api.caseNumber}` : r.id} · {t("rp_count", { count: r.count })}
         </span>
       </div>
       <h2 id={headingId} className="type-h3">

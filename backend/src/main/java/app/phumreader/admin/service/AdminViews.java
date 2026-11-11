@@ -61,6 +61,9 @@ public final class AdminViews {
 
     /**
      * @param status open, resolved or dismissed
+     * @param caseNumber shown to the reporter as R-{caseNumber}
+     * @param accusedName the person behind the reported thing
+     * @param action what was done: remove, remove_warn, suspend or none (null while open)
      */
     public record AdminReport(
             UUID id,
@@ -72,6 +75,10 @@ public final class AdminViews {
             @Nullable Instant resolvedAt,
             @Nullable String resolvedBy,
             @Nullable String note,
+            int caseNumber,
+            @Nullable UUID accusedId,
+            @Nullable String accusedName,
+            @Nullable String action,
             ReportTarget target) {}
 
     /**

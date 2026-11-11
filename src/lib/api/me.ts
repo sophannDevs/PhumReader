@@ -105,6 +105,8 @@ export type ApiComment = {
   top: boolean
   canDelete: boolean
   mine: boolean
+  /** The author's account (Block / "Also block"). */
+  authorId: string
 }
 
 /** "now", "5m", "2h", "3d", then a date (the demo's short style). */
@@ -127,6 +129,7 @@ export const toComment = (c: Schemas["CommentView"]): ApiComment => ({
   top: c.top,
   canDelete: c.canDelete,
   mine: c.mine,
+  authorId: c.author.id,
 })
 
 /** A thread is a series ("one-piece") or one episode ("one-piece:3"). */
@@ -152,4 +155,23 @@ export const putCommentLike = (id: string, on: boolean) =>
 
 export const deleteComment = (id: string) => api.delete(`/comments/${id}`)
 
-export const reportComment = (id: string, reason: string) => api.post(`/comments/${id}/report`, { reason })
+/** The case number (R-xxxxx) and the person behind it; a second open report on the same comment returns the first case. */
+export type ReportReceipt = Schemas["ReportReceipt"]
+
+/** `reason` is one of the Report dialog's keys; `details` is separate (10+ characters for other and copyright). */
+export const reportComment = (id: string, reason: string, details: string) =>
+  api.post<ReportReceipt>(`/comments/${id}/report`, { reason, details: details || undefined })
+export const reportSeries = (slug: string, reason: string, details: string) =>
+  api.post<ReportReceipt>(`/series/${slug}/report`, { reason, details: details || undefined })
+export const reportEpisode = (slug: string, n: number, reason: string, details: string) =>
+  api.post<ReportReceipt>(`/series/${slug}/episodes/${n}/report`, { reason, details: details || undefined })
+
+// ---------------------------------------------------------------- blocking and "Your reports" (V21-04)
+
+export type BlockedAccount = Schemas["BlockedAccount"]
+export type MyReport = Schemas["MyReport"]
+
+export const fetchBlocks = () => api.get<BlockedAccount[]>("/me/blocks")
+export const blockAccount = (id: string) => api.put<void>(`/users/${id}/block`)
+export const unblockAccount = (id: string) => api.delete<void>(`/users/${id}/block`)
+export const fetchMyReports = () => api.get<MyReport[]>("/me/reports")

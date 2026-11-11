@@ -13,7 +13,8 @@ export type ReviewQueueItem = Schemas["ReviewQueueItem"];
 /** A change "Request changes" asks for: contact, cover, title, age or images. */
 export type ReviewItemKey = Schemas["ChangesRequest"]["items"][number];
 export type ContentType = AdminContent["type"];
-export type ReportAction = "dismiss" | "resolve" | "hide";
+/** dismiss = no violation, hide = remove, remove_warn = remove and warn, suspend = remove and suspend the account. */
+export type ReportAction = "dismiss" | "resolve" | "hide" | "remove_warn" | "suspend";
 
 type Page<T> = { items: T[]; nextCursor?: string | null };
 export type ListFilter = { q?: string; status?: string };
@@ -59,10 +60,11 @@ export const hideContent = (type: ContentType, id: string, reason: string) =>
   api.post<void>(`/admin/content/${type}/${id}/hide`, { reason });
 export const restoreContent = (type: ContentType, id: string) =>
   api.post<void>(`/admin/content/${type}/${id}/restore`, {});
-export const settleReport = (id: string, action: ReportAction, note: string) =>
+export const settleReport = (id: string, action: ReportAction, note: string, days?: number) =>
   api.post<AdminReport>(`/admin/reports/${id}/settle`, {
     action,
     note: note.trim() || undefined,
+    days,
   });
 export const refundOrder = (id: string, reason: string) =>
   api.post<Schemas["RefundResult"]>(`/admin/orders/${id}/refund`, { reason });

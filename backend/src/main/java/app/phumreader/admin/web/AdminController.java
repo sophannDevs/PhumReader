@@ -65,11 +65,15 @@ class AdminController {
     public record OptionalReasonRequest(@Nullable @Size(max = 500) String reason) {}
 
     /**
-     * @param action dismiss (nothing wrong), resolve (handled) or hide (take the target down)
+     * @param action dismiss (no violation), resolve (handled), hide (remove the target),
+     *     remove_warn (remove and warn) or suspend (remove and suspend the account)
      * @param note optional; kept with the report and in the audit log
+     * @param days suspend only: 1-365, default 7
      */
     public record SettleRequest(
-            @NotNull ReportAction action, @Nullable @Size(max = 1000) String note) {}
+            @NotNull ReportAction action,
+            @Nullable @Size(max = 1000) String note,
+            @Nullable Integer days) {}
 
     /**
      * @param items what the creator must change: 1 to 5 different keys (contact, cover, title, age,
@@ -185,7 +189,7 @@ class AdminController {
             @PathVariable UUID id,
             @Valid @RequestBody SettleRequest body,
             @Parameter(hidden = true) @AuthenticationPrincipal CurrentUser user) {
-        return admin.settle(user, id, body.action(), body.note());
+        return admin.settle(user, id, body.action(), body.note(), body.days());
     }
 
     // ---------- series review ----------

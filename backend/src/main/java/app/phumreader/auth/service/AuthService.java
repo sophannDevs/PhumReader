@@ -177,7 +177,7 @@ public class AuthService {
         }
         limiter.reset(failures);
 
-        User user = found.get();
+        User user = lifted(found.get());
         if (user.getStatus() == UserStatus.BANNED) {
             throw ApiException.forbidden("account_banned", "This account has been suspended.");
         }
@@ -206,7 +206,10 @@ public class AuthService {
             throw TokenService.sessionExpired();
         }
         TokenService.Rotation rotation = tokens.rotate(refreshToken, client.userAgent());
-        Optional<User> user = users.findById(rotation.userId()).filter(AuthService::maySignIn);
+        Optional<User> user =
+                users.findById(rotation.userId())
+                        .map(u -> lifted(u))
+                        .filter(AuthService::maySignIn);
         if (user.isEmpty()) {
             tokens.revokeFamily(rotation.familyId());
             throw TokenService.sessionExpired();
@@ -305,6 +308,12 @@ public class AuthService {
 
     private static void requireStrongPassword(String password) {
         PasswordPolicy.require("password", password);
+    }
+
+    /** A timed suspension that is over ends here (V21-04). */
+    private User lifted(User user) {
+        user.liftSuspensionIfOver(clock.instant());
+        return user;
     }
 
     private static boolean maySignIn(User user) {

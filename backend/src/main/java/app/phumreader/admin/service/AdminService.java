@@ -40,6 +40,8 @@ import app.phumreader.user.domain.Role;
 import app.phumreader.user.service.UserService;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.Clock;
+import java.time.Duration;
+import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.HashSet;
@@ -349,14 +351,29 @@ public class AdminService {
         return page(rows, size, ReportRow::createdAt, ReportRow::id, AdminService::view);
     }
 
+    /** The longest timed suspension a report can give. */
+    public static final int MAX_SUSPEND_DAYS = 365;
+
+    public static final int DEFAULT_SUSPEND_DAYS = 7;
+
     /**
-     * Settles a report: {@code dismiss} (nothing wrong), {@code resolve} (handled), or {@code hide}
-     * (the target is taken down, which also resolves every other open report on it). The reporters
-     * get a notification (V21-03).
+     * Settles a report: {@code dismiss} (no violation), {@code resolve} (handled), {@code hide}
+     * (the target is taken down, which also resolves every other open report on it), {@code
+     * remove_warn} (the same, and the warning is recorded) or {@code suspend} (the same, and the
+     * accused cannot sign in for {@code days}, default 7). The reporters get a notification
+     * (V21-03). 409 {@code no_accused} / {@code cannot_ban_admin} for {@code suspend}.
      */
     @Transactional
     public AdminReport settle(
-            CurrentUser admin, UUID reportId, ReportAction action, @Nullable String note) {
+            CurrentUser admin,
+            UUID reportId,
+            ReportAction action,
+            @Nullable String note,
+            @Nullable Integer days) {
+        if (days != null && (days < 1 || days > MAX_SUSPEND_DAYS)) {
+            throw ApiException.invalidField(
+                    "days", "invalid_days", "Use 1 to " + MAX_SUSPEND_DAYS + " days.");
+        }
         OpenReport report =
                 queries.lockReport(reportId)
                         .orElseThrow(
@@ -365,23 +382,48 @@ public class AdminService {
             throw ApiException.conflict(
                     "report_closed", "This report was already settled by another admin.");
         }
+        UserRow accused = null;
+        if (action == ReportAction.SUSPEND) {
+            UUID accusedId = report.accusedId();
+            if (accusedId == null) {
+                throw ApiException.conflict("no_accused", "This report has no account to suspend.");
+            }
+            accused = requireUser(accusedId);
+            if (accused.roles().contains(Role.ADMIN.name())) {
+                throw ApiException.conflict(
+                        "cannot_ban_admin", "An admin account cannot be suspended here.");
+            }
+        }
         switch (action) {
-            case HIDE -> {
+            case HIDE, REMOVE_WARN, SUSPEND -> {
                 String reason = note == null || note.isBlank() ? "Reported" : note;
                 var state = queries.state(report.targetType(), report.targetId());
                 if (state.isPresent() && state.get().equals(report.targetType().live())) {
                     hide(admin, report.targetType(), report.targetId(), reason);
                 }
                 // Hidden by hand or by another report meanwhile: this one is still handled.
-                queries.closeReport(reportId, RESOLVED, admin.id(), note, now());
+                queries.closeReport(
+                        reportId,
+                        RESOLVED,
+                        switch (action) {
+                            case REMOVE_WARN -> "REMOVE_WARN";
+                            case SUSPEND -> "SUSPEND";
+                            default -> "REMOVE";
+                        },
+                        admin.id(),
+                        note,
+                        now());
                 inbox.reportsResolved(List.of(reportId), true, admin.id());
+                if (action == ReportAction.SUSPEND) {
+                    suspend(admin, accused, days == null ? DEFAULT_SUSPEND_DAYS : days, reason);
+                }
             }
             case RESOLVE -> {
-                queries.closeReport(reportId, RESOLVED, admin.id(), note, now());
+                queries.closeReport(reportId, RESOLVED, "NONE", admin.id(), note, now());
                 inbox.reportsResolved(List.of(reportId), false, admin.id());
             }
             case DISMISS -> {
-                queries.closeReport(reportId, DISMISSED, admin.id(), note, now());
+                queries.closeReport(reportId, DISMISSED, "NONE", admin.id(), note, now());
                 inbox.reportDismissed(reportId, admin.id());
             }
         }
@@ -398,8 +440,35 @@ public class AdminService {
                         "targetType",
                         report.targetType().name(),
                         "targetId",
-                        report.targetId().toString()));
+                        report.targetId().toString(),
+                        "days",
+                        action == ReportAction.SUSPEND
+                                ? (days == null ? DEFAULT_SUSPEND_DAYS : days)
+                                : null));
         return view(queries.report(reportId).orElseThrow());
+    }
+
+    /** A timed suspension from a report: signed out everywhere, back after {@code days}. */
+    private void suspend(CurrentUser admin, UserRow accused, int days, String reason) {
+        Instant until = clock.instant().plus(Duration.ofDays(days));
+        if (users.ban(accused.id(), until)) {
+            tokens.revokeAll(accused.id());
+            audit.record(
+                    admin.id(),
+                    "user.ban",
+                    "USER",
+                    accused.id().toString(),
+                    details(
+                            "reason",
+                            reason,
+                            "email",
+                            accused.email(),
+                            "was",
+                            accused.status(),
+                            "until",
+                            until.toString()));
+        }
+        // Already suspended: the report is handled and the earlier suspension stays.
     }
 
     /** What an admin can do with a report. */
@@ -409,7 +478,11 @@ public class AdminService {
         @JsonProperty("resolve")
         RESOLVE,
         @JsonProperty("hide")
-        HIDE
+        HIDE,
+        @JsonProperty("remove_warn")
+        REMOVE_WARN,
+        @JsonProperty("suspend")
+        SUSPEND
     }
 
     /** Resolves the open reports on content that was taken down; the reporters hear it. */
@@ -610,6 +683,10 @@ public class AdminService {
                 r.resolvedAt() == null ? null : r.resolvedAt().toInstant(),
                 r.resolvedBy(),
                 r.note(),
+                r.caseNumber(),
+                r.accusedId(),
+                r.accusedName(),
+                r.action() == null ? null : r.action().toLowerCase(Locale.ROOT),
                 new ReportTarget(
                         r.targetType(),
                         r.targetId(),

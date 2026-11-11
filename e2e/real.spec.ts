@@ -1720,7 +1720,92 @@ test("18. notifications: the bell and the page match in two browsers; read, remo
   }
 });
 
-test("19. delete the account: signed out everywhere, wrong password refused first", async () => {
+test("19. key flow 3: report a comment -> admin removes it -> the reporter sees Removed in Settings; the block follows the account to a new device", async ({
+  browser,
+}) => {
+  test.setTimeout(180_000);
+  const other = `e2e-flow3-${stamp}@phumireader.test`;
+  const otherName = `E2E Flow3 ${stamp}`;
+  const target = `E2E reported comment ${stamp}`;
+  sql(
+    `insert into users (email, email_verified_at, display_name) values ('${other}', now(), '${otherName}')`,
+  );
+  sql(
+    `insert into comments (series_id, author_id, body) select s.id, u.id, '${target}' from series s, users u where s.slug = 'glass-compass' and u.email = '${other}'`,
+  );
+  const adminCtx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+  const deviceCtx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+  try {
+    // The reader reports it (the reason is a key, the case number comes from the API) and also blocks the author.
+    await page.goto("/series/glass-compass");
+    await page.waitForLoadState("networkidle");
+    await visible(page.getByRole("tab", { name: /Comments/ })).click();
+    await visible(page.locator("li", { hasText: target }))
+      .getByRole("button", { name: `Report comment by ${otherName}` })
+      .click();
+    const dialog = visible(page.getByRole("dialog"));
+    await dialog.getByRole("radio", { name: /^Spam or scam/ }).click();
+    await dialog.getByRole("button", { name: "Send report" }).click();
+    const caseLine = dialog.getByText(/^Case R-\d+$/);
+    await expect(caseLine).toBeVisible();
+    const caseId = ((await caseLine.textContent()) ?? "").replace("Case ", "");
+    await dialog.getByText(`Also block ${otherName}`).click();
+    await dialog.getByRole("button", { name: "Done" }).click();
+    await expect(visible(page.getByText(`${otherName} is blocked`))).toBeVisible();
+    await expect(page.getByText(target)).toHaveCount(0);
+    await expect(visible(page.getByText(/comment from people you blocked hidden/))).toBeVisible();
+
+    // The admin removes the content from the report queue.
+    const ap = await adminCtx.newPage();
+    await logIn(ap, NEW_PASSWORD);
+    await ap.goto("/admin/reports");
+    const queue = visible(ap.getByRole("list", { name: "Open reports" }));
+    await queue.getByRole("button", { name: new RegExp(target) }).click();
+    const detail = visible(ap.getByRole("region", { name: "Spam or scam" }));
+    await detail.getByRole("radio", { name: /^Remove content/ }).click();
+    await detail.getByRole("button", { name: "Confirm" }).click();
+    await expect(queue.getByRole("button", { name: new RegExp(target) })).toHaveCount(0);
+
+    // The decision is saved after the Undo window; the API then lists the case as removed for the reporter.
+    await expect
+      .poll(
+        async () =>
+          (
+            (await (await page.request.get("/api/v1/me/reports")).json()) as { caseNumber: number; status: string }[]
+          ).find((r) => `R-${r.caseNumber}` === caseId)?.status,
+        { timeout: 30_000 },
+      )
+      .toBe("removed");
+
+    // Settings > Privacy and safety shows the case as Removed and the blocked author.
+    await page.goto("/settings");
+    await page.waitForLoadState("networkidle");
+    await expect(visible(page.locator("li", { hasText: caseId }))).toContainText("Removed");
+    await expect(visible(page.getByRole("button", { name: `Unblock ${otherName}` }))).toBeVisible();
+
+    // A new device (a second sign-in) has the block and the case without doing anything.
+    const dp = await deviceCtx.newPage();
+    await logIn(dp, NEW_PASSWORD);
+    await dp.goto("/settings");
+    await expect(visible(dp.getByRole("button", { name: `Unblock ${otherName}` }))).toBeVisible();
+    await expect(visible(dp.locator("li", { hasText: caseId }))).toContainText("Removed");
+
+    // Unblock there; the first browser sees it after a reload.
+    await visible(dp.getByRole("button", { name: `Unblock ${otherName}` })).click();
+    await expect(dp.getByRole("button", { name: `Unblock ${otherName}` })).toHaveCount(0);
+    await page.reload();
+    await page.waitForLoadState("networkidle");
+    await expect(page.getByRole("button", { name: `Unblock ${otherName}` })).toHaveCount(0);
+  } finally {
+    await adminCtx.close();
+    await deviceCtx.close();
+    sql(`delete from reports where target_type = 'COMMENT' and target_id in (select id from comments where body = '${target}')`);
+    sql(`delete from comments where body = '${target}'`);
+    sql(`delete from users where email = '${other}'`);
+  }
+});
+
+test("20. delete the account: signed out everywhere, wrong password refused first", async () => {
   await page.goto("/settings");
   await visible(page.getByRole("button", { name: "Delete account" })).click();
   // V2.1: type DELETE first; the button stays disabled until then.

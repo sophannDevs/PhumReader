@@ -41,6 +41,7 @@ import {
   useHydrated,
   useUser,
 } from "@/lib/store"
+import { unblockUser } from "@/lib/moderation"
 import { useTheme } from "@/lib/theme"
 import { cn } from "@/lib/utils"
 
@@ -175,6 +176,7 @@ function PillGroup<T extends string>({
 export function SettingsPage() {
   const t = useTranslations("settings")
   const ta = useTranslations("account")
+  const tt = useTranslations("toasts")
   const locale = useLocale() as Locale
   const router = useRouter()
   const pathname = usePathname()
@@ -616,8 +618,9 @@ export function SettingsPage() {
                         size="sm"
                         aria-label={t("unblockName", { name })}
                         onClick={() => {
-                          useAppStore.getState().unblock(name)
-                          toast.success(t("unblocked", { name }))
+                          void unblockUser(name, tt("actionFailed")).then((ok) => {
+                            if (ok) toast.success(t("unblocked", { name }))
+                          })
                         }}
                       >
                         {t("unblock")}

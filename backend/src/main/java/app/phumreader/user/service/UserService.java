@@ -273,8 +273,13 @@ public class UserService {
 
     /** Suspends the account; {@code false} when it already was. */
     public boolean ban(UUID userId) {
+        return ban(userId, null);
+    }
+
+    /** Suspends the account until {@code until} (null = until lifted). */
+    public boolean ban(UUID userId, @Nullable Instant until) {
         User user = require(userId);
-        boolean changed = user.ban();
+        boolean changed = user.ban(until);
         users.saveAndFlush(user);
         return changed;
     }

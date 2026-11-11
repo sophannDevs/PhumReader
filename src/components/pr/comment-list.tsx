@@ -8,13 +8,14 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import type { Comment } from "@/data/types"
 import { formatCount, initials } from "@/lib/format"
+import type { ReportReceipt } from "@/lib/api/me"
 import { useAskToLogin } from "@/lib/me"
 import { useUser } from "@/lib/store"
 import { cn } from "@/lib/utils"
 import { Num } from "@/i18n/num"
 
 /** A comment plus the state the page owns (stable id, whether this reader liked it). */
-export type CommentView = Comment & { id: string; liked?: boolean; canDelete?: boolean; mine?: boolean }
+export type CommentView = Comment & { id: string; liked?: boolean; canDelete?: boolean; mine?: boolean; authorId?: string }
 
 /**
  * Flat comments (series Comments tab preview, the readers' end cards): avatar, name · time, "Top" badge, then
@@ -37,7 +38,7 @@ export function CommentList({
   /** Offered on comments the reader may delete (their own). Real API only. */
   onDelete?: (id: string) => void
   /** Real API: the Report dialog also sends the report there. */
-  onReportSend?: (id: string, reason: string, details: string) => Promise<void>
+  onReportSend?: (id: string, reason: string, details: string) => Promise<ReportReceipt | void>
   /** "dark" for the comic reader (surface colours), "themed" for the novel reader (reader theme colours). */
   tone?: "light" | "dark" | "themed"
   className?: string
@@ -112,6 +113,7 @@ export function CommentList({
                           kind: "comment",
                           target: t("commentBy", { name: c.name }),
                           who: c.name,
+                          whoId: c.authorId,
                           onSend: onReportSend ? (reason, details) => onReportSend(c.id, reason, details) : undefined,
                         })
                       )}
@@ -123,7 +125,7 @@ export function CommentList({
                       size="sm"
                       className={quiet}
                       aria-label={t("blockName", { name: c.name })}
-                      onClick={gate(() => openBlock(c.name))}
+                      onClick={gate(() => openBlock(c.name, c.authorId))}
                     >
                       {t("block")}
                     </Button>

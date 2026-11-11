@@ -1746,6 +1746,13 @@
         },
         "responses" : {
           "202" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ReportReceipt"
+                }
+              }
+            },
             "description" : "Accepted"
           },
           "default" : {
@@ -2981,6 +2988,38 @@
         "tags" : [ "account" ]
       }
     },
+    "/api/v1/me/blocks" : {
+      "get" : {
+        "operationId" : "list_2",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/BlockedAccount"
+                  }
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "The accounts you blocked, newest first",
+        "tags" : [ "account" ]
+      }
+    },
     "/api/v1/me/coins" : {
       "get" : {
         "operationId" : "wallet",
@@ -3613,6 +3652,38 @@
         },
         "summary" : "Saves this browser's push token",
         "tags" : [ "account" ]
+      }
+    },
+    "/api/v1/me/reports" : {
+      "get" : {
+        "operationId" : "myReports",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/MyReport"
+                  }
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Your reports with their status, newest first (at most 50)",
+        "tags" : [ "comments" ]
       }
     },
     "/api/v1/me/settings" : {
@@ -4704,6 +4775,13 @@
         },
         "responses" : {
           "202" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ReportReceipt"
+                }
+              }
+            },
             "description" : "Accepted"
           },
           "default" : {
@@ -4875,6 +4953,13 @@
         },
         "responses" : {
           "202" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ReportReceipt"
+                }
+              }
+            },
             "description" : "Accepted"
           },
           "default" : {
@@ -4888,7 +4973,7 @@
             "description" : "Error"
           }
         },
-        "summary" : "Report a series to the admins",
+        "summary" : "Report a series to the admins; returns the case number",
         "tags" : [ "comments" ]
       }
     },
@@ -4962,6 +5047,67 @@
         },
         "summary" : "Subscribe to a series",
         "tags" : [ "library" ]
+      }
+    },
+    "/api/v1/users/{id}/block" : {
+      "delete" : {
+        "operationId" : "unblock",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "No Content"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Unblock an account (unblocking again changes nothing)",
+        "tags" : [ "account" ]
+      },
+      "put" : {
+        "description" : "400 cannot_block_self, 404 user_not_found.",
+        "operationId" : "block",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "No Content"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Block an account (blocking again changes nothing)",
+        "tags" : [ "account" ]
       }
     }
   },
@@ -5064,6 +5210,20 @@
       "AdminReport" : {
         "type" : "object",
         "properties" : {
+          "accusedId" : {
+            "type" : [ "string", "null" ],
+            "format" : "uuid"
+          },
+          "accusedName" : {
+            "type" : [ "string", "null" ]
+          },
+          "action" : {
+            "type" : [ "string", "null" ]
+          },
+          "caseNumber" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
           "createdAt" : {
             "type" : "string",
             "format" : "date-time"
@@ -5098,7 +5258,7 @@
             "$ref" : "#/components/schemas/ReportTarget"
           }
         },
-        "required" : [ "createdAt", "id", "reason", "reporter", "status", "target" ]
+        "required" : [ "caseNumber", "createdAt", "id", "reason", "reporter", "status", "target" ]
       },
       "AdminUser" : {
         "type" : "object",
@@ -5307,6 +5467,26 @@
         },
         "required" : [ "type" ]
       },
+      "BlockedAccount" : {
+        "type" : "object",
+        "properties" : {
+          "avatarUrl" : {
+            "type" : [ "string", "null" ]
+          },
+          "blockedAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "userId" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        },
+        "required" : [ "blockedAt", "name", "userId" ]
+      },
       "BookmarkState" : {
         "type" : "object",
         "properties" : {
@@ -5465,11 +5645,15 @@
           "avatarUrl" : {
             "type" : [ "string", "null" ]
           },
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
           "name" : {
             "type" : "string"
           }
         },
-        "required" : [ "name" ]
+        "required" : [ "id", "name" ]
       },
       "CommentLikeState" : {
         "type" : "object",
@@ -5501,6 +5685,9 @@
           "author" : {
             "$ref" : "#/components/schemas/CommentAuthor"
           },
+          "blocked" : {
+            "type" : "boolean"
+          },
           "body" : {
             "type" : "string"
           },
@@ -5529,7 +5716,7 @@
             "type" : "boolean"
           }
         },
-        "required" : [ "author", "body", "canDelete", "createdAt", "id", "liked", "likes", "mine", "top" ]
+        "required" : [ "author", "blocked", "body", "canDelete", "createdAt", "id", "liked", "likes", "mine", "top" ]
       },
       "CreateUploadRequest" : {
         "type" : "object",
@@ -6593,6 +6780,39 @@
         },
         "required" : [ "displayName", "email", "emailVerified", "id", "roles" ]
       },
+      "MyReport" : {
+        "type" : "object",
+        "properties" : {
+          "accusedName" : {
+            "type" : [ "string", "null" ]
+          },
+          "caseNumber" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "createdAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "episodeNumber" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int32"
+          },
+          "reason" : {
+            "type" : "string"
+          },
+          "seriesTitle" : {
+            "type" : [ "string", "null" ]
+          },
+          "status" : {
+            "type" : "string"
+          },
+          "targetType" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "caseNumber", "createdAt", "reason", "status", "targetType" ]
+      },
       "NotificationItem" : {
         "type" : "object",
         "properties" : {
@@ -7141,6 +7361,23 @@
           }
         },
         "required" : [ "items" ]
+      },
+      "ReportReceipt" : {
+        "type" : "object",
+        "properties" : {
+          "accusedId" : {
+            "type" : [ "string", "null" ],
+            "format" : "uuid"
+          },
+          "accusedName" : {
+            "type" : [ "string", "null" ]
+          },
+          "caseNumber" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        },
+        "required" : [ "caseNumber" ]
       },
       "ReportRequest" : {
         "type" : "object",
@@ -7734,7 +7971,11 @@
         "properties" : {
           "action" : {
             "type" : "string",
-            "enum" : [ "dismiss", "resolve", "hide" ]
+            "enum" : [ "dismiss", "resolve", "hide", "remove_warn", "suspend" ]
+          },
+          "days" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int32"
           },
           "note" : {
             "type" : [ "string", "null" ],

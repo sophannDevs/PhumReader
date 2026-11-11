@@ -14,6 +14,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { episodeCommentCount, type Episode, type Series } from "@/data"
 import { Link } from "@/i18n/navigation"
 import { DEMO_MODE } from "@/lib/api/config"
+import * as real from "@/lib/api/me"
 import { useCommentThreads } from "@/lib/comments"
 import { formatCount } from "@/lib/format"
 import { useLocalize } from "@/lib/localize"
@@ -125,7 +126,11 @@ export function ComicEndSection({
         </div>
         <button
           type="button"
-          onClick={() => (user ? openReport({ kind: "episode", target: `${series.title} · ${episode.title}` }) : askToLogin())}
+          onClick={() => (user ? openReport({
+                  kind: "episode",
+                  target: `${series.title} · ${episode.title}`,
+                  onSend: DEMO_MODE ? undefined : (reason, details) => real.reportEpisode(series.slug, episode.n, reason, details),
+                }) : askToLogin())}
           className="rounded-sm text-[13px] leading-[18px] text-muted-foreground underline underline-offset-[3px] outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
         >
           {t("reportEpisode")}

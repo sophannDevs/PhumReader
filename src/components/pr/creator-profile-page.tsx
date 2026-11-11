@@ -36,6 +36,7 @@ import { useLocalize } from "@/lib/localize"
 import { useAskToLogin } from "@/lib/me"
 import { useDemoFlag } from "@/lib/queries"
 import { creatorHandle, readerHref } from "@/lib/routes"
+import { unblockUser } from "@/lib/moderation"
 import { isCreator, useAppStore, useHydrated, useUser } from "@/lib/store"
 import { cn } from "@/lib/utils"
 
@@ -187,8 +188,9 @@ function Profile({ handle, baseName, isOwner }: { handle: string; baseName: stri
   function block() {
     if (!user) return askToLogin()
     if (blocked) {
-      useAppStore.getState().unblock(baseName)
-      toast.success(t("unblocked", { name }))
+      void unblockUser(baseName, tt("actionFailed")).then((ok) => {
+        if (ok) toast.success(t("unblocked", { name }))
+      })
       return
     }
     openBlock(baseName)

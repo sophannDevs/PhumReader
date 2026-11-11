@@ -44,6 +44,9 @@ public class User implements Persistable<UUID> {
 
     @Nullable private Instant deletionRequestedAt;
 
+    /** A timed suspension ends then (V21-04); null while suspended = until an admin lifts it. */
+    @Nullable private Instant suspendedUntil;
+
     @Nullable private Instant lastLoginAt;
 
     @ElementCollection(fetch = FetchType.EAGER)
@@ -134,12 +137,41 @@ public class User implements Persistable<UUID> {
 
     /** An admin suspends the account (P3-18); {@code false} when it was already suspended. */
     public boolean ban() {
+        return ban(null);
+    }
+
+    /**
+     * Suspends the account until {@code until} (V21-04); {@code null} = until an admin lifts it.
+     * {@code false} when it was already suspended.
+     */
+    public boolean ban(@Nullable Instant until) {
         if (status == UserStatus.BANNED) {
             return false;
         }
         status = UserStatus.BANNED;
+        suspendedUntil = until;
         deletionRequestedAt = null;
         return true;
+    }
+
+    /**
+     * Ends a timed suspension whose date has passed (checked at sign-in and refresh, so no job is
+     * needed).
+     *
+     * @return whether the account is active again
+     */
+    public boolean liftSuspensionIfOver(Instant now) {
+        if (status == UserStatus.BANNED && suspendedUntil != null && !suspendedUntil.isAfter(now)) {
+            status = UserStatus.ACTIVE;
+            suspendedUntil = null;
+            return true;
+        }
+        return false;
+    }
+
+    @Nullable
+    public Instant getSuspendedUntil() {
+        return suspendedUntil;
     }
 
     /** Lifts a suspension; {@code false} when the account was not suspended. */
@@ -148,6 +180,7 @@ public class User implements Persistable<UUID> {
             return false;
         }
         status = UserStatus.ACTIVE;
+        suspendedUntil = null;
         return true;
     }
 

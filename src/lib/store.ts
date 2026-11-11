@@ -142,6 +142,8 @@ export type AppState = {
   notifPrefs: NotifPrefs
   /** Blocked display names */
   blocked: string[]
+  /** Real mode: the blocked accounts' ids by display name (Unblock calls the API with them) */
+  blockedIds: Record<string, string>
   reports: StoredReport[]
   myWorks: MyWork[]
   reviewNotes: Record<string, ReviewNote>
@@ -197,10 +199,11 @@ type AppActions = {
   removeNotif: (id: string) => void
   restoreNotif: (id: string) => void
   setNotifPrefs: (patch: Partial<NotifPrefs>) => void
-  block: (name: string) => void
+  /** `userId`: real mode, the account (kept for Unblock) */
+  block: (name: string, userId?: string) => void
   unblock: (name: string) => void
-  /** Saves a report and returns its case number */
-  addReport: (report: Omit<StoredReport, "id" | "at" | "status">) => string
+  /** Saves a report and returns its case number (`caseId`: the API's R-xxxxx) */
+  addReport: (report: Omit<StoredReport, "id" | "at" | "status">, caseId?: string) => string
   setReportStatus: (id: string, status: ReportStatus) => void
   upsertWork: (work: MyWork) => void
   setWorkStatus: (id: string, status: MyWork["status"]) => void
@@ -306,6 +309,7 @@ const initialState = (): AppState => ({
   notifGone: [],
   notifPrefs: { ...defaultNotifPrefs },
   blocked: [],
+  blockedIds: {},
   reports: demoReports(),
   myWorks: demoData.myWorks.map((w) => ({ ...w })),
   reviewNotes: {},
@@ -367,10 +371,18 @@ export const useAppStore = create<AppState & AppActions>()(
       removeNotif: (id) => set((s) => ({ notifGone: [...new Set([...s.notifGone, id])] })),
       restoreNotif: (id) => set((s) => ({ notifGone: s.notifGone.filter((x) => x !== id) })),
       setNotifPrefs: (patch) => set((s) => ({ notifPrefs: { ...s.notifPrefs, ...patch } })),
-      block: (name) => set((s) => (s.blocked.includes(name) ? s : { blocked: [...s.blocked, name] })),
-      unblock: (name) => set((s) => ({ blocked: s.blocked.filter((x) => x !== name) })),
-      addReport: (report) => {
-        const id = `R-${20480 + get().reports.length + 1}`
+      block: (name, userId) =>
+        set((s) => ({
+          blocked: s.blocked.includes(name) ? s.blocked : [...s.blocked, name],
+          blockedIds: userId ? { ...s.blockedIds, [name]: userId } : s.blockedIds,
+        })),
+      unblock: (name) =>
+        set((s) => ({
+          blocked: s.blocked.filter((x) => x !== name),
+          blockedIds: Object.fromEntries(Object.entries(s.blockedIds).filter(([n]) => n !== name)),
+        })),
+      addReport: (report, caseId) => {
+        const id = caseId ?? `R-${20480 + get().reports.length + 1}`
         set((s) => ({ reports: [{ ...report, id, at: Date.now(), status: "In review" as const }, ...s.reports].slice(0, 20) }))
         return id
       },

@@ -1053,13 +1053,39 @@ as the plan tasks (tests, `./gradlew check`, OpenAPI + `npm run api:gen`); commi
     and mark all read) passes against the local backend. Push and email for comments, coins and news, the daily
     digest email, comment replies and "Fast Pass now free" have no sender or source yet.
 
-- [ ] **V21-04 Blocking and report outcomes**
+- [x] **V21-04 Blocking and report outcomes**
   - Build: block / unblock / list blocked accounts (their comments are hidden for the blocker); the V2.1 report
     reasons per type with a case number (R-xxxxx); the reporter's "Your reports" list with status; admin actions
     remove / warn / suspend (timed) / no violation.
   - Depends on: P3-13, P3-18
   - Done when: key flow 3 (comment → report → admin removes → the reporter sees "Removed" in Settings) passes in
     real mode, and a block still applies on a new device.
+  - Design (proposed 2026-11-11, not yet confirmed by the owner):
+    - **Migration V12.** `user_blocks` (blocker, blocked, created_at; you cannot block yourself). `reports` gains
+      `case_number` (sequence from 20481, shown as R-20481), `accused_id` (the person behind the target: comment
+      author, or the series' creator for a series or episode) and `action` (REMOVE / REMOVE_WARN / SUSPEND / NONE).
+      `users.suspended_until`: a timed suspension is status BANNED plus a date; sign-in and refresh lift it once the
+      date has passed (no job).
+    - **Blocks.** `GET /me/blocks`, `PUT` / `DELETE /users/{id}/block` (both idempotent). Comment threads send
+      `author.id` and `blocked` on each comment; a blocked author's comments stay in the list so the website can show
+      "1 comment from people you blocked hidden · Show". A blocked person's likes make no notification.
+    - **Reports.** The reason is a key checked per target type (comment: spam, harass, hate, sexual, violence,
+      spoiler, other · series and episode: copyright first, spam, harass, hate, sexual, violence, rating, other);
+      `details` is separate and needs 10+ characters for other / copyright. The report answers 202 with
+      `{ caseNumber, accusedId, accusedName }` (a second open report on the same target returns the first case
+      number). `GET /me/reports` lists the reporter's cases with `status` in_review / removed / no_violation.
+    - **Admin actions.** `settle` keeps dismiss (= no violation), resolve and hide (= remove) and adds `remove_warn`
+      and `suspend` (+ `days`, 1-365, default 7): both take the content down; suspend also bans the accused until the
+      end date (409 `cannot_ban_admin`, 409 `no_accused`). Every action is in the audit log; reporters are told as
+      before (V21-03).
+    - **Done 2026-11-11.** V12, the endpoints and `BlockingAndReportsApiTest`; `./gradlew check` green, OpenAPI and
+      `api:gen` updated. Website: Report dialog, Block, Settings lists, admin actions and `ModerationSync` use the API
+      (`src/lib/moderation.test.tsx`). `e2e/real.spec.ts` test 19 (key flow 3, and the block and the case on a second
+      sign-in) passes against the local backend. Run the real suite with `NEXT_PUBLIC_DEMO=0`: `.env.local` has
+      `NEXT_PUBLIC_DEMO=1`, which otherwise makes the "real" build a demo build. Tests 15-18 were not run in this pass
+      (15 stops at its image upload against the local storage; 9-13 are `fixme` for the same reason).
+    - **Not in this task.** Reports on an account (`/creators/<handle>` profile; its reasons) wait for V21-05, which
+      adds the handle; the warning is recorded, not yet sent to the accused as an inbox item.
 
 - [ ] **V21-05 Creator earnings and public profile**
   - Build: earnings from coins spent on the creator's Fast Pass episodes (per series and month, `[REVENUE SHARE]`

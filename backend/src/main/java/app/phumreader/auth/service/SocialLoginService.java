@@ -117,6 +117,7 @@ public class SocialLoginService {
             throw ApiException.badRequest("social_failed", "The sign-in could not be completed.");
         }
         User user = match(profile, language);
+        user.liftSuspensionIfOver(clock.instant());
         if (user.getStatus() == UserStatus.BANNED) {
             throw ApiException.forbidden("account_banned", "This account has been suspended.");
         }

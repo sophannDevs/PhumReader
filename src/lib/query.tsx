@@ -8,6 +8,7 @@ import { Toaster } from "@/components/ui/sonner"
 import { ApiError } from "@/lib/api/client"
 import { reportError } from "@/lib/error-report"
 import { SessionSync } from "@/lib/session-sync"
+import { ModerationSync } from "@/lib/moderation"
 import { SettingsSync } from "@/lib/settings-sync"
 import { StoreHydrator } from "@/lib/store-hydrator"
 import { ThemeProvider } from "@/lib/theme"
@@ -46,6 +47,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
         <StoreHydrator />
         <SessionSync />
         <SettingsSync />
+        <ModerationSync />
         <ReportProvider>{children}</ReportProvider>
         <Toaster />
       </QueryClientProvider>

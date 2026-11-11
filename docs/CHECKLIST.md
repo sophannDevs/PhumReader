@@ -315,8 +315,9 @@ docs/BACKEND_CHECKLIST.md, "V2.1 API additions" (V21-01 … V21-07).
   more); each decision calls approve / request-changes (keys + note) / reject after the Undo window; when another admin
   decided first (409 not_in_review) the decision is undone and the queue reloads.
 - V2-54 (F26) **Reports**: demo queue = `adminReportQueue` + the reader's own "In review" reports (their content isn't
-  stored, so it shows "(Content as reported)"). Real mode maps remove / warn / suspend to the API's settle "hide" (or
-  "resolve") with the action as the note, and No violation to "dismiss"; the API has no timed suspension.
+  stored, so it shows "(Content as reported)"). Real mode (V21-04) settles with the API's own actions: remove = hide, warn =
+  remove_warn, suspend = suspend (7 days), No violation = dismiss. Blocked accounts and "Your reports" come from the account
+  (`ModerationSync`); reports on an account (profile) and the warning sent to the accused stay local until V21-05.
 - V2-55 (F27) **Payments**: demo rows come from the prototype (`src/lib/admin.ts`); Add coins adds to this device's wallet
   (one device plays reader and admin). Real mode lists paid orders with eligibility and refunds after a reason;
   "Paid but no coins" is hidden (no such API list).

@@ -59,7 +59,11 @@ public class AdminQueries {
             @Nullable String targetTitle,
             @Nullable String targetStatus,
             @Nullable String seriesSlug,
-            @Nullable Integer episodeNumber) {}
+            @Nullable Integer episodeNumber,
+            int caseNumber,
+            @Nullable UUID accusedId,
+            @Nullable String accusedName,
+            @Nullable String action) {}
 
     public record OrderRow(
             UUID id,
@@ -88,7 +92,12 @@ public class AdminQueries {
             OffsetDateTime createdAt) {}
 
     /** A report still waiting for an admin, with its target. */
-    public record OpenReport(UUID id, ContentType targetType, UUID targetId, String status) {}
+    public record OpenReport(
+            UUID id,
+            ContentType targetType,
+            UUID targetId,
+            String status,
+            @Nullable UUID accusedId) {}
 
     /**
      * @param seriesInReview series waiting for a review decision
@@ -405,8 +414,10 @@ public class AdminQueries {
                     + "   when 'EPISODE' then lower(te.status) else lower(tc.status) end"
                     + "   as target_status,"
                     + " coalesce(ts.slug, tes.slug, tcs.slug) as series_slug,"
-                    + " coalesce(te.number, tce.number) as episode_number"
+                    + " coalesce(te.number, tce.number) as episode_number,"
+                    + " r.case_number, r.accused_id, acc.display_name as accused, r.action"
                     + " from reports r join users rep on rep.id = r.reporter_id"
+                    + " left join users acc on acc.id = r.accused_id"
                     + " left join users res on res.id = r.resolved_by"
                     + " left join series ts on r.target_type = 'SERIES' and ts.id = r.target_id"
                     + " left join episodes te on r.target_type = 'EPISODE' and te.id = r.target_id"
@@ -435,7 +446,8 @@ public class AdminQueries {
     /** The report, locked until the transaction ends. */
     public Optional<OpenReport> lockReport(UUID id) {
         return jdbc.sql(
-                        "select id, target_type, target_id, status from reports where id = :id"
+                        "select id, target_type, target_id, status, accused_id from reports"
+                                + " where id = :id"
                                 + " for update")
                 .param("id", id)
                 .query((rs, n) ->
@@ -443,7 +455,8 @@ public class AdminQueries {
                                 rs.getObject("id", UUID.class),
                                 ContentType.valueOf(rs.getString("target_type")),
                                 rs.getObject("target_id", UUID.class),
-                                rs.getString("status")))
+                                rs.getString("status"),
+                                rs.getObject("accused_id", UUID.class)))
                 .optional();
     }
 
@@ -460,7 +473,8 @@ public class AdminQueries {
             @Nullable String note,
             OffsetDateTime now) {
         return jdbc.sql(
-                        "update reports set status = :status, resolved_by = :admin,"
+                        "update reports set status = :status, action = 'REMOVE',"
+                                + " resolved_by = :admin,"
                                 + " resolved_at = :now, resolution_note = :note"
                                 + " where target_type = :type and target_id = :target"
                                 + " and status = 'OPEN' returning id")
@@ -474,13 +488,19 @@ public class AdminQueries {
                 .list();
     }
 
-    /** Closes one report. */
+    /** Closes one report and records what was done ({@code REMOVE}, {@code REMOVE_WARN} ...). */
     public void closeReport(
-            UUID id, String status, UUID admin, @Nullable String note, OffsetDateTime now) {
+            UUID id,
+            String status,
+            @Nullable String action,
+            UUID admin,
+            @Nullable String note,
+            OffsetDateTime now) {
         jdbc.sql(
-                        "update reports set status = :status, resolved_by = :admin,"
+                        "update reports set status = :status, action = :action, resolved_by = :admin,"
                                 + " resolved_at = :now, resolution_note = :note where id = :id")
                 .param("status", status)
+                .param("action", action, Types.VARCHAR)
                 .param("admin", admin)
                 .param("now", now)
                 .param("note", note, Types.VARCHAR)
@@ -653,7 +673,11 @@ public class AdminQueries {
                 rs.getString("target_title"),
                 rs.getString("target_status"),
                 rs.getString("series_slug"),
-                rs.getObject("episode_number", Integer.class));
+                rs.getObject("episode_number", Integer.class),
+                rs.getInt("case_number"),
+                rs.getObject("accused_id", UUID.class),
+                rs.getString("accused"),
+                rs.getString("action"));
     }
 
     private static OrderRow order(ResultSet rs) throws SQLException {

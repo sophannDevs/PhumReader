@@ -4,10 +4,14 @@ import app.phumreader.comment.domain.CommentOrder;
 import app.phumreader.comment.repository.CommentQueries;
 import app.phumreader.comment.repository.CommentQueries.CommentInfo;
 import app.phumreader.comment.repository.CommentQueries.CommentRow;
+import app.phumreader.comment.repository.CommentQueries.FiledReport;
 import app.phumreader.comment.repository.CommentQueries.Key;
+import app.phumreader.comment.repository.CommentQueries.MyReportRow;
 import app.phumreader.comment.service.CommentViews.CommentAuthor;
 import app.phumreader.comment.service.CommentViews.CommentLikeState;
 import app.phumreader.comment.service.CommentViews.CommentView;
+import app.phumreader.comment.service.CommentViews.MyReport;
+import app.phumreader.comment.service.CommentViews.ReportReceipt;
 import app.phumreader.common.error.ApiException;
 import app.phumreader.common.paging.CursorPage;
 import app.phumreader.common.paging.Cursors;
@@ -19,6 +23,7 @@ import app.phumreader.series.service.CatalogRefs.EpisodeRef;
 import app.phumreader.series.service.CatalogRefs.SeriesRef;
 import app.phumreader.series.service.CatalogService;
 import app.phumreader.user.domain.Role;
+import app.phumreader.user.service.BlockService;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
@@ -26,6 +31,7 @@ import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeParseException;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -62,6 +68,7 @@ public class CommentService {
     private final ReadingService reading;
     private final RateLimiter limiter;
     private final NotificationInbox inbox;
+    private final BlockService blocks;
     private final Clock clock;
 
     public CommentService(
@@ -70,12 +77,14 @@ public class CommentService {
             ReadingService reading,
             RateLimiter limiter,
             NotificationInbox inbox,
+            BlockService blocks,
             Clock clock) {
         this.queries = queries;
         this.catalog = catalog;
         this.reading = reading;
         this.limiter = limiter;
         this.inbox = inbox;
+        this.blocks = blocks;
         this.clock = clock;
     }
 
@@ -98,6 +107,11 @@ public class CommentService {
                 user == null
                         ? Set.of()
                         : queries.likedBy(user.id(), page.stream().map(CommentRow::id).toList());
+        Set<UUID> blocked =
+                user == null
+                        ? Set.of()
+                        : blocks.blockedAmong(
+                                user.id(), page.stream().map(CommentRow::authorId).toList());
         List<CommentView> items =
                 page.stream()
                         .map(r ->
@@ -105,6 +119,7 @@ public class CommentService {
                                         r,
                                         top.filter(r.id()::equals).isPresent(),
                                         liked.contains(r.id()),
+                                        blocked.contains(r.authorId()),
                                         user,
                                         series.creatorId()))
                         .toList();
@@ -144,7 +159,7 @@ public class CommentService {
         limiter.acquire(
                 "comment:" + user.id(), COMMENTS_PER_WINDOW, COMMENT_WINDOW, "too_many_comments");
         CommentRow row = queries.insert(series.id(), episodeId, user.id(), text, now());
-        return view(row, false, false, user, series.creatorId());
+        return view(row, false, false, false, user, series.creatorId());
     }
 
     /** Deletes a comment: its author, the creator of its series or an admin. */
@@ -169,10 +184,11 @@ public class CommentService {
      */
     @Transactional
     public CommentLikeState like(CurrentUser user, UUID commentId, boolean liked) {
-        visible(commentId);
+        CommentInfo info = visible(commentId);
         if (liked) {
             OffsetDateTime at = now();
-            if (queries.like(user.id(), commentId, at)) {
+            if (queries.like(user.id(), commentId, at)
+                    && !blocks.isBlocked(info.authorId(), user.id())) {
                 inbox.commentLiked(user.id(), commentId, at.toInstant());
             }
         } else {
@@ -181,12 +197,27 @@ public class CommentService {
         return new CommentLikeState(liked, queries.likes(commentId));
     }
 
+    /** Report reasons per kind of target (the website's keys, demo-data {@code reportReasons}). */
+    private static final Set<String> COMMENT_REASONS =
+            Set.of("spam", "harass", "hate", "sexual", "violence", "spoiler", "other");
+
+    private static final Set<String> CONTENT_REASONS =
+            Set.of("copyright", "spam", "harass", "hate", "sexual", "violence", "rating", "other");
+
+    /** These reasons need a few words from the reporter. */
+    private static final Set<String> NEEDS_DETAILS = Set.of("other", "copyright");
+
+    static final int MIN_DETAILS = 10;
+
     /**
      * Reports a series ({@code slug}), an episode ({@code slug} + {@code episode}) or a comment to
-     * the admin queue. A second report on the same target while the first is open changes nothing.
+     * the admin queue and returns the case number. A second report on the same target while the
+     * first is open changes nothing and returns the first case. 400 {@code invalid_reason} (the
+     * reason is not one for this kind of target) and {@code details_required} (other and copyright
+     * need at least {@value #MIN_DETAILS} characters).
      */
     @Transactional
-    public void report(
+    public ReportReceipt report(
             CurrentUser user,
             TargetType type,
             @Nullable String slug,
@@ -194,18 +225,72 @@ public class CommentService {
             @Nullable UUID commentId,
             String reason,
             @Nullable String details) {
-        UUID target =
-                switch (type) {
-                    case SERIES -> catalog.require(require(slug)).id();
-                    case EPISODE ->
-                            catalog.requireEpisode(catalog.require(require(slug)), require(episode))
-                                    .id();
-                    case COMMENT -> visible(require(commentId)).id();
-                };
+        String key = reason.strip().toLowerCase(Locale.ROOT);
+        String detailText = details == null || details.isBlank() ? null : details.strip();
+        UUID target;
+        UUID accused;
+        switch (type) {
+            case SERIES -> {
+                SeriesRef series = catalog.require(require(slug));
+                target = series.id();
+                accused = series.creatorId();
+            }
+            case EPISODE -> {
+                SeriesRef series = catalog.require(require(slug));
+                target = catalog.requireEpisode(series, require(episode)).id();
+                accused = series.creatorId();
+            }
+            default -> {
+                CommentInfo info = visible(require(commentId));
+                target = info.id();
+                accused = info.authorId();
+            }
+        }
+        Set<String> allowed = type == TargetType.COMMENT ? COMMENT_REASONS : CONTENT_REASONS;
+        if (!allowed.contains(key)) {
+            throw ApiException.invalidField(
+                    "reason", "invalid_reason", "Choose one of the listed reasons.");
+        }
+        if (NEEDS_DETAILS.contains(key)
+                && (detailText == null || detailText.length() < MIN_DETAILS)) {
+            throw ApiException.invalidField(
+                    "details",
+                    "details_required",
+                    "Tell us a little more (at least " + MIN_DETAILS + " characters).");
+        }
         limiter.acquire(
                 "report:" + user.id(), REPORTS_PER_HOUR, Duration.ofHours(1), "too_many_reports");
-        String detailText = details == null || details.isBlank() ? null : details.strip();
-        queries.report(user.id(), type.name(), target, reason.strip(), detailText, now());
+        FiledReport filed =
+                queries.report(user.id(), type.name(), target, accused, key, detailText, now());
+        // Never offer "Also block" for yourself.
+        boolean self = user.id().equals(filed.accusedId());
+        return new ReportReceipt(
+                filed.caseNumber(),
+                self ? null : filed.accusedId(),
+                self ? null : filed.accusedName());
+    }
+
+    /** The reader's own reports, newest first (at most 50): Settings > Your reports. */
+    public List<MyReport> myReports(CurrentUser user) {
+        return queries.myReports(user.id(), 50).stream().map(CommentService::view).toList();
+    }
+
+    private static MyReport view(MyReportRow r) {
+        String status =
+                switch (r.status()) {
+                    case "RESOLVED" -> "removed";
+                    case "DISMISSED" -> "no_violation";
+                    default -> "in_review";
+                };
+        return new MyReport(
+                r.caseNumber(),
+                r.targetType().toLowerCase(Locale.ROOT),
+                r.seriesTitle(),
+                r.episodeNumber(),
+                r.accusedName(),
+                r.reason(),
+                status,
+                r.createdAt().toInstant());
     }
 
     // ---------- helpers ----------
@@ -221,6 +306,7 @@ public class CommentService {
             CommentRow r,
             boolean top,
             boolean liked,
+            boolean blocked,
             @Nullable CurrentUser user,
             UUID seriesCreatorId) {
         boolean mine = user != null && user.id().equals(r.authorId());
@@ -231,14 +317,15 @@ public class CommentService {
                                 || user.hasRole(Role.ADMIN.name()));
         return new CommentView(
                 r.id(),
-                new CommentAuthor(r.authorName(), r.authorAvatar()),
+                new CommentAuthor(r.authorId(), r.authorName(), r.authorAvatar()),
                 r.body(),
                 r.likes(),
                 r.createdAt().toInstant(),
                 top,
                 liked,
                 mine,
-                canDelete);
+                canDelete,
+                blocked);
     }
 
     private static String key(CommentRow r, CommentOrder order) {

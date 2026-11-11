@@ -355,7 +355,7 @@ export function fromApiReport(r: real.AdminReport, now: number): QueueReport {
     kind: r.target.type,
     reason: r.reason,
     target: r.target.title ?? "",
-    who: "",
+    who: r.accusedName ?? "",
     where: "",
     text: r.target.title ?? null,
     count: 1,

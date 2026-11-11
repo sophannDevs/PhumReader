@@ -118,9 +118,7 @@ export function useCommentThread(kind: "series" | "episode", slug: string, justN
   }
 
   /** The Report dialog sends the reason to the API too (real mode). */
-  const reportSend = async (id: string, reason: string, details: string) => {
-    await real.reportComment(id, details ? `${reason}: ${details}` : reason)
-  }
+  const reportSend = (id: string, reason: string, details: string) => real.reportComment(id, reason, details)
 
   // Delete exists in the real API only (the demo's posted comments are not deletable here).
   return { comments, query, post, toggleLike, remove: DEMO_MODE ? undefined : remove, reportSend: DEMO_MODE ? undefined : reportSend }
@@ -208,6 +206,7 @@ export function useCommentThreads(series: Pick<Series, "creator"> | undefined, t
         id: c.id,
         name: c.name,
         mine: c.mine,
+        authorId: c.authorId,
         when: c.when,
         ago: hoursAgo(c.when),
         likes: c.likes - (c.liked ? 1 : 0),
@@ -321,7 +320,7 @@ export function useCommentThreads(series: Pick<Series, "creator"> | undefined, t
   const reportSend = async (id: string, reason: string, details: string) => {
     // Replies are local (no API id): only top-level API comments are sent.
     if (!threads.some((c) => c.id === id)) return
-    await real.reportComment(id, details ? `${reason}: ${details}` : reason)
+    return real.reportComment(id, reason, details)
   }
 
   return { threads, query, post, like, reply, edit, remove, reportSend: DEMO_MODE ? undefined : reportSend }

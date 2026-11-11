@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { formatCount, initials } from "@/lib/format"
+import type { ReportReceipt } from "@/lib/api/me"
 import { useAskToLogin } from "@/lib/me"
 import { useUser } from "@/lib/store"
 import { cn } from "@/lib/utils"
@@ -32,6 +33,8 @@ export type ReplyView = {
   liked: boolean
   creator?: boolean
   mine?: boolean
+  /** Real API: the author's account (Block) */
+  authorId?: string
 }
 
 export type ThreadView = ReplyView & {
@@ -53,7 +56,7 @@ export type ThreadActions = {
   onEdit: (id: string, text: string) => void
   onDelete: (id: string) => void
   /** Also send a report to the real API (the local report is always saved). */
-  onReportSend?: (id: string, reason: string, details: string) => Promise<void>
+  onReportSend?: (id: string, reason: string, details: string) => Promise<ReportReceipt | void>
 }
 
 const MAX = 500
@@ -143,11 +146,12 @@ export function CommentThread({
   const others = !c.mine && !c.creator
   const replies = hideReplyFrom?.length ? c.replies.filter((r) => !hideReplyFrom.includes(r.name)) : c.replies
   const withCreator = replies.some((r) => r.creator)
-  const report = (id: string, name: string, reply: boolean) =>
+  const report = (id: string, name: string, reply: boolean, whoId?: string) =>
     openReport({
       kind: "comment",
       target: t(reply ? "replyBy" : "commentBy", { name }),
       who: name,
+      whoId,
       onSend: onReportSend ? (reason, details) => onReportSend(id, reason, details) : undefined,
     })
 
@@ -243,7 +247,7 @@ export function CommentThread({
                   size="sm"
                   className={quiet}
                   aria-label={t("reportBy", { name: c.name })}
-                  onClick={gate(() => report(c.id, c.name, false))}
+                  onClick={gate(() => report(c.id, c.name, false, c.authorId))}
                 >
                   {t("report")}
                 </Button>
@@ -252,7 +256,7 @@ export function CommentThread({
                   size="sm"
                   className={quiet}
                   aria-label={t("blockName", { name: c.name })}
-                  onClick={gate(() => openBlock(c.name))}
+                  onClick={gate(() => openBlock(c.name, c.authorId))}
                 >
                   {t("block")}
                 </Button>

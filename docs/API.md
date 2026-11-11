@@ -277,9 +277,12 @@ Paths below are relative to `/api/v1`. "CSRF" applies to every write (see [CSRF]
 | DELETE | `/comments/{id}` | Signed in | Delete a comment |
 | PUT | `/comments/{id}/like` | Signed in | Like a comment |
 | DELETE | `/comments/{id}/like` | Signed in | Take back the like |
-| POST | `/series/{slug}/report` | Signed in | Report a series |
+| POST | `/series/{slug}/report` | Signed in | Report a series; answers 202 with the case number (V21-04) |
 | POST | `/series/{slug}/episodes/{n}/report` | Signed in | Report an episode |
-| POST | `/comments/{id}/report` | Signed in | Report a comment |
+| POST | `/comments/{id}/report` | Signed in | Report a comment (`reason` is a key, `details` separate; 400 `invalid_reason`, `details_required`) |
+| GET | `/me/reports` | Signed in | Your reports with status in_review / removed / no_violation |
+| GET | `/me/blocks` | Signed in | Accounts you blocked |
+| PUT / DELETE | `/users/{id}/block` | Signed in | Block / unblock (idempotent; 400 `cannot_block_self`) |
 | **Coins and payments** ||||
 | GET | `/coins/packs` | Public | Coin packs and payment methods |
 | GET | `/me/coins` | Signed in | Balance |
@@ -324,7 +327,7 @@ Paths below are relative to `/api/v1`. "CSRF" applies to every write (see [CSRF]
 | POST | `/admin/content/{type}/{id}/hide` | Admin | Take content down |
 | POST | `/admin/content/{type}/{id}/restore` | Admin | Put it back |
 | GET | `/admin/reports` | Admin | Report queue |
-| POST | `/admin/reports/{id}/settle` | Admin | Dismiss, resolve or hide |
+| POST | `/admin/reports/{id}/settle` | Admin | dismiss, resolve, hide, remove_warn or suspend (`days`, default 7) |
 | GET | `/admin/series-review` | Admin | Series waiting for review |
 | POST | `/admin/series/{id}/approve` | Admin | Approve: the series goes live |
 | POST | `/admin/series/{id}/request-changes` | Admin | Send it back with changes to make |

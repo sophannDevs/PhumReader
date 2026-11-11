@@ -211,34 +211,99 @@ public class CommentQueries {
                 .single();
     }
 
+    /** A report as the filing returns it. */
+    public record FiledReport(
+            int caseNumber, @Nullable UUID accusedId, @Nullable String accusedName) {}
+
+    /** One of the reporter's cases ("Your reports" in Settings). */
+    public record MyReportRow(
+            int caseNumber,
+            String targetType,
+            @Nullable String seriesTitle,
+            @Nullable Integer episodeNumber,
+            @Nullable String accusedName,
+            String reason,
+            String status,
+            @Nullable String action,
+            OffsetDateTime createdAt) {}
+
     /**
      * Files a report for the admin queue, unless this reporter already has an open report on the
-     * same target.
-     *
-     * @return whether a new report was filed
+     * same target (that one is returned).
      */
-    public boolean report(
+    public FiledReport report(
             UUID reporterId,
             String targetType,
             UUID targetId,
+            @Nullable UUID accusedId,
             String reason,
             @Nullable String details,
             OffsetDateTime now) {
+        jdbc.sql(
+                        "insert into reports (reporter_id, target_type, target_id, accused_id,"
+                                + " reason, details, created_at)"
+                                + " select :r, :type, :target, :accused, :reason, :details, :now"
+                                + " where not exists (select 1 from reports"
+                                + " where reporter_id = :r and target_type = :type"
+                                + " and target_id = :target and status = 'OPEN')")
+                .param("r", reporterId)
+                .param("type", targetType)
+                .param("target", targetId)
+                .param("accused", accusedId, Types.OTHER)
+                .param("reason", reason)
+                .param("details", details, Types.VARCHAR)
+                .param("now", now)
+                .update();
         return jdbc.sql(
-                                "insert into reports (reporter_id, target_type, target_id, reason,"
-                                        + " details, created_at)"
-                                        + " select :r, :type, :target, :reason, :details, :now"
-                                        + " where not exists (select 1 from reports"
-                                        + " where reporter_id = :r and target_type = :type"
-                                        + " and target_id = :target and status = 'OPEN')")
-                        .param("r", reporterId)
-                        .param("type", targetType)
-                        .param("target", targetId)
-                        .param("reason", reason)
-                        .param("details", details, Types.VARCHAR)
-                        .param("now", now)
-                        .update()
-                == 1;
+                        "select r.case_number, r.accused_id, u.display_name from reports r"
+                                + " left join users u on u.id = r.accused_id"
+                                + " where r.reporter_id = :r and r.target_type = :type"
+                                + " and r.target_id = :target order by r.created_at desc, r.id desc"
+                                + " limit 1")
+                .param("r", reporterId)
+                .param("type", targetType)
+                .param("target", targetId)
+                .query((rs, n) ->
+                        new FiledReport(
+                                rs.getInt("case_number"),
+                                rs.getObject("accused_id", UUID.class),
+                                rs.getString("display_name")))
+                .single();
+    }
+
+    /** The reporter's cases, newest first (at most {@code limit}). */
+    public List<MyReportRow> myReports(UUID reporterId, int limit) {
+        return jdbc.sql(
+                        "select r.case_number, r.target_type, r.reason, r.status, r.action,"
+                                + " r.created_at, acc.display_name as accused,"
+                                + " coalesce(ts.title, tes.title, tcs.title) as series_title,"
+                                + " coalesce(te.number, tce.number) as episode_number"
+                                + " from reports r left join users acc on acc.id = r.accused_id"
+                                + " left join series ts on r.target_type = 'SERIES'"
+                                + "   and ts.id = r.target_id"
+                                + " left join episodes te on r.target_type = 'EPISODE'"
+                                + "   and te.id = r.target_id"
+                                + " left join series tes on tes.id = te.series_id"
+                                + " left join comments tc on r.target_type = 'COMMENT'"
+                                + "   and tc.id = r.target_id"
+                                + " left join series tcs on tcs.id = tc.series_id"
+                                + " left join episodes tce on tce.id = tc.episode_id"
+                                + " where r.reporter_id = :r order by r.created_at desc, r.id desc"
+                                + " limit :limit")
+                .param("r", reporterId)
+                .param("limit", limit)
+                .query((rs, n) ->
+                        new MyReportRow(
+                                rs.getInt("case_number"),
+                                rs.getString("target_type"),
+                                rs.getString("series_title"),
+                                rs.getObject("episode_number", Integer.class),
+                                rs.getString("accused"),
+                                rs.getString("reason"),
+                                rs.getString("status"),
+                                rs.getString("action"),
+                                rs.getObject("created_at", OffsetDateTime.class)))
+                .list();
     }
 
     private void changeLikes(UUID commentId, int delta) {

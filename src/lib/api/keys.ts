@@ -26,6 +26,9 @@ export const meKeys = {
   devices: (email?: string) => ["devices", email ?? ""] as const,
   /** GET /me/settings: the account's theme, reader and alert settings (V21-03). */
   settings: (email: string) => ["settings", email] as const,
+  /** GET /me/blocks and GET /me/reports (V21-04). */
+  blocks: (email: string) => ["blocks", email] as const,
+  reports: (email: string) => ["reports", email] as const,
 }
 
 export const walletKeys = {

@@ -5,6 +5,8 @@ import app.phumreader.comment.service.CommentService;
 import app.phumreader.comment.service.CommentService.TargetType;
 import app.phumreader.comment.service.CommentViews.CommentLikeState;
 import app.phumreader.comment.service.CommentViews.CommentView;
+import app.phumreader.comment.service.CommentViews.MyReport;
+import app.phumreader.comment.service.CommentViews.ReportReceipt;
 import app.phumreader.common.error.ApiException;
 import app.phumreader.common.paging.CursorPage;
 import app.phumreader.common.security.CurrentUser;
@@ -16,6 +18,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import java.util.List;
 import java.util.UUID;
 import org.jspecify.annotations.Nullable;
 import org.springframework.http.HttpStatus;
@@ -55,8 +58,11 @@ class CommentController {
     public record CommentRequest(@NotNull @Size(max = 2000) String body) {}
 
     /**
-     * @param reason short reason, e.g. "spam"
-     * @param details optional longer explanation
+     * @param reason one of the website's keys: comment spam, harass, hate, sexual, violence,
+     *     spoiler, other; series and episode copyright, spam, harass, hate, sexual, violence,
+     *     rating, other (400 invalid_reason)
+     * @param details optional; at least 10 characters for other and copyright (400
+     *     details_required)
      */
     public record ReportRequest(
             @NotBlank @Size(max = 50) String reason, @Nullable @Size(max = 1000) String details) {}
@@ -154,36 +160,42 @@ class CommentController {
 
     @PostMapping("/series/{slug}/report")
     @ResponseStatus(HttpStatus.ACCEPTED)
-    @Operation(summary = "Report a series to the admins")
-    void reportSeries(
+    @Operation(summary = "Report a series to the admins; returns the case number")
+    ReportReceipt reportSeries(
             @PathVariable String slug,
             @Valid @RequestBody ReportRequest request,
             @Parameter(hidden = true) @AuthenticationPrincipal CurrentUser user) {
-        comments.report(
+        return comments.report(
                 user, TargetType.SERIES, slug, null, null, request.reason(), request.details());
     }
 
     @PostMapping("/series/{slug}/episodes/{n}/report")
     @ResponseStatus(HttpStatus.ACCEPTED)
     @Operation(summary = "Report an episode to the admins")
-    void reportEpisode(
+    ReportReceipt reportEpisode(
             @PathVariable String slug,
             @PathVariable int n,
             @Valid @RequestBody ReportRequest request,
             @Parameter(hidden = true) @AuthenticationPrincipal CurrentUser user) {
-        comments.report(
+        return comments.report(
                 user, TargetType.EPISODE, slug, n, null, request.reason(), request.details());
     }
 
     @PostMapping("/comments/{id}/report")
     @ResponseStatus(HttpStatus.ACCEPTED)
     @Operation(summary = "Report a comment to the admins")
-    void reportComment(
+    ReportReceipt reportComment(
             @PathVariable UUID id,
             @Valid @RequestBody ReportRequest request,
             @Parameter(hidden = true) @AuthenticationPrincipal CurrentUser user) {
-        comments.report(
+        return comments.report(
                 user, TargetType.COMMENT, null, null, id, request.reason(), request.details());
+    }
+
+    @GetMapping("/me/reports")
+    @Operation(summary = "Your reports with their status, newest first (at most 50)")
+    List<MyReport> myReports(@Parameter(hidden = true) @AuthenticationPrincipal CurrentUser user) {
+        return comments.myReports(user);
     }
 
     private static CommentOrder order(String sort) {

@@ -257,7 +257,7 @@ class CommentApiTest {
                         "/api/v1/series/glass-compass/episodes/65/report",
                         "{\"reason\":\"violence\",\"details\":\"Page 3\"}")
                 .andExpect(status().isAccepted());
-        report(reader, "/api/v1/comments/" + commentId + "/report", "{\"reason\":\"rude\"}")
+        report(reader, "/api/v1/comments/" + commentId + "/report", "{\"reason\":\"harass\"}")
                 .andExpect(status().isAccepted());
         assertThat(
                         jdbc.sql(
@@ -266,7 +266,7 @@ class CommentApiTest {
                                 .param("r", reader)
                                 .query(String.class)
                                 .list())
-                .containsExactly("COMMENT:rude", "EPISODE:violence", "SERIES:spam");
+                .containsExactly("COMMENT:harass", "EPISODE:violence", "SERIES:spam");
 
         report(reader, "/api/v1/series/glass-compass/report", "{\"reason\":\"\"}")
                 .andExpect(status().isBadRequest());
