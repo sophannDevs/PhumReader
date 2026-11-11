@@ -10,6 +10,10 @@ import { defaultHandlers, server } from "./server"
 
 // ---- animations (Animate UI / motion): jump straight to the end, so a closed dialog leaves the DOM at once
 MotionGlobalConfig.skipAnimations = true
+// jsdom has no SVGGeometryElement; Animate UI's checkbox/radio indicator only uses it for an `instanceof` check.
+if (typeof globalThis.SVGGeometryElement === "undefined") {
+  Object.defineProperty(globalThis, "SVGGeometryElement", { value: class SVGGeometryElement extends SVGElement {}, configurable: true })
+}
 
 // ---- routing: Next.js and next-intl need the Next.js runtime, so tests get plain stand-ins
 vi.mock("next/navigation", async () => {
