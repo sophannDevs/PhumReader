@@ -32,7 +32,7 @@ describe("CommentsSection (page)", () => {
     expect(screen.getAllByText("Dara Vann")).toHaveLength(2)
     expect(screen.getByText("Top")).toBeInTheDocument()
     expect(screen.getAllByText("· now")).toHaveLength(2)
-    expect(screen.getAllByRole("button", { name: "Like comment by Dara Vann, likes: 3" })).toHaveLength(2)
+    expect(screen.getAllByRole("button", { name: /^Like comment by Dara Vann, likes:\s*3$/ })).toHaveLength(2)
   })
 
   it("shows the empty state when nobody has commented", async () => {
@@ -115,6 +115,7 @@ describe("CommentsSection (page)", () => {
   })
 })
 
+// jsdom has no CSS, so the screen-reader text and the count join without a space ("likes:3"); a browser reads "likes: 3".
 describe("CommentsSection: likes, delete and report", () => {
   it("liking shows the change at once, sends PUT, and settles on the server's count", async () => {
     signIn()
@@ -127,9 +128,9 @@ describe("CommentsSection: likes, delete and report", () => {
       }),
     )
     const { user } = renderUi(<CommentsSection kind="series" slug="ink-witch" />)
-    const like = await screen.findByRole("button", { name: "Like comment by Dara Vann, likes: 3" })
+    const like = await screen.findByRole("button", { name: /^Like comment by Dara Vann, likes:\s*3$/ })
     await user.click(like)
-    await waitFor(() => expect(screen.getByRole("button", { name: "Like comment by Dara Vann, likes: 4" })).toHaveAttribute("aria-pressed", "true"))
+    await waitFor(() => expect(screen.getByRole("button", { name: /^Like comment by Dara Vann, likes:\s*4$/ })).toHaveAttribute("aria-pressed", "true"))
     expect(put).toBe(true)
   })
 
@@ -144,8 +145,8 @@ describe("CommentsSection: likes, delete and report", () => {
       }),
     )
     const { user } = renderUi(<CommentsSection kind="series" slug="ink-witch" />)
-    await user.click(await screen.findByRole("button", { name: "Like comment by Dara Vann, likes: 4" }))
-    await waitFor(() => expect(screen.getByRole("button", { name: "Like comment by Dara Vann, likes: 3" })).toHaveAttribute("aria-pressed", "false"))
+    await user.click(await screen.findByRole("button", { name: /^Like comment by Dara Vann, likes:\s*4$/ }))
+    await waitFor(() => expect(screen.getByRole("button", { name: /^Like comment by Dara Vann, likes:\s*3$/ })).toHaveAttribute("aria-pressed", "false"))
     expect(deleted).toBe(true)
   })
 
@@ -153,16 +154,16 @@ describe("CommentsSection: likes, delete and report", () => {
     signIn()
     server.use(thread(comment("1", { likes: 3 })), http.put(`${API}/comments/1/like`, () => apiError(500, "internal_error")))
     const { user } = renderUi(<CommentsSection kind="series" slug="ink-witch" />)
-    await user.click(await screen.findByRole("button", { name: "Like comment by Dara Vann, likes: 3" }))
+    await user.click(await screen.findByRole("button", { name: /^Like comment by Dara Vann, likes:\s*3$/ }))
     await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Something went wrong. Please try again."))
-    expect(screen.getByRole("button", { name: "Like comment by Dara Vann, likes: 3" })).toHaveAttribute("aria-pressed", "false")
+    expect(screen.getByRole("button", { name: /^Like comment by Dara Vann, likes:\s*3$/ })).toHaveAttribute("aria-pressed", "false")
   })
 
   it("logged out: liking asks to log in and remembers the page", async () => {
     nav.pathname = "/series/ink-witch"
     server.use(thread(comment("1")))
     const { user } = renderUi(<CommentsSection kind="series" slug="ink-witch" />)
-    await user.click(await screen.findByRole("button", { name: "Like comment by Dara Vann, likes: 3" }))
+    await user.click(await screen.findByRole("button", { name: /^Like comment by Dara Vann, likes:\s*3$/ }))
     expect(toast.success).toHaveBeenCalledWith("Log in to do this")
     expect(useAppStore.getState().returnTo).toBe("/series/ink-witch")
   })
