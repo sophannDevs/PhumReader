@@ -67,6 +67,7 @@ import { useLocalize } from "@/lib/localize"
 import { genreFromSlug, genreSlug } from "@/lib/routes"
 import { useAppStore } from "@/lib/store"
 import { cn } from "@/lib/utils"
+import { Effect } from "@animate-ui/react/primitives/effects/effect"
 
 /**
  * Create series (spec §15, prototype CreateSeries/): four steps (Basics / Story / Cover / Publishing) with an error
@@ -573,375 +574,378 @@ function Wizard({ workId, seed }: { workId: string | null; seed: Partial<Draft> 
             <div className="flex flex-col gap-5 p-5 max-md:p-4">
               <ErrorSummary title={t("fixToContinue", { count: shown.length })} items={shown.map((p) => p.text)} />
 
-              {step === "basics" ? (
-                <>
-                  <div className={fieldCol}>
-                    <FieldLabel id="cs-format-l" required>
-                      {t("format")}
-                    </FieldLabel>
-                    <div role="radiogroup" aria-labelledby="cs-format-l" className="grid gap-2.5 md:grid-cols-2">
-                      {(["comic", "novel"] as const).map((f) => (
-                        <OptionCard
-                          key={f}
-                          selected={d.format === f}
-                          onSelect={() => update({ format: f })}
-                          title={<span className="text-[13px] leading-[18px] font-semibold">{t(f === "comic" ? "formatComic" : "formatNovel")}</span>}
-                          description={t(f === "comic" ? "formatComicDesc" : "formatNovelDesc")}
-                          disabled={!DEMO_MODE && !!savedId}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                  <div className={fieldCol}>
-                    <FieldLabel htmlFor="cs-title" required>
-                      {t("titleLabel")}
-                    </FieldLabel>
-                    <Input
-                      id="cs-title"
-                      value={d.title}
-                      maxLength={TITLE_MAX}
-                      aria-invalid={!!bad("title")}
-                      aria-describedby="cs-title-h"
-                      onChange={(e) => update({ title: e.target.value.slice(0, TITLE_MAX) })}
-                    />
-                    <FieldHint id="cs-title-h" error={!!bad("title")}>
-                      {bad("title") ?? t("titleHint", { count: d.title.length, max: TITLE_MAX })}
-                    </FieldHint>
-                  </div>
-                  <div className={fieldRow}>
+              {/* Each step fades up when it opens (the key restarts the effect). */}
+              <Effect key={step} fade slide={{ direction: "up", offset: 12 }} className="flex flex-col gap-5">
+                {step === "basics" ? (
+                  <>
                     <div className={fieldCol}>
-                      <FieldLabel htmlFor="cs-genre" required>
-                        {t("mainGenre")}
+                      <FieldLabel id="cs-format-l" required>
+                        {t("format")}
                       </FieldLabel>
-                      <NativeSelect
-                        id="cs-genre"
-                        value={d.genre}
-                        className={selectInvalid}
-                        aria-invalid={!!bad("genre")}
-                        aria-describedby={bad("genre") ? "cs-genre-e" : undefined}
-                        onChange={(e) => {
-                          const g = e.target.value as StudioGenre | ""
-                          update({ genre: g, genre2: d.genre2 === g ? "" : d.genre2 })
-                        }}
-                      >
-                        <option value="">{t("chooseGenre")}</option>
-                        {GENRES.map((g) => (
-                          <option key={g} value={g}>
-                            {loc.genre(g)}
-                          </option>
+                      <div role="radiogroup" aria-labelledby="cs-format-l" className="grid gap-2.5 md:grid-cols-2">
+                        {(["comic", "novel"] as const).map((f) => (
+                          <OptionCard
+                            key={f}
+                            selected={d.format === f}
+                            onSelect={() => update({ format: f })}
+                            title={<span className="text-[13px] leading-[18px] font-semibold">{t(f === "comic" ? "formatComic" : "formatNovel")}</span>}
+                            description={t(f === "comic" ? "formatComicDesc" : "formatNovelDesc")}
+                            disabled={!DEMO_MODE && !!savedId}
+                          />
                         ))}
-                      </NativeSelect>
-                      {bad("genre") ? (
-                        <FieldHint id="cs-genre-e" error>
-                          {bad("genre")}
+                      </div>
+                    </div>
+                    <div className={fieldCol}>
+                      <FieldLabel htmlFor="cs-title" required>
+                        {t("titleLabel")}
+                      </FieldLabel>
+                      <Input
+                        id="cs-title"
+                        value={d.title}
+                        maxLength={TITLE_MAX}
+                        aria-invalid={!!bad("title")}
+                        aria-describedby="cs-title-h"
+                        onChange={(e) => update({ title: e.target.value.slice(0, TITLE_MAX) })}
+                      />
+                      <FieldHint id="cs-title-h" error={!!bad("title")}>
+                        {bad("title") ?? t("titleHint", { count: d.title.length, max: TITLE_MAX })}
+                      </FieldHint>
+                    </div>
+                    <div className={fieldRow}>
+                      <div className={fieldCol}>
+                        <FieldLabel htmlFor="cs-genre" required>
+                          {t("mainGenre")}
+                        </FieldLabel>
+                        <NativeSelect
+                          id="cs-genre"
+                          value={d.genre}
+                          className={selectInvalid}
+                          aria-invalid={!!bad("genre")}
+                          aria-describedby={bad("genre") ? "cs-genre-e" : undefined}
+                          onChange={(e) => {
+                            const g = e.target.value as StudioGenre | ""
+                            update({ genre: g, genre2: d.genre2 === g ? "" : d.genre2 })
+                          }}
+                        >
+                          <option value="">{t("chooseGenre")}</option>
+                          {GENRES.map((g) => (
+                            <option key={g} value={g}>
+                              {loc.genre(g)}
+                            </option>
+                          ))}
+                        </NativeSelect>
+                        {bad("genre") ? (
+                          <FieldHint id="cs-genre-e" error>
+                            {bad("genre")}
+                          </FieldHint>
+                        ) : null}
+                      </div>
+                      <div className={fieldCol}>
+                        <FieldLabel htmlFor="cs-genre2" optional>
+                          {t("secondGenre")}
+                        </FieldLabel>
+                        <NativeSelect id="cs-genre2" value={d.genre2} onChange={(e) => update({ genre2: e.target.value as StudioGenre | "" })}>
+                          <option value="">{t("none")}</option>
+                          {GENRES.filter((g) => g !== d.genre).map((g) => (
+                            <option key={g} value={g}>
+                              {loc.genre(g)}
+                            </option>
+                          ))}
+                        </NativeSelect>
+                      </div>
+                    </div>
+                    <div className={fieldRow}>
+                      <div className={fieldCol}>
+                        <FieldLabel id="cs-age-l" required>
+                          {t("ageRating")}
+                        </FieldLabel>
+                        <Segmented
+                          stretch
+                          label={t("ageRating")}
+                          value={d.age}
+                          onChange={(a) => update({ age: a })}
+                          options={AGES.map((a) => ({ value: a, label: ageLabel(a) }))}
+                        />
+                        <FieldHint>{ageHint}</FieldHint>
+                      </div>
+                      <div className={fieldCol}>
+                        <FieldLabel htmlFor="cs-lang" required>
+                          {t("language")}
+                        </FieldLabel>
+                        <NativeSelect id="cs-lang" value={d.lang} onChange={(e) => update({ lang: e.target.value as Lang })}>
+                          <option value="km">{t("langKm")}</option>
+                          <option value="en">{t("langEn")}</option>
+                          <option value="both">{t("langBoth")}</option>
+                        </NativeSelect>
+                      </div>
+                    </div>
+                  </>
+                ) : null}
+
+                {step === "story" ? (
+                  <>
+                    <div className={fieldCol}>
+                      <FieldLabel htmlFor="cs-sum" required>
+                        {t("summaryLabel")}
+                      </FieldLabel>
+                      <Textarea
+                        id="cs-sum"
+                        rows={5}
+                        maxLength={SUMMARY_MAX}
+                        value={d.summary}
+                        placeholder={t("summaryPlaceholder")}
+                        aria-invalid={!!bad("summary")}
+                        aria-describedby="cs-sum-h"
+                        onChange={(e) => update({ summary: e.target.value.slice(0, SUMMARY_MAX) })}
+                      />
+                      <div className="flex justify-between gap-3">
+                        <FieldHint id="cs-sum-h" error={!!bad("summary")}>
+                          {bad("summary") ?? (sumLen < SUMMARY_MIN ? t("summaryMore", { count: SUMMARY_MIN - sumLen }) : t("looksGood"))}
+                        </FieldHint>
+                        <span className="shrink-0 text-xs leading-4 text-muted-foreground tabular-nums">
+                          {d.summary.length}/{SUMMARY_MAX}
+                        </span>
+                      </div>
+                    </div>
+                    <div className={fieldCol}>
+                      <FieldLabel htmlFor={canTag ? "cs-tag" : undefined} id="cs-tags-l">
+                        {t("tagsLabel")} <span className="text-xs leading-4 font-normal text-muted-foreground">{t("tagsMax", { max: MAX_TAGS })}</span>
+                      </FieldLabel>
+                      <div className="flex min-h-11 flex-wrap items-center gap-1.5 rounded-control border border-input bg-background p-1.5 shadow-xs transition-colors focus-within:border-[#a1a1aa] focus-within:ring-[3px] focus-within:ring-[rgba(0,166,80,0.22)]">
+                        <ul aria-labelledby="cs-tags-l" className="contents">
+                          {d.tags.map((tag) => (
+                            <li key={tag} className="inline-flex h-7 items-center gap-1 rounded-full bg-foreground pr-1 pl-2.5 text-[13px] font-medium text-background">
+                              #{tag}
+                              <button
+                                type="button"
+                                aria-label={t("removeTag", { tag })}
+                                onClick={() => update({ tags: d.tags.filter((x) => x !== tag) })}
+                                className="inline-flex size-5 items-center justify-center rounded-full bg-white/20 text-sm leading-none outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                              >
+                                ×
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                        {canTag ? (
+                          <input
+                            id="cs-tag"
+                            value={tagDraft}
+                            placeholder={t("tagPlaceholder")}
+                            aria-describedby="cs-tags-h"
+                            className="h-7 min-w-[120px] flex-[1_1_140px] bg-transparent px-1.5 text-sm outline-none placeholder:text-muted-foreground"
+                            onChange={(e) => {
+                              const v = e.target.value
+                              if (/[,\s]$/.test(v)) addTag(v)
+                              else setTagDraft(v.slice(0, TAG_MAX))
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                e.preventDefault()
+                                addTag(tagDraft)
+                              } else if (e.key === "Backspace" && !tagDraft && d.tags.length) {
+                                update({ tags: d.tags.slice(0, -1) })
+                              }
+                            }}
+                          />
+                        ) : null}
+                      </div>
+                      <span id="cs-tags-h" className="sr-only">
+                        {t("tagsHelp")}
+                      </span>
+                      {canTag && ideas.length ? (
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          <span className="text-xs leading-4 text-muted-foreground">{t("popular")}</span>
+                          {ideas.map((x) => (
+                            <button
+                              key={x}
+                              type="button"
+                              onClick={() => addTag(x)}
+                              aria-label={t("addTag", { tag: x })}
+                              className="inline-flex h-7 items-center rounded-full border bg-background px-3 text-xs font-medium transition-colors outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                            >
+                              + {x}
+                            </button>
+                          ))}
+                        </div>
+                      ) : null}
+                    </div>
+                  </>
+                ) : null}
+
+                {step === "cover" ? (
+                  <div className="grid gap-6 md:grid-cols-[220px_minmax(0,1fr)]">
+                    <div className={fieldCol}>
+                      <FieldLabel id="cs-cover-l" required>
+                        {t("coverLabel")}
+                      </FieldLabel>
+                      {!DEMO_MODE ? (
+                        <input
+                          ref={fileRef}
+                          type="file"
+                          accept="image/jpeg,image/png"
+                          className="sr-only"
+                          tabIndex={-1}
+                          aria-labelledby="cs-cover-l"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0]
+                            e.target.value = ""
+                            if (file) void pickFile(file)
+                          }}
+                        />
+                      ) : null}
+                      {coverProgress !== null ? (
+                        <div role="status" className="flex aspect-[3/4] flex-col items-center justify-center gap-3 rounded-card border-[1.5px] border-dashed border-[#a1a1aa] bg-[#fafafa] p-4 text-center max-md:aspect-auto max-md:min-h-[180px] dark:bg-muted">
+                          <span className="text-[13px] leading-[18px] font-semibold">{t("coverUploading", { percent: coverProgress })}</span>
+                          <Progress value={coverProgress} aria-label={t("coverLabel")} className="w-full" />
+                        </div>
+                      ) : cover ? (
+                        <div className="flex flex-col gap-2">
+                          <Image
+                            src={cover}
+                            alt={t("coverPreviewAlt")}
+                            width={440}
+                            height={587}
+                            unoptimized={!DEMO_MODE}
+                            className="aspect-[3/4] w-full rounded-card border object-cover max-md:max-w-[200px]"
+                          />
+                          <div className="flex gap-1.5">
+                            <Button type="button" variant="outline" size="sm" onClick={pickCover}>
+                              {t("replace")}
+                            </Button>
+                            <Button type="button" variant="ghost" size="sm" onClick={() => update({ cover: "", coverUploadId: null })}>
+                              {t("remove")}
+                            </Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={pickCover}
+                          aria-describedby={bad("cover") ? "cs-cover-e" : undefined}
+                          onDragOver={(e) => {
+                            if (e.dataTransfer.types.includes("Files")) {
+                              e.preventDefault()
+                              setDropping(true)
+                            }
+                          }}
+                          onDragLeave={() => setDropping(false)}
+                          onDrop={(e) => {
+                            e.preventDefault()
+                            setDropping(false)
+                            const file = e.dataTransfer.files?.[0]
+                            if (!file) return
+                            if (DEMO_MODE) pickCover()
+                            else void pickFile(file)
+                          }}
+                          className={cn(
+                            "flex aspect-[3/4] w-full flex-col items-center justify-center gap-2 rounded-card border-[1.5px] border-dashed border-[#a1a1aa] bg-[#fafafa] p-3 text-center transition-colors outline-none hover:border-primary hover:bg-selected focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 max-md:aspect-auto max-md:min-h-[180px] dark:bg-muted",
+                            dropping && "border-primary bg-selected",
+                            bad("cover") && "border-destructive"
+                          )}
+                        >
+                          <PlusIcon className="size-[22px]" aria-hidden />
+                          <span className="text-[13px] leading-[18px] font-semibold">{t("chooseCover")}</span>
+                          <span className="text-xs leading-4 text-muted-foreground">{t("orDrag")}</span>
+                        </button>
+                      )}
+                      {coverError ? (
+                        <FieldHint error>
+                          <span role="alert">{coverError}</span>
+                        </FieldHint>
+                      ) : bad("cover") ? (
+                        <FieldHint id="cs-cover-e" error>
+                          {bad("cover")}
                         </FieldHint>
                       ) : null}
                     </div>
-                    <div className={fieldCol}>
-                      <FieldLabel htmlFor="cs-genre2" optional>
-                        {t("secondGenre")}
-                      </FieldLabel>
-                      <NativeSelect id="cs-genre2" value={d.genre2} onChange={(e) => update({ genre2: e.target.value as StudioGenre | "" })}>
-                        <option value="">{t("none")}</option>
-                        {GENRES.filter((g) => g !== d.genre).map((g) => (
-                          <option key={g} value={g}>
-                            {loc.genre(g)}
-                          </option>
-                        ))}
-                      </NativeSelect>
-                    </div>
-                  </div>
-                  <div className={fieldRow}>
-                    <div className={fieldCol}>
-                      <FieldLabel id="cs-age-l" required>
-                        {t("ageRating")}
-                      </FieldLabel>
-                      <Segmented
-                        stretch
-                        label={t("ageRating")}
-                        value={d.age}
-                        onChange={(a) => update({ age: a })}
-                        options={AGES.map((a) => ({ value: a, label: ageLabel(a) }))}
+                    <div className="flex min-w-0 flex-col gap-2.5">
+                      <span className="text-sm leading-5 font-medium">{t("requirements")}</span>
+                      <TickList
+                        items={[t("req1"), t("req2"), t("req3"), t("req4")].map((text) => ({ ok: !!cover, text }))}
                       />
-                      <FieldHint>{ageHint}</FieldHint>
-                    </div>
-                    <div className={fieldCol}>
-                      <FieldLabel htmlFor="cs-lang" required>
-                        {t("language")}
-                      </FieldLabel>
-                      <NativeSelect id="cs-lang" value={d.lang} onChange={(e) => update({ lang: e.target.value as Lang })}>
-                        <option value="km">{t("langKm")}</option>
-                        <option value="en">{t("langEn")}</option>
-                        <option value="both">{t("langBoth")}</option>
-                      </NativeSelect>
+                      <span className="pt-1.5 text-sm leading-5 font-medium">{t("squareThumb")}</span>
+                      <div className="flex items-center gap-3">
+                        <div className="relative flex size-[72px] shrink-0 items-center justify-center overflow-hidden rounded-card bg-muted text-[11px] text-muted-foreground">
+                          {cover ? (
+                            <Image src={cover} alt="" width={144} height={192} unoptimized={!DEMO_MODE} className="absolute inset-x-0 top-0 h-[133%] w-full object-cover" />
+                          ) : (
+                            "1:1"
+                          )}
+                        </div>
+                        <span className="text-xs leading-4 text-muted-foreground">{t("squareThumbHint")}</span>
+                      </div>
                     </div>
                   </div>
-                </>
-              ) : null}
+                ) : null}
 
-              {step === "story" ? (
-                <>
-                  <div className={fieldCol}>
-                    <FieldLabel htmlFor="cs-sum" required>
-                      {t("summaryLabel")}
-                    </FieldLabel>
-                    <Textarea
-                      id="cs-sum"
-                      rows={5}
-                      maxLength={SUMMARY_MAX}
-                      value={d.summary}
-                      placeholder={t("summaryPlaceholder")}
-                      aria-invalid={!!bad("summary")}
-                      aria-describedby="cs-sum-h"
-                      onChange={(e) => update({ summary: e.target.value.slice(0, SUMMARY_MAX) })}
-                    />
-                    <div className="flex justify-between gap-3">
-                      <FieldHint id="cs-sum-h" error={!!bad("summary")}>
-                        {bad("summary") ?? (sumLen < SUMMARY_MIN ? t("summaryMore", { count: SUMMARY_MIN - sumLen }) : t("looksGood"))}
+                {step === "publishing" ? (
+                  <>
+                    <div className={fieldCol}>
+                      <FieldLabel id="cs-days-l" required>
+                        {t("updateDays")}
+                      </FieldLabel>
+                      <DayChips value={d.days} onChange={(days) => update({ days: sortDays(days) })} labelledBy="cs-days-l" />
+                      <FieldHint error={!!bad("days")}>
+                        {bad("days") ??
+                          (d.days.length
+                            ? t("daysHintSet", { unit, days: listJoin(t, daysLong) })
+                            : t("daysHintNone"))}
                       </FieldHint>
-                      <span className="shrink-0 text-xs leading-4 text-muted-foreground tabular-nums">
-                        {d.summary.length}/{SUMMARY_MAX}
-                      </span>
                     </div>
-                  </div>
-                  <div className={fieldCol}>
-                    <FieldLabel htmlFor={canTag ? "cs-tag" : undefined} id="cs-tags-l">
-                      {t("tagsLabel")} <span className="text-xs leading-4 font-normal text-muted-foreground">{t("tagsMax", { max: MAX_TAGS })}</span>
-                    </FieldLabel>
-                    <div className="flex min-h-11 flex-wrap items-center gap-1.5 rounded-control border border-input bg-background p-1.5 shadow-xs transition-colors focus-within:border-[#a1a1aa] focus-within:ring-[3px] focus-within:ring-[rgba(0,166,80,0.22)]">
-                      <ul aria-labelledby="cs-tags-l" className="contents">
-                        {d.tags.map((tag) => (
-                          <li key={tag} className="inline-flex h-7 items-center gap-1 rounded-full bg-foreground pr-1 pl-2.5 text-[13px] font-medium text-background">
-                            #{tag}
-                            <button
-                              type="button"
-                              aria-label={t("removeTag", { tag })}
-                              onClick={() => update({ tags: d.tags.filter((x) => x !== tag) })}
-                              className="inline-flex size-5 items-center justify-center rounded-full bg-white/20 text-sm leading-none outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                            >
-                              ×
-                            </button>
-                          </li>
-                        ))}
-                      </ul>
-                      {canTag ? (
-                        <input
-                          id="cs-tag"
-                          value={tagDraft}
-                          placeholder={t("tagPlaceholder")}
-                          aria-describedby="cs-tags-h"
-                          className="h-7 min-w-[120px] flex-[1_1_140px] bg-transparent px-1.5 text-sm outline-none placeholder:text-muted-foreground"
-                          onChange={(e) => {
-                            const v = e.target.value
-                            if (/[,\s]$/.test(v)) addTag(v)
-                            else setTagDraft(v.slice(0, TAG_MAX))
-                          }}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") {
-                              e.preventDefault()
-                              addTag(tagDraft)
-                            } else if (e.key === "Backspace" && !tagDraft && d.tags.length) {
-                              update({ tags: d.tags.slice(0, -1) })
-                            }
-                          }}
+                    <div className={fieldRow}>
+                      <div className={fieldCol}>
+                        <FieldLabel htmlFor="cs-time">{t("releaseTime")}</FieldLabel>
+                        <NativeSelect id="cs-time" value={String(d.time)} aria-describedby="cs-time-h" onChange={(e) => update({ time: Number(e.target.value) })}>
+                          {(RELEASE_HOURS as readonly number[]).concat(RELEASE_HOURS.includes(d.time as never) ? [] : [d.time]).map((h) => (
+                            <option key={h} value={h}>
+                              {hourLabel(h)}
+                            </option>
+                          ))}
+                        </NativeSelect>
+                        <FieldHint id="cs-time-h">{t("releaseTimeHint")}</FieldHint>
+                      </div>
+                      <div className={fieldCol}>
+                        <FieldLabel id="cs-fp-l">{t("fastPass")}</FieldLabel>
+                        <div className="flex min-h-9 items-center justify-between gap-3">
+                          <span id="cs-fp-d" className="text-[13px] leading-[18px]">
+                            {t("fastPassDesc", { unit })}
+                          </span>
+                          <SmallSwitch checked={d.fastPass} onCheckedChange={(on) => update({ fastPass: on })} aria-labelledby="cs-fp-l" aria-describedby="cs-fp-d cs-fp-h" />
+                        </div>
+                        <FieldHint id="cs-fp-h">{t("fastPassHint", { unit })}</FieldHint>
+                      </div>
+                    </div>
+                    <div className="h-px bg-border" />
+                    <div className="flex flex-col gap-2">
+                      <div className="flex items-start gap-2.5">
+                        <Checkbox
+                          id="cs-agree"
+                          checked={d.agree}
+                          className="mt-px"
+                          aria-invalid={!!bad("agree")}
+                          aria-describedby={bad("agree") ? "cs-agree-e" : undefined}
+                          onCheckedChange={(on) => update({ agree: on === true })}
                         />
+                        <label htmlFor="cs-agree" className="text-[13px] leading-[18px]">
+                          {t.rich("agree", {
+                            link: (chunks) => (
+                              <Link href="/legal/creator" className="underline underline-offset-2">
+                                {chunks}
+                              </Link>
+                            ),
+                          })}
+                        </label>
+                      </div>
+                      {bad("agree") ? (
+                        <FieldHint id="cs-agree-e" error>
+                          {bad("agree")}
+                        </FieldHint>
                       ) : null}
                     </div>
-                    <span id="cs-tags-h" className="sr-only">
-                      {t("tagsHelp")}
-                    </span>
-                    {canTag && ideas.length ? (
-                      <div className="flex flex-wrap items-center gap-1.5">
-                        <span className="text-xs leading-4 text-muted-foreground">{t("popular")}</span>
-                        {ideas.map((x) => (
-                          <button
-                            key={x}
-                            type="button"
-                            onClick={() => addTag(x)}
-                            aria-label={t("addTag", { tag: x })}
-                            className="inline-flex h-7 items-center rounded-full border bg-background px-3 text-xs font-medium transition-colors outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                          >
-                            + {x}
-                          </button>
-                        ))}
-                      </div>
-                    ) : null}
-                  </div>
-                </>
-              ) : null}
-
-              {step === "cover" ? (
-                <div className="grid gap-6 md:grid-cols-[220px_minmax(0,1fr)]">
-                  <div className={fieldCol}>
-                    <FieldLabel id="cs-cover-l" required>
-                      {t("coverLabel")}
-                    </FieldLabel>
-                    {!DEMO_MODE ? (
-                      <input
-                        ref={fileRef}
-                        type="file"
-                        accept="image/jpeg,image/png"
-                        className="sr-only"
-                        tabIndex={-1}
-                        aria-labelledby="cs-cover-l"
-                        onChange={(e) => {
-                          const file = e.target.files?.[0]
-                          e.target.value = ""
-                          if (file) void pickFile(file)
-                        }}
-                      />
-                    ) : null}
-                    {coverProgress !== null ? (
-                      <div role="status" className="flex aspect-[3/4] flex-col items-center justify-center gap-3 rounded-card border-[1.5px] border-dashed border-[#a1a1aa] bg-[#fafafa] p-4 text-center max-md:aspect-auto max-md:min-h-[180px] dark:bg-muted">
-                        <span className="text-[13px] leading-[18px] font-semibold">{t("coverUploading", { percent: coverProgress })}</span>
-                        <Progress value={coverProgress} aria-label={t("coverLabel")} className="w-full" />
-                      </div>
-                    ) : cover ? (
-                      <div className="flex flex-col gap-2">
-                        <Image
-                          src={cover}
-                          alt={t("coverPreviewAlt")}
-                          width={440}
-                          height={587}
-                          unoptimized={!DEMO_MODE}
-                          className="aspect-[3/4] w-full rounded-card border object-cover max-md:max-w-[200px]"
-                        />
-                        <div className="flex gap-1.5">
-                          <Button type="button" variant="outline" size="sm" onClick={pickCover}>
-                            {t("replace")}
-                          </Button>
-                          <Button type="button" variant="ghost" size="sm" onClick={() => update({ cover: "", coverUploadId: null })}>
-                            {t("remove")}
-                          </Button>
-                        </div>
-                      </div>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={pickCover}
-                        aria-describedby={bad("cover") ? "cs-cover-e" : undefined}
-                        onDragOver={(e) => {
-                          if (e.dataTransfer.types.includes("Files")) {
-                            e.preventDefault()
-                            setDropping(true)
-                          }
-                        }}
-                        onDragLeave={() => setDropping(false)}
-                        onDrop={(e) => {
-                          e.preventDefault()
-                          setDropping(false)
-                          const file = e.dataTransfer.files?.[0]
-                          if (!file) return
-                          if (DEMO_MODE) pickCover()
-                          else void pickFile(file)
-                        }}
-                        className={cn(
-                          "flex aspect-[3/4] w-full flex-col items-center justify-center gap-2 rounded-card border-[1.5px] border-dashed border-[#a1a1aa] bg-[#fafafa] p-3 text-center transition-colors outline-none hover:border-primary hover:bg-selected focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 max-md:aspect-auto max-md:min-h-[180px] dark:bg-muted",
-                          dropping && "border-primary bg-selected",
-                          bad("cover") && "border-destructive"
-                        )}
-                      >
-                        <PlusIcon className="size-[22px]" aria-hidden />
-                        <span className="text-[13px] leading-[18px] font-semibold">{t("chooseCover")}</span>
-                        <span className="text-xs leading-4 text-muted-foreground">{t("orDrag")}</span>
-                      </button>
-                    )}
-                    {coverError ? (
-                      <FieldHint error>
-                        <span role="alert">{coverError}</span>
-                      </FieldHint>
-                    ) : bad("cover") ? (
-                      <FieldHint id="cs-cover-e" error>
-                        {bad("cover")}
-                      </FieldHint>
-                    ) : null}
-                  </div>
-                  <div className="flex min-w-0 flex-col gap-2.5">
-                    <span className="text-sm leading-5 font-medium">{t("requirements")}</span>
-                    <TickList
-                      items={[t("req1"), t("req2"), t("req3"), t("req4")].map((text) => ({ ok: !!cover, text }))}
-                    />
-                    <span className="pt-1.5 text-sm leading-5 font-medium">{t("squareThumb")}</span>
-                    <div className="flex items-center gap-3">
-                      <div className="relative flex size-[72px] shrink-0 items-center justify-center overflow-hidden rounded-card bg-muted text-[11px] text-muted-foreground">
-                        {cover ? (
-                          <Image src={cover} alt="" width={144} height={192} unoptimized={!DEMO_MODE} className="absolute inset-x-0 top-0 h-[133%] w-full object-cover" />
-                        ) : (
-                          "1:1"
-                        )}
-                      </div>
-                      <span className="text-xs leading-4 text-muted-foreground">{t("squareThumbHint")}</span>
-                    </div>
-                  </div>
-                </div>
-              ) : null}
-
-              {step === "publishing" ? (
-                <>
-                  <div className={fieldCol}>
-                    <FieldLabel id="cs-days-l" required>
-                      {t("updateDays")}
-                    </FieldLabel>
-                    <DayChips value={d.days} onChange={(days) => update({ days: sortDays(days) })} labelledBy="cs-days-l" />
-                    <FieldHint error={!!bad("days")}>
-                      {bad("days") ??
-                        (d.days.length
-                          ? t("daysHintSet", { unit, days: listJoin(t, daysLong) })
-                          : t("daysHintNone"))}
-                    </FieldHint>
-                  </div>
-                  <div className={fieldRow}>
-                    <div className={fieldCol}>
-                      <FieldLabel htmlFor="cs-time">{t("releaseTime")}</FieldLabel>
-                      <NativeSelect id="cs-time" value={String(d.time)} aria-describedby="cs-time-h" onChange={(e) => update({ time: Number(e.target.value) })}>
-                        {(RELEASE_HOURS as readonly number[]).concat(RELEASE_HOURS.includes(d.time as never) ? [] : [d.time]).map((h) => (
-                          <option key={h} value={h}>
-                            {hourLabel(h)}
-                          </option>
-                        ))}
-                      </NativeSelect>
-                      <FieldHint id="cs-time-h">{t("releaseTimeHint")}</FieldHint>
-                    </div>
-                    <div className={fieldCol}>
-                      <FieldLabel id="cs-fp-l">{t("fastPass")}</FieldLabel>
-                      <div className="flex min-h-9 items-center justify-between gap-3">
-                        <span id="cs-fp-d" className="text-[13px] leading-[18px]">
-                          {t("fastPassDesc", { unit })}
-                        </span>
-                        <SmallSwitch checked={d.fastPass} onCheckedChange={(on) => update({ fastPass: on })} aria-labelledby="cs-fp-l" aria-describedby="cs-fp-d cs-fp-h" />
-                      </div>
-                      <FieldHint id="cs-fp-h">{t("fastPassHint", { unit })}</FieldHint>
-                    </div>
-                  </div>
-                  <div className="h-px bg-border" />
-                  <div className="flex flex-col gap-2">
-                    <div className="flex items-start gap-2.5">
-                      <Checkbox
-                        id="cs-agree"
-                        checked={d.agree}
-                        className="mt-px"
-                        aria-invalid={!!bad("agree")}
-                        aria-describedby={bad("agree") ? "cs-agree-e" : undefined}
-                        onCheckedChange={(on) => update({ agree: on === true })}
-                      />
-                      <label htmlFor="cs-agree" className="text-[13px] leading-[18px]">
-                        {t.rich("agree", {
-                          link: (chunks) => (
-                            <Link href="/legal/creator" className="underline underline-offset-2">
-                              {chunks}
-                            </Link>
-                          ),
-                        })}
-                      </label>
-                    </div>
-                    {bad("agree") ? (
-                      <FieldHint id="cs-agree-e" error>
-                        {bad("agree")}
-                      </FieldHint>
-                    ) : null}
-                  </div>
-                </>
-              ) : null}
+                  </>
+                ) : null}
+              </Effect>
             </div>
             <div className="flex items-center gap-2 border-t px-5 pt-4 pb-5 max-md:flex-wrap max-md:px-4 max-md:pb-4">
               {ix > 0 ? (

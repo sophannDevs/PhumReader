@@ -68,6 +68,7 @@ import { useDemoFlag } from "@/lib/queries"
 import { genreFromSlug, genreSlug } from "@/lib/routes"
 import { useAppStore } from "@/lib/store"
 import { cn } from "@/lib/utils"
+import { Effect } from "@animate-ui/react/primitives/effects/effect"
 
 /**
  * Manage series (spec §21, prototype Manage/): header with the cover, status, "View as reader" and Upload; the reviewer's
@@ -960,342 +961,344 @@ function ManageView({ model, actions }: { model: Model; actions: Actions }) {
         })}
       </div>
 
-      <div role="tabpanel" id="mg-panel" aria-labelledby={`mg-tab-${tab}`} className="flex min-w-0 flex-col gap-5 outline-none">
-        {tab === "episodes" ? (
-          <>
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div role="group" aria-label={t("filterLabel")} className="flex flex-wrap gap-1.5">
-                {filters.map((x) => (
-                  <Chip
-                    key={x.id}
-                    selected={filter === x.id}
-                    count={eps.filter(groups[x.id]).length}
-                    onClick={() => {
-                      setFilter(x.id)
-                      setShown(PAGE)
-                    }}
-                  >
-                    {x.label}
-                  </Chip>
-                ))}
-              </div>
-              <Button type="button" variant="ghost" size="sm" onClick={() => setNewest((v) => !v)} aria-label={t("sortLabel", { order: newest ? t("newestFirst") : t("oldestFirst") })}>
-                <ArrowUpDownIcon className="size-3.5" />
-                {newest ? t("newestFirst") : t("oldestFirst")}
-              </Button>
-            </div>
-            {visible.length ? (
-              <ul className="m-0 flex list-none flex-col overflow-hidden rounded-card border p-0" aria-label={t("tabEpisodes", { unit })}>
-                {visible.map((e) => {
-                  const draft = e.state === "draft"
-                  const isHidden = e.state === "hidden"
-                  return (
-                    <li key={e.n} className="flex items-center gap-3.5 bg-background px-3.5 py-2.5 not-first:border-t max-md:flex-wrap max-md:gap-3 max-md:px-3">
-                      {e.thumb ? (
-                        <Image src={e.thumb} alt="" width={96} height={96} unoptimized={!DEMO_MODE} className={cn("size-12 shrink-0 rounded-lg object-cover", isHidden && "opacity-50")} />
-                      ) : (
-                        <span aria-hidden className="size-12 shrink-0 rounded-lg bg-muted" />
-                      )}
-                      <div className="flex min-w-0 flex-1 flex-col gap-1">
-                        <span className={cn("truncate text-[13px] leading-[18px] font-semibold", isHidden && "opacity-50")}>{label(e)}</span>
-                        <div className="flex flex-wrap items-center gap-1.5">
-                          <Badge variant={badge[e.state]}>{t(`state.${e.state}`)}</Badge>
-                          <span className="text-xs leading-4 text-muted-foreground">{when(e)}</span>
-                        </div>
-                      </div>
-                      {e.views !== null ? (
-                        <div className="flex shrink-0 gap-[18px] text-xs leading-4 text-muted-foreground max-md:hidden">
-                          <span>{t.rich("statViews", { count: formatCount(e.views), b: (c) => <strong className="font-semibold text-foreground tabular-nums">{c}</strong> })}</span>
-                          {e.likes !== null ? <span>{t.rich("statLikes", { count: formatCount(e.likes), b: (c) => <strong className="font-semibold text-foreground tabular-nums">{c}</strong> })}</span> : null}
-                          {e.comments !== null ? <span>{t.rich("statComments", { count: formatCount(e.comments), b: (c) => <strong className="font-semibold text-foreground tabular-nums">{c}</strong> })}</span> : null}
-                        </div>
-                      ) : null}
-                      <div className="flex shrink-0 gap-1 max-md:w-full max-md:pl-[60px]">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          aria-label={t("editLabel", { label: label(e) })}
-                          onClick={() => setDialog({ kind: "edit", ep: e, title: e.title, at: e.at ?? null, tried: false })}
-                        >
-                          {t("edit")}
-                        </Button>
-                        {!draft && e.state !== "scheduled" && !e.takenDown ? (
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            aria-label={t(isHidden ? "showLabel" : "hideLabel", { unit, n: e.n })}
-                            onClick={() => (isHidden ? void showEpisode(e) : setDialog({ kind: "hide", ep: e }))}
-                          >
-                            {isHidden ? t("show") : t("hide")}
-                          </Button>
-                        ) : null}
-                        {draft ? (
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            className="text-destructive hover:text-destructive"
-                            aria-label={t("deleteLabel", { label: label(e) })}
-                            onClick={() => setDialog({ kind: "delete", ep: e })}
-                          >
-                            {t("delete")}
-                          </Button>
-                        ) : null}
-                      </div>
-                    </li>
-                  )
-                })}
-              </ul>
-            ) : (
-              <div className="flex flex-col items-center gap-2 rounded-card border bg-card px-5 py-9 text-center shadow-xs">
-                <h2 className="type-h4">{!eps.length ? t("emptyTitle", { unit }) : filter === "scheduled" ? t("emptyScheduledTitle") : t("emptyFilterTitle", { unit })}</h2>
-                <p className="text-[13px] leading-[18px] text-muted-foreground">
-                  {!eps.length ? t("emptyText", { unit }) : filter === "scheduled" ? t("emptyScheduledText", { unit }) : t("emptyFilterText")}
-                </p>
-                {!eps.length && canUpload ? (
-                  <Button asChild variant="brand" size="sm" className="mt-1">
-                    <Link href={`/creator/upload?series=${encodeURIComponent(model.id)}`}>{t("uploadFirst", { unit })}</Link>
-                  </Button>
-                ) : null}
-              </div>
-            )}
-            {list.length > shown ? (
-              <div className="flex items-center justify-center gap-3">
-                <span className="text-[13px] leading-[18px] text-muted-foreground" role="status">
-                  {t("showing", { shown: visible.length, total: list.length })}
-                </span>
-                <Button type="button" variant="outline" size="sm" onClick={() => setShown((x) => x + PAGE)}>
-                  {t("showMore")}
+      <Effect key={tab} asChild fade slide={{ direction: "up", offset: 8 }}>
+        <div role="tabpanel" id="mg-panel" aria-labelledby={`mg-tab-${tab}`} className="flex min-w-0 flex-col gap-5 outline-none">
+          {tab === "episodes" ? (
+            <>
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div role="group" aria-label={t("filterLabel")} className="flex flex-wrap gap-1.5">
+                  {filters.map((x) => (
+                    <Chip
+                      key={x.id}
+                      selected={filter === x.id}
+                      count={eps.filter(groups[x.id]).length}
+                      onClick={() => {
+                        setFilter(x.id)
+                        setShown(PAGE)
+                      }}
+                    >
+                      {x.label}
+                    </Chip>
+                  ))}
+                </div>
+                <Button type="button" variant="ghost" size="sm" onClick={() => setNewest((v) => !v)} aria-label={t("sortLabel", { order: newest ? t("newestFirst") : t("oldestFirst") })}>
+                  <ArrowUpDownIcon className="size-3.5" />
+                  {newest ? t("newestFirst") : t("oldestFirst")}
                 </Button>
               </div>
-            ) : null}
-          </>
-        ) : null}
+              {visible.length ? (
+                <ul className="m-0 flex list-none flex-col overflow-hidden rounded-card border p-0" aria-label={t("tabEpisodes", { unit })}>
+                  {visible.map((e) => {
+                    const draft = e.state === "draft"
+                    const isHidden = e.state === "hidden"
+                    return (
+                      <li key={e.n} className="flex items-center gap-3.5 bg-background px-3.5 py-2.5 not-first:border-t max-md:flex-wrap max-md:gap-3 max-md:px-3">
+                        {e.thumb ? (
+                          <Image src={e.thumb} alt="" width={96} height={96} unoptimized={!DEMO_MODE} className={cn("size-12 shrink-0 rounded-lg object-cover", isHidden && "opacity-50")} />
+                        ) : (
+                          <span aria-hidden className="size-12 shrink-0 rounded-lg bg-muted" />
+                        )}
+                        <div className="flex min-w-0 flex-1 flex-col gap-1">
+                          <span className={cn("truncate text-[13px] leading-[18px] font-semibold", isHidden && "opacity-50")}>{label(e)}</span>
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            <Badge variant={badge[e.state]}>{t(`state.${e.state}`)}</Badge>
+                            <span className="text-xs leading-4 text-muted-foreground">{when(e)}</span>
+                          </div>
+                        </div>
+                        {e.views !== null ? (
+                          <div className="flex shrink-0 gap-[18px] text-xs leading-4 text-muted-foreground max-md:hidden">
+                            <span>{t.rich("statViews", { count: formatCount(e.views), b: (c) => <strong className="font-semibold text-foreground tabular-nums">{c}</strong> })}</span>
+                            {e.likes !== null ? <span>{t.rich("statLikes", { count: formatCount(e.likes), b: (c) => <strong className="font-semibold text-foreground tabular-nums">{c}</strong> })}</span> : null}
+                            {e.comments !== null ? <span>{t.rich("statComments", { count: formatCount(e.comments), b: (c) => <strong className="font-semibold text-foreground tabular-nums">{c}</strong> })}</span> : null}
+                          </div>
+                        ) : null}
+                        <div className="flex shrink-0 gap-1 max-md:w-full max-md:pl-[60px]">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            aria-label={t("editLabel", { label: label(e) })}
+                            onClick={() => setDialog({ kind: "edit", ep: e, title: e.title, at: e.at ?? null, tried: false })}
+                          >
+                            {t("edit")}
+                          </Button>
+                          {!draft && e.state !== "scheduled" && !e.takenDown ? (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              aria-label={t(isHidden ? "showLabel" : "hideLabel", { unit, n: e.n })}
+                              onClick={() => (isHidden ? void showEpisode(e) : setDialog({ kind: "hide", ep: e }))}
+                            >
+                              {isHidden ? t("show") : t("hide")}
+                            </Button>
+                          ) : null}
+                          {draft ? (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              className="text-destructive hover:text-destructive"
+                              aria-label={t("deleteLabel", { label: label(e) })}
+                              onClick={() => setDialog({ kind: "delete", ep: e })}
+                            >
+                              {t("delete")}
+                            </Button>
+                          ) : null}
+                        </div>
+                      </li>
+                    )
+                  })}
+                </ul>
+              ) : (
+                <div className="flex flex-col items-center gap-2 rounded-card border bg-card px-5 py-9 text-center shadow-xs">
+                  <h2 className="type-h4">{!eps.length ? t("emptyTitle", { unit }) : filter === "scheduled" ? t("emptyScheduledTitle") : t("emptyFilterTitle", { unit })}</h2>
+                  <p className="text-[13px] leading-[18px] text-muted-foreground">
+                    {!eps.length ? t("emptyText", { unit }) : filter === "scheduled" ? t("emptyScheduledText", { unit }) : t("emptyFilterText")}
+                  </p>
+                  {!eps.length && canUpload ? (
+                    <Button asChild variant="brand" size="sm" className="mt-1">
+                      <Link href={`/creator/upload?series=${encodeURIComponent(model.id)}`}>{t("uploadFirst", { unit })}</Link>
+                    </Button>
+                  ) : null}
+                </div>
+              )}
+              {list.length > shown ? (
+                <div className="flex items-center justify-center gap-3">
+                  <span className="text-[13px] leading-[18px] text-muted-foreground" role="status">
+                    {t("showing", { shown: visible.length, total: list.length })}
+                  </span>
+                  <Button type="button" variant="outline" size="sm" onClick={() => setShown((x) => x + PAGE)}>
+                    {t("showMore")}
+                  </Button>
+                </div>
+              ) : null}
+            </>
+          ) : null}
 
-        {tab === "details" ? (
-          <StudioCard>
-            <form onSubmit={saveDetails} noValidate aria-label={t("tabDetails")}>
-              <div className="flex flex-col gap-[18px] p-5 max-md:p-4">
-                <div className={fieldCol}>
-                  <FieldLabel htmlFor="md-title">{tf("titleLabel")}</FieldLabel>
-                  <Input id="md-title" value={f.title} maxLength={TITLE_MAX} aria-invalid={titleShort} aria-describedby="md-title-h" onChange={(e) => setF({ ...f, title: e.target.value.slice(0, TITLE_MAX) })} />
-                  <FieldHint id="md-title-h" error={titleShort}>
-                    {titleShort ? t("titleMissing") : titleChanged && status === "published" ? t("titleReview") : `${f.title.length}/${TITLE_MAX}`}
-                  </FieldHint>
-                </div>
-                <div className={fieldCol}>
-                  <FieldLabel htmlFor="md-sum">{tf("summaryLabel")}</FieldLabel>
-                  <Textarea
-                    id="md-sum"
-                    rows={4}
-                    maxLength={SUMMARY_MAX}
-                    value={f.summary}
-                    aria-invalid={sumContact || sumShort}
-                    aria-describedby="md-sum-h"
-                    onChange={(e) => setF({ ...f, summary: e.target.value.slice(0, SUMMARY_MAX) })}
-                  />
-                  <div className="flex justify-between gap-3">
-                    <FieldHint id="md-sum-h" error={sumContact || sumShort}>
-                      {sumContact ? t("summaryContact") : sumShort ? t("summaryShort", { min: SUMMARY_MIN }) : tf("looksGood")}
+          {tab === "details" ? (
+            <StudioCard>
+              <form onSubmit={saveDetails} noValidate aria-label={t("tabDetails")}>
+                <div className="flex flex-col gap-[18px] p-5 max-md:p-4">
+                  <div className={fieldCol}>
+                    <FieldLabel htmlFor="md-title">{tf("titleLabel")}</FieldLabel>
+                    <Input id="md-title" value={f.title} maxLength={TITLE_MAX} aria-invalid={titleShort} aria-describedby="md-title-h" onChange={(e) => setF({ ...f, title: e.target.value.slice(0, TITLE_MAX) })} />
+                    <FieldHint id="md-title-h" error={titleShort}>
+                      {titleShort ? t("titleMissing") : titleChanged && status === "published" ? t("titleReview") : `${f.title.length}/${TITLE_MAX}`}
                     </FieldHint>
-                    <span className="shrink-0 text-xs leading-4 text-muted-foreground tabular-nums">
-                      {f.summary.length}/{SUMMARY_MAX}
-                    </span>
-                  </div>
-                </div>
-                <div className={fieldRow}>
-                  <div className={fieldCol}>
-                    <FieldLabel htmlFor="md-genre">{tf("mainGenre")}</FieldLabel>
-                    <NativeSelect id="md-genre" value={f.genre} onChange={(e) => setF({ ...f, genre: e.target.value as StudioGenre })}>
-                      {GENRES.map((g) => (
-                        <option key={g} value={g}>
-                          {loc.genre(g)}
-                        </option>
-                      ))}
-                    </NativeSelect>
                   </div>
                   <div className={fieldCol}>
-                    <FieldLabel id="md-run-l">{t("storyStatus")}</FieldLabel>
-                    <Segmented
-                      stretch
-                      label={t("storyStatus")}
-                      value={f.run}
-                      onChange={(run) => setF({ ...f, run })}
-                      options={[
-                        { value: "ongoing", label: runLabel.ongoing },
-                        { value: "hiatus", label: runLabel.hiatus },
-                        { value: "completed", label: runLabel.completed },
-                      ]}
+                    <FieldLabel htmlFor="md-sum">{tf("summaryLabel")}</FieldLabel>
+                    <Textarea
+                      id="md-sum"
+                      rows={4}
+                      maxLength={SUMMARY_MAX}
+                      value={f.summary}
+                      aria-invalid={sumContact || sumShort}
+                      aria-describedby="md-sum-h"
+                      onChange={(e) => setF({ ...f, summary: e.target.value.slice(0, SUMMARY_MAX) })}
                     />
-                    <FieldHint>{f.run === "ongoing" ? t("runOngoingHint", { unit }) : f.run === "hiatus" ? t("runHiatusHint") : t("runCompletedHint", { unit })}</FieldHint>
-                  </div>
-                </div>
-                {f.run === "hiatus" ? (
-                  <div className={fieldCol}>
-                    <FieldLabel htmlFor="md-note">{t("breakMessage")}</FieldLabel>
-                    <Input
-                      id="md-note"
-                      value={f.note}
-                      maxLength={BREAK_NOTE_MAX}
-                      placeholder={t("breakPlaceholder")}
-                      aria-describedby="md-note-h"
-                      onChange={(e) => setF({ ...f, note: e.target.value.slice(0, BREAK_NOTE_MAX) })}
-                    />
-                    <FieldHint id="md-note-h">{t("breakHint")}</FieldHint>
-                  </div>
-                ) : null}
-                <div className={fieldCol}>
-                  <FieldLabel id="md-days-l">{tf("updateDays")}</FieldLabel>
-                  <DayChips value={f.days} onChange={(days) => setF({ ...f, days: sortDays(days) })} labelledBy="md-days-l" />
-                  {!f.days.length ? <FieldHint error>{t("chooseDay")}</FieldHint> : null}
-                </div>
-                <div className={fieldCol}>
-                  <FieldLabel id="md-cover-l">{tf("coverLabel")}</FieldLabel>
-                  <div className="flex items-end gap-3.5">
-                    {f.cover ? (
-                      <Image
-                        src={f.cover}
-                        alt={t("currentCover")}
-                        width={192}
-                        height={256}
-                        unoptimized={!DEMO_MODE}
-                        className={cn("aspect-[3/4] w-24 rounded-[10px] border object-cover", !coverFixed && f.cover === saved.cover && "outline-2 outline-offset-2 outline-destructive")}
-                      />
-                    ) : (
-                      <span aria-hidden className="aspect-[3/4] w-24 rounded-[10px] border bg-muted" />
-                    )}
-                    <div className="flex flex-col items-start gap-1.5">
-                      <Button type="button" variant="outline" size="sm" loading={coverBusy} onClick={() => void replaceCover()} aria-describedby="md-cover-h">
-                        {t("replaceCover")}
-                      </Button>
-                      <FieldHint id="md-cover-h" error={!!coverError || (!coverFixed && f.cover === saved.cover)}>
-                        {coverError ?? (!coverFixed && f.cover === saved.cover ? t("coverWatermark") : t("coverRules"))}
+                    <div className="flex justify-between gap-3">
+                      <FieldHint id="md-sum-h" error={sumContact || sumShort}>
+                        {sumContact ? t("summaryContact") : sumShort ? t("summaryShort", { min: SUMMARY_MIN }) : tf("looksGood")}
                       </FieldHint>
+                      <span className="shrink-0 text-xs leading-4 text-muted-foreground tabular-nums">
+                        {f.summary.length}/{SUMMARY_MAX}
+                      </span>
+                    </div>
+                  </div>
+                  <div className={fieldRow}>
+                    <div className={fieldCol}>
+                      <FieldLabel htmlFor="md-genre">{tf("mainGenre")}</FieldLabel>
+                      <NativeSelect id="md-genre" value={f.genre} onChange={(e) => setF({ ...f, genre: e.target.value as StudioGenre })}>
+                        {GENRES.map((g) => (
+                          <option key={g} value={g}>
+                            {loc.genre(g)}
+                          </option>
+                        ))}
+                      </NativeSelect>
+                    </div>
+                    <div className={fieldCol}>
+                      <FieldLabel id="md-run-l">{t("storyStatus")}</FieldLabel>
+                      <Segmented
+                        stretch
+                        label={t("storyStatus")}
+                        value={f.run}
+                        onChange={(run) => setF({ ...f, run })}
+                        options={[
+                          { value: "ongoing", label: runLabel.ongoing },
+                          { value: "hiatus", label: runLabel.hiatus },
+                          { value: "completed", label: runLabel.completed },
+                        ]}
+                      />
+                      <FieldHint>{f.run === "ongoing" ? t("runOngoingHint", { unit }) : f.run === "hiatus" ? t("runHiatusHint") : t("runCompletedHint", { unit })}</FieldHint>
+                    </div>
+                  </div>
+                  {f.run === "hiatus" ? (
+                    <div className={fieldCol}>
+                      <FieldLabel htmlFor="md-note">{t("breakMessage")}</FieldLabel>
+                      <Input
+                        id="md-note"
+                        value={f.note}
+                        maxLength={BREAK_NOTE_MAX}
+                        placeholder={t("breakPlaceholder")}
+                        aria-describedby="md-note-h"
+                        onChange={(e) => setF({ ...f, note: e.target.value.slice(0, BREAK_NOTE_MAX) })}
+                      />
+                      <FieldHint id="md-note-h">{t("breakHint")}</FieldHint>
+                    </div>
+                  ) : null}
+                  <div className={fieldCol}>
+                    <FieldLabel id="md-days-l">{tf("updateDays")}</FieldLabel>
+                    <DayChips value={f.days} onChange={(days) => setF({ ...f, days: sortDays(days) })} labelledBy="md-days-l" />
+                    {!f.days.length ? <FieldHint error>{t("chooseDay")}</FieldHint> : null}
+                  </div>
+                  <div className={fieldCol}>
+                    <FieldLabel id="md-cover-l">{tf("coverLabel")}</FieldLabel>
+                    <div className="flex items-end gap-3.5">
+                      {f.cover ? (
+                        <Image
+                          src={f.cover}
+                          alt={t("currentCover")}
+                          width={192}
+                          height={256}
+                          unoptimized={!DEMO_MODE}
+                          className={cn("aspect-[3/4] w-24 rounded-[10px] border object-cover", !coverFixed && f.cover === saved.cover && "outline-2 outline-offset-2 outline-destructive")}
+                        />
+                      ) : (
+                        <span aria-hidden className="aspect-[3/4] w-24 rounded-[10px] border bg-muted" />
+                      )}
+                      <div className="flex flex-col items-start gap-1.5">
+                        <Button type="button" variant="outline" size="sm" loading={coverBusy} onClick={() => void replaceCover()} aria-describedby="md-cover-h">
+                          {t("replaceCover")}
+                        </Button>
+                        <FieldHint id="md-cover-h" error={!!coverError || (!coverFixed && f.cover === saved.cover)}>
+                          {coverError ?? (!coverFixed && f.cover === saved.cover ? t("coverWatermark") : t("coverRules"))}
+                        </FieldHint>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-              <div className="flex justify-end gap-2 border-t px-5 pt-4 pb-5 max-md:px-4 max-md:pb-4">
-                <Button type="button" variant="ghost" disabled={!dirty || savingDetails} onClick={() => setF(saved)}>
-                  {t("discard")}
-                </Button>
-                <Button type="submit" variant="brand" disabled={!dirty} loading={savingDetails}>
-                  {t("saveChanges")}
-                </Button>
-              </div>
-            </form>
-          </StudioCard>
-        ) : null}
-
-        {tab === "fast-pass" ? (
-          <StudioCard className="flex flex-col gap-[18px] p-5 max-md:p-4">
-            <SwitchRow
-              id="mg-fp"
-              strong
-              label={tf("fastPass")}
-              // Free after ahead × 7 ÷ update days, rounded up (V21-02): a weekly series with 3 ahead waits 21 days.
-              desc={t("fpDesc", { unit, coins: FAST_PASS_COINS, days: api.seriesFreeAfterDays(fp.n, saved.days.length) })}
-              checked={fp.on}
-              onChange={(on) => setFp({ ...fp, on })}
-            />
-            {fp.on ? (
-              <>
-                <div className={fieldCol}>
-                  <FieldLabel htmlFor="mg-fp-n">{t("fpAhead", { unit })}</FieldLabel>
-                  <NativeSelect id="mg-fp-n" value={String(fp.n)} wrapperClassName="max-w-[240px]" aria-describedby="mg-fp-h" onChange={(e) => setFp({ ...fp, n: Number(e.target.value) })}>
-                    {[1, 2, 3, 4, 5].map((x) => (
-                      <option key={x} value={x}>
-                        {x}
-                      </option>
-                    ))}
-                  </NativeSelect>
-                  <FieldHint id="mg-fp-h">{t("fpHint", { unit, count: fp.n })}</FieldHint>
+                <div className="flex justify-end gap-2 border-t px-5 pt-4 pb-5 max-md:px-4 max-md:pb-4">
+                  <Button type="button" variant="ghost" disabled={!dirty || savingDetails} onClick={() => setF(saved)}>
+                    {t("discard")}
+                  </Button>
+                  <Button type="submit" variant="brand" disabled={!dirty} loading={savingDetails}>
+                    {t("saveChanges")}
+                  </Button>
                 </div>
-                <div className="flex flex-col gap-2">
-                  <span className="text-sm leading-5 font-medium" id="mg-fp-q">
-                    {t("rightNow")}
-                  </span>
-                  <ul aria-labelledby="mg-fp-q" className="m-0 flex list-none flex-col rounded-[10px] border p-0">
-                    {eps.some((e) => e.state === "fastpass") ? (
-                      eps
-                        .filter((e) => e.state === "fastpass")
-                        .map((e) => (
-                          <li key={e.n} className="flex items-center justify-between gap-3 px-3 py-2.5 not-first:border-t">
-                            <span className="min-w-0 truncate text-[13px] leading-[18px]">{label(e)}</span>
-                            <span className="shrink-0 text-xs leading-4 text-muted-foreground">{e.free ? t("freeOn", { date: formatShortDate(e.free, locale) }) : ""}</span>
-                          </li>
-                        ))
-                    ) : (
-                      <li className="px-3 py-2.5 text-[13px] leading-[18px]">{t("fpNone", { unit })}</li>
-                    )}
-                  </ul>
-                </div>
-              </>
-            ) : (
-              <div className="flex items-start gap-3 rounded-lg border px-4 py-3.5">
-                <InfoIcon className="mt-0.5 size-4 shrink-0 text-muted-foreground" aria-hidden />
-                <span className="text-[13px] leading-[19px]">{t("fpOff", { unit })}</span>
-              </div>
-            )}
-            <div>
-              <Button
-                type="button"
-                variant="brand"
-                size="sm"
-                loading={fpBusy}
-                disabled={fp.on === fpSaved.on && fp.n === fpSaved.n}
-                onClick={() => void saveFastPass()}
-              >
-                {t("fpSave")}
-              </Button>
-            </div>
-          </StudioCard>
-        ) : null}
+              </form>
+            </StudioCard>
+          ) : null}
 
-        {tab === "settings" ? (
-          <StudioCard className="flex flex-col gap-4 p-5 max-md:p-4">
-            <SwitchRow
-              id="mg-cm"
-              label={t("allowComments")}
-              desc={t("allowCommentsDesc", { unit })}
-              checked={comments}
-              onChange={(on) => void switchComments(on)}
-            />
-            <div className="h-px bg-border" />
-            <div className="flex items-center justify-between gap-3 max-md:flex-wrap">
-              <span className="flex min-w-0 flex-col gap-0.5">
-                <span className="text-[13px] leading-[18px] font-semibold">{hidden ? t("showSeriesTitle") : t("hideSeriesTitle")}</span>
-                <span className="text-xs leading-4 text-muted-foreground">{hidden ? t("showSeriesDesc") : t("hideSeriesDesc")}</span>
-              </span>
-              <Button type="button" variant="outline" size="sm" className="shrink-0" onClick={() => (hidden ? void showSeries() : setDialog({ kind: "hideSeries", typed: "" }))}>
-                {hidden ? t("showSeries") : t("hideSeries")}
-              </Button>
-            </div>
-            <div className="h-px bg-border" />
-            <div className="flex items-center justify-between gap-3 max-md:flex-wrap">
-              <span className="flex min-w-0 flex-col gap-0.5">
-                <span className="text-[13px] leading-[18px] font-semibold">{t("deleteSeries")}</span>
-                <span className="text-xs leading-4 text-muted-foreground" id="mg-del-d">
-                  {publishedEver ? t("deleteBlocked", { unit }) : t("deleteDesc")}
+          {tab === "fast-pass" ? (
+            <StudioCard className="flex flex-col gap-[18px] p-5 max-md:p-4">
+              <SwitchRow
+                id="mg-fp"
+                strong
+                label={tf("fastPass")}
+                // Free after ahead × 7 ÷ update days, rounded up (V21-02): a weekly series with 3 ahead waits 21 days.
+                desc={t("fpDesc", { unit, coins: FAST_PASS_COINS, days: api.seriesFreeAfterDays(fp.n, saved.days.length) })}
+                checked={fp.on}
+                onChange={(on) => setFp({ ...fp, on })}
+              />
+              {fp.on ? (
+                <>
+                  <div className={fieldCol}>
+                    <FieldLabel htmlFor="mg-fp-n">{t("fpAhead", { unit })}</FieldLabel>
+                    <NativeSelect id="mg-fp-n" value={String(fp.n)} wrapperClassName="max-w-[240px]" aria-describedby="mg-fp-h" onChange={(e) => setFp({ ...fp, n: Number(e.target.value) })}>
+                      {[1, 2, 3, 4, 5].map((x) => (
+                        <option key={x} value={x}>
+                          {x}
+                        </option>
+                      ))}
+                    </NativeSelect>
+                    <FieldHint id="mg-fp-h">{t("fpHint", { unit, count: fp.n })}</FieldHint>
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <span className="text-sm leading-5 font-medium" id="mg-fp-q">
+                      {t("rightNow")}
+                    </span>
+                    <ul aria-labelledby="mg-fp-q" className="m-0 flex list-none flex-col rounded-[10px] border p-0">
+                      {eps.some((e) => e.state === "fastpass") ? (
+                        eps
+                          .filter((e) => e.state === "fastpass")
+                          .map((e) => (
+                            <li key={e.n} className="flex items-center justify-between gap-3 px-3 py-2.5 not-first:border-t">
+                              <span className="min-w-0 truncate text-[13px] leading-[18px]">{label(e)}</span>
+                              <span className="shrink-0 text-xs leading-4 text-muted-foreground">{e.free ? t("freeOn", { date: formatShortDate(e.free, locale) }) : ""}</span>
+                            </li>
+                          ))
+                      ) : (
+                        <li className="px-3 py-2.5 text-[13px] leading-[18px]">{t("fpNone", { unit })}</li>
+                      )}
+                    </ul>
+                  </div>
+                </>
+              ) : (
+                <div className="flex items-start gap-3 rounded-lg border px-4 py-3.5">
+                  <InfoIcon className="mt-0.5 size-4 shrink-0 text-muted-foreground" aria-hidden />
+                  <span className="text-[13px] leading-[19px]">{t("fpOff", { unit })}</span>
+                </div>
+              )}
+              <div>
+                <Button
+                  type="button"
+                  variant="brand"
+                  size="sm"
+                  loading={fpBusy}
+                  disabled={fp.on === fpSaved.on && fp.n === fpSaved.n}
+                  onClick={() => void saveFastPass()}
+                >
+                  {t("fpSave")}
+                </Button>
+              </div>
+            </StudioCard>
+          ) : null}
+
+          {tab === "settings" ? (
+            <StudioCard className="flex flex-col gap-4 p-5 max-md:p-4">
+              <SwitchRow
+                id="mg-cm"
+                label={t("allowComments")}
+                desc={t("allowCommentsDesc", { unit })}
+                checked={comments}
+                onChange={(on) => void switchComments(on)}
+              />
+              <div className="h-px bg-border" />
+              <div className="flex items-center justify-between gap-3 max-md:flex-wrap">
+                <span className="flex min-w-0 flex-col gap-0.5">
+                  <span className="text-[13px] leading-[18px] font-semibold">{hidden ? t("showSeriesTitle") : t("hideSeriesTitle")}</span>
+                  <span className="text-xs leading-4 text-muted-foreground">{hidden ? t("showSeriesDesc") : t("hideSeriesDesc")}</span>
                 </span>
-              </span>
-              <Button
-                type="button"
-                variant="destructive"
-                size="sm"
-                className="shrink-0"
-                aria-describedby="mg-del-d"
-                disabled={publishedEver}
-                onClick={() => setDialog({ kind: "deleteSeries" })}
-              >
-                {t("deleteSeries")}
-              </Button>
-            </div>
-          </StudioCard>
-        ) : null}
-      </div>
+                <Button type="button" variant="outline" size="sm" className="shrink-0" onClick={() => (hidden ? void showSeries() : setDialog({ kind: "hideSeries", typed: "" }))}>
+                  {hidden ? t("showSeries") : t("hideSeries")}
+                </Button>
+              </div>
+              <div className="h-px bg-border" />
+              <div className="flex items-center justify-between gap-3 max-md:flex-wrap">
+                <span className="flex min-w-0 flex-col gap-0.5">
+                  <span className="text-[13px] leading-[18px] font-semibold">{t("deleteSeries")}</span>
+                  <span className="text-xs leading-4 text-muted-foreground" id="mg-del-d">
+                    {publishedEver ? t("deleteBlocked", { unit }) : t("deleteDesc")}
+                  </span>
+                </span>
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="sm"
+                  className="shrink-0"
+                  aria-describedby="mg-del-d"
+                  disabled={publishedEver}
+                  onClick={() => setDialog({ kind: "deleteSeries" })}
+                >
+                  {t("deleteSeries")}
+                </Button>
+              </div>
+            </StudioCard>
+          ) : null}
+        </div>
+      </Effect>
 
       <Dialog open={!!dialog} onOpenChange={(open) => !open && !busy && setDialog(null)}>
         {dialog ? (
