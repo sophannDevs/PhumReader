@@ -24,6 +24,7 @@ import { formatDate } from "@/lib/format"
 import { useDemoFlag } from "@/lib/queries"
 import { useAppStore } from "@/lib/store"
 import { cn } from "@/lib/utils"
+import { Effect } from "@animate-ui/react/primitives/effects/effect"
 
 /**
  * Earnings (spec §18, prototype Earnings/): period 30 days / 3 months / 6 months, stat cards (money stays
@@ -244,14 +245,16 @@ function CoinsChart({ months, coins }: { months: Months; coins: number[] }) {
       style={{ gridTemplateColumns: `repeat(${coins.length}, minmax(0, 1fr))` }}
     >
       {coins.map((v, i) => (
-        <div key={`${months[i].year}-${months[i].month}`} className="flex h-full min-w-0 flex-col items-center justify-end gap-1.5">
-          <strong className="text-xs leading-4 font-bold tabular-nums max-md:text-[9px] max-md:leading-3">{fmt(v)}</strong>
-          <span
-            className={cn("w-full max-w-11 rounded-t-md rounded-b-[2px]", i === coins.length - 1 ? "bg-primary" : "bg-brand-soft-border")}
-            style={{ height: `${Math.round((v / max) * 100 * 0.82)}%` }}
-          />
-          <span className="text-[11px] leading-[14px] text-muted-foreground">{t(`month.${months[i].month}`)}</span>
-        </div>
+        <Effect key={`${months[i].year}-${months[i].month}`} asChild fade slide={{ direction: "up", offset: 14 }} delay={i * 60} inView>
+          <div className="flex h-full min-w-0 flex-col items-center justify-end gap-1.5">
+            <strong className="text-xs leading-4 font-bold tabular-nums max-md:text-[9px] max-md:leading-3">{fmt(v)}</strong>
+            <span
+              className={cn("w-full max-w-11 rounded-t-md rounded-b-[2px]", i === coins.length - 1 ? "bg-primary" : "bg-brand-soft-border")}
+              style={{ height: `${Math.round((v / max) * 100 * 0.82)}%` }}
+            />
+            <span className="text-[11px] leading-[14px] text-muted-foreground">{t(`month.${months[i].month}`)}</span>
+          </div>
+        </Effect>
       ))}
     </div>
   )

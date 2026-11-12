@@ -28,6 +28,7 @@ import { useAccountEmail } from "@/lib/me"
 import { useCreator, useDemoFlag } from "@/lib/queries"
 import { useAppStore } from "@/lib/store"
 import { cn } from "@/lib/utils"
+import { Effect } from "@animate-ui/react/primitives/effects/effect"
 
 /**
  * Creator dashboard (spec §14, prototype Creator/): CreatorNav, greeting, four stat cards for the last 30 days, a
@@ -363,13 +364,15 @@ function ViewsChart({ base }: { base: string }) {
             const day = weekdayOf(addDays(base, i - VIEWS.length + 1))
             const isToday = i === VIEWS.length - 1
             return (
-              <div key={i} title={t("barTip", { day: td(`dayFull.${day}`), views: `${v}K` })} className="flex h-full min-w-0 flex-col items-center justify-end gap-1.5">
-                <span
-                  className={cn("w-full max-w-7 rounded-t-md rounded-b-[2px]", isToday ? "bg-primary" : "bg-brand-soft-border")}
-                  style={{ height: `${Math.round((v / max) * 100)}%` }}
-                />
-                <span className="text-[10px] leading-3 text-muted-foreground max-md:text-[9px]">{t(`dayShort.${day}`)}</span>
-              </div>
+              <Effect key={i} asChild fade slide={{ direction: "up", offset: 14 }} delay={i * 35} inView>
+                <div title={t("barTip", { day: td(`dayFull.${day}`), views: `${v}K` })} className="flex h-full min-w-0 flex-col items-center justify-end gap-1.5">
+                  <span
+                    className={cn("w-full max-w-7 rounded-t-md rounded-b-[2px]", isToday ? "bg-primary" : "bg-brand-soft-border")}
+                    style={{ height: `${Math.round((v / max) * 100)}%` }}
+                  />
+                  <span className="text-[10px] leading-3 text-muted-foreground max-md:text-[9px]">{t(`dayShort.${day}`)}</span>
+                </div>
+              </Effect>
             )
           })}
         </div>
