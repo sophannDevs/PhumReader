@@ -1,39 +1,105 @@
 "use client"
 
-import { ChevronDownIcon } from "lucide-react"
+import * as React from "react"
 import { useTranslations } from "@/i18n/translations"
 import { Button } from "@/components/ui/button"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
 import { cn } from "@/lib/utils"
 
 /**
  * Small V2.1 controls shared by Library, Notifications and Settings (prototype shared.css):
- * - NativeSelect: `.select` (36 px, chevron on the right) on a native <select>
+ * - NativeSelect: `.select` (36 px, chevron on the right) on the animated Select (keeps the <select>-like API)
  * - SmallSwitch: `.switch` (36 × 20 px) on the shadcn Switch
  * - SaveBar: sticky dark bar "You have unsaved changes · Discard / Save changes" (foundations.md §8, Settings)
  */
 
+/** What `NativeSelect` passes to `onChange`: the part of a change event the call sites read. */
+export type SelectChange = { target: { value: string; name?: string } }
+
+type SelectOption = { value: string; label: React.ReactNode; disabled?: boolean; lang?: string }
+
+/**
+ * Radix Select forbids "" as an item value; an <option value=""> ("Choose…") maps to this and back.
+ * Inside a <form>, Radix's hidden native select would submit "__pr-empty__" for that choice, so don't read
+ * these fields from native FormData (the forms here read the value from `onChange` / react-hook-form).
+ */
+const EMPTY = "__pr-empty__"
+
+/** Reads the <option> children (also inside fragments) into items. Groups are not supported (none are used). */
+function readOptions(children: React.ReactNode): SelectOption[] {
+  const out: SelectOption[] = []
+  React.Children.forEach(children, (child) => {
+    if (!React.isValidElement<{ children?: React.ReactNode }>(child)) return
+    if (child.type === React.Fragment) {
+      out.push(...readOptions(child.props.children))
+    } else if (child.type === "option") {
+      const p = child.props as React.ComponentProps<"option">
+      const value = p.value ?? (typeof p.children === "string" || typeof p.children === "number" ? p.children : "")
+      out.push({ value: String(value), label: p.children, disabled: p.disabled, lang: p.lang })
+    }
+  })
+  return out
+}
+
+/**
+ * The prototype's `.select` (36 px, chevron on the right), now on the animated Select (src/components/ui/select).
+ * It keeps the native-select API of its call sites: `value`, `onChange(e)` with `e.target.value`, and
+ * <option> children (an <option value=""> works as the "Choose…" entry). `id` and the aria props go on the
+ * trigger button, so <label htmlFor> keeps working. The trigger and each option carry the raw value in `data-value`
+ * (tests and e2e pick options by it). An auto-width trigger takes the width of its longest option.
+ */
 export function NativeSelect({
   className,
   wrapperClassName,
   children,
+  value,
+  onChange,
+  name,
+  required,
+  disabled,
   ...props
-}: React.ComponentProps<"select"> & { wrapperClassName?: string }) {
+}: Omit<React.ComponentProps<typeof SelectTrigger>, "value" | "defaultValue" | "onChange" | "children" | "name"> & {
+  value: string
+  onChange?: (event: SelectChange) => void
+  name?: string
+  required?: boolean
+  wrapperClassName?: string
+  children: React.ReactNode
+}) {
+  const options = readOptions(children)
+  const toItem = (v: string) => (v === "" ? EMPTY : v)
   return (
     <span className={cn("relative inline-flex w-full min-w-0", wrapperClassName)}>
-      <select
-        className={cn(
-          "h-9 w-full min-w-0 cursor-pointer appearance-none rounded-control border border-input bg-background pr-8 pl-3 text-sm text-foreground shadow-xs transition-colors outline-none focus-visible:border-[#a1a1aa] focus-visible:ring-[3px] focus-visible:ring-[rgba(0,166,80,0.22)]",
-          className
-        )}
-        {...props}
+      <Select
+        value={toItem(value)}
+        onValueChange={(v) => onChange?.({ target: { value: v === EMPTY ? "" : v, name } })}
+        name={name}
+        required={required}
+        disabled={disabled}
       >
-        {children}
-      </select>
-      <ChevronDownIcon
-        aria-hidden
-        className="pointer-events-none absolute top-1/2 right-2.5 size-4 -translate-y-1/2 text-muted-foreground"
-      />
+        <SelectTrigger className={className} data-value={value} {...props}>
+          {/* Every label stacked in one grid cell, hidden: an auto-width trigger is as wide as its longest
+              option, so it keeps its width when the choice changes (a full-width trigger clips them). */}
+          <span className="grid min-w-0 flex-1 grid-cols-[minmax(0,1fr)] overflow-hidden">
+            <span className="col-start-1 row-start-1 min-w-0 truncate">
+              <SelectValue />
+            </span>
+            {options.map((o) => (
+              <span key={o.value} aria-hidden lang={o.lang} className="invisible col-start-1 row-start-1 whitespace-nowrap">
+                {o.label}
+              </span>
+            ))}
+          </span>
+        </SelectTrigger>
+        <SelectContent>
+          {options.map((o) => (
+            <SelectItem key={o.value} value={toItem(o.value)} data-value={o.value} disabled={o.disabled} lang={o.lang}>
+              {o.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
     </span>
   )
 }

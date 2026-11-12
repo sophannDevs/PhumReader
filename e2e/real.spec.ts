@@ -8,7 +8,7 @@ import {
   test,
   type Page,
 } from "@playwright/test";
-import { visible } from "./helpers";
+import { selectOption, visible } from "./helpers";
 
 /**
  * Key flows against the real API (the local Spring Boot backend on :8080, dev payment simulator
@@ -53,7 +53,7 @@ test("1. sign up with the email code, skip the first-time setup and land logged 
   await visible(page.getByLabel("Email")).fill(EMAIL);
   await visible(page.getByLabel("Password", { exact: true })).fill(PASSWORD);
   await visible(page.getByLabel("Confirm password")).fill(PASSWORD);
-  await visible(page.getByLabel("Birth year")).selectOption("1995");
+  await selectOption(visible(page.getByRole("combobox", { name: "Birth year" })), "1995");
   await visible(page.getByRole("checkbox", { name: /Terms/ })).click();
   await visible(page.getByRole("button", { name: "Create account" })).click();
   await expect(
@@ -392,7 +392,7 @@ test("9. Create series wizard: step checks, cover rules with a real upload, draf
   await expect(visible(page.getByText("Fix 2 things to continue"))).toBeVisible();
   await expect(field("cs-title")).toHaveAttribute("aria-invalid", "true");
   await field("cs-title").fill(title);
-  await field("cs-genre").selectOption({ label: "Fantasy" });
+  await selectOption(field("cs-genre"), { label: "Fantasy" });
   await next().click();
 
   // Story: a short summary is refused; tags are added and removed.
@@ -460,7 +460,7 @@ test("9. Create series wizard: step checks, cover rules with a real upload, draf
   await expect(publishing.or(step)).toBeVisible();
   await visible(page.getByRole("button", { name: /^Basics/ })).click();
   await expect(field("cs-title")).toHaveValue(title);
-  await expect(field("cs-genre")).toHaveValue(/fantasy|Fantasy/);
+  await expect(field("cs-genre")).toHaveAttribute("data-value", /fantasy|Fantasy/);
 
   // Submit for review: update day and the original-work promise are required; then it waits for an admin.
   for (let n = 0; n < 3 && !(await publishing.isVisible()); n++) await step.click();
@@ -752,7 +752,7 @@ test("11. Comic episode page: 60 images at 10 Mbps with per-file progress, a fai
   // The series goes back to a draft so the dev data stays clean.
   await page.goto("/creator/upload?series=00000000-0000-0000-0000-000000000000");
   await expect(visible(page.getByRole("heading", { level: 1, name: "Upload episode" }))).toBeVisible();
-  await expect(visible(page.getByRole("combobox", { name: "Series" }))).not.toHaveValue("00000000-0000-0000-0000-000000000000");
+  await expect(visible(page.getByRole("combobox", { name: "Series" }))).not.toHaveAttribute("data-value", "00000000-0000-0000-0000-000000000000");
   expect(
     (await page.request.post(`/api/v1/creator/series/${id}/unpublish`, { headers: await apiHeaders() })).status(),
   ).toBe(200);
@@ -1017,8 +1017,8 @@ test("14. admin: only ADMIN gets in; remove a reported comment, suspend a user, 
 
     // Content (V1 screen): comments, hidden; restore it.
     await ap.goto("/admin/content");
-    await visible(ap.getByLabel("Type")).selectOption("comment");
-    await visible(ap.getByLabel("Status")).selectOption("hidden");
+    await selectOption(visible(ap.getByLabel("Type")), "comment");
+    await selectOption(visible(ap.getByLabel("Status")), "hidden");
     const hidden = visible(ap.locator("li", { hasText: target }));
     await expect(hidden).toBeVisible();
     await hidden.getByRole("button", { name: "Restore" }).click();
@@ -1057,7 +1057,7 @@ test("14. admin: only ADMIN gets in; remove a reported comment, suspend a user, 
     for (const action of ["user.unban", "user.ban", "content.restore"]) {
       await expect(visible(ap.locator("li", { hasText: action }))).toContainText(/E2E (Reader|Renamed)/);
     }
-    await visible(ap.getByLabel("Area")).selectOption("user.");
+    await selectOption(visible(ap.getByLabel("Area")), "user.");
     await expect(ap.locator("li", { hasText: "content.restore" })).toHaveCount(0);
   } finally {
     await ctx.close();
@@ -1206,10 +1206,10 @@ test("16. V2.1 series fields survive a reload: Create series, Manage series (det
   // Create series: basics with a second genre, 16+ and both languages; Save draft.
   await page.goto("/creator/new");
   await field("cs-title").fill(title);
-  await field("cs-genre").selectOption({ label: "Fantasy" });
-  await field("cs-genre2").selectOption({ label: "Romance" });
+  await selectOption(field("cs-genre"), { label: "Fantasy" });
+  await selectOption(field("cs-genre2"), { label: "Romance" });
   await visible(page.getByRole("radio", { name: "16+" }).or(page.getByRole("button", { name: "16+" }))).click();
-  await field("cs-lang").selectOption("both");
+  await selectOption(field("cs-lang"), "both");
   await visible(page.getByRole("button", { name: "Continue" })).click();
   await field("cs-sum").fill(
     "Two lighthouse keepers on Koh Rong trade letters through the tide, one in Khmer and one in English.",
@@ -1233,7 +1233,7 @@ test("16. V2.1 series fields survive a reload: Create series, Manage series (det
     const day = days.getByRole("button", { name: d });
     if ((await day.getAttribute("aria-pressed")) !== "true") await day.click();
   }
-  await visible(page.getByLabel("Release time")).selectOption({ label: "8:00 PM" });
+  await selectOption(visible(page.getByRole("combobox", { name: "Release time" })), { label: "8:00 PM" });
   const saved = page.waitForResponse(
     (r) => r.url().endsWith(`/api/v1/creator/series/${id}`) && r.request().method() === "PUT",
   );
@@ -1253,10 +1253,10 @@ test("16. V2.1 series fields survive a reload: Create series, Manage series (det
   await expect(publishing).toBeVisible();
   await expect(days.getByRole("button", { name: "Mon" })).toHaveAttribute("aria-pressed", "true");
   await expect(days.getByRole("button", { name: "Thu" })).toHaveAttribute("aria-pressed", "true");
-  await expect(visible(page.getByLabel("Release time"))).toHaveValue("20");
+  await expect(visible(page.getByRole("combobox", { name: "Release time" }))).toHaveAttribute("data-value", "20");
   await visible(page.getByRole("button", { name: /^Basics/ })).click();
-  await expect(field("cs-genre2")).toHaveValue(/romance|Romance/);
-  await expect(field("cs-lang")).toHaveValue("both");
+  await expect(field("cs-genre2")).toHaveAttribute("data-value", /romance|Romance/);
+  await expect(field("cs-lang")).toHaveAttribute("data-value", "both");
 
   // Manage series, details: On break with a message.
   await page.goto(`/creator/series/${id}?tab=details`);
@@ -1273,11 +1273,11 @@ test("16. V2.1 series fields survive a reload: Create series, Manage series (det
   await page.goto(`/creator/series/${id}?tab=fast-pass`);
   // Mon + Thu with 3 ahead: free after ceil(3 × 7 ÷ 2) = 11 days.
   await expect(visible(page.getByText(/free for everyone 11 days after release/))).toBeVisible();
-  await visible(page.getByLabel("How many episodes ahead")).selectOption("2");
+  await selectOption(visible(page.getByRole("combobox", { name: "How many episodes ahead" })), "2");
   await visible(page.getByRole("button", { name: "Save Fast Pass settings" })).click();
   await expect.poll(async () => (await (await page.request.get(`/api/v1/creator/series/${id}`)).json()).fastPass.ahead).toBe(2);
   await page.reload();
-  await expect(visible(page.getByLabel("How many episodes ahead"))).toHaveValue("2");
+  await expect(visible(page.getByRole("combobox", { name: "How many episodes ahead" }))).toHaveAttribute("data-value", "2");
   await page.goto(`/creator/series/${id}?tab=settings`);
   const comments = visible(page.getByRole("switch", { name: /comment/i }));
   await expect(comments).toBeChecked();
@@ -1672,7 +1672,7 @@ test("22. smaller V2.1 fields: birth year, Home picks, Help ticket and votes sta
 
   // Help: the Contact us form creates a ticket; "Was this helpful?" is saved.
   await page.goto("/help");
-  await visible(page.getByLabel("Topic *")).selectOption("other");
+  await selectOption(visible(page.getByRole("combobox", { name: "Topic *" })), "other");
   await visible(page.getByLabel("Message *")).fill(`Where do I find my reading history? ${stamp}`);
   await visible(page.getByRole("button", { name: "Send message" })).click();
   await expect(visible(page.getByText(/^T-\d{5}$/).or(page.locator("strong", { hasText: /^T-\d{5}$/ })).first())).toBeVisible();

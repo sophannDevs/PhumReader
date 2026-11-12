@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test"
-import { DEMO, SOKHA, seed, visible } from "./helpers"
+import { DEMO, SOKHA, seed, selectOption, visible } from "./helpers"
 
 /** design/spec.md "Key flows to test end to end" (V2.1). Flows 3 and 4 (admin) are in admin-flows.spec.ts. */
 test.describe("key flows (spec V2.1)", () => {
@@ -13,7 +13,7 @@ test.describe("key flows (spec V2.1)", () => {
     await visible(page.getByLabel("Email")).fill(`reader${Date.now()}@example.com`)
     await visible(page.getByLabel("Password", { exact: true })).fill("Phumi-Reader-2026!")
     await visible(page.getByLabel("Confirm password")).fill("Phumi-Reader-2026!")
-    await visible(page.getByLabel("Birth year")).selectOption("1995")
+    await selectOption(visible(page.getByRole("combobox", { name: "Birth year" })), "1995")
     await visible(page.getByRole("checkbox", { name: /Terms/ })).click()
     await visible(page.getByRole("button", { name: "Create account" })).click()
 
@@ -89,6 +89,6 @@ test.describe("key flows (spec V2.1)", () => {
 
     await expect(page).toHaveURL(/\/help#contact$/)
     await expect(visible(page.getByLabel(/Order number/))).toHaveValue("TW-48213377")
-    await expect(visible(page.locator("select#ct-topic"))).toHaveValue("payment")
+    await expect(visible(page.locator("#ct-topic"))).toHaveAttribute("data-value", "payment")
   })
 })

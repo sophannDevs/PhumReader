@@ -2,7 +2,6 @@
 
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useMutation } from "@tanstack/react-query"
-import { ChevronDownIcon } from "lucide-react"
 import { useLocale } from "next-intl"
 import { useTranslations } from "@/i18n/translations"
 import { useEffect, useState } from "react"
@@ -21,6 +20,7 @@ import {
   PasswordMeter,
   SubmitButton,
 } from "@/components/auth/auth-ui"
+import { NativeSelect } from "@/components/pr/settings-ui"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { demoData } from "@/data"
@@ -236,23 +236,30 @@ export function SignupView({
             <label htmlFor="signup-year" className="text-sm leading-5 font-medium">
               {t("birthYear")}
             </label>
-            <div className="relative">
-              <select
-                id="signup-year"
-                aria-invalid={!!errors.year}
-                aria-describedby="signup-year-note"
-                className="h-11 w-full min-w-0 cursor-pointer appearance-none rounded-[10px] border border-input bg-background pr-8 pl-3 text-[15px] shadow-xs outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background aria-invalid:border-destructive"
-                {...form.register("year")}
-              >
-                <option value="">{t("choose")}</option>
-                {YEARS.map((y) => (
-                  <option key={y} value={y}>
-                    {localDigits(y, locale)}
-                  </option>
-                ))}
-              </select>
-              <ChevronDownIcon aria-hidden className="pointer-events-none absolute top-1/2 right-2.5 size-4 -translate-y-1/2 text-[#71717a]" />
-            </div>
+            <Controller
+              control={form.control}
+              name="year"
+              render={({ field }) => (
+                <NativeSelect
+                  id="signup-year"
+                  ref={field.ref}
+                  name={field.name}
+                  value={field.value}
+                  onChange={(e) => field.onChange(e.target.value)}
+                  onBlur={field.onBlur}
+                  aria-invalid={!!errors.year}
+                  aria-describedby="signup-year-note"
+                  className="h-11 rounded-[10px] text-[15px] focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                >
+                  <option value="">{t("choose")}</option>
+                  {YEARS.map((y) => (
+                    <option key={y} value={y}>
+                      {localDigits(y, locale)}
+                    </option>
+                  ))}
+                </NativeSelect>
+              )}
+            />
           </div>
         </div>
         {errors.year ? (

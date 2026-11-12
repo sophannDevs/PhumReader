@@ -5,6 +5,7 @@ import { useAppStore } from "@/lib/store"
 import { router, setSearch } from "@/test/navigation"
 import { renderUi, screen, waitFor, within } from "@/test/render"
 import { API, apiError, http, HttpResponse, server } from "@/test/server"
+import { selectOption } from "@/test/select"
 
 /** Manage series in real mode (V21-01): the reviewer's changes from the API, Mark fixed / Undo and Resubmit. */
 
@@ -267,11 +268,11 @@ describe("ManageSeriesPage: series details, Fast Pass and comments are saved (re
     expect(fastPass).toBeChecked()
     // Two update days, 3 ahead: free after ceil(3 × 7 ÷ 2) = 11 days.
     expect(screen.getByText(/free for everyone 11 days after release/)).toBeInTheDocument()
-    expect(screen.getByLabelText("How many episodes ahead")).toHaveValue("3")
+    expect(screen.getByLabelText("How many episodes ahead")).toHaveAttribute("data-value", "3")
     const save = screen.getByRole("button", { name: "Save Fast Pass settings" })
     expect(save).toBeDisabled()
 
-    await user.selectOptions(screen.getByLabelText("How many episodes ahead"), "5")
+    await selectOption(user, screen.getByLabelText("How many episodes ahead"), "5")
     expect(screen.getByText(/free for everyone 18 days after release/)).toBeInTheDocument()
     await user.click(save)
     await waitFor(() => expect(toast.success).toHaveBeenCalledWith("Fast Pass: 5 episodes ahead"))

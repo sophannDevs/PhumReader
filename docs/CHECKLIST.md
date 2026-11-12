@@ -609,3 +609,15 @@ docs/BACKEND_CHECKLIST.md, "V2.1 API additions" (V21-01 … V21-07).
   selected look themselves, only the selected text colour. The Vue (Reka UI) Tabs page is not used: this is a React
   project. Not tabs, so unchanged: the genre chips, the Home spotlight pager dots and the Admin side menu (it has its
   own pill, ANIM-11).
+- ANIM-14 (animations) **Selects**: all selects now use a hand-written shadcn-style wrapper,
+  `src/components/ui/select.tsx`, on the Animate UI radix Select primitive. No native `<select>` is left. The V2.1
+  design pack drew native selects, so check against `design/screens` before launch. `NativeSelect`
+  (`settings-ui.tsx`) keeps its name and props (`value`, `onChange(e.target.value)`, `<option>` children). An empty
+  value is mapped to an internal `"__pr-empty__"` sentinel, and the hidden native select would submit that sentinel,
+  so don't read these fields from native `FormData`. The list opens below or above the trigger (popper), its minimum
+  width is the trigger width, and it uses `z-[60]` to sit above dialogs and sheets (not a design token). Auto-width
+  selects size to the longest option through hidden stacked labels. The Admin Filter now shows the shared lucide
+  chevron instead of the native arrow. Birth year (signup) and Help topic use react-hook-form `Controller`. Tests use
+  `src/test/select.ts`, and e2e uses `selectOption` in `e2e/helpers.ts`. Not verified: the select edits in
+  `e2e/real.spec.ts` (they need the backend on :8080) and the Admin Filter in the browser (demo mode shows "needs the
+  real API").

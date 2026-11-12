@@ -103,8 +103,8 @@ describe("UploadEpisodePage: defaults from the series (real API)", () => {
     serve(edit(), (b) => (body = b))
     const { user } = renderUi(<UploadEpisodePage />)
     const date = nextUpdate()
-    expect(await screen.findByLabelText("Date")).toHaveValue(date)
-    expect(screen.getByLabelText("Time (ICT)")).toHaveValue("20")
+    expect(await screen.findByLabelText("Date")).toHaveAttribute("data-value", date)
+    expect(screen.getByLabelText("Time (ICT)")).toHaveAttribute("data-value", "20")
     expect(screen.getByRole("switch", { name: "Fast Pass" })).toBeChecked()
     // Two update days, 3 ahead: free after ceil(3 × 7 ÷ 2) = 11 days, the same rule the API uses.
     expect(screen.getByText(`Readers pay 5 coins to read early. Free for everyone on ${dayDate(addDays(date, 11))}.`)).toBeInTheDocument()
@@ -126,7 +126,7 @@ describe("UploadEpisodePage: defaults from the series (real API)", () => {
     const fastPass = await screen.findByRole("switch", { name: "Fast Pass" })
     expect(fastPass).not.toBeChecked()
     expect(screen.getByText("Free for everyone when it’s released.")).toBeInTheDocument()
-    expect(screen.getByLabelText("Time (ICT)")).toHaveValue("12")
+    expect(screen.getByLabelText("Time (ICT)")).toHaveAttribute("data-value", "12")
 
     await user.click(fastPass)
     await fillChapter(user)

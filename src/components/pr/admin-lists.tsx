@@ -8,6 +8,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { ReasonDialog, type ReasonAsk } from "@/components/pr/admin-dialogs";
 import { EmptyState } from "@/components/pr/empty-state";
+import { NativeSelect } from "@/components/pr/settings-ui";
 import { ErrorState } from "@/components/pr/error-state";
 import { SkeletonRow } from "@/components/pr/skeletons";
 import { Badge } from "@/components/ui/badge";
@@ -96,7 +97,7 @@ function SearchBox({
   );
 }
 
-/** Native select (the project has no Select component). */
+/** A list filter on the animated Select (NativeSelect), labelled by `aria-label`. */
 function Filter({
   label,
   value,
@@ -109,18 +110,19 @@ function Filter({
   options: { value: string; label: string }[];
 }) {
   return (
-    <select
+    <NativeSelect
       aria-label={label}
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      wrapperClassName="w-auto"
+      className="h-10 rounded-md px-3 shadow-none focus-visible:border-input focus-visible:ring-2 focus-visible:ring-ring"
     >
       {options.map((o) => (
         <option key={o.value} value={o.value}>
           {o.label}
         </option>
       ))}
-    </select>
+    </NativeSelect>
   );
 }
 

@@ -6,7 +6,7 @@ import { CheckIcon, ClockIcon, CoinsIcon, MailIcon, MessageSquareIcon, PlusIcon,
 import { useLocale } from "next-intl"
 import { useTranslations } from "@/i18n/translations"
 import { useEffect, useRef, useState } from "react"
-import { useForm, useWatch } from "react-hook-form"
+import { Controller, useForm, useWatch } from "react-hook-form"
 import { toast } from "sonner"
 import { z } from "zod"
 import { NativeSelect } from "@/components/pr/settings-ui"
@@ -170,21 +170,31 @@ export function HelpContact() {
                   {t("topic")}
                   <Required />
                 </label>
-                <NativeSelect
-                  id="ct-topic"
-                  aria-required
-                  aria-invalid={!!errors.topic}
-                  aria-describedby={described("topic")}
-                  className={cn(errors.topic && "border-destructive")}
-                  {...form.register("topic")}
-                >
-                  <option value="">{t("chooseTopic")}</option>
-                  {CONTACT_TOPICS.map((k) => (
-                    <option key={k} value={k}>
-                      {t(`topics.${k}`)}
-                    </option>
-                  ))}
-                </NativeSelect>
+                <Controller
+                  control={form.control}
+                  name="topic"
+                  render={({ field }) => (
+                    <NativeSelect
+                      id="ct-topic"
+                      ref={field.ref}
+                      name={field.name}
+                      value={field.value}
+                      onChange={(e) => field.onChange(e.target.value)}
+                      onBlur={field.onBlur}
+                      aria-required
+                      aria-invalid={!!errors.topic}
+                      aria-describedby={described("topic")}
+                      className={cn(errors.topic && "border-destructive")}
+                    >
+                      <option value="">{t("chooseTopic")}</option>
+                      {CONTACT_TOPICS.map((k) => (
+                        <option key={k} value={k}>
+                          {t(`topics.${k}`)}
+                        </option>
+                      ))}
+                    </NativeSelect>
+                  )}
+                />
                 {errors.topic ? (
                   <p id="ct-topic-error" className={error}>
                     {t("topicError")}

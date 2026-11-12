@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test"
-import { ADMIN, CREATOR, SOKHA, png, seed, visible } from "./helpers"
+import { ADMIN, CREATOR, SOKHA, png, seed, selectOption, visible } from "./helpers"
 
 /**
  * design/spec.md key flows 3 and 4. In the demo one browser plays every part, so the test switches the signed-in
@@ -52,7 +52,7 @@ test.describe("key flows with the admin (spec V2.1)", () => {
     // Create series: four steps, then "in review".
     await page.goto("/creator/new")
     await visible(page.getByRole("textbox", { name: /^Title/ })).fill(title)
-    await visible(page.locator("select#cs-genre")).selectOption("Fantasy")
+    await selectOption(visible(page.locator("#cs-genre")), "Fantasy")
     await visible(page.getByRole("button", { name: "Continue" })).click()
     await visible(page.getByRole("textbox", { name: /^Summary/ })).fill(
       "A ferry girl on the Kampot river finds a lantern that shows the way to people who are lost, and must decide who to help."

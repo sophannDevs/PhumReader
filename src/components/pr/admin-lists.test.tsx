@@ -4,6 +4,7 @@ import { AuditTab, ContentTab, OrdersTab, UsersTab } from "@/components/pr/admin
 import { useAppStore } from "@/lib/store"
 import { renderUi, screen, waitFor, within } from "@/test/render"
 import { API, apiError, http, HttpResponse, server } from "@/test/server"
+import { selectOption } from "@/test/select"
 
 const NOW = "2026-11-08T07:00:00Z"
 const user = (id: string, over: Record<string, unknown> = {}) => ({ id, displayName: `User ${id}`, email: `${id}@example.com`, roles: ["READER"], status: "active", createdAt: NOW, lastLoginAt: null, ...over })
@@ -33,7 +34,7 @@ describe("lists: loading, empty and error states", () => {
     server.use(http.get(`${API}/admin/users`, () => page([])))
     const { user: u } = renderUi(<UsersTab />)
     expect(await screen.findByText("Nothing here yet")).toBeInTheDocument()
-    await u.selectOptions(screen.getByLabelText("Status"), "banned")
+    await selectOption(u, screen.getByLabelText("Status"), "banned")
     expect(await screen.findByText("No matches")).toBeInTheDocument()
   })
 
@@ -90,7 +91,7 @@ describe("UsersTab", () => {
     await screen.findByText("User a")
     await u.type(screen.getByRole("searchbox", { name: "Search by name or email" }), "sok")
     await waitFor(() => expect(seen.some((s) => s.includes("q=sok"))).toBe(true))
-    await u.selectOptions(screen.getByLabelText("Status"), "banned")
+    await selectOption(u, screen.getByLabelText("Status"), "banned")
     await waitFor(() => expect(seen.some((s) => s.includes("status=banned"))).toBe(true))
     // one request per settled search, not one per key press
     expect(seen.filter((s) => s.includes("q=s")).length).toBeLessThanOrEqual(2)
@@ -169,7 +170,7 @@ describe("ContentTab", () => {
     )
     const { user: u } = renderUi(<ContentTab />)
     await screen.findByText("Nothing here yet")
-    await u.selectOptions(screen.getByLabelText("Type"), "comment")
+    await selectOption(u, screen.getByLabelText("Type"), "comment")
     await waitFor(() => expect(types).toContain("comment"))
   })
 
@@ -267,7 +268,7 @@ describe("AuditTab", () => {
     expect(await screen.findByText("user.ban")).toBeInTheDocument()
     expect(screen.getByText(/Admin Sok/)).toBeInTheDocument()
     expect(screen.getByText("reason: spam")).toBeInTheDocument()
-    await u.selectOptions(screen.getByLabelText("Area"), "user.")
+    await selectOption(u, screen.getByLabelText("Area"), "user.")
     await waitFor(() => expect(actions).toContain("user."))
   })
 })

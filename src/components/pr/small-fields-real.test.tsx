@@ -5,6 +5,7 @@ import { meKeys } from "@/lib/api/keys"
 import { useAppStore } from "@/lib/store"
 import { renderUi, screen, waitFor } from "@/test/render"
 import { API, apiError, http, HttpResponse, server } from "@/test/server"
+import { selectOption } from "@/test/select"
 
 /** The smaller V2.1 fields on the real API (V21-07): Home picks, the Help contact form and "Was this helpful?" votes. */
 
@@ -69,7 +70,7 @@ describe("Help: Contact us and votes", () => {
       }),
     )
     const { user } = renderUi(<HelpPage />)
-    await user.selectOptions(screen.getByLabelText(/Topic/, { selector: "select" }), "other")
+    await selectOption(user, screen.getByRole("combobox", { name: /Topic/ }), "other")
     await user.type(screen.getByLabelText(/^Email/), "dara@example.com")
     await user.type(screen.getByLabelText(/^Message/), "Where do I find my reading history?")
     await user.click(screen.getByRole("button", { name: "Send message" }))
@@ -80,7 +81,7 @@ describe("Help: Contact us and votes", () => {
   it("keeps the form and says so when the ticket cannot be sent", async () => {
     server.use(http.post(`${API}/help/tickets`, () => apiError(429, "too_many_requests")))
     const { user } = renderUi(<HelpPage />)
-    await user.selectOptions(screen.getByLabelText(/Topic/, { selector: "select" }), "other")
+    await selectOption(user, screen.getByRole("combobox", { name: /Topic/ }), "other")
     await user.type(screen.getByLabelText(/^Email/), "dara@example.com")
     await user.type(screen.getByLabelText(/^Message/), "Where do I find my reading history?")
     await user.click(screen.getByRole("button", { name: "Send message" }))

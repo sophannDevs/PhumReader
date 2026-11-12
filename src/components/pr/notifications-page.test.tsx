@@ -8,6 +8,7 @@ import { useAppStore } from "@/lib/store"
 import { router } from "@/test/navigation"
 import { renderUi, screen, waitFor, within } from "@/test/render"
 import { API, apiError, http, HttpResponse, server } from "@/test/server"
+import { selectOption } from "@/test/select"
 
 /**
  * The Notifications page in real mode (V21-03): the inbox from GET /me/notifications (MSW keeps a small inbox that
@@ -514,8 +515,8 @@ describe("NotificationsPage (real API): alert settings", () => {
     expect(screen.getByRole("switch", { name: "PhumiReader news: push" })).toBeChecked()
     expect(screen.getByRole("switch", { name: "PhumiReader news: email" })).toBeChecked()
     expect(screen.getByRole("switch", { name: "Quiet hours" })).toBeChecked()
-    expect(screen.getByLabelText("From")).toHaveValue("23")
-    expect(screen.getByLabelText("To")).toHaveValue("6")
+    expect(screen.getByLabelText("From")).toHaveAttribute("data-value", "23")
+    expect(screen.getByLabelText("To")).toHaveAttribute("data-value", "6")
     expect(screen.getByRole("switch", { name: "Daily digest" })).toBeChecked()
   })
 
@@ -552,13 +553,13 @@ describe("NotificationsPage (real API): alert settings", () => {
     inbox([])
     const state = accountSettings()
     const { user } = renderUi(<NotificationsPage />)
-    await user.selectOptions(await screen.findByLabelText("From"), "21")
+    await selectOption(user, await screen.findByLabelText("From"), "21")
     await waitFor(() => expect(state.patches).toEqual([{ notifications: { quiet: { from: 21 } } }]))
-    await user.selectOptions(screen.getByLabelText("To"), "8")
+    await selectOption(user, screen.getByLabelText("To"), "8")
     await waitFor(() => expect(state.patches).toHaveLength(2))
     expect(state.patches[1]).toEqual({ notifications: { quiet: { to: 8 } } })
-    expect(screen.getByLabelText("From")).toHaveValue("21")
-    expect(screen.getByLabelText("To")).toHaveValue("8")
+    expect(screen.getByLabelText("From")).toHaveAttribute("data-value", "21")
+    expect(screen.getByLabelText("To")).toHaveAttribute("data-value", "8")
     expect(useAppStore.getState().notifPrefs).toMatchObject({ from: 21, to: 8 })
   })
 

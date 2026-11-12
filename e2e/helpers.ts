@@ -30,6 +30,20 @@ export const CREATOR = { name: "Dara Vann", email: "creator@phumireader.app", ro
  */
 export const visible = (locator: Locator) => locator.locator("visible=true").first()
 
+/**
+ * Picks an option of a `NativeSelect` (the animated Radix Select; it replaced the native <select>): opens the list
+ * from the trigger, then clicks the option by its value (`data-value`) or by its visible label.
+ */
+export async function selectOption(trigger: Locator, option: string | { label: string }) {
+  await trigger.click()
+  const listbox = visible(trigger.page().getByRole("listbox"))
+  const item =
+    typeof option === "string"
+      ? listbox.locator(`[role="option"][data-value=${JSON.stringify(option)}]`)
+      : listbox.getByRole("option", { name: option.label, exact: true })
+  await item.click()
+}
+
 /** A plain RGB PNG of the given size (the upload checks the real pixel width: 690–1600 px). */
 export function png(width: number, height: number): Buffer {
   const crcTable = Array.from({ length: 256 }, (_, n) => {

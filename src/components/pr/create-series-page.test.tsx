@@ -5,6 +5,7 @@ import { useAppStore } from "@/lib/store"
 import { setSearch } from "@/test/navigation"
 import { renderUi, screen, waitFor, within } from "@/test/render"
 import { API, apiError, http, HttpResponse, server } from "@/test/server"
+import { selectOption } from "@/test/select"
 
 /** Create series in real mode (V21-01): Submit saves the series and submits it for review instead of publishing it. */
 
@@ -146,7 +147,7 @@ describe("CreateSeriesPage: every field round-trips (real API)", () => {
     expect(within(days).getByRole("button", { name: "Mon" })).toHaveAttribute("aria-pressed", "true")
     expect(within(days).getByRole("button", { name: "Thu" })).toHaveAttribute("aria-pressed", "true")
     expect(within(days).getByRole("button", { name: "Tue" })).toHaveAttribute("aria-pressed", "false")
-    expect(screen.getByLabelText("Release time")).toHaveValue("20")
+    expect(screen.getByLabelText("Release time")).toHaveAttribute("data-value", "20")
     expect(screen.getByRole("switch", { name: "Fast Pass" })).not.toBeChecked()
 
     await user.click(screen.getByRole("button", { name: "Save draft" }))
@@ -162,14 +163,14 @@ describe("CreateSeriesPage: every field round-trips (real API)", () => {
     const { user } = renderUi(<CreateSeriesPage />)
     const days = await screen.findByRole("group", { name: /Update days/ })
     await user.click(within(days).getByRole("button", { name: "Tue" }))
-    await user.selectOptions(screen.getByLabelText("Release time"), "21")
+    await selectOption(user, screen.getByLabelText("Release time"), "21")
     await user.click(screen.getByRole("switch", { name: "Fast Pass" }))
 
     await user.click(screen.getByRole("button", { name: /^Basics/ }))
-    expect(await screen.findByLabelText(/Second genre/)).toHaveValue("Romance")
+    expect(await screen.findByLabelText(/Second genre/)).toHaveAttribute("data-value", "Romance")
     expect(screen.getByRole("radio", { name: "16+" })).toHaveAttribute("aria-checked", "true")
     await user.click(screen.getByRole("radio", { name: "18+" }))
-    await user.selectOptions(screen.getByLabelText(/Second genre/), "Drama")
+    await selectOption(user, screen.getByLabelText(/Second genre/), "Drama")
 
     await user.click(screen.getByRole("button", { name: "Save draft" }))
     await waitFor(() => expect(body).toBeDefined())

@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest"
 import { SignupView } from "@/components/auth/signup-view"
 import { renderUi, screen, waitFor } from "@/test/render"
 import { API, apiError, http, HttpResponse, server } from "@/test/server"
+import { selectOption } from "@/test/select"
 
 function setup(locale: "en" | "km" = "en") {
   const onSubmitted = vi.fn()
@@ -20,7 +21,7 @@ async function fillAll(user: User, over: Partial<Record<"name" | "email" | "pass
   await user.type(screen.getByLabelText("Email"), over.email ?? "sokha@example.com")
   await user.type(screen.getByLabelText("Password"), password)
   await user.type(screen.getByLabelText("Confirm password"), over.confirm ?? password)
-  await user.selectOptions(screen.getByLabelText("Birth year"), "1998")
+  await selectOption(user, screen.getByLabelText("Birth year"), "1998")
   if (terms) await user.click(screen.getByRole("checkbox"))
 }
 const submit = (user: User) => user.click(screen.getByRole("button", { name: "Create account" }))
@@ -114,7 +115,7 @@ describe("SignupView: creating the account", () => {
     await user.type(document.getElementById("signup-email") as HTMLElement, "sokha@example.com")
     await user.type(document.getElementById("signup-password") as HTMLElement, "Abcdef1!")
     await user.type(document.getElementById("signup-confirm") as HTMLElement, "Abcdef1!")
-    await user.selectOptions(document.getElementById("signup-year") as HTMLElement, "1998")
+    await selectOption(user, document.getElementById("signup-year") as HTMLElement, "1998")
     await user.click(screen.getByRole("checkbox"))
     await user.click(document.querySelector("button[type=submit]") as HTMLElement)
     await waitFor(() => expect(onSubmitted).toHaveBeenCalled())
