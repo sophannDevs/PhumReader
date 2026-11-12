@@ -46,6 +46,7 @@ import {
 import { unblockUser } from "@/lib/moderation"
 import { useTheme } from "@/lib/theme"
 import { cn } from "@/lib/utils"
+import { Effect } from "@animate-ui/react/primitives/effects/effect"
 
 /**
  * Settings (spec §12, prototype Settings/): a side menu and one card per section. Account, Reading, Language and
@@ -94,19 +95,21 @@ function Card({
   children: React.ReactNode
 }) {
   return (
-    <section
-      id={`set-${id}`}
-      aria-labelledby={`h-${id}`}
-      className={cn("min-w-0 scroll-mt-20 rounded-card border bg-card shadow-xs", danger && "border-[#fecaca]")}
-    >
-      <div className="flex flex-col gap-1 px-5 pt-5 max-md:px-4 max-md:pt-4">
-        <h2 id={`h-${id}`} className="type-h3">
-          {title}
-        </h2>
-        {desc ? <p className={fieldHint}>{desc}</p> : null}
-      </div>
-      <div className="flex flex-col gap-[18px] p-5 max-md:p-4">{children}</div>
-    </section>
+    <Effect asChild fade slide={{ direction: "up", offset: 10 }} inView>
+      <section
+        id={`set-${id}`}
+        aria-labelledby={`h-${id}`}
+        className={cn("min-w-0 scroll-mt-20 rounded-card border bg-card shadow-xs", danger && "border-[#fecaca]")}
+      >
+        <div className="flex flex-col gap-1 px-5 pt-5 max-md:px-4 max-md:pt-4">
+          <h2 id={`h-${id}`} className="type-h3">
+            {title}
+          </h2>
+          {desc ? <p className={fieldHint}>{desc}</p> : null}
+        </div>
+        <div className="flex flex-col gap-[18px] p-5 max-md:p-4">{children}</div>
+      </section>
+    </Effect>
   )
 }
 
@@ -589,22 +592,24 @@ export function SettingsPage() {
           </Card>
 
           {/* Notifications */}
-          <section id="set-notifs" aria-labelledby="h-notifs" className="min-w-0 scroll-mt-20 rounded-card border bg-card p-5 shadow-xs max-md:p-4">
-            <div className="flex items-center justify-between gap-4 max-md:items-start">
-              <div className="flex min-w-0 flex-col gap-0.5">
-                <h2 id="h-notifs" className="type-h3">
-                  {t("nav.notifs")}
-                </h2>
-                <span className={fieldHint}>{customAlerts ? t("notifCustom") : t("notifSummary")}</span>
+          <Effect asChild fade slide={{ direction: "up", offset: 10 }} inView>
+            <section id="set-notifs" aria-labelledby="h-notifs" className="min-w-0 scroll-mt-20 rounded-card border bg-card p-5 shadow-xs max-md:p-4">
+              <div className="flex items-center justify-between gap-4 max-md:items-start">
+                <div className="flex min-w-0 flex-col gap-0.5">
+                  <h2 id="h-notifs" className="type-h3">
+                    {t("nav.notifs")}
+                  </h2>
+                  <span className={fieldHint}>{customAlerts ? t("notifCustom") : t("notifSummary")}</span>
+                </div>
+                <Button asChild variant="outline" size="sm" className="shrink-0">
+                  <Link href="/notifications#ns">
+                    {t("manage")}
+                    <ChevronRightIcon className="size-3.5" aria-hidden />
+                  </Link>
+                </Button>
               </div>
-              <Button asChild variant="outline" size="sm" className="shrink-0">
-                <Link href="/notifications#ns">
-                  {t("manage")}
-                  <ChevronRightIcon className="size-3.5" aria-hidden />
-                </Link>
-              </Button>
-            </div>
-          </section>
+            </section>
+          </Effect>
 
           {/* Privacy and safety */}
           <Card id="privacy" title={t("nav.privacy")}>
@@ -685,25 +690,27 @@ export function SettingsPage() {
           </Card>
 
           {/* Coins and payments */}
-          <section id="set-coins" aria-labelledby="h-coins" className="min-w-0 scroll-mt-20 rounded-card border bg-card p-5 shadow-xs max-md:p-4">
-            <div className="flex items-center justify-between gap-4 max-md:items-start">
-              <div className="flex min-w-0 items-center gap-3 max-md:items-start">
-                <CoinIcon size={32} className="text-[13px]" />
-                <div className="flex min-w-0 flex-col gap-0.5">
-                  <h2 id="h-coins" className="type-h3">
-                    {t("nav.coins")}
-                  </h2>
-                  <span className={fieldHint}>{t("coinsHint", { count: coins })}</span>
+          <Effect asChild fade slide={{ direction: "up", offset: 10 }} inView>
+            <section id="set-coins" aria-labelledby="h-coins" className="min-w-0 scroll-mt-20 rounded-card border bg-card p-5 shadow-xs max-md:p-4">
+              <div className="flex items-center justify-between gap-4 max-md:items-start">
+                <div className="flex min-w-0 items-center gap-3 max-md:items-start">
+                  <CoinIcon size={32} className="text-[13px]" />
+                  <div className="flex min-w-0 flex-col gap-0.5">
+                    <h2 id="h-coins" className="type-h3">
+                      {t("nav.coins")}
+                    </h2>
+                    <span className={fieldHint}>{t("coinsHint", { count: coins })}</span>
+                  </div>
                 </div>
+                <Button asChild variant="outline" size="sm" className="shrink-0">
+                  <Link href="/coins#history-title">
+                    {t("history")}
+                    <ChevronRightIcon className="size-3.5" aria-hidden />
+                  </Link>
+                </Button>
               </div>
-              <Button asChild variant="outline" size="sm" className="shrink-0">
-                <Link href="/coins#history-title">
-                  {t("history")}
-                  <ChevronRightIcon className="size-3.5" aria-hidden />
-                </Link>
-              </Button>
-            </div>
-          </section>
+            </section>
+          </Effect>
 
           {/* Account actions */}
           <Card id="danger" title={t("nav.danger")} danger>
