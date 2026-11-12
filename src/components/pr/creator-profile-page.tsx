@@ -44,6 +44,7 @@ import { creatorHandle, readerHref } from "@/lib/routes"
 import { unblockUser } from "@/lib/moderation"
 import { isCreator, useAppStore, useHydrated, useUser } from "@/lib/store"
 import { cn } from "@/lib/utils"
+import { Effect } from "@animate-ui/react/primitives/effects/effect"
 
 /**
  * Creator profile (spec §17, prototype Profile/): banner, avatar, verified badge, bio and stats; tabs Series / Updates /
@@ -309,57 +310,59 @@ function Profile({ handle, baseName, isOwner, api }: { handle: string; baseName:
         <>
           <section aria-labelledby="pf-name" className={cn("border-b", isOwner && "mt-4")}>
             <div aria-hidden className="h-40 max-md:h-[110px]" style={{ backgroundImage: BANNER }} />
-            <div className="container flex items-end gap-6 pb-6 max-md:flex-col max-md:items-stretch max-md:gap-3">
-              <span
-                aria-hidden
-                className="-mt-12 inline-flex size-[120px] shrink-0 self-start items-center justify-center rounded-full border-[5px] border-white bg-primary text-[40px] font-extrabold text-primary-foreground shadow-md max-md:-mt-10 max-md:size-[84px] max-md:border-4 max-md:text-[28px]"
-              >
-                {initials(name)}
-              </span>
-              <div className="flex min-w-0 flex-1 flex-col gap-1.5 pt-4 max-md:pt-0">
-                <div className="flex flex-wrap items-center gap-2">
-                  <h1 id="pf-name" className="type-h2">
-                    {name}
-                  </h1>
-                  <Badge variant="brand">
-                    <CheckIcon aria-hidden />
-                    {t("verified")}
-                  </Badge>
+            <Effect asChild fade slide={{ direction: "up", offset: 10 }}>
+              <div className="container flex items-end gap-6 pb-6 max-md:flex-col max-md:items-stretch max-md:gap-3">
+                <span
+                  aria-hidden
+                  className="-mt-12 inline-flex size-[120px] shrink-0 self-start items-center justify-center rounded-full border-[5px] border-white bg-primary text-[40px] font-extrabold text-primary-foreground shadow-md max-md:-mt-10 max-md:size-[84px] max-md:border-4 max-md:text-[28px]"
+                >
+                  {initials(name)}
+                </span>
+                <div className="flex min-w-0 flex-1 flex-col gap-1.5 pt-4 max-md:pt-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h1 id="pf-name" className="type-h2">
+                      {name}
+                    </h1>
+                    <Badge variant="brand">
+                      <CheckIcon aria-hidden />
+                      {t("verified")}
+                    </Badge>
+                  </div>
+                  <span className="text-[13px] leading-5 text-muted-foreground">{t("handleLine", { handle, place, year })}</span>
+                  <p className="max-w-[64ch] text-[15px] leading-[23px] text-[#3f3f46]">{bio}</p>
+                  <dl className="flex flex-wrap gap-7 pt-1 max-md:gap-[18px]">
+                    {stats.map((s) => (
+                      <div key={s.k} className="flex flex-col-reverse">
+                        <dt className="text-xs leading-4 text-muted-foreground">{s.k}</dt>
+                        <dd className="text-lg leading-6 font-bold tabular-nums">{s.v}</dd>
+                      </div>
+                    ))}
+                  </dl>
                 </div>
-                <span className="text-[13px] leading-5 text-muted-foreground">{t("handleLine", { handle, place, year })}</span>
-                <p className="max-w-[64ch] text-[15px] leading-[23px] text-[#3f3f46]">{bio}</p>
-                <dl className="flex flex-wrap gap-7 pt-1 max-md:gap-[18px]">
-                  {stats.map((s) => (
-                    <div key={s.k} className="flex flex-col-reverse">
-                      <dt className="text-xs leading-4 text-muted-foreground">{s.k}</dt>
-                      <dd className="text-lg leading-6 font-bold tabular-nums">{s.v}</dd>
-                    </div>
-                  ))}
-                </dl>
-              </div>
-              <div className="flex shrink-0 items-center gap-2 max-md:w-full">
-                {isOwner ? null : (
-                  <Button variant={following ? "secondary" : "brand"} aria-pressed={following} className="max-md:flex-1" onClick={() => void toggleFollow()}>
-                    {following ? <CheckIcon aria-hidden /> : <PlusIcon aria-hidden />}
-                    {following ? t("following") : t("follow")}
+                <div className="flex shrink-0 items-center gap-2 max-md:w-full">
+                  {isOwner ? null : (
+                    <Button variant={following ? "secondary" : "brand"} aria-pressed={following} className="max-md:flex-1" onClick={() => void toggleFollow()}>
+                      {following ? <CheckIcon aria-hidden /> : <PlusIcon aria-hidden />}
+                      {following ? t("following") : t("follow")}
+                    </Button>
+                  )}
+                  <Button variant="outline" size="icon" aria-label={t("share")} onClick={() => void share()}>
+                    <ShareIcon />
                   </Button>
-                )}
-                <Button variant="outline" size="icon" aria-label={t("share")} onClick={() => void share()}>
-                  <ShareIcon />
-                </Button>
-                {/* Real API: no reporting or blocking yourself, also on your own public page (400 cannot_report_self). */}
-                {isOwner || api?.owner ? null : (
-                  <>
-                    <Button variant="ghost" onClick={report}>
-                      {t("report")}
-                    </Button>
-                    <Button variant="ghost" aria-pressed={blocked} onClick={block}>
-                      {blocked ? t("unblock") : t("block")}
-                    </Button>
-                  </>
-                )}
+                  {/* Real API: no reporting or blocking yourself, also on your own public page (400 cannot_report_self). */}
+                  {isOwner || api?.owner ? null : (
+                    <>
+                      <Button variant="ghost" onClick={report}>
+                        {t("report")}
+                      </Button>
+                      <Button variant="ghost" aria-pressed={blocked} onClick={block}>
+                        {blocked ? t("unblock") : t("block")}
+                      </Button>
+                    </>
+                  )}
+                </div>
               </div>
-            </div>
+            </Effect>
           </section>
 
           {isOwner && editing ? (
@@ -386,8 +389,8 @@ function Profile({ handle, baseName, isOwner, api }: { handle: string; baseName:
                   <StateBox icon={BookOpenIcon} title={t("noSeriesTitle")} text={t("noSeriesText", { name })} />
                 ) : (
                   <ul className="m-0 grid list-none gap-4 p-0 lg:grid-cols-2">
-                    {items.map((i) => (
-                      <SeriesItem key={i.key} item={i} />
+                    {items.map((i, n) => (
+                      <SeriesItem key={i.key} item={i} index={n} />
                     ))}
                   </ul>
                 )}
@@ -396,17 +399,19 @@ function Profile({ handle, baseName, isOwner, api }: { handle: string; baseName:
               <TabsContent value="updates">
                 {isDemoCreator && items.length > 0 ? (
                   <ul className="m-0 flex max-w-[720px] list-none flex-col gap-3 p-0">
-                    {DEMO_CREATOR_POSTS.map((p) => {
+                    {DEMO_CREATOR_POSTS.map((p, pi) => {
                       const ago = -daysFromToday(p.date)
                       return (
-                        <li key={p.date} className="flex flex-col gap-1.5 rounded-card border bg-card p-5 shadow-xs max-md:p-4">
-                          <span className="text-xs leading-4 text-muted-foreground">
-                            {ago <= 0 ? t("today") : ago < 7 ? t("daysAgo", { count: ago }) : formatShortDate(p.date, locale)}
-                          </span>
-                          <span className="type-h4">{p.title}</span>
-                          <p className="text-[13px] leading-[19px] text-[#3f3f46]">{p.body}</p>
-                          <span className="text-xs leading-4 text-muted-foreground">{t("postStats", { likes: p.likes, count: p.comments })}</span>
-                        </li>
+                        <Effect key={p.date} asChild fade slide={{ direction: "up", offset: 8 }} delay={Math.min(pi, 10) * 40} inView>
+                          <li className="flex flex-col gap-1.5 rounded-card border bg-card p-5 shadow-xs max-md:p-4">
+                            <span className="text-xs leading-4 text-muted-foreground">
+                              {ago <= 0 ? t("today") : ago < 7 ? t("daysAgo", { count: ago }) : formatShortDate(p.date, locale)}
+                            </span>
+                            <span className="type-h4">{p.title}</span>
+                            <p className="text-[13px] leading-[19px] text-[#3f3f46]">{p.body}</p>
+                            <span className="text-xs leading-4 text-muted-foreground">{t("postStats", { likes: p.likes, count: p.comments })}</span>
+                          </li>
+                        </Effect>
                       )
                     })}
                   </ul>
@@ -458,38 +463,40 @@ function Profile({ handle, baseName, isOwner, api }: { handle: string; baseName:
   )
 }
 
-function SeriesItem({ item: i }: { item: Item }) {
+function SeriesItem({ item: i, index }: { item: Item; index: number }) {
   const t = useTranslations("profile")
   const loc = useLocalize()
   return (
-    <li className="flex gap-4 rounded-card border bg-card p-4 shadow-xs">
-      {i.cover ? (
-        <Image src={i.cover} alt="" width={240} height={320} className="aspect-[3/4] w-[120px] shrink-0 self-start rounded-[10px] object-cover max-md:w-[88px]" />
-      ) : (
-        <span aria-hidden className="aspect-[3/4] w-[120px] shrink-0 self-start rounded-[10px] bg-muted max-md:w-[88px]" />
-      )}
-      <div className="flex min-w-0 flex-col gap-1.5">
-        <div className="flex flex-wrap gap-1.5">
-          <Badge variant="outline">{loc.genre(i.genre)}</Badge>
-          <Badge variant="outline">{t(i.format === "novel" ? "formatNovel" : "formatComic")}</Badge>
-          {i.live ? null : <Badge variant="warn">{t("comingSoon")}</Badge>}
-        </div>
-        <h2 className="type-h3">{i.title}</h2>
-        {i.summary ? <p className="text-[13px] leading-[19px] text-muted-foreground">{i.summary}</p> : null}
-        <span className="text-xs leading-4 text-muted-foreground">
-          {i.live
-            ? t("metaLive", { unit: i.format, count: i.eps, day: i.days.length ? loc.days(i.days, "full") : "—", subs: i.subs })
-            : t("metaSoon", { unit: i.format })}
-        </span>
-        {i.live && i.href ? (
-          <div className="pt-1">
-            <Button asChild variant="brand" size="sm">
-              <Link href={i.href}>{t("readFirst", { unit: i.format })}</Link>
-            </Button>
+    <Effect asChild fade slide={{ direction: "up", offset: 8 }} delay={Math.min(index, 10) * 40} inView>
+      <li className="flex gap-4 rounded-card border bg-card p-4 shadow-xs">
+        {i.cover ? (
+          <Image src={i.cover} alt="" width={240} height={320} className="aspect-[3/4] w-[120px] shrink-0 self-start rounded-[10px] object-cover max-md:w-[88px]" />
+        ) : (
+          <span aria-hidden className="aspect-[3/4] w-[120px] shrink-0 self-start rounded-[10px] bg-muted max-md:w-[88px]" />
+        )}
+        <div className="flex min-w-0 flex-col gap-1.5">
+          <div className="flex flex-wrap gap-1.5">
+            <Badge variant="outline">{loc.genre(i.genre)}</Badge>
+            <Badge variant="outline">{t(i.format === "novel" ? "formatNovel" : "formatComic")}</Badge>
+            {i.live ? null : <Badge variant="warn">{t("comingSoon")}</Badge>}
           </div>
-        ) : null}
-      </div>
-    </li>
+          <h2 className="type-h3">{i.title}</h2>
+          {i.summary ? <p className="text-[13px] leading-[19px] text-muted-foreground">{i.summary}</p> : null}
+          <span className="text-xs leading-4 text-muted-foreground">
+            {i.live
+              ? t("metaLive", { unit: i.format, count: i.eps, day: i.days.length ? loc.days(i.days, "full") : "—", subs: i.subs })
+              : t("metaSoon", { unit: i.format })}
+          </span>
+          {i.live && i.href ? (
+            <div className="pt-1">
+              <Button asChild variant="brand" size="sm">
+                <Link href={i.href}>{t("readFirst", { unit: i.format })}</Link>
+              </Button>
+            </div>
+          ) : null}
+        </div>
+      </li>
+    </Effect>
   )
 }
 
