@@ -18,6 +18,7 @@ import { useLocalize } from "@/lib/localize"
 import { genreSlug, seriesHref } from "@/lib/routes"
 import { cn } from "@/lib/utils"
 import { Num } from "@/i18n/num"
+import { Effect } from "@animate-ui/react/primitives/effects/effect"
 
 type Format = "all" | "comic" | "novel"
 type Status = "any" | "ongoing" | "completed"
@@ -110,28 +111,32 @@ export function GenresPage() {
 
   return (
     <div className="container flex flex-col gap-5 pt-7 pb-16">
-      <div className="flex flex-col gap-1">
-        <h1 className="type-h1">{novelsPage ? t("novelsTitle") : t("title")}</h1>
-        <p className="text-[15px] leading-[26px] text-muted-foreground">{novelsPage ? t("novelsLead") : t("lead")}</p>
-      </div>
+      <Effect asChild fade slide={{ direction: "up", offset: 8 }}>
+        <div className="flex flex-col gap-1">
+          <h1 className="type-h1">{novelsPage ? t("novelsTitle") : t("title")}</h1>
+          <p className="text-[15px] leading-[26px] text-muted-foreground">{novelsPage ? t("novelsLead") : t("lead")}</p>
+        </div>
+      </Effect>
 
-      <div
-        role="radiogroup"
-        aria-label={t("genres")}
-        className="flex flex-wrap gap-2 max-md:-mx-4 max-md:flex-nowrap max-md:overflow-x-auto max-md:px-4 max-md:[scrollbar-width:none]"
-      >
-        {(["All", ...genres()] as const).map((g) => (
-          <Chip
-            key={g}
-            role="radio"
-            selected={genre === g}
-            onClick={() => replaceQuery({ g: g === "All" ? null : g })}
-            count={ready ? pool.filter((s) => (g === "All" || s.genre === g) && match(s, true)).length : undefined}
-          >
-            {g === "All" ? t("allGenres") : loc.genre(g)}
-          </Chip>
-        ))}
-      </div>
+      <Effect asChild fade slide={{ direction: "up", offset: 8 }} delay={80}>
+        <div
+          role="radiogroup"
+          aria-label={t("genres")}
+          className="flex flex-wrap gap-2 max-md:-mx-4 max-md:flex-nowrap max-md:overflow-x-auto max-md:px-4 max-md:[scrollbar-width:none]"
+        >
+          {(["All", ...genres()] as const).map((g) => (
+            <Chip
+              key={g}
+              role="radio"
+              selected={genre === g}
+              onClick={() => replaceQuery({ g: g === "All" ? null : g })}
+              count={ready ? pool.filter((s) => (g === "All" || s.genre === g) && match(s, true)).length : undefined}
+            >
+              {g === "All" ? t("allGenres") : loc.genre(g)}
+            </Chip>
+          ))}
+        </div>
+      </Effect>
 
       {genre !== "All" ? <Banner genre={genre} series={pool.filter((s) => s.genre === genre)} ready={ready} /> : null}
 
@@ -223,8 +228,8 @@ export function GenresPage() {
       ) : (
         <>
           <ul className={GRID}>
-            {visible.map((s) => (
-              <GenreCard key={s.id} series={s} />
+            {visible.map((s, i) => (
+              <GenreCard key={s.id} series={s} index={i} />
             ))}
           </ul>
           {list.length > shown ? (
@@ -247,39 +252,41 @@ function Banner({ genre, series, ready }: { genre: Genre; series: Series[]; read
   const loc = useLocalize()
   const [, bg, ink] = demoData.genreInfo[genre] ?? ["", "#f4f4f5", "#047a3a"]
   return (
-    <section
-      aria-labelledby="gn-banner-h"
-      className="flex items-center justify-between gap-6 overflow-hidden rounded-2xl border border-[rgba(9,9,11,0.06)] px-7 py-6 max-md:gap-3 max-md:p-4"
-      style={{ background: bg }}
-    >
-      <div className="flex min-w-0 flex-col gap-1.5">
-        <p className="type-eyebrow" style={{ color: ink }}>
-          {ready ? t("bannerCount", { count: series.length }) : " "}
-        </p>
-        <h2 id="gn-banner-h" className="type-h2">
-          {loc.genre(genre)}
-        </h2>
-        <p className="max-w-[60ch] text-[13px] leading-[18px] text-[#3f3f46]">{t(`desc.${genre}`)}</p>
-      </div>
-      <div aria-hidden className="flex shrink-0 items-end pl-[18px] max-md:hidden">
-        {series.slice(0, 3).map((s, i) => (
-          <span
-            key={s.id}
-            className={cn(
-              "relative -ml-[18px] aspect-[3/4] w-[84px] overflow-hidden rounded-[10px] border-2 border-white shadow-[0_8px_20px_rgba(9,9,11,0.18)]",
-              i === 1 && "mb-3"
-            )}
-          >
-            <Image src={s.cover} alt="" fill sizes="84px" className="object-cover" />
-          </span>
-        ))}
-      </div>
-    </section>
+    <Effect asChild fade slide={{ direction: "up", offset: 8 }}>
+      <section
+        aria-labelledby="gn-banner-h"
+        className="flex items-center justify-between gap-6 overflow-hidden rounded-2xl border border-[rgba(9,9,11,0.06)] px-7 py-6 max-md:gap-3 max-md:p-4"
+        style={{ background: bg }}
+      >
+        <div className="flex min-w-0 flex-col gap-1.5">
+          <p className="type-eyebrow" style={{ color: ink }}>
+            {ready ? t("bannerCount", { count: series.length }) : " "}
+          </p>
+          <h2 id="gn-banner-h" className="type-h2">
+            {loc.genre(genre)}
+          </h2>
+          <p className="max-w-[60ch] text-[13px] leading-[18px] text-[#3f3f46]">{t(`desc.${genre}`)}</p>
+        </div>
+        <div aria-hidden className="flex shrink-0 items-end pl-[18px] max-md:hidden">
+          {series.slice(0, 3).map((s, i) => (
+            <span
+              key={s.id}
+              className={cn(
+                "relative -ml-[18px] aspect-[3/4] w-[84px] overflow-hidden rounded-[10px] border-2 border-white shadow-[0_8px_20px_rgba(9,9,11,0.18)]",
+                i === 1 && "mb-3"
+              )}
+            >
+              <Image src={s.cover} alt="" fill sizes="84px" className="object-cover" />
+            </span>
+          ))}
+        </div>
+      </section>
+    </Effect>
   )
 }
 
 /** `.s-card` for this grid: UP / Novel / Completed badges, title, creator and "Every Mon · ♥ 3.6M" (or Completed). */
-function GenreCard({ series: s }: { series: Series }) {
+function GenreCard({ series: s, index }: { series: Series; index: number }) {
   const t = useTranslations("genresPage")
   const tc = useTranslations("cards")
   const loc = useLocalize()
@@ -287,43 +294,45 @@ function GenreCard({ series: s }: { series: Series }) {
   const novel = s.type === "novel"
   const lead = done ? t("completed") : loc.schedule(s)
   return (
-    <li className="min-w-0">
-      <Link
-        href={seriesHref(s)}
-        className="group flex min-w-0 flex-col gap-2.5 rounded-[10px] outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-      >
-        <div className="relative aspect-[3/4] w-full overflow-hidden rounded-[10px] bg-muted">
-          <Image
-            src={s.cover}
-            alt=""
-            width={360}
-            height={480}
-            sizes="(min-width: 1280px) 190px, (min-width: 1024px) 16vw, (min-width: 768px) 25vw, 33vw"
-            className="cover-zoom size-full object-cover"
-          />
-          {s.badges.up || novel || done ? (
-            <div className="absolute top-2 right-2 left-2 flex flex-wrap gap-1">
-              {s.badges.up ? <Badge variant="up">{tc("up")}</Badge> : null}
-              {novel ? <Badge variant="dark">{tc("novel")}</Badge> : null}
-              {done ? (
-                <Badge variant="secondary" className="max-md:hidden">
-                  {t("completed")}
-                </Badge>
-              ) : null}
-            </div>
-          ) : null}
-        </div>
-        <div className="flex min-w-0 flex-col gap-[3px]">
-          <h3 className="truncate text-sm leading-5 font-semibold max-md:text-[13px] max-md:leading-[18px]">{s.title}</h3>
-          <p className="truncate text-[13px] leading-[18px] text-muted-foreground max-md:text-xs">{s.creator}</p>
-          <p className="truncate text-[13px] leading-[18px] text-muted-foreground max-md:text-xs">
-            {lead ? `${lead} · ` : ""}
-            <span aria-hidden>♥ </span>
-            <span className="sr-only">{t("likes", { count: s.likes })}</span>
-            <span aria-hidden><Num>{s.likes}</Num></span>
-          </p>
-        </div>
-      </Link>
-    </li>
+    <Effect asChild fade slide={{ direction: "up", offset: 8 }} delay={Math.min(index, 10) * 40} inView>
+      <li className="min-w-0">
+        <Link
+          href={seriesHref(s)}
+          className="group flex min-w-0 flex-col gap-2.5 rounded-[10px] outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+        >
+          <div className="relative aspect-[3/4] w-full overflow-hidden rounded-[10px] bg-muted">
+            <Image
+              src={s.cover}
+              alt=""
+              width={360}
+              height={480}
+              sizes="(min-width: 1280px) 190px, (min-width: 1024px) 16vw, (min-width: 768px) 25vw, 33vw"
+              className="cover-zoom size-full object-cover"
+            />
+            {s.badges.up || novel || done ? (
+              <div className="absolute top-2 right-2 left-2 flex flex-wrap gap-1">
+                {s.badges.up ? <Badge variant="up">{tc("up")}</Badge> : null}
+                {novel ? <Badge variant="dark">{tc("novel")}</Badge> : null}
+                {done ? (
+                  <Badge variant="secondary" className="max-md:hidden">
+                    {t("completed")}
+                  </Badge>
+                ) : null}
+              </div>
+            ) : null}
+          </div>
+          <div className="flex min-w-0 flex-col gap-[3px]">
+            <h3 className="truncate text-sm leading-5 font-semibold max-md:text-[13px] max-md:leading-[18px]">{s.title}</h3>
+            <p className="truncate text-[13px] leading-[18px] text-muted-foreground max-md:text-xs">{s.creator}</p>
+            <p className="truncate text-[13px] leading-[18px] text-muted-foreground max-md:text-xs">
+              {lead ? `${lead} · ` : ""}
+              <span aria-hidden>♥ </span>
+              <span className="sr-only">{t("likes", { count: s.likes })}</span>
+              <span aria-hidden><Num>{s.likes}</Num></span>
+            </p>
+          </div>
+        </Link>
+      </li>
+    </Effect>
   )
 }
