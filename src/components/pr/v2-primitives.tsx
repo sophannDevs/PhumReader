@@ -3,6 +3,7 @@
 import { CheckIcon, type LucideIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Num } from "@/i18n/num"
+import { SlidingTab, SlidingTabs } from "@/components/ui/sliding-tabs"
 
 /**
  * Small V2.1 building blocks from design/prototype-src/shared.css and the page CSS:
@@ -120,25 +121,27 @@ export function Segmented<T extends string>({
         className
       )}
     >
+      <SlidingTabs value={value} pill="inset-0 rounded-[7px] bg-background shadow-[0_1px_3px_rgba(9,9,11,0.1)]">
       {options.map((o) => {
         const on = o.value === value
         return (
+          <SlidingTab key={o.value} value={o.value} className={cn("inline-flex shrink-0", stretch && "flex-1")}>
           <button
-            key={o.value}
             type="button"
             role="radio"
             aria-checked={on}
             onClick={() => onChange(o.value)}
             className={cn(
-              "inline-flex h-[30px] shrink-0 items-center justify-center gap-1.5 rounded-[7px] px-3 text-sm font-medium whitespace-nowrap transition-colors outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
-              on && "bg-background text-foreground shadow-[0_1px_3px_rgba(9,9,11,0.1)]",
-              stretch && "flex-1"
+              "inline-flex h-[30px] w-full items-center justify-center gap-1.5 rounded-[7px] px-3 text-sm font-medium whitespace-nowrap transition-colors outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
+              on && "text-foreground"
             )}
           >
             {o.label}
           </button>
+          </SlidingTab>
         )
       })}
+      </SlidingTabs>
     </div>
   )
 }

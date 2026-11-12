@@ -15,6 +15,7 @@ import { useDemoFlag } from "@/lib/queries"
 import { useHydrated, useUser } from "@/lib/store"
 import { cn } from "@/lib/utils"
 import { Num } from "@/i18n/num"
+import { SlidingTab, SlidingTabs } from "@/components/ui/sliding-tabs"
 
 /**
  * Pieces shared by the browse pages (Search §7, Rankings §10, Genres / Web novels §11):
@@ -55,11 +56,12 @@ export function LineTabs<T extends string>({
 
   return (
     <div role="tablist" aria-label={label} className={cn("flex gap-1 overflow-x-auto border-b [scrollbar-width:none]", className)}>
+      <SlidingTabs value={value} pill="inset-x-0 bottom-0 h-0.5 bg-foreground">
       {items.map((it, i) => {
         const on = it.value === value
         return (
+          <SlidingTab key={it.value} value={it.value} className="-mb-px inline-flex shrink-0">
           <button
-            key={it.value}
             ref={(el) => {
               refs.current[i] = el
             }}
@@ -72,8 +74,8 @@ export function LineTabs<T extends string>({
             onClick={() => onChange(it.value)}
             onKeyDown={(e) => onKeyDown(e, i)}
             className={cn(
-              "-mb-px inline-flex h-11 shrink-0 items-center gap-1.5 border-b-2 border-transparent px-3 text-sm font-medium whitespace-nowrap text-muted-foreground transition-colors outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset",
-              on && "border-foreground text-foreground"
+              "inline-flex h-11 items-center gap-1.5 px-3 text-sm font-medium whitespace-nowrap text-muted-foreground transition-colors outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset",
+              on && "text-foreground"
             )}
           >
             {it.label}
@@ -83,8 +85,10 @@ export function LineTabs<T extends string>({
               </Badge>
             ) : null}
           </button>
+          </SlidingTab>
         )
       })}
+      </SlidingTabs>
     </div>
   )
 }

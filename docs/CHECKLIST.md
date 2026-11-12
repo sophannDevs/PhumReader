@@ -600,3 +600,12 @@ docs/BACKEND_CHECKLIST.md, "V2.1 API additions" (V21-01 … V21-07).
   warning ("have a lawyer review") and its long text sections (anchor links jump to them; only the summary box and
   the footer card animate); the creator nav (each page renders its own copy, so it remounts on every navigation and
   a slide could never play); the home hero (it holds the LCP image); `/dev/foundations`.
+- ANIM-13 (animations) **All tabs slide**: tabs built on `ui/tabs.tsx` or Radix (Library, Notifications, Creator
+  profile, Series page) already used Animate UI Tabs. The hand-built tab lists (Log in / Sign up, Manage series,
+  the Home day tabs, and the shared `TabsBar` that Search and Rankings use) and the `Segmented` pill toggle (about 11
+  places) keep their markup, ARIA and arrow-key handling and now get a sliding indicator from Animate UI `Highlight`
+  through `src/components/ui/sliding-tabs.tsx` (`SlidingTabs` + `SlidingTab`; each tab's slot is `role="none"`, so
+  `role="tab"` stays a direct child of the tablist in the accessibility tree). The tab buttons no longer paint the
+  selected look themselves, only the selected text colour. The Vue (Reka UI) Tabs page is not used: this is a React
+  project. Not tabs, so unchanged: the genre chips, the Home spotlight pager dots and the Admin side menu (it has its
+  own pill, ANIM-11).

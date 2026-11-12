@@ -69,6 +69,7 @@ import { genreFromSlug, genreSlug } from "@/lib/routes"
 import { useAppStore } from "@/lib/store"
 import { cn } from "@/lib/utils"
 import { Effect } from "@animate-ui/react/primitives/effects/effect"
+import { SlidingTab, SlidingTabs } from "@/components/ui/sliding-tabs"
 
 /**
  * Manage series (spec §21, prototype Manage/): header with the cover, status, "View as reader" and Upload; the reviewer's
@@ -929,11 +930,12 @@ function ManageView({ model, actions }: { model: Model; actions: Actions }) {
       ) : null}
 
       <div role="tablist" aria-label={t("tabsLabel")} className="flex gap-1 overflow-x-auto border-b [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <SlidingTabs value={tab} pill="inset-x-0 bottom-0 h-0.5 bg-foreground">
         {TABS.map((id) => {
           const on = id === tab
           return (
+            <SlidingTab key={id} value={id} className="-mb-px inline-flex shrink-0">
             <button
-              key={id}
               ref={(el) => {
                 tabRefs.current[id] = el
               }}
@@ -946,8 +948,8 @@ function ManageView({ model, actions }: { model: Model; actions: Actions }) {
               onClick={() => pickTab(id)}
               onKeyDown={tabKey}
               className={cn(
-                "-mb-px inline-flex h-11 shrink-0 items-center gap-1.5 rounded-t-sm border-b-2 px-3 text-sm font-medium whitespace-nowrap transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset",
-                on ? "border-foreground text-foreground" : "border-transparent text-muted-foreground hover:text-foreground"
+                "inline-flex h-11 items-center gap-1.5 rounded-t-sm px-3 text-sm font-medium whitespace-nowrap transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset",
+                on ? "text-foreground" : "text-muted-foreground hover:text-foreground"
               )}
             >
               {id === "episodes" ? t("tabEpisodes", { unit }) : id === "details" ? t("tabDetails") : id === "fast-pass" ? t("tabFastPass") : t("tabSettings")}
@@ -957,8 +959,10 @@ function ManageView({ model, actions }: { model: Model; actions: Actions }) {
                 </Badge>
               ) : null}
             </button>
+            </SlidingTab>
           )
         })}
+        </SlidingTabs>
       </div>
 
       <Effect key={tab} asChild fade slide={{ direction: "up", offset: 8 }}>

@@ -11,6 +11,7 @@ import type { Series, Weekday } from "@/data"
 import { realWeekdayIct } from "@/lib/format"
 import { cn } from "@/lib/utils"
 import { Num } from "@/i18n/num"
+import { SlidingTab, SlidingTabs } from "@/components/ui/sliding-tabs"
 
 const DAYS: Weekday[] = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 type Kind = "all" | "comic" | "novel"
@@ -97,20 +98,21 @@ export function DailyUpdatesSection({
         aria-label={t("dayLabel")}
         className="grid grid-cols-7 gap-1.5 max-md:-mx-4 max-md:flex max-md:overflow-x-auto max-md:px-4 max-md:[scrollbar-width:none]"
       >
+        <SlidingTabs value={day} pill="inset-0 rounded-[10px] bg-foreground">
         {DAYS.map((d) => {
           const on = d === day
           const n = (daily[d] ?? []).filter(match).length
           return (
+            <SlidingTab key={d} value={d} className="flex max-md:w-[52px] max-md:shrink-0">
             <button
-              key={d}
               type="button"
               role="tab"
               aria-selected={on}
               onClick={() => pickDay(d)}
               className={cn(
-                "flex flex-col items-center gap-0.5 rounded-[10px] border px-1 py-2 transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background max-md:w-[52px] max-md:shrink-0",
+                "flex w-full flex-col items-center gap-0.5 rounded-[10px] border px-1 py-2 transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
                 on
-                  ? "border-foreground bg-foreground text-[#fafafa]"
+                  ? "border-foreground text-[#fafafa]"
                   : d === todayDay
                     ? "border-primary bg-background text-brand-ink hover:bg-accent"
                     : "bg-background text-muted-foreground hover:bg-accent hover:text-foreground"
@@ -119,8 +121,10 @@ export function DailyUpdatesSection({
               <span className="text-sm font-semibold">{d === todayDay ? t("today") : t(`days.${d}`)}</span>
               <span className="text-[11px] tabular-nums">{state === "ready" ? t("dayCount", { count: n }) : " "}</span>
             </button>
+            </SlidingTab>
           )
         })}
+        </SlidingTabs>
       </div>
 
       {state === "error" ? (

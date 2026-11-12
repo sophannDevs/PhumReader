@@ -15,6 +15,7 @@ import { AuthHead } from "@/components/auth/auth-ui"
 import { setPasswordWithCode, type PendingCode } from "@/lib/session"
 import { useAppStore, type StoredUser } from "@/lib/store"
 import { cn } from "@/lib/utils"
+import { SlidingTab, SlidingTabs } from "@/components/ui/sliding-tabs"
 
 type Mode = "signup" | "forgot" | "verify" | null
 
@@ -228,9 +229,10 @@ function ModeTabs({ value, onChange }: { value: "login" | "signup"; onChange: (v
   const tabs = ["login", "signup"] as const
   return (
     <div role="tablist" aria-label={t("modes")} className="grid grid-cols-2 gap-0.5 rounded-xl bg-muted p-1">
+      <SlidingTabs value={value} pill="inset-0 rounded-[9px] bg-background shadow-[0_1px_3px_rgba(9,9,11,0.1)]">
       {tabs.map((id) => (
+        <SlidingTab key={id} value={id} className="flex">
         <button
-          key={id}
           id={`auth-tab-${id}`}
           type="button"
           role="tab"
@@ -245,13 +247,15 @@ function ModeTabs({ value, onChange }: { value: "login" | "signup"; onChange: (v
             document.getElementById(`auth-tab-${next}`)?.focus()
           }}
           className={cn(
-            "h-[38px] rounded-[9px] text-sm font-semibold outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-            value === id ? "bg-background text-foreground shadow-[0_1px_3px_rgba(9,9,11,0.1)]" : "text-muted-foreground hover:text-foreground"
+            "h-[38px] w-full rounded-[9px] text-sm font-semibold outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+            value === id ? "text-foreground" : "text-muted-foreground hover:text-foreground"
           )}
         >
           {t(id)}
         </button>
+        </SlidingTab>
       ))}
+      </SlidingTabs>
     </div>
   )
 }
