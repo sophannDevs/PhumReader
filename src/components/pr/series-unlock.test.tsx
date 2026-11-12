@@ -11,7 +11,16 @@ import { API, apiError, http, HttpResponse, server } from "@/test/server"
 const comic = getSeries().find((s) => s.type === "comic") as Series
 const novel = getSeries().find((s) => s.type === "novel") as Series
 
-const summary = (n: number, access: "free" | "fastpass") => ({ n, title: `Episode ${n}`, date: "2026-11-01", isUp: false, likes: 10, access, thumb: "/covers/x.svg" })
+const summary = (n: number, access: "free" | "fastpass", price?: number) => ({
+  n,
+  title: `Episode ${n}`,
+  date: "2026-11-01",
+  isUp: false,
+  likes: 10,
+  access,
+  thumb: "/covers/x.svg",
+  ...(price === undefined ? {} : { price }),
+})
 const listFor = (slug: string) =>
   http.get(`${API}/series/${slug}/episodes`, () =>
     HttpResponse.json({ items: [summary(1, "free"), summary(2, "fastpass"), summary(3, "fastpass")], nextCursor: null }),
@@ -77,9 +86,47 @@ describe("useSeriesUnlock: not enough coins", () => {
     const { user } = await openRow(comic, 3)
     expect(await screen.findByText(/You need 2 more coins\./)).toBeInTheDocument()
     await user.click(screen.getByRole("button", { name: "Get coins" }))
-    expect(useAppStore.getState().shopReturn).toEqual({ page: `/series/${comic.slug}`, episode: 3, title: comic.title })
+    expect(useAppStore.getState().shopReturn).toEqual({ page: `/series/${comic.slug}`, episode: 3, title: comic.title, price: 5, novel: false })
     expect(useAppStore.getState().pendingUnlock).toEqual({ seriesId: comic.id, episode: 3 })
     expect(router.push).toHaveBeenCalledWith("/coins")
+  })
+
+  it("hands /coins the episode's own price and says it is a chapter for a web novel", async () => {
+    signIn(3)
+    server.use(
+      http.get(`${API}/series/${novel.slug}/episodes`, () =>
+        HttpResponse.json({ items: [summary(1, "free"), summary(2, "fastpass", 8)], nextCursor: null }),
+      ),
+    )
+    const { user } = await openRow(novel, 2)
+    expect(await screen.findByText(/You need 5 more coins\./)).toBeInTheDocument()
+    await user.click(screen.getByRole("button", { name: "Get coins" }))
+    expect(useAppStore.getState().shopReturn).toEqual({ page: `/series/${novel.slug}`, episode: 2, title: novel.title, price: 8, novel: true })
+  })
+})
+
+describe("useSeriesUnlock: the API's prices", () => {
+  /** Episode 2 costs 7 coins and episode 3 costs 4 (each Fast Pass episode has its own price). */
+  const priced = (slug: string) =>
+    http.get(`${API}/series/${slug}/episodes`, () =>
+      HttpResponse.json({ items: [summary(1, "free"), summary(2, "fastpass", 7), summary(3, "fastpass", 4)], nextCursor: null }),
+    )
+
+  it("charges the episode's own price, not the demo's 5 coins", async () => {
+    signIn(12)
+    server.use(priced(comic.slug))
+    await openRow(comic, 2)
+    expect(await screen.findByRole("button", { name: "Unlock for 7 coins" })).toBeInTheDocument()
+    expect(screen.getByText("5 coins")).toBeInTheDocument() // after unlocking: 12 - 7
+  })
+
+  it("prices the bundle as the sum of its episodes", async () => {
+    signIn(30)
+    server.use(priced(comic.slug))
+    const { user } = await openRow(comic, 3)
+    expect(await screen.findByRole("button", { name: "Unlock for 4 coins" })).toBeInTheDocument()
+    await user.click(screen.getByRole("radio", { name: /All 2 Fast Pass episodes/ }))
+    expect(await screen.findByRole("button", { name: "Unlock 2 episodes for 11 coins" })).toBeInTheDocument()
   })
 })
 

@@ -40,7 +40,8 @@ public final class CommentViews {
      *
      * @param caseNumber shown as R-{caseNumber}; the same number when this reader already had an
      *     open report on the target
-     * @param accusedId the person behind the reported thing, for "Also block"
+     * @param accusedId the person behind the reported thing (for an account report: the account),
+     *     for "Also block"
      */
     public record ReportReceipt(
             int caseNumber, @Nullable UUID accusedId, @Nullable String accusedName) {}
@@ -48,7 +49,7 @@ public final class CommentViews {
     /**
      * One of the reader's reports.
      *
-     * @param targetType series, episode or comment
+     * @param targetType series, episode, comment or user (an account)
      * @param status in_review, removed or no_violation
      */
     public record MyReport(

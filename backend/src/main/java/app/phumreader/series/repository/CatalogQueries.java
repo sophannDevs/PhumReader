@@ -44,7 +44,8 @@ public class CatalogQueries {
             """
             select c.id, c.slug, c.title, c.type, c.summary, g.slug as genre_slug,
                    g.name as genre_name, g2.slug as second_genre_slug, c.creator_id, p.pen_name,
-                   c.cover_url, c.view_count, c.like_count, c.subscriber_count, c.update_days,
+                   p.handle as creator_handle, c.cover_url, c.view_count, c.like_count,
+                   c.subscriber_count, c.update_days,
                    c.status, c.languages, c.age_rating, c.comments_enabled, c.break_message,
                    coalesce(c.launched_at, c.created_at) as launched_at,
                    e.free_episodes, e.fast_pass_episodes, e.total_episodes,
@@ -82,6 +83,7 @@ public class CatalogQueries {
                             rs.getString("second_genre_slug"),
                             rs.getObject("creator_id", UUID.class),
                             rs.getString("pen_name"),
+                            rs.getString("creator_handle"),
                             rs.getString("cover_url"),
                             rs.getLong("view_count"),
                             rs.getLong("like_count"),
@@ -151,14 +153,6 @@ public class CatalogQueries {
                 .param("now", now)
                 .query(SERIES)
                 .list();
-    }
-
-    /** The address of the creator's public profile. */
-    public String creatorHandle(UUID creatorId) {
-        return jdbc.sql("select handle from creator_profiles where user_id = :id")
-                .param("id", creatorId)
-                .query(String.class)
-                .single();
     }
 
     public int publishedSeriesOfCreator(UUID creatorId) {

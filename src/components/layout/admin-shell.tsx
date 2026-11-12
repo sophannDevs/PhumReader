@@ -12,7 +12,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Link, usePathname } from "@/i18n/navigation"
 import { ApiError } from "@/lib/api/client"
 import { DEMO_MODE } from "@/lib/api/config"
-import { priorityOf, useAdminQueues, useOverview, useReports } from "@/lib/admin"
+import { priorityOf, useAdminQueues, useOverview, usePaymentCounts, useReports } from "@/lib/admin"
 import { initials } from "@/lib/format"
 import { isAdmin, useAppStore, useHydrated, useUser } from "@/lib/store"
 import { cn } from "@/lib/utils"
@@ -153,16 +153,19 @@ function AccessCard({ denied, email }: { denied: boolean; email: string }) {
   )
 }
 
-type NavItem = { href: string; label: string; count?: number; urgent?: boolean }
+/** `count`: a number, or "N+" (an older API without the overview's payment counts, while more pages wait) */
+type NavItem = { href: string; label: string; count?: number | string; urgent?: boolean }
 
 /**
- * Side menu counts: demo – the demo queues; real mode – the series to review and the open reports from the API
- * (payments have no API queue yet).
+ * Side menu counts: demo – the demo queues; real mode – the series to review and the open reports from the API, and
+ * for Payments the overview's open refund requests (V21-06) without the ones decided here. Like the prototype and the
+ * demo, the Payments count is refund requests only; the overview's cards show "Paid but no coins" separately.
  */
 function useNavCounts() {
   const queues = useAdminQueues()
   const overview = useOverview()
   const realReports = useReports(DEMO_MODE ? undefined : "open")
+  const payments = usePaymentCounts()
   const loaded = !!queues.query.data
   if (DEMO_MODE) {
     return {
@@ -176,7 +179,7 @@ function useNavCounts() {
     series: queues.seriesTotal ?? overview.data?.seriesInReview,
     reports: overview.data?.openReports,
     urgent: realReports.items.some((r) => priorityOf(r.reason) === "urgent"),
-    payments: undefined,
+    payments: payments.refunds,
   }
 }
 

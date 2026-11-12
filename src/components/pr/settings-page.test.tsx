@@ -242,6 +242,27 @@ describe("SettingsPage: real app", () => {
     renderUi(<SettingsPage />)
     expect(screen.queryByRole("button", { name: "Reset demo data" })).not.toBeInTheDocument()
   })
+
+  it("keeps Download your data with the button off and Coming soon (the API has no export yet)", () => {
+    signIn()
+    server.use(noDevices)
+    renderUi(<SettingsPage />)
+    expect(screen.getByText("Download your data")).toBeInTheDocument()
+    const button = screen.getByRole("button", { name: "Request download" })
+    expect(button).toBeDisabled()
+    expect(button).toHaveAccessibleDescription("Coming soon")
+  })
+
+  it("lists an account report from the API as the profile it was about", () => {
+    signIn()
+    server.use(noDevices)
+    useAppStore.setState({
+      reports: [{ id: "R-20483", kind: "user", target: "Profile of Rude Rithy", who: "Rude Rithy", reason: "harass", details: "", at: Date.parse("2026-11-11T03:00:00Z"), status: "In review" }],
+    })
+    renderUi(<SettingsPage />)
+    expect(screen.getByText("Profile of Rude Rithy")).toBeInTheDocument()
+    expect(screen.getByText(/R-20483/)).toBeInTheDocument()
+  })
 })
 
 /** The account's settings as GET /me/settings answers them (V21-03 alert defaults unless changed). */

@@ -1,5 +1,6 @@
 "use client"
 
+import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { AlertCircleIcon, ClockIcon, HeartIcon, RefreshCwIcon, SearchIcon, TrendingUpIcon, XIcon } from "lucide-react"
 import Image from "next/image"
 import { useSearchParams } from "next/navigation"
@@ -16,11 +17,14 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { genres, type Genre, type Series, type Weekday } from "@/data"
 import { Link } from "@/i18n/navigation"
 import { DEMO_MODE } from "@/lib/api/config"
+import { fetchCreatorProfile, type CreatorProfile } from "@/lib/api/creators"
+import { creatorKeys, meKeys } from "@/lib/api/keys"
+import { putFollow, type FollowedCreator } from "@/lib/api/me"
 import { initials } from "@/lib/format"
 import { useLocalize } from "@/lib/localize"
-import { useAskToLogin } from "@/lib/me"
+import { useAccountEmail, useAskToLogin, useFailed, useFollowedCreators } from "@/lib/me"
 import { useSearchSeries } from "@/lib/queries"
-import { creatorHref, seriesHref } from "@/lib/routes"
+import { creatorHandle, creatorHref, seriesHref } from "@/lib/routes"
 import { useAppStore, useHydrated, useUser } from "@/lib/store"
 import { cn } from "@/lib/utils"
 import { Num } from "@/i18n/num"
@@ -596,20 +600,93 @@ function ResultRow({ series: s, k }: { series: Series; k: string }) {
   )
 }
 
-/** Creator result: initials, name (links to the profile), "N series · titles", Follow (stored follows). */
+/**
+ * Creator result: initials, name (links to the profile), "N series · titles", Follow. Demo: the stored follows and a
+ * handle made from the name. Real API: the cards carry the creator's account id and handle; Follow reads whether the
+ * reader follows them from GET /me/follows and saves with PUT / DELETE /creators/{id}/follow (shown at once, undone if
+ * the call fails). Cards without an id (older answers) fall back to the profile (GET /creators/{handle}); without one
+ * there is no Follow. Logged out, Follow asks to log in.
+ */
 function CreatorItem({ name, series, k }: { name: string; series: Series[]; k: string }) {
   const t = useTranslations("search")
   const tt = useTranslations("toasts")
   const hydrated = useHydrated()
   const user = useUser()
+  const email = useAccountEmail()
   const askToLogin = useAskToLogin()
+  const failed = useFailed()
+  const qc = useQueryClient()
   const stored = useAppStore((s) => s.follows.includes(name))
-  const on = hydrated && stored
+  const cardId = series.find((s) => s.creatorId)?.creatorId
+  const handle = series.find((s) => s.creatorHandle)?.creatorHandle ?? creatorHandle(name)
+  const api = !DEMO_MODE && !!email
+  const follows = useFollowedCreators()
+  const profileKey = creatorKeys.profile(handle, email ?? "")
+  const profile = useQuery({
+    queryKey: profileKey,
+    queryFn: () => fetchCreatorProfile(handle),
+    // Only when the cards don't say who the creator is.
+    enabled: api && !cardId,
+  })
+  const on = DEMO_MODE
+    ? hydrated && stored
+    : cardId
+      ? !!follows.data?.some((f) => f.id === cardId)
+      : !!profile.data?.following
+  const loading = api && (cardId ? follows.isPending : profile.isPending)
+  // A Follow or Unfollow on its way: the button waits for it (a second click would race it).
+  const [saving, setSaving] = useState(false)
+  // Real API, signed in: Follow needs the creator's account and the reader's follows (could not load: no button).
+  const showFollow = !api || loading || (cardId ? !!follows.data : !!profile.data)
 
-  function follow() {
+  /** Shows the change at once, saves it, and puts it back if the API refuses. */
+  async function save<T>(key: readonly unknown[], change: (old: T | undefined) => T | undefined, id: string, next: boolean) {
+    setSaving(true)
+    await qc.cancelQueries({ queryKey: key })
+    const before = qc.getQueryData<T>(key)
+    qc.setQueryData<T>(key, change)
+    try {
+      await putFollow(id, next)
+      toast.success(tt(next ? "followed" : "unfollowed", { name }))
+    } catch (error) {
+      qc.setQueryData(key, before)
+      failed(error)
+    } finally {
+      setSaving(false)
+      // The follows list, the profile, the series pages' "Follow the creator" and the Library's followed creators.
+      void qc.invalidateQueries({ queryKey: meKeys.follows(email ?? "") })
+      void qc.invalidateQueries({ queryKey: profileKey })
+      void qc.invalidateQueries({ queryKey: ["viewer", email] })
+    }
+  }
+
+  async function follow() {
+    if (saving) return
     if (!user) return askToLogin()
-    useAppStore.getState().toggleFollow(name)
-    toast.success(tt(on ? "unfollowed" : "followed", { name }))
+    if (DEMO_MODE) {
+      useAppStore.getState().toggleFollow(name)
+      toast.success(tt(on ? "unfollowed" : "followed", { name }))
+      return
+    }
+    if (!email) return
+    const next = !on
+    if (cardId) {
+      const added: FollowedCreator = { id: cardId, name, seriesCount: series.length, followedAt: new Date().toISOString() }
+      return save<FollowedCreator[]>(
+        meKeys.follows(email),
+        (old) => (next ? [added, ...(old ?? []).filter((f) => f.id !== cardId)] : old?.filter((f) => f.id !== cardId)),
+        cardId,
+        next
+      )
+    }
+    const p = profile.data
+    if (!p) return
+    return save<CreatorProfile | null>(
+      profileKey,
+      (old) => (old ? { ...old, following: next, followers: old.followers + (next ? 1 : -1) } : old),
+      p.id,
+      next
+    )
   }
 
   return (
@@ -619,7 +696,7 @@ function CreatorItem({ name, series, k }: { name: string; series: Series[]; k: s
       </span>
       <div className="flex min-w-0 flex-1 flex-col">
         <Link
-          href={creatorHref(name)}
+          href={creatorHref(name, handle)}
           className="type-h4 block truncate rounded-sm underline-offset-[3px] outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring"
         >
           <Highlight text={name} k={k} />
@@ -634,9 +711,11 @@ function CreatorItem({ name, series, k }: { name: string; series: Series[]; k: s
           })}
         </span>
       </div>
-      <Button variant="outline" size="sm" aria-pressed={on} onClick={follow}>
-        {on ? t("following") : t("follow")}
-      </Button>
+      {showFollow ? (
+        <Button variant="outline" size="sm" aria-pressed={on} disabled={loading || saving} onClick={() => void follow()}>
+          {on ? t("following") : t("follow")}
+        </Button>
+      ) : null}
     </li>
   )
 }

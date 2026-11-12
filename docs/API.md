@@ -1,12 +1,13 @@
 # PhumiReader API reference
 
-The REST API of the Spring Boot backend in `backend/` (Phase 2): version **v1**, **120 endpoints**.
+The REST API of the Spring Boot backend in `backend/` (Phase 2): version **v1**, **135 endpoints**.
 
 > **Where this comes from.** Written from the controllers in `backend/src/main/java/app/phumreader/*/web/`
-> and the generated contract `backend/openapi/openapi.json` (2026-11-11, V21-03). The OpenAPI file is
-> the machine-readable contract: `./gradlew check` fails when it is out of date, and `npm run api:gen` turns it
-> into the website's TypeScript types (`src/lib/api/schema.d.ts`). This page explains it for people. If the two
-> ever disagree, the code wins; please update this page in the same commit as the controller change.
+> and the generated contract `backend/openapi/openapi.json` (2026-11-12, after "Fix: real-mode data gaps"). The
+> OpenAPI file is the machine-readable contract: `./gradlew check` fails when it is out of date, and
+> `npm run api:gen` turns it into the website's TypeScript types (`src/lib/api/schema.d.ts`). This page explains it
+> for people. If the two ever disagree, the code wins; please update this page in the same commit as the controller
+> change.
 >
 > While the API runs (`cd backend && ./gradlew bootRun`) you can also browse it live:
 > Swagger UI at http://localhost:8080/swagger-ui.html, raw OpenAPI at http://localhost:8080/v3/api-docs.
@@ -280,6 +281,7 @@ Paths below are relative to `/api/v1`. "CSRF" applies to every write (see [CSRF]
 | POST | `/series/{slug}/report` | Signed in | Report a series; answers 202 with the case number (V21-04) |
 | POST | `/series/{slug}/episodes/{n}/report` | Signed in | Report an episode |
 | POST | `/comments/{id}/report` | Signed in | Report a comment (`reason` is a key, `details` separate; 400 `invalid_reason`, `details_required`) |
+| POST | `/users/{id}/report` | Signed in | Report an account: spam, impersonate, harass, other; 400 `cannot_report_self`, 404 `user_not_found` |
 | GET | `/me/reports` | Signed in | Your reports with status in_review / removed / no_violation |
 | GET | `/me/blocks` | Signed in | Accounts you blocked |
 | POST | `/coins/orders/{number}/refund-request` | Signed in | Ask for a refund of a paid order (V21-06; the order then carries `refundRequest`) |
@@ -336,7 +338,7 @@ Paths below are relative to `/api/v1`. "CSRF" applies to every write (see [CSRF]
 | POST | `/admin/content/{type}/{id}/hide` | Admin | Take content down |
 | POST | `/admin/content/{type}/{id}/restore` | Admin | Put it back |
 | GET | `/admin/reports` | Admin | Report queue |
-| POST | `/admin/reports/{id}/settle` | Admin | dismiss, resolve, hide, remove_warn or suspend (`days`, default 7) |
+| POST | `/admin/reports/{id}/settle` | Admin | dismiss, resolve, hide, remove_warn, warn (account reports) or suspend (`days`, default 7) |
 | GET | `/admin/series-review` | Admin | Series waiting for review |
 | POST | `/admin/series/{id}/approve` | Admin | Approve: the series goes live |
 | POST | `/admin/series/{id}/request-changes` | Admin | Send it back with changes to make |
@@ -611,7 +613,7 @@ resumed worker page adds nothing).
 | `comment_liked` | `comment` | the comment's author when someone else likes it; one item per comment and day (Asia/Phnom_Penh): a new liker raises `count` and makes the item unread and newest again (also after a remove); unliking never lowers it | the series · the episode number for a comment on an episode | `{ commentId, count }` |
 | `order_paid` | `coins` | the buyer when a coin order is paid | null | `{ orderNumber, coins }`: pack + bonus + first-purchase bonus |
 | `order_refunded` | `coins` | the buyer when an admin refunds the order | null | `{ orderNumber, coins }`: the coins taken back |
-| `report_resolved` | `system` | each reporter when an admin resolves the report, or hides the content (from the report or the content list) | the reported series, or the series of the episode / comment · the episode number | `{ reportId, targetType, hidden }`; `targetType`: `series`, `episode`, `comment`; `hidden`: the content was taken down |
+| `report_resolved` | `system` | each reporter when an admin resolves the report, or hides the content (from the report or the content list) | the reported series, or the series of the episode / comment · the episode number | `{ reportId, targetType, hidden }`; `targetType`: `series`, `episode`, `comment`, `user` (an account: the item's series and episode are null); `hidden`: the content was taken down (never for an account) |
 | `report_dismissed` | `system` | the reporter when an admin dismisses the report | as above | `{ reportId, targetType, hidden: false }` |
 | `series_approved` | `system` | the creator, on the V21-01 review decision | the series · null | `{}` |
 | `series_changes` | `system` | the creator | the series · null | `{ items, note }`: review item keys (`contact`, `cover`, `title`, `age`, `images`), the admin's note or null |
@@ -818,7 +820,7 @@ Subscribed series. **Signed in.** `sort`: `recent` (default) or `title`; plus pa
 
 Unlocked episodes (not the ones the creator hid). **Signed in.** `sort`: `recent` (default) or `title` (series
 title, then number); plus paging.
-**200** → page of [UnlockedEntry](#unlockedentry).
+**200** → page of [UnlockedEntry](#unlockedentry); `coins` is what that unlock cost at the time.
 
 #### `GET /api/v1/me/follows`
 
@@ -898,8 +900,22 @@ Report a series, an episode or a comment to the admins (it lands in `GET /admin/
 { "reason": "spam", "details": "Same link posted on every episode." }
 ```
 
-`reason`: a short reason key, up to 50 characters. `details`: optional, up to 1000 characters.
-**202.** **Errors:** `404` for unknown content · `429 too_many_reports`.
+`reason`: a reason key, up to 50 characters, checked per kind of target. Comments: `spam`, `harass`, `hate`, `sexual`,
+`violence`, `spoiler`, `other`. Series and episodes: `copyright`, `spam`, `harass`, `hate`, `sexual`, `violence`,
+`rating`, `other`. `details`: optional, up to 1000 characters; `other` and `copyright` need at least 10.
+**202** → [ReportReceipt](#reportreceipt) `{ caseNumber, accusedId, accusedName }`. A second open report from the same
+reader on the same target returns the first case number. **Errors:** `400 invalid_reason` (field `reason`) ·
+`400 details_required` · `404` for unknown content · `429 too_many_reports` (20 an hour, for all report endpoints).
+
+#### `POST /api/v1/users/{id}/report`
+
+Report an account to the admins (the website's Report button on a creator profile). **Signed in.** Same body as above.
+`reason`: `spam`, `impersonate`, `harass` or `other` (`other` needs 10 or more characters in `details`). **202** →
+[ReportReceipt](#reportreceipt); `accusedId` and `accusedName` are the reported account. A second open report from the
+same reader on the same account returns the first case number. In the admin queue it is a report whose target `type`
+is `user`.
+**Errors:** `400 cannot_report_self` · `400 invalid_reason` · `400 details_required` · `404 user_not_found` (no such
+account, or a deleted one) · `429 too_many_reports` · `401` when not signed in.
 
 ### Coins and payments
 
@@ -1234,8 +1250,10 @@ the request id. Lists are newest first and [paged](#5-lists-and-pagination).
 
 #### `GET /api/v1/admin/overview`
 
-Counts for the admin start page (open reports, banned users, hidden content, refunded orders, series waiting for
-review and when the longest-waiting one was submitted). **200** → [Overview](#overview).
+Counts for the admin start page (open reports, open refund requests, "paid but no coins" payments not resolved, banned
+users, hidden content, refunded orders, series waiting for review and when the longest-waiting one was submitted).
+`openRefundRequests` and `openStuckPayments` are the rows `GET /admin/refund-requests?status=open` and
+`GET /admin/stuck-payments?status=open` list. **200** → [Overview](#overview).
 
 #### `GET /api/v1/admin/users`
 
@@ -1290,10 +1308,17 @@ Settles a report.
 { "action": "hide", "note": "Spoilers in the first line." }
 ```
 
-`action`: `dismiss`, `resolve` or `hide` (also hides the reported content). `note`: optional, up to 1000 characters.
+`action`: `dismiss` (no violation), `resolve` (handled), `hide` (also hides the reported content), `remove_warn` (hides
+it and records a warning), `warn` (account reports only: records a warning, nothing is removed) or `suspend` (hides
+the content and suspends the accused for `days`, 1–365, default 7). `note`: optional, up to 1000 characters.
 **200** → [AdminReport](#adminreport). The reporter gets a `report_dismissed` or `report_resolved`
 [notification](#notifications) (for `hide`: every reporter of that content).
-**Errors:** `404 report_not_found` · `409 report_closed` (another admin settled it) · `400 missing_target`.
+
+An account report (target `type` `user`) takes `dismiss`, `resolve`, `warn` (`remove_warn` counts as `warn`) and
+`suspend`; `hide` is `400 invalid_action`. `warn` on a content report is `400 invalid_action` too (use `remove_warn`).
+The API records a warning but sends nothing to the accused.
+**Errors:** `404 report_not_found` · `409 report_closed` (another admin settled it) · `409 no_accused` and
+`409 cannot_ban_admin` (for `suspend`) · `400 invalid_action` · `400 missing_target`.
 
 #### `GET /api/v1/admin/series-review`
 
@@ -1398,6 +1423,10 @@ interface AdminOrder {
 
 ```ts
 interface AdminReport {
+  accusedId?: string | null;                 // uuid; the person behind the target (for an account report: the account)
+  accusedName?: string | null;
+  action?: string | null;                    // what was done when settled
+  caseNumber: number;                        // shown as R-<caseNumber>
   createdAt: string;                         // ISO 8601 instant
   details?: string | null;
   id: string;                                // uuid
@@ -2035,6 +2064,23 @@ interface MeResponse {
 }
 ```
 
+### MyReport
+
+One of the reader's own reports (`GET /me/reports`, newest first, at most 50).
+
+```ts
+interface MyReport {
+  accusedName?: string | null;
+  caseNumber: number;                        // shown as R-<caseNumber>
+  createdAt: string;                         // ISO 8601 instant
+  episodeNumber?: number | null;
+  reason: string;
+  seriesTitle?: string | null;
+  status: string;                            // in_review | removed | no_violation
+  targetType: string;                        // series | episode | comment | user
+}
+```
+
 ### NotificationItem
 
 ```ts
@@ -2143,7 +2189,9 @@ interface Overview {
   hiddenEpisodes: number;
   hiddenSeries: number;
   oldestReviewAt?: string | null;            // ISO 8601 instant
+  openRefundRequests: number;                // same rows as GET /admin/refund-requests?status=open
   openReports: number;
+  openStuckPayments: number;                 // same rows as GET /admin/stuck-payments?status=open
   refundedOrders: number;
   seriesInReview: number;
 }
@@ -2330,6 +2378,18 @@ interface RemoveRequest {
 }
 ```
 
+### ReportReceipt
+
+The answer to every report endpoint (202).
+
+```ts
+interface ReportReceipt {
+  accusedId?: string | null;                 // uuid; the person behind the target (an account report: the account)
+  accusedName?: string | null;
+  caseNumber: number;                        // shown as R-<caseNumber>; the first case when a report was already open
+}
+```
+
 ### ReportRequest
 
 ```ts
@@ -2346,9 +2406,9 @@ interface ReportTarget {
   episodeNumber?: number | null;
   id: string;                                // uuid
   seriesSlug?: string | null;
-  status?: string | null;
-  title?: string | null;
-  type: "series" | "episode" | "comment";
+  status?: string | null;                    // for "user": the account status (active, banned, …)
+  title?: string | null;                     // for "user": the display name
+  type: "series" | "episode" | "comment" | "user";
 }
 ```
 
@@ -2431,6 +2491,8 @@ interface SeriesCard {
   badges: Badges;
   cover?: string | null;
   creator: string;
+  creatorHandle: string;                     // the profile address: /creators/<creatorHandle>
+  creatorId: string;                         // uuid; the creator's account (follow, report)
   fastPassEpisodes: number;
   freeEpisodes: number;
   genre: string;
@@ -2584,7 +2646,8 @@ interface SettingsChange {
 
 ```ts
 interface SettleRequest {
-  action: "dismiss" | "resolve" | "hide";
+  action: "dismiss" | "resolve" | "hide" | "remove_warn" | "warn" | "suspend";  // "warn": account reports only
+  days?: number | null;                      // suspend only: 1-365, default 7
   note?: string | null;                      // max 1000 chars
 }
 ```
@@ -2656,6 +2719,7 @@ interface TokenRequest {
 
 ```ts
 interface UnlockedEntry {
+  coins: number;                             // what the unlock cost at the time
   episode: EpisodeSummary;
   series: SeriesCard;
   unlockedAt: string;                        // ISO 8601 instant

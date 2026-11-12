@@ -197,8 +197,14 @@ export function derivedStats(series: Series): { subscribers: string; comments: s
 /** Day of the week "today" falls on (Thursday for the pinned date). */
 export const todayWeekday = (): Weekday => weekdayOf(today)
 
-/** Fast Pass price in coins. */
+/** Fast Pass price in coins (the demo's; the real API's episodes carry their own, see `episodePrice`). */
 export const fastPassPrice = (): number => demoData.fastPass.price
+
+/** What one Fast Pass episode costs: its own price (real API), else the demo's 5 coins. */
+export const episodePrice = (e: Pick<Episode, "price"> | null | undefined): number => e?.price ?? fastPassPrice()
+
+/** What unlocking all of these costs (each at its own price). */
+export const episodesCost = (list: readonly Pick<Episode, "price">[]): number => list.reduce((sum, e) => sum + episodePrice(e), 0)
 
 /** Not in the data: an episode thread is about 2.55% of the episode's likes ("47K" likes -> "1.2K" comments). */
 /** Same ratio as episodes, for a novel chapter. */

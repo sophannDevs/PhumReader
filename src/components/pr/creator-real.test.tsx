@@ -122,6 +122,50 @@ describe("CreatorProfilePage (real API)", () => {
     expect(screen.getByText("42")).toBeInTheDocument()
   })
 
+  it("reports the account to the API (POST /users/{id}/report) and shows its case number", async () => {
+    useAppStore.getState().login({ name: "Sokha", email: "sokha@example.com" })
+    let body: unknown = null
+    server.use(
+      http.get(`${API}/creators/dara-vann`, () => HttpResponse.json(profile())),
+      http.post(`${API}/users/c-1/report`, async ({ request }) => {
+        body = await request.json()
+        return HttpResponse.json({ caseNumber: 20490, accusedId: "c-1", accusedName: "Dara Vann" }, { status: 202 })
+      }),
+    )
+    const { user } = renderUi(<CreatorProfilePage handle="dara-vann" name={null} ownerView={false} />)
+    await user.click(await screen.findByRole("button", { name: "Report" }))
+    const dialog = await screen.findByRole("dialog", { name: "Report account" })
+    await user.click(within(dialog).getByRole("radio", { name: /Harassment or bullying/ }))
+    await user.click(within(dialog).getByRole("button", { name: "Send report" }))
+    expect(await screen.findByText("Case R-20490")).toBeInTheDocument()
+    expect(body).toEqual({ reason: "harass" })
+    expect(useAppStore.getState().reports[0]).toMatchObject({ id: "R-20490", kind: "user", who: "Dara Vann" })
+  })
+
+  it("has no Report or Block on the viewer's own public profile", async () => {
+    signIn()
+    server.use(http.get(`${API}/creators/dara-vann`, () => HttpResponse.json(profile({ owner: true }))))
+    renderUi(<CreatorProfilePage handle="dara-vann" name={null} ownerView={false} />)
+    expect(await screen.findByRole("heading", { level: 1, name: "Dara Vann" })).toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: "Report" })).not.toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: "Block" })).not.toBeInTheDocument()
+  })
+
+  it("keeps the report dialog open with an error when the API refuses the report", async () => {
+    useAppStore.getState().login({ name: "Sokha", email: "sokha@example.com" })
+    server.use(
+      http.get(`${API}/creators/dara-vann`, () => HttpResponse.json(profile())),
+      http.post(`${API}/users/c-1/report`, () => apiError(429, "too_many_reports")),
+    )
+    const { user } = renderUi(<CreatorProfilePage handle="dara-vann" name={null} ownerView={false} />)
+    await user.click(await screen.findByRole("button", { name: "Report" }))
+    const dialog = await screen.findByRole("dialog", { name: "Report account" })
+    await user.click(within(dialog).getByRole("radio", { name: /Spam or fake account/ }))
+    await user.click(within(dialog).getByRole("button", { name: "Send report" }))
+    expect(await within(dialog).findByRole("alert")).toHaveTextContent("Something went wrong. Please try again.")
+    expect(useAppStore.getState().reports).toEqual([])
+  })
+
   it("is a 404 page for a handle nobody has", async () => {
     server.use(http.get(`${API}/creators/nobody`, () => apiError(404, "creator_not_found")))
     renderUi(<CreatorProfilePage handle="nobody" name={null} ownerView={false} />)

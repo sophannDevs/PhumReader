@@ -45,6 +45,10 @@ export const seriesSchema = z.strictObject({
   type: seriesTypeSchema,
   genre: genreSchema,
   creator: z.string().min(1),
+  /** The creator's account (real API only): Follow uses it */
+  creatorId: z.string().optional(),
+  /** The creator's profile handle (real API only); the demo derives it from the name (`creatorHref`) */
+  creatorHandle: z.string().optional(),
   /** Public path, e.g. "/covers/<id>.svg" */
   cover: z.string().startsWith("/covers/"),
   /** Pre-formatted count such as "1.6M" */
@@ -93,6 +97,8 @@ export const episodeSchema = z.strictObject({
   thumb: z.string(),
   access: episodeAccessSchema,
   isUp: z.boolean(),
+  /** Fast Pass price in coins; only the real API sends it (while the episode is still Fast Pass). See `episodePrice`. */
+  price: positiveInt.optional(),
 });
 
 export const panelSchema = z.strictObject({

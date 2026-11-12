@@ -206,7 +206,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Dismiss, resolve or hide the reported content */
+        /**
+         * Dismiss, resolve or hide the reported content
+         * @description Account reports (target type user): dismiss, resolve, warn (remove_warn is taken as warn) or suspend; hide is 400 invalid_action. warn on a content report is 400 invalid_action (use remove_warn). 409 report_closed, no_accused, cannot_ban_admin; 404 report_not_found.
+         */
         post: operations["settle"];
         delete?: never;
         options?: never;
@@ -2148,6 +2151,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/users/{id}/report": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Report an account to the admins
+         * @description Reasons: spam, impersonate, harass, other (other needs details). The same open case comes back for a second report on the account. 400 cannot_report_self, invalid_reason, details_required; 404 user_not_found; 429 too_many_reports.
+         */
+        post: operations["reportUser"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -2940,7 +2963,11 @@ export interface components {
             /** Format: date-time */
             oldestReviewAt?: string | null;
             /** Format: int64 */
+            openRefundRequests: number;
+            /** Format: int64 */
             openReports: number;
+            /** Format: int64 */
+            openStuckPayments: number;
             /** Format: int64 */
             refundedOrders: number;
             /** Format: int64 */
@@ -3114,7 +3141,7 @@ export interface components {
             status?: string | null;
             title?: string | null;
             /** @enum {string} */
-            type: "series" | "episode" | "comment";
+            type: "series" | "episode" | "comment" | "user";
         };
         RequestedChange: {
             fixed: boolean;
@@ -3165,6 +3192,9 @@ export interface components {
             badges: components["schemas"]["Badges"];
             cover?: string | null;
             creator: string;
+            creatorHandle: string;
+            /** Format: uuid */
+            creatorId: string;
             /** Format: int32 */
             fastPassEpisodes: number;
             /** Format: int32 */
@@ -3303,7 +3333,7 @@ export interface components {
         };
         SettleRequest: {
             /** @enum {string} */
-            action: "dismiss" | "resolve" | "hide" | "remove_warn" | "suspend";
+            action: "dismiss" | "resolve" | "hide" | "remove_warn" | "warn" | "suspend";
             /** Format: int32 */
             days?: number | null;
             note?: string | null;
@@ -3351,6 +3381,8 @@ export interface components {
             episode: number;
         };
         UnlockedEntry: {
+            /** Format: int32 */
+            coins: number;
             episode: components["schemas"]["EpisodeSummary"];
             series: components["schemas"]["SeriesCard"];
             /** Format: date-time */
@@ -7716,6 +7748,41 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    reportUser: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReportRequest"];
+            };
+        };
+        responses: {
+            /** @description Accepted */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReportReceipt"];
+                };
             };
             /** @description Error */
             default: {

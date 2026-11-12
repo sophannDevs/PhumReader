@@ -122,6 +122,68 @@ describe("CreatorPage: a creator", () => {
   })
 })
 
+describe("CreatorPage: drafts (real API)", () => {
+  /** GET /creator/series/{id}: what the dashboard reads of a draft (its summary; the list has none). */
+  const edit = (id: string, summary: string, coverUrl: string | null) => ({
+    id,
+    slug: `draft-${id}`,
+    title: `Draft ${id}`,
+    type: "comic",
+    genre: "fantasy",
+    languages: ["km"],
+    summary,
+    tags: [],
+    ageRating: "all",
+    status: "ongoing",
+    breakMessage: null,
+    updateDays: [],
+    secondGenre: null,
+    releaseHour: 18,
+    fastPass: { on: false, ahead: 0 },
+    commentsEnabled: true,
+    coverUrl,
+    bannerUrl: null,
+    visibility: "draft",
+  })
+  const drafts = [
+    // No summary and no cover yet: the API's card has the placeholder cover.
+    { series: { ...card("d1", "Moon Draft"), cover: "/covers/placeholder.svg" }, visibility: "draft", subscribers: 0, comments: 0 },
+    { series: card("d2", "Sun Draft"), visibility: "draft", subscribers: 0, comments: 0 },
+  ]
+
+  it("reads each draft's summary: one needs a summary (and a cover), the other is ready", async () => {
+    signIn()
+    serve(dashboard(), drafts)
+    server.use(
+      http.get(`${API}/creator/series/d1`, () => HttpResponse.json(edit("d1", "", null))),
+      http.get(`${API}/creator/series/d2`, () => HttpResponse.json(edit("d2", "A girl and the moon.", "/covers/x.svg"))),
+    )
+    renderUi(<CreatorPage />)
+    expect(await screen.findByText("Moon Draft needs a summary")).toBeInTheDocument()
+    expect(screen.getByText("Missing: summary and cover")).toBeInTheDocument()
+    expect(await screen.findByText("Sun Draft is ready to submit")).toBeInTheDocument()
+    expect(screen.getByText("Ready to submit for review")).toBeInTheDocument()
+    expect(screen.queryByText("Sun Draft needs a summary")).not.toBeInTheDocument()
+  })
+
+  it("does not call a summary missing while it loads, and leaves the draft out of To do until then", async () => {
+    signIn()
+    serve(dashboard(), drafts)
+    server.use(
+      http.get(`${API}/creator/series/d1`, () => new Promise(() => undefined)),
+      http.get(`${API}/creator/series/d2`, () => new Promise(() => undefined)),
+    )
+    renderUi(<CreatorPage />)
+    expect(await screen.findByText("Moon Draft")).toBeInTheDocument()
+    // The placeholder cover is known to be missing; the summary is not known yet.
+    expect(screen.getByText("Missing: cover")).toBeInTheDocument()
+    expect(screen.queryByText(/needs a summary/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/Missing: summary/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/is ready to submit/)).not.toBeInTheDocument()
+    expect(screen.queryByText("Ready to submit for review")).not.toBeInTheDocument()
+  })
+})
+
 describe("CreatorPage: a reader who is not a creator", () => {
   it("invites them to become a creator, and opens the dialog; Escape gives the focus back", async () => {
     useAppStore.getState().login({ name: "Sokha", email: "sokha@example.com" })

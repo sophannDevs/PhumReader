@@ -33,6 +33,7 @@ import {
   useAdminQueues,
   useAudit,
   useOverview,
+  usePaymentCounts,
   useReports,
   type QueueReport,
 } from "@/lib/admin";
@@ -51,8 +52,9 @@ const SERIES_AUDIT = new Map<string, "approve" | "changes" | "reject">([
 /**
  * /admin (spec §22 Overview, screens 22-admin-overview): "Today" with the targets, four counts that open each queue,
  * "Waiting longest" and recent decisions. Demo: the V2.1 queues and the decision log; real mode: the API's series
- * review queue (its count and oldest submission), open reports and refunded orders, suspended users, and the audit log
- * for recent decisions (series decisions made here reach it once their Undo window closes).
+ * review queue (its count and oldest submission), open reports, open refund requests and "Paid but no coins" payments
+ * (the overview's counts, without the ones decided here), and the audit log for recent decisions (series decisions made
+ * here reach it once their Undo window closes). Real mode never loads the demo data.
  */
 export function AdminPage() {
   const t = useTranslations("admin");
@@ -63,6 +65,7 @@ export function AdminPage() {
   const queues = useAdminQueues();
   const overview = useOverview();
   const realReports = useReports(DEMO_MODE ? undefined : "open");
+  const payments = usePaymentCounts();
   const audit = useAudit(undefined);
   const decisions = useAppStore((s) => s.adminLog);
   const age = useAge();
@@ -73,12 +76,14 @@ export function AdminPage() {
   const todayIso = DEMO_MODE ? ADMIN_TODAY : ictDate(now);
   const dateLabel = `${td(`dayFull.${weekdayOf(todayIso)}`)}${locale === "km" ? " " : ", "}${formatShortDate(todayIso, locale)}`;
 
-  const loading =
-    queues.query.isPending ||
-    (!DEMO_MODE && (overview.isPending || queues.seriesQuery.isPending));
-  const failed =
-    queues.query.isError ||
-    (!DEMO_MODE && (overview.isError || queues.seriesQuery.isError));
+  // `queues.query` is the demo data's load: real mode never runs it (it stays pending), so it counts in demo mode only.
+  // Real mode: the payment counts come with the overview (B2), so they don't hold the page back.
+  const loading = DEMO_MODE
+    ? queues.query.isPending
+    : overview.isPending || queues.seriesQuery.isPending;
+  const failed = DEMO_MODE
+    ? queues.query.isError
+    : overview.isError || queues.seriesQuery.isError;
 
   const series = queues.series;
   const reports: QueueReport[] = DEMO_MODE
@@ -87,7 +92,7 @@ export function AdminPage() {
   const urgent = reports.filter((r) => priorityOf(r.reason) === "urgent").length;
   const oldest = queues.oldestHours;
   const seriesWaiting = queues.seriesTotal ?? series.length;
-  const stuckLeft = queues.stuck.filter((s) => !s.done).length;
+  const stuckLeft = DEMO_MODE ? queues.stuck.filter((s) => !s.done).length : payments.stuckLeft;
 
   const head = <AdminHead title={t("today")} line={t("todayLine", { date: dateLabel })} />;
   if (loading) {
@@ -112,11 +117,13 @@ export function AdminPage() {
         {head}
         <AdminError
           onRetry={() => {
-            void queues.query.refetch();
-            if (!DEMO_MODE) {
-              void overview.refetch();
-              queues.seriesQuery.refetch();
+            if (DEMO_MODE) {
+              void queues.query.refetch();
+              return;
             }
+            void overview.refetch();
+            queues.seriesQuery.refetch();
+            payments.refetch();
           }}
         />
       </>
@@ -170,19 +177,20 @@ export function AdminPage() {
           tone: urgent ? ("down" as const) : ("muted" as const),
           href: "/admin/reports",
         },
+        // The design's two payment cards (V21-06): open refund requests and "Paid but no coins".
         {
-          label: t("kpi_refunded"),
-          value: overview.data?.refundedOrders ?? 0,
-          change: undefined,
+          label: t("kpi_refunds"),
+          value: payments.refunds ?? 0,
+          change: t("kpi_refundTarget"),
           tone: "muted" as const,
           href: "/admin/payments",
         },
         {
-          label: t("kpi_banned"),
-          value: overview.data?.bannedUsers ?? 0,
-          change: undefined,
-          tone: "muted" as const,
-          href: "/admin/users",
+          label: t("kpi_stuck"),
+          value: payments.stuck ?? 0,
+          change: stuckLeft ? t("kpi_fixToday") : t("kpi_allDone"),
+          tone: stuckLeft ? ("down" as const) : ("muted" as const),
+          href: "/admin/payments",
         },
       ];
 

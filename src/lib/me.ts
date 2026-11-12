@@ -89,6 +89,16 @@ export function useSubscriptions() {
   })
 }
 
+/** Creators the reader follows (real API, GET /me/follows): their account ids and names. */
+export function useFollowedCreators() {
+  const email = useAccountEmail()
+  return useQuery({
+    queryKey: meKeys.follows(email ?? ""),
+    queryFn: real.fetchFollows,
+    enabled: !DEMO_MODE && !!email,
+  })
+}
+
 /** Subscribe / unsubscribe, with the toast. */
 export function useSubscribe(series: Series) {
   const tt = useTranslations("toasts")
@@ -160,6 +170,8 @@ export function useFollow(series: Pick<Series, "id" | "slug" | "creator">, creat
       failed(error)
     } finally {
       void qc.invalidateQueries({ queryKey: key })
+      // The reader's follows list (search's Follow buttons read it).
+      void qc.invalidateQueries({ queryKey: meKeys.follows(email) })
     }
   }
 

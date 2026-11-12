@@ -111,3 +111,24 @@ describe("UnlockDialog: the three states", () => {
     expect(await screen.findByRole("button", { name: /Unlock for 5 coins/ })).toBeDisabled()
   })
 })
+
+describe("UnlockDialog: the bundle", () => {
+  const bundle = { count: 3, first: 7, last: 9, lastDate: "2026-12-15" }
+
+  it("without a cost, prices the bundle at count × price", async () => {
+    await open({ balance: 30, price: 5, bundle, mode: "all" })
+    expect(await screen.findByRole("button", { name: "Unlock 3 episodes for 15 coins" })).toBeInTheDocument()
+  })
+
+  it("uses the bundle's own cost when episodes have their own prices (real API)", async () => {
+    await open({ balance: 30, price: 7, bundle: { ...bundle, cost: 16 }, mode: "all" })
+    expect(await screen.findByRole("button", { name: "Unlock 3 episodes for 16 coins" })).toBeInTheDocument()
+    expect(screen.getByRole("radio", { name: /All 3 Fast Pass episodes/ })).toHaveTextContent("16")
+    expect(screen.getByText("14 coins")).toBeInTheDocument() // after unlocking: 30 - 16
+  })
+
+  it("asks for the missing coins of the bundle's cost", async () => {
+    await open({ balance: 10, price: 7, bundle: { ...bundle, cost: 16 }, mode: "all" })
+    expect(await screen.findByText(/You need 6 more coins\./)).toBeInTheDocument()
+  })
+})

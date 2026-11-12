@@ -23,6 +23,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
+import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.jspecify.annotations.Nullable;
@@ -500,6 +501,39 @@ class CatalogApiTest {
     }
 
     @Test
+    void cardsCarryTheCreatorsIdAndHandle() throws Exception {
+        // Search by pen name: every card names the same creator account and profile address.
+        List<JsonNode> byPenName = search("sreyleak");
+        assertThat(byPenName).hasSize(4);
+        for (JsonNode card : byPenName) {
+            assertThat(card.get("creatorId").asString())
+                    .isEqualTo(creatorOf(card.get("slug").asString()).toString());
+            assertThat(card.get("creatorHandle").asString())
+                    .isEqualTo(handleOf(creatorOf(card.get("slug").asString())));
+        }
+        assertThat(byPenName.stream().map(c -> c.get("creatorId").asString()).distinct())
+                .hasSize(1);
+
+        // Every list of cards has them: popular, search, series lists, rankings, the series page.
+        List<JsonNode> cards = new ArrayList<>(list(getJson("/api/v1/search").get("items")));
+        cards.addAll(search("glass"));
+        cards.addAll(list(getJson("/api/v1/series?limit=5").get("items")));
+        list(getJson("/api/v1/rankings?kind=novels").get("items"))
+                .forEach(r -> cards.add(r.get("series")));
+        JsonNode detail = getJson("/api/v1/series/glass-compass");
+        cards.add(detail.get("series"));
+        cards.addAll(list(detail.get("related")));
+        assertThat(cards).hasSizeGreaterThan(10);
+        for (JsonNode card : cards) {
+            UUID creator = creatorOf(card.get("slug").asString());
+            assertThat(card.get("creatorId").asString()).isEqualTo(creator.toString());
+            assertThat(card.get("creatorHandle").asString()).isEqualTo(handleOf(creator));
+        }
+        assertThat(detail.get("series").get("creatorHandle").asString())
+                .isEqualTo(detail.get("creatorHandle").asString());
+    }
+
+    @Test
     void searchFiltersByTypeGenreAndStatusAndSorts() throws Exception {
         List<JsonNode> novels = list(getJson("/api/v1/search?type=novel&limit=20").get("items"));
         assertThat(novels).hasSize(7).allMatch(c -> c.get("type").asString().equals("novel"));
@@ -558,6 +592,20 @@ class CatalogApiTest {
                         .getResponse()
                         .getContentAsString(StandardCharsets.UTF_8);
         return json.readTree(body);
+    }
+
+    private UUID creatorOf(String slug) {
+        return jdbc.sql("select creator_id from series where slug = :slug")
+                .param("slug", slug)
+                .query(UUID.class)
+                .single();
+    }
+
+    private String handleOf(UUID creator) {
+        return jdbc.sql("select handle from creator_profiles where user_id = :id")
+                .param("id", creator)
+                .query(String.class)
+                .single();
     }
 
     private List<JsonNode> search(String query) throws Exception {

@@ -82,6 +82,15 @@ describe("EpisodeListPopover", () => {
     expect(rows().find((r) => r.textContent?.includes("Episode 14"))).not.toHaveTextContent("Locked")
   })
 
+  it("novel: shows each locked chapter's own price (real API), else the popover's", async () => {
+    const episodes = make(5, 4).map((e) => (e.n === 5 ? { ...e, price: 8 } : e))
+    const { user } = setup({ readerTheme: "light", episodes, current: 3 })
+    await user.click(screen.getByRole("button", { name: "Chapters" }))
+    await screen.findByRole("list")
+    expect(rows().find((r) => r.textContent?.includes("Episode 4"))).toHaveTextContent(/5\s*Locked/)
+    expect(rows().find((r) => r.textContent?.includes("Episode 5"))).toHaveTextContent(/8\s*Locked/)
+  })
+
   it("calls onSelect with the episode number, also from the keyboard", async () => {
     const { user, onSelect } = setup()
     await user.click(screen.getByRole("button", { name: "Episodes" }))

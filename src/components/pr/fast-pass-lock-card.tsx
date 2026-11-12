@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils"
 /**
  * The Fast Pass card of a locked episode or chapter inside the readers (spec §3 / §4 "Locked", prototype
  * `.vw-lock-card` and `.nr-lock`): "Fast Pass", what it costs and when it is free, then one main action
- * (Log in to unlock / Unlock for 5 coins / Get coins · you need N more), "Unlock all N" when more than one
+ * (Log in to unlock / Unlock for N coins / Get coins · you need N more), "Unlock all N" when more than one
  * is locked, and back to the previous one. Presentational: the reader wires the actions (useSeriesUnlock).
  */
 export function FastPassLockCard({
@@ -41,8 +41,8 @@ export function FastPassLockCard({
   price: number
   coins: number
   loggedIn: boolean
-  /** Fast Pass episodes still locked, when there are 2 or more */
-  bundle: { count: number } | null
+  /** Fast Pass episodes still locked, when there are 2 or more; `cost` defaults to `count` × `price` */
+  bundle: { count: number; cost?: number } | null
   onLogin: () => void
   onUnlock: () => void
   onGetCoins: () => void
@@ -102,7 +102,7 @@ export function FastPassLockCard({
             )}
             onClick={onUnlockAll}
           >
-            {t(comic ? "unlockAllEpisodes" : "unlockAllChapters", { count: bundle.count, cost: bundle.count * price })}
+            {t(comic ? "unlockAllEpisodes" : "unlockAllChapters", { count: bundle.count, cost: bundle.cost ?? bundle.count * price })}
           </Button>
         ) : null}
         <Button variant="ghost" className={cn("w-full", !comic && "text-reader-text")} disabled={!canGoBack} onClick={onBack}>

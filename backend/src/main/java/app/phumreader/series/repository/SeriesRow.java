@@ -14,6 +14,7 @@ import org.jspecify.annotations.Nullable;
  * the creator hid are not counted.
  *
  * @param secondGenreSlug the optional second genre (V21-02)
+ * @param creatorHandle the address of the creator's public profile, {@code /creators/<handle>}
  * @param updateDays the days new episodes come out, in week order
  * @param commentsEnabled the series' comments switch
  * @param breakMessage the "On break" message (only while the status is HIATUS)
@@ -35,6 +36,7 @@ public record SeriesRow(
         @Nullable String secondGenreSlug,
         UUID creatorId,
         String creatorName,
+        String creatorHandle,
         @Nullable String coverUrl,
         long views,
         long likes,

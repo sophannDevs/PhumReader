@@ -155,9 +155,9 @@ export function SeriesHero({
               {initials(series.creator)}
             </span>
             {/* The creator's profile (/creators/[handle]): the API sends the address; the demo has profiles for the creators in its data. */}
-            {creatorHandle || creatorNameByHandle(creatorHandle_(series.creator)) ? (
+            {creatorHandle || series.creatorHandle || creatorNameByHandle(creatorHandle_(series.creator)) ? (
               <Link
-                href={creatorHandle ? `/creators/${creatorHandle}` : creatorHref(series.creator)}
+                href={creatorHref(series.creator, creatorHandle || series.creatorHandle)}
                 className="rounded-sm underline-offset-3 hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-surface focus-visible:outline-none"
               >
                 {series.creator}

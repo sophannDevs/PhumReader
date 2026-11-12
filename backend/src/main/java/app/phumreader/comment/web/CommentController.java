@@ -60,7 +60,7 @@ class CommentController {
     /**
      * @param reason one of the website's keys: comment spam, harass, hate, sexual, violence,
      *     spoiler, other; series and episode copyright, spam, harass, hate, sexual, violence,
-     *     rating, other (400 invalid_reason)
+     *     rating, other; account spam, impersonate, harass, other (400 invalid_reason)
      * @param details optional; at least 10 characters for other and copyright (400
      *     details_required)
      */
@@ -190,6 +190,23 @@ class CommentController {
             @Parameter(hidden = true) @AuthenticationPrincipal CurrentUser user) {
         return comments.report(
                 user, TargetType.COMMENT, null, null, id, request.reason(), request.details());
+    }
+
+    @PostMapping("/users/{id}/report")
+    @ResponseStatus(HttpStatus.ACCEPTED)
+    @Operation(
+            summary = "Report an account to the admins",
+            description =
+                    "Reasons: spam, impersonate, harass, other (other needs details). The same"
+                            + " open case comes back for a second report on the account. 400"
+                            + " cannot_report_self, invalid_reason, details_required; 404"
+                            + " user_not_found; 429 too_many_reports.")
+    ReportReceipt reportUser(
+            @PathVariable UUID id,
+            @Valid @RequestBody ReportRequest request,
+            @Parameter(hidden = true) @AuthenticationPrincipal CurrentUser user) {
+        return comments.report(
+                user, TargetType.USER, null, null, id, request.reason(), request.details());
     }
 
     @GetMapping("/me/reports")

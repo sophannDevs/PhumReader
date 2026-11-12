@@ -116,7 +116,11 @@ export type AppState = {
   pos: Record<string, Record<number, number>>
   purchases: StoredPurchase[]
   returnTo: string | null
-  shopReturn: { page: string; episode: number; title: string } | null
+  /**
+   * Coins opened from a locked episode: where to go back. `price` is that episode's Fast Pass price and `novel` says
+   * "chapter"; both are optional (older stored values have neither: the demo's price, and the demo series' type).
+   */
+  shopReturn: { page: string; episode: number; title: string; price?: number; novel?: boolean } | null
   /** `direct`: set by a reader redirect (locked episode opened by URL): reopen even when logged out. */
   pendingUnlock: { seriesId: string; episode: number; direct?: boolean; bundle?: boolean } | null
   /** Spec `novel` */

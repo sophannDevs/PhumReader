@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react"
 import type { ListEpisode } from "@/components/layout/episode-list-popover"
 import { useSeriesUnlock } from "@/components/pr/series-unlock"
-import type { Episode, Series } from "@/data"
+import { episodePrice, type Episode, type Series } from "@/data"
 import { useRouter } from "@/i18n/navigation"
 import { DEMO_MODE } from "@/lib/api/config"
 import { useEpisodes } from "@/lib/queries"
@@ -77,6 +77,7 @@ export function useReaderNav(series: Series, n: number, total: number, opts: { k
     date: e.date,
     thumb: e.thumb,
     locked: isLocked(e),
+    price: episodePrice(e),
   }))
 
   return { go, list, listEpisodes, isLocked, coins, request, handOff, dialog, gated, locked, finishRef }

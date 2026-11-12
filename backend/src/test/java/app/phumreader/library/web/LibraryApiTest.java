@@ -252,18 +252,22 @@ class LibraryApiTest {
         UUID reader = sessions.newReader("Dara");
         unlock(reader, "glass-compass", 67);
         clock.advance(Duration.ofMinutes(1));
-        unlock(reader, "midnight-courier", 119);
+        unlock(reader, "midnight-courier", 119, 8);
         clock.advance(Duration.ofMinutes(1));
-        unlock(reader, "glass-compass", 66);
+        unlock(reader, "glass-compass", 66, 3);
 
+        // Each entry says what the unlock actually cost (the price at the time).
         mvc.perform(get("/api/v1/me/unlocked").with(sessions.as(reader)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.items.length()").value(3))
                 .andExpect(jsonPath("$.items[0].series.slug").value("glass-compass"))
                 .andExpect(jsonPath("$.items[0].episode.n").value(66))
                 .andExpect(jsonPath("$.items[0].episode.access").value("fastpass"))
+                .andExpect(jsonPath("$.items[0].coins").value(3))
                 .andExpect(jsonPath("$.items[1].series.slug").value("midnight-courier"))
-                .andExpect(jsonPath("$.items[2].episode.n").value(67));
+                .andExpect(jsonPath("$.items[1].coins").value(8))
+                .andExpect(jsonPath("$.items[2].episode.n").value(67))
+                .andExpect(jsonPath("$.items[2].coins").value(5));
         mvc.perform(get("/api/v1/me/unlocked?sort=title&limit=2").with(sessions.as(reader)))
                 .andExpect(jsonPath("$.items[0].episode.n").value(66))
                 .andExpect(jsonPath("$.items[1].episode.n").value(67))
@@ -349,12 +353,17 @@ class LibraryApiTest {
     }
 
     private void unlock(UUID reader, String slug, int number) {
+        unlock(reader, slug, number, 5);
+    }
+
+    private void unlock(UUID reader, String slug, int number, int coins) {
         jdbc.sql(
                         "insert into unlocks (user_id, episode_id, coins, created_at)"
-                                + " select :u, e.id, 5, :at from episodes e"
+                                + " select :u, e.id, :coins, :at from episodes e"
                                 + " join series s on s.id = e.series_id"
                                 + " where s.slug = :slug and e.number = :n")
                 .param("u", reader)
+                .param("coins", coins)
                 .param("slug", slug)
                 .param("n", number)
                 .param("at", clock.instant().atOffset(java.time.ZoneOffset.UTC))

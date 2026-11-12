@@ -586,6 +586,7 @@
     },
     "/api/v1/admin/reports/{id}/settle" : {
       "post" : {
+        "description" : "Account reports (target type user): dismiss, resolve, warn (remove_warn is taken as warn) or suspend; hide is 400 invalid_action. warn on a content report is 400 invalid_action (use remove_warn). 409 report_closed, no_accused, cannot_ban_admin; 404 report_not_found.",
         "operationId" : "settle",
         "parameters" : [ {
           "in" : "path",
@@ -5573,6 +5574,55 @@
         "summary" : "Block an account (blocking again changes nothing)",
         "tags" : [ "account" ]
       }
+    },
+    "/api/v1/users/{id}/report" : {
+      "post" : {
+        "description" : "Reasons: spam, impersonate, harass, other (other needs details). The same open case comes back for a second report on the account. 400 cannot_report_self, invalid_reason, details_required; 404 user_not_found; 429 too_many_reports.",
+        "operationId" : "reportUser",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ReportRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "202" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ReportReceipt"
+                }
+              }
+            },
+            "description" : "Accepted"
+          },
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description" : "Error"
+          }
+        },
+        "summary" : "Report an account to the admins",
+        "tags" : [ "comments" ]
+      }
     }
   },
   "components" : {
@@ -7777,7 +7827,15 @@
             "type" : [ "string", "null" ],
             "format" : "date-time"
           },
+          "openRefundRequests" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
           "openReports" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "openStuckPayments" : {
             "type" : "integer",
             "format" : "int64"
           },
@@ -7790,7 +7848,7 @@
             "format" : "int64"
           }
         },
-        "required" : [ "bannedUsers", "hiddenComments", "hiddenEpisodes", "hiddenSeries", "openReports", "refundedOrders", "seriesInReview" ]
+        "required" : [ "bannedUsers", "hiddenComments", "hiddenEpisodes", "hiddenSeries", "openRefundRequests", "openReports", "openStuckPayments", "refundedOrders", "seriesInReview" ]
       },
       "Panel" : {
         "type" : "object",
@@ -8250,7 +8308,7 @@
           },
           "type" : {
             "type" : "string",
-            "enum" : [ "series", "episode", "comment" ]
+            "enum" : [ "series", "episode", "comment", "user" ]
           }
         },
         "required" : [ "id", "type" ]
@@ -8409,6 +8467,13 @@
           "creator" : {
             "type" : "string"
           },
+          "creatorHandle" : {
+            "type" : "string"
+          },
+          "creatorId" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
           "fastPassEpisodes" : {
             "type" : "integer",
             "format" : "int32"
@@ -8468,7 +8533,7 @@
             "format" : "int64"
           }
         },
-        "required" : [ "ageRating", "badges", "creator", "fastPassEpisodes", "freeEpisodes", "genre", "id", "language", "likes", "slug", "status", "title", "totalEpisodes", "type", "updateDays", "views" ]
+        "required" : [ "ageRating", "badges", "creator", "creatorHandle", "creatorId", "fastPassEpisodes", "freeEpisodes", "genre", "id", "language", "likes", "slug", "status", "title", "totalEpisodes", "type", "updateDays", "views" ]
       },
       "SeriesDetail" : {
         "type" : "object",
@@ -8807,7 +8872,7 @@
         "properties" : {
           "action" : {
             "type" : "string",
-            "enum" : [ "dismiss", "resolve", "hide", "remove_warn", "suspend" ]
+            "enum" : [ "dismiss", "resolve", "hide", "remove_warn", "warn", "suspend" ]
           },
           "days" : {
             "type" : [ "integer", "null" ],
@@ -8947,6 +9012,10 @@
       "UnlockedEntry" : {
         "type" : "object",
         "properties" : {
+          "coins" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
           "episode" : {
             "$ref" : "#/components/schemas/EpisodeSummary"
           },
@@ -8958,7 +9027,7 @@
             "format" : "date-time"
           }
         },
-        "required" : [ "episode", "series", "unlockedAt" ]
+        "required" : [ "coins", "episode", "series", "unlockedAt" ]
       },
       "UnreadCount" : {
         "type" : "object",

@@ -25,8 +25,8 @@ import { derivedStats, type Weekday } from "@/data"
 import { DEMO_MODE } from "@/lib/api/config"
 import { toSeries } from "@/lib/api/catalog"
 import * as real from "@/lib/api/creators"
-import { creatorKeys } from "@/lib/api/keys"
-import { putFollow } from "@/lib/api/me"
+import { creatorKeys, meKeys } from "@/lib/api/keys"
+import { putFollow, reportUser } from "@/lib/api/me"
 import { Link } from "@/i18n/navigation"
 import {
   catalogSeriesBy,
@@ -52,8 +52,8 @@ import { cn } from "@/lib/utils"
  * public profile" note and Edit profile (name, location, bio up to 200 characters; store `profile`).
  * Profiles come from the demo series' creator names; the demo creator account also shows its studio works
  * (store `myWorks`). Demo: demo data. Real API (V21-05): GET /creators/{handle} (bio, location, followers, the published
- * series), Follow with the creator's account, Edit profile saved with PATCH /creator/profile; the Report button on an
- * account stays on this device.
+ * series), Follow with the creator's account, Edit profile saved with PATCH /creator/profile, and Report sent with
+ * POST /users/{id}/report.
  */
 
 type Item = {
@@ -234,6 +234,8 @@ function Profile({ handle, baseName, isOwner, api }: { handle: string; baseName:
       failed(error)
     } finally {
       void qc.invalidateQueries({ queryKey: key })
+      // The reader's follows list (search's Follow buttons read it).
+      if (email) void qc.invalidateQueries({ queryKey: meKeys.follows(email) })
     }
   }
   async function share() {
@@ -246,7 +248,15 @@ function Profile({ handle, baseName, isOwner, api }: { handle: string; baseName:
   }
   function report() {
     if (!user) return askToLogin()
-    openReport({ kind: "user", target: t("reportTarget", { name }), who: baseName, whoId: api?.id })
+    const id = api?.id
+    openReport({
+      kind: "user",
+      target: t("reportTarget", { name }),
+      who: baseName,
+      whoId: id,
+      // Real API: POST /users/{id}/report; the dialog shows its case number (demo: kept on this device).
+      onSend: id ? (reason, details) => reportUser(id, reason, details) : undefined,
+    })
   }
   function block() {
     if (!user) return askToLogin()
@@ -337,7 +347,8 @@ function Profile({ handle, baseName, isOwner, api }: { handle: string; baseName:
                 <Button variant="outline" size="icon" aria-label={t("share")} onClick={() => void share()}>
                   <ShareIcon />
                 </Button>
-                {isOwner ? null : (
+                {/* Real API: no reporting or blocking yourself, also on your own public page (400 cannot_report_self). */}
+                {isOwner || api?.owner ? null : (
                   <>
                     <Button variant="ghost" onClick={report}>
                       {t("report")}

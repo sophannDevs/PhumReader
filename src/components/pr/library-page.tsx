@@ -39,7 +39,8 @@ type SubSort = "updated" | "added" | "az"
 type RecentSort = "recent" | "progress" | "az"
 
 type HistoryItem = { series: Series; episode: number; progress: number; when: string }
-type UnlockedItem = { series: Series; numbers: number[] }
+/** `coins`: what the reader paid for them (real API); the demo counts the demo price per episode. */
+type UnlockedItem = { series: Series; numbers: number[]; coins?: number }
 
 const NONE_LIST: string[] = []
 const NONE_MAP: Record<string, number[]> = {}
@@ -648,6 +649,8 @@ export function LibraryPage() {
                   const lastN = e[e.length - 1]
                   const fp = episodesFor(s.slug).find((x) => x.n === lastN && x.access === "fastpass")
                   const freeIso = (fp && displayToIso(fp.date)) || addDays(today, (lastN - s.freeEpisodes) * 7)
+                  // Real API: the coins actually charged; demo: the demo price per episode.
+                  const spent = u.coins ?? e.length * fastPassPrice()
                   return (
                     <li key={s.id} className="flex items-center gap-3.5 bg-background px-4 py-3 max-md:gap-3 max-md:px-3 max-md:py-2.5">
                       <Thumb series={s} />
@@ -658,8 +661,8 @@ export function LibraryPage() {
                         </span>
                         <span className="text-xs leading-4 text-muted-foreground">
                           {daysFromToday(freeIso) > 0
-                            ? t("spentFree", { coins: e.length * fastPassPrice(), date: formatShortDate(freeIso, locale) })
-                            : t("spentFreeNow", { coins: e.length * fastPassPrice() })}
+                            ? t("spentFree", { coins: spent, date: formatShortDate(freeIso, locale) })
+                            : t("spentFreeNow", { coins: spent })}
                         </span>
                       </div>
                       <Button asChild variant="brand" size="sm" className="shrink-0">

@@ -5,7 +5,7 @@ import { useTranslations } from "@/i18n/translations"
 import { useEffect, useRef, useState } from "react"
 import { toast } from "sonner"
 import { UnlockDialog, type UnlockMode } from "@/components/pr/unlock-dialog"
-import { fastPassPrice, type Episode, type Series } from "@/data"
+import { episodePrice, episodesCost, type Episode, type Series } from "@/data"
 import { usePathname, useRouter } from "@/i18n/navigation"
 import { DEMO_MODE } from "@/lib/api/config"
 import * as realCoins from "@/lib/api/coins"
@@ -46,7 +46,6 @@ export function useSeriesUnlock(
   const qc = useQueryClient()
   // One key per episode being unlocked: pressing Unlock again after a network error never charges twice.
   const unlockKeys = useRef<Map<number, string>>(new Map())
-  const price = fastPassPrice()
   const novel = series.type === "novel"
 
   const lockedFast = (episodes.data ?? []).filter((e) => e.access === "fastpass" && !unlocked?.includes(e.n))
@@ -92,7 +91,7 @@ export function useSeriesUnlock(
   const handOff = (to: "login" | "coins", episode: Episode, mode: UnlockMode = "one") => {
     selfRequest.current = true
     if (to === "login") store().setReturnTo(here())
-    else store().setShopReturn({ page: returnPage, episode: episode.n, title: series.title })
+    else store().setShopReturn({ page: returnPage, episode: episode.n, title: series.title, price: episodePrice(episode), novel })
     store().setPendingUnlock({ seriesId: series.id, episode: episode.n, ...(mode === "all" ? { bundle: true } : {}) })
     setTarget(null)
     router.push(to === "login" ? "/login" : "/coins")
@@ -103,7 +102,9 @@ export function useSeriesUnlock(
     const bundleList = lockedFast.length > 1 && lockedFast.some((e) => e.n === target.episode.n) ? lockedFast : null
     const mode: UnlockMode = target.mode === "all" && bundleList ? "all" : "one"
     const list = mode === "all" && bundleList ? bundleList : [target.episode]
-    const cost = list.length * price
+    // Each episode at its own price (real API); the demo's are all 5 coins.
+    const price = episodePrice(target.episode)
+    const cost = episodesCost(list)
     const saveRequest = () =>
       store().setPendingUnlock({ seriesId: series.id, episode: target.episode.n, ...(mode === "all" ? { bundle: true } : {}) })
 
@@ -123,6 +124,7 @@ export function useSeriesUnlock(
                 first: bundleList[0].n,
                 last: bundleList[bundleList.length - 1].n,
                 lastDate: bundleList[bundleList.length - 1].date,
+                cost: episodesCost(bundleList),
               }
             : null
         }
@@ -138,7 +140,7 @@ export function useSeriesUnlock(
         }}
         onGetCoins={() => {
           selfRequest.current = true
-          store().setShopReturn({ page: returnPage, episode: target.episode.n, title: series.title })
+          store().setShopReturn({ page: returnPage, episode: target.episode.n, title: series.title, price, novel })
           saveRequest()
           setTarget(null)
           router.push("/coins")

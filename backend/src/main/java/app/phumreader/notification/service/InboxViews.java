@@ -24,8 +24,9 @@ public final class InboxViews {
      *   <li>{@code order_paid} / {@code order_refunded}: {@code {orderNumber, coins}}: the coins
      *       credited (pack, bonus and first-purchase bonus) or taken back
      *   <li>{@code report_resolved} / {@code report_dismissed}: {@code {reportId, targetType,
-     *       hidden}}: {@code targetType} {@code series}, {@code episode} or {@code comment}; {@code
-     *       hidden} when the content was taken down
+     *       hidden}}: {@code targetType} {@code series}, {@code episode}, {@code comment} or {@code
+     *       user} (an account); {@code hidden} when the content was taken down (never for an
+     *       account)
      *   <li>{@code series_approved}: {@code {}}; {@code series_changes}: {@code {items, note}} (the
      *       review item keys, e.g. {@code cover}); {@code series_rejected}: {@code {note}}
      *   <li>{@code welcome}: {@code {}}

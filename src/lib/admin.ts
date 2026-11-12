@@ -92,11 +92,11 @@ export function useAdminAction<V, R>(run: (v: V) => Promise<R>) {
 export const actions = real;
 
 // ------------------------------------------------------------------------------------------------
-// V2.1 queues (spec §22). Refund requests and "Paid but no coins" have no API yet: they run on demo data (the
-// prototype's payment rows) plus the local store in both modes. The series review queue uses `adminSeriesQueue` + the
-// creator's own series in demo mode, and GET /admin/series-review in real mode (V21-01). The report queue uses
-// `adminReportQueue` + the reader's own reports in demo mode, and GET /admin/reports in real mode. Decisions made here
-// are remembered in the store's `adminLog` (id = "<queue item>:<id>"), so a decided item leaves the list at once.
+// V2.1 queues (spec §22). Demo mode: demo data (`adminSeriesQueue`, `adminReportQueue`, the prototype's payment rows)
+// plus the local store (the creator's own series, the reader's own reports). Real mode reads the API only: the series
+// review queue from GET /admin/series-review (V21-01), reports from GET /admin/reports, refund requests and "Paid but
+// no coins" from GET /admin/refund-requests and GET /admin/stuck-payments (V21-06). Decisions made here are remembered
+// in the store's `adminLog` (id = "<queue item>:<id>"), so a decided item leaves the list at once.
 
 /** The admin screens' "today" (screens 22-*: "Tuesday, Nov 10"); the demo queues' ages are relative to it. */
 export const ADMIN_TODAY = "2026-11-10";
@@ -427,11 +427,14 @@ export function fromApiReview(q: real.ReviewQueueItem, now: number): QueueSeries
 }
 
 /**
- * The V2.1 queues: series waiting for review (demo: demo queue + the creator's own series with status "review"; real
- * mode: GET /admin/series-review), reports (demo queue + the reader's own reports "In review"), refund requests and
- * "Paid but no coins" (demo data and the store in both modes). `query` carries the loading and error state of the demo
- * data (demo-api delay and ?demo= flags), `seriesQuery` the one of the series queue. `seriesTotal` is how many series
- * wait (real mode: the overview's count when more pages wait), `oldestHours` how long the oldest one has waited.
+ * The V2.1 queues. Demo mode: series waiting for review (demo queue + the creator's own series with status "review"),
+ * reports (demo queue + the reader's own reports "In review"), refund requests, "Paid but no coins" and the demo team's
+ * decision log, all from demo data and the store; `query` carries their loading and error state (demo-api delay and
+ * ?demo= flags). Real mode: only the series queue (GET /admin/series-review, state in `seriesQuery`); the demo data is
+ * never loaded (`query` stays idle and pending, so read it in demo mode only), and `reports`, `refunds`, `stuck` and
+ * `log` are empty: the pages read reports (`useReports`) and payments (`useRefundRequests`, `useStuckPayments`,
+ * `usePaymentCounts`) from the API themselves. `seriesTotal` is how many series wait (real mode: the overview's count
+ * when more pages wait), `oldestHours` how long the oldest one has waited.
  */
 export function useAdminQueues() {
   const flag = useDemoFlag();
@@ -439,6 +442,8 @@ export function useAdminQueues() {
     queryKey: ["admin-demo", flag],
     queryFn: fetchAdminDemo,
     staleTime: Infinity,
+    // Demo data only: real mode never waits for the demo delay or follows ?demo= flags.
+    enabled: DEMO_MODE,
   });
   const review = useSeriesReview();
   const overview = useOverview();
@@ -566,7 +571,61 @@ export function useAdminQueues() {
     : seriesTotal && oldestAt
       ? hoursSince(Date.parse(oldestAt), now)
       : 0;
-  return { query, ...lists, series: realSeries, seriesQuery, seriesTotal, oldestHours };
+  // The demo lists stay empty here: the real pages load reports and payments from the API.
+  return {
+    query,
+    series: realSeries,
+    reports: [] as QueueReport[],
+    refunds: [] as RefundRequest[],
+    stuck: [] as (StuckPayment & { done: boolean })[],
+    log: [] as DemoLogLine[],
+    seriesQuery,
+    seriesTotal,
+    oldestHours,
+  };
 }
 
 export type AdminQueues = ReturnType<typeof useAdminQueues>;
+
+/**
+ * How many of a queue are open, without the ones decided here. With the overview's count (B2) it is exact: that count
+ * still includes the decisions made here whose rows the API still lists as open (their call waits out the Undo
+ * window), so those are taken off, as for the series and report queues. Without it (an older API) it is the loaded
+ * rows, "N+" while more pages wait. `undefined` until it is known.
+ */
+function openCount(
+  open: number | undefined,
+  list: { data?: unknown; items: { id: string }[]; hasNextPage?: boolean },
+  decided: (id: string) => boolean,
+): number | string | undefined {
+  const left = list.items.filter((x) => !decided(x.id)).length;
+  if (open !== undefined) return Math.max(left, open - (list.items.length - left));
+  if (!list.data) return undefined;
+  return list.hasNextPage ? `${left}+` : left;
+}
+
+/**
+ * Real mode (V21-06): how many refund requests and "Paid but no coins" payments are open, without the ones decided
+ * here: the overview's `openRefundRequests` / `openStuckPayments` (exact), less the decisions made here that the
+ * first page of each list (same lists and cache as /admin/payments) still shows as open.
+ */
+export function usePaymentCounts() {
+  const overview = useOverview();
+  const refunds = useRefundRequests("open");
+  const stuck = useStuckPayments("open");
+  const log = useAppStore((s) => s.adminLog);
+  const handled = new Set(log.map((d) => d.id));
+  const refundCount = openCount(overview.data?.openRefundRequests, refunds, (id) => handled.has(decisionKey("refund", id)));
+  const stuckCount = openCount(overview.data?.openStuckPayments, stuck, (id) => handled.has(decisionKey("stuck", id)));
+  return {
+    refetch: () => {
+      void refunds.refetch();
+      void stuck.refetch();
+    },
+    /** Open refund requests (also the side menu's Payments count, as in the prototype) */
+    refunds: refundCount,
+    stuck: stuckCount,
+    /** The stuck payments left as a number (0 while unknown), for "Fix today" / "All done" */
+    stuckLeft: stuckCount === undefined ? 0 : Number.parseInt(String(stuckCount), 10),
+  };
+}

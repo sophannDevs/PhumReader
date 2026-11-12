@@ -178,7 +178,10 @@ public class LibraryService {
                     return e == null
                             ? null
                             : new UnlockedEntry(
-                                    r.unlockedAt().toInstant(), e.series(), e.episode().summary());
+                                    r.unlockedAt().toInstant(),
+                                    e.series(),
+                                    e.episode().summary(),
+                                    r.coins());
                 });
     }
 

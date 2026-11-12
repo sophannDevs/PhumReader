@@ -32,6 +32,9 @@ export type AdminAction =
   | "remove"
   | "warn"
   | "suspend"
+  /** Account reports (real API): the account itself is warned or suspended, nothing is removed */
+  | "warnUser"
+  | "suspendUser"
   | "dismiss"
   | "refund"
   | "decline"

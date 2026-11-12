@@ -78,7 +78,7 @@ One package per feature. Inside a feature: `web` (controllers + request/response
 | Content | genres, series (V21-02: second genre, age TEEN16, several update days, release hour, Fast Pass switch and ahead, comments switch, break message), series_tags, series_reviews + series_review_items (V21-01: one row per submission for review, the admin's decision and the requested changes), episodes (number, title, status draft / scheduled / published / hidden by an admin, published_at, free_at + price for Fast Pass, comments on/off, hidden_at when the creator hides it: V21-02), episode_images (order, width, height, storage key), chapter_texts (blocks as JSON), featured_slides (home hero), rankings |
 | Reading | subscriptions, reading_progress (last episode, progress, highest episode opened), episode_likes, episode_bookmarks |
 | Money | coin_packs, coin_wallets (the locked row; balance = sum of the ledger), payment_orders, coin_ledger (append-only, one row per top-up, bonus, unlock, refund), unlocks, creator_earnings, idempotency_keys |
-| Community | comments, comment_likes, reports |
+| Community | comments, comment_likes, reports (V21-04: case number, the accused, the admin's action; migration V15: a report can also point at an account, target type USER, and end in WARN), user_blocks (V21-04) |
 | Operations | push_tokens, notifications (V21-03: the in-app inbox, one row per recipient and event: type + values, read / removed; removed rows go after 7 days, read rows after 90), outbox_events (search and notification sync), audit_log, shedlock |
 
 Migration: `backend/src/main/resources/db/migration/V1__init.sql`. Indexes from the plan: episodes by series +

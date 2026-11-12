@@ -3,7 +3,7 @@
 import { Command as CommandPrimitive } from "cmdk"
 import { SearchIcon } from "lucide-react"
 import Image from "next/image"
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useTranslations } from "@/i18n/translations"
 import { Badge } from "@/components/ui/badge"
 import { CommandEmpty, CommandGroup, CommandItem, CommandList } from "@/components/ui/command"
@@ -11,13 +11,18 @@ import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/compone
 import { getSeries } from "@/data"
 import type { Series } from "@/data/types"
 import { useRouter } from "@/i18n/navigation"
+import { DEMO_MODE } from "@/lib/api/config"
+import { useSearchSeries } from "@/lib/queries"
 import { seriesHref } from "@/lib/routes"
 import { useRestoreFocus } from "@/lib/use-restore-focus"
 import { useLocalize } from "@/lib/localize"
 
 const MAX_RESULTS = 8
 const POPULAR_COUNT = 6
+/** Real API: ask once typing pauses this long. */
+const DEBOUNCE_MS = 250
 
+/** Demo: the demo catalogue, filtered as you type. */
 function filterSeries(query: string): Series[] {
   const q = query.trim().toLowerCase()
   if (!q) return getSeries().slice(0, POPULAR_COUNT)
@@ -26,7 +31,11 @@ function filterSeries(query: string): Series[] {
     .slice(0, MAX_RESULTS)
 }
 
-/** ⌘K search dialog: "Popular now" when empty, "Series" results while typing. */
+/**
+ * ⌘K search dialog: "Popular now" when empty, "Series" results while typing.
+ * Demo: the demo catalogue. Real API: GET /search (the most viewed series for an empty query), asked 250 ms after
+ * typing stops; the last results stay while the next ones load.
+ */
 export function SearchCommand({
   open,
   onOpenChange,
@@ -40,10 +49,26 @@ export function SearchCommand({
   const router = useRouter()
   const restoreFocus = useRestoreFocus()
   const [query, setQuery] = useState("")
-  const results = useMemo(() => filterSeries(query), [query])
+  // Real API: the text the request uses, a moment after typing stops.
+  const [asked, setAsked] = useState("")
+  const typed = query.trim()
+  useEffect(() => {
+    if (DEMO_MODE) return
+    const id = setTimeout(() => setAsked(typed), DEBOUNCE_MS)
+    return () => clearTimeout(id)
+  }, [typed])
+  const search = useSearchSeries(asked, asked ? MAX_RESULTS : POPULAR_COUNT, { enabled: !DEMO_MODE && open, keepPrevious: true })
+  const demoResults = useMemo(() => (DEMO_MODE ? filterSeries(query) : []), [query])
+  const results = DEMO_MODE ? demoResults : (search.data ?? [])
+  // Real API: waiting for the pause or the answer, with nothing to show yet.
+  const loading = !DEMO_MODE && results.length === 0 && !search.isError && (asked !== typed || search.isFetching || search.isPending)
+  const failed = !DEMO_MODE && search.isError && !loading
 
   function handleOpenChange(next: boolean) {
-    if (!next) setQuery("")
+    if (!next) {
+      setQuery("")
+      setAsked("")
+    }
     onOpenChange(next)
   }
 
@@ -85,8 +110,20 @@ export function SearchCommand({
               {t("esc")}
             </kbd>
           </div>
+          {/* Real API: "Searching…" and the failure are announced from here, outside the list of results (a listbox
+              may hold options only). The polite region stays mounted so screen readers hear each change. */}
+          {DEMO_MODE ? null : (
+            <div role="status" aria-live="polite" className={loading ? "px-4 py-8 text-muted-foreground" : undefined}>
+              {loading ? t("searching") : null}
+            </div>
+          )}
+          {failed ? (
+            <div role="alert" className="px-4 py-8 text-muted-foreground">
+              {t("errorTitle")}
+            </div>
+          ) : null}
           <CommandList className="max-h-[60vh]">
-            <CommandEmpty className="px-4 py-8 text-muted-foreground">{t("empty")}</CommandEmpty>
+            {loading || failed ? null : <CommandEmpty className="px-4 py-8 text-muted-foreground">{t("empty")}</CommandEmpty>}
             <CommandGroup heading={query.trim() ? t("series") : t("popular")}>
               {results.map((s) => (
                 <CommandItem key={s.id} value={s.id} onSelect={() => go(s)} className="gap-3 py-2">

@@ -45,13 +45,17 @@ public class LibraryQueries {
             int lastRead,
             OffsetDateTime readAt) {}
 
+    /**
+     * @param coins what the unlock cost (the episode's price at the time)
+     */
     public record UnlockRow(
             UUID unlockId,
             UUID episodeId,
             UUID seriesId,
             String title,
             int number,
-            OffsetDateTime unlockedAt) {}
+            OffsetDateTime unlockedAt,
+            int coins) {}
 
     public record FollowRow(
             UUID creatorId, String name, long seriesCount, OffsetDateTime followedAt) {}
@@ -314,7 +318,8 @@ public class LibraryQueries {
     public List<UnlockRow> unlocked(
             UUID userId, LibraryOrder order, @Nullable Key after, int limit) {
         String select =
-                "select u.id, u.episode_id, e.series_id, s.title, e.number, u.created_at"
+                "select u.id, u.episode_id, e.series_id, s.title, e.number, u.created_at,"
+                        + " u.coins"
                         + " from unlocks u join episodes e on e.id = u.episode_id"
                         + " join series s on s.id = e.series_id"
                         + " where u.user_id = :u and s.visibility = 'PUBLISHED'"
@@ -328,7 +333,8 @@ public class LibraryQueries {
                                 rs.getObject("series_id", UUID.class),
                                 rs.getString("title"),
                                 rs.getInt("number"),
-                                rs.getObject("created_at", OffsetDateTime.class)))
+                                rs.getObject("created_at", OffsetDateTime.class),
+                                rs.getInt("coins")))
                 .list();
     }
 

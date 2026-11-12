@@ -68,7 +68,10 @@ class AdminController {
 
     /**
      * @param action dismiss (no violation), resolve (handled), hide (remove the target),
-     *     remove_warn (remove and warn) or suspend (remove and suspend the account)
+     *     remove_warn (remove and warn), warn (account reports only: warn, nothing is removed) or
+     *     suspend (remove and suspend the account). An account report (target type user) takes
+     *     dismiss, resolve, warn (remove_warn counts as warn) and suspend; hide is 400
+     *     invalid_action
      * @param note optional; kept with the report and in the audit log
      * @param days suspend only: 1-365, default 7
      */
@@ -186,7 +189,14 @@ class AdminController {
     }
 
     @PostMapping("/reports/{id}/settle")
-    @Operation(summary = "Dismiss, resolve or hide the reported content")
+    @Operation(
+            summary = "Dismiss, resolve or hide the reported content",
+            description =
+                    "Account reports (target type user): dismiss, resolve, warn (remove_warn is"
+                            + " taken as warn) or suspend; hide is 400 invalid_action. warn on a"
+                            + " content report is 400 invalid_action (use remove_warn). 409"
+                            + " report_closed, no_accused, cannot_ban_admin; 404"
+                            + " report_not_found.")
     AdminReport settle(
             @PathVariable UUID id,
             @Valid @RequestBody SettleRequest body,

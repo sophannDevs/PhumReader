@@ -20,7 +20,8 @@ export const creatorHandle = (name: string) =>
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "")
-export const creatorHref = (name: string) => `/creators/${creatorHandle(name)}`
+/** The creator's profile: the API's handle when known (real mode), else the one made from the name (demo). */
+export const creatorHref = (name: string, handle?: string | null) => `/creators/${handle || creatorHandle(name)}`
 
 /** The inverse of `genreSlug` over the demo genres ("slice-of-life" -> "Slice of life"). */
 export const genreFromSlug = <G extends string>(slug: string, genres: readonly G[]): G | undefined =>

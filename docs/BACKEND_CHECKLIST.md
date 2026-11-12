@@ -584,8 +584,10 @@ Spring Boot owns every business rule; the website never talks to the database di
     against the real Meilisearch 1.56.1 (`MeilisearchIndexTest`, 6 tests, none skipped): whole words, parts of words
     and creator names in Khmer all match. With Meilisearch "newest" and "popular" order the matches after the
     relevance rules (typos, words), so a closer match can come before a more popular one; PostgreSQL orders purely by
-    the sort. The website's search page and ⌘K dialog still call plain `/search?q=`: the design has no filter
-    controls, so no UI was added; the API is ready for them. Not run end to end (publish a series through the API,
+    the sort. The website's search page and ⌘K dialog call plain `/search?q=`: the design has no filter
+    controls, so no UI was added; the API is ready for them. (The ⌘K dialog calls it in real mode since 2026-11-12,
+    250 ms after typing stops, "Popular now" with `limit=6` when empty; before that it filtered the demo catalogue.
+    Demo mode still does.) Not run end to end (publish a series through the API,
     then search it) against a live backend in this session.
 
 - [ ] **P3-16 Notifications**
@@ -1147,6 +1149,38 @@ as the plan tasks (tests, `./gradlew check`, OpenAPI + `npm run api:gen`); commi
       (`src/components/pr/payments-real.test.tsx`). `e2e/real.spec.ts` test 21 passes (asked on the receipt, shown in
       /admin/payments, approved after the Undo window, one REFUND ledger row, balance back). Tests 15-18 were not run.
       A second purchase of the same pack within an hour is flagged "Double charge" by design.
+
+- **Fix: real-mode data gaps** (2026-11-12; a bug batch, not a plan task). Additive API changes so the website's
+  real mode stops guessing or using the local store. Nothing was removed or renamed.
+  - **B1. Cards carry the creator.** `SeriesCard` gains `creatorId` (uuid) and `creatorHandle` (string), both
+    required, on every card: home, search, series lists, rankings, related, library, creator lists. The handle comes
+    from `creator_profiles.handle` in the same query. Search's Follow button and the creator links use them.
+  - **B2. Overview counts.** `Overview` gains `openRefundRequests` and `openStuckPayments` (int64): the same rows as
+    `GET /admin/refund-requests?status=open` and `GET /admin/stuck-payments?status=open`. The admin side menu and the
+    overview cards use them.
+  - **B3. Unlock price.** `UnlockedEntry` gains `coins` (int32): what that unlock cost (`unlocks.coins`, the price at
+    the time). Library's "coins spent" sums it.
+  - **B4. Report an account.** `POST /users/{id}/report` `{ reason, details? }` answers 202 with a `ReportReceipt`
+    (`accusedId` and `accusedName` are the account). Reasons: `spam`, `impersonate`, `harass`, `other` (other needs 10+
+    characters in `details`). Errors: 400 `cannot_report_self`, `invalid_reason`, `details_required`; 404
+    `user_not_found` (unknown or deleted account); 429 `too_many_reports` (the shared 20 an hour); 401 for guests. A
+    second open report from the same reader on the same account returns the first case number.
+    - **Migration V15** (`V15__report_accounts.sql`) widens `reports_target_type_check` (adds `USER`) and
+      `reports_action_check` (adds `WARN`). For an account report `target_id` and `accused_id` are both the account.
+    - **Admin.** `ReportTarget.type` gains `user` (`title` = the display name, `status` = the account status,
+      `seriesSlug` and `episodeNumber` null). `SettleRequest.action` gains `warn`. An account report takes `dismiss`,
+      `resolve`, `warn` and `suspend` (`days`); `remove_warn` counts as `warn`; `hide` is 400 `invalid_action`. `warn`
+      on a content report is 400 `invalid_action` (use `remove_warn`). Nothing is sent to the accused. `MyReport`'s
+      `targetType` can be `user`.
+  - **Tests.** `BlockingAndReportsApiTest` +3 (an account report with its reasons; warn, suspend and dismiss but never
+    hide; `remove_warn` as a warning), `CatalogApiTest` +1 (cards carry id and handle), `RefundRequestsApiTest` +1
+    (overview counts match the queues), `LibraryApiTest` (the unlock price). `./gradlew check` 329 tests green; OpenAPI
+    and `api:gen` updated.
+  - **Open.** A resolved account report (warn or suspend) shows as "removed" in the reporter's `GET /me/reports`
+    (`CommentService` maps RESOLVED to removed). Warning or suspending an account does not close other readers' open
+    reports on it. No inbox item tells the accused about a warning.
+  - **Website notes** are the assumptions V2-72 to V2-81 in `docs/CHECKLIST.md`. `npm test` and `test:e2e:real` were not
+    run in this pass (no Vitest packages and no backend on that PC).
 
 - [ ] **V21-07 Smaller V2.1 fields**
   - Build: welcome picks (genres, story languages) saved as account preferences and used by Home; birth year at

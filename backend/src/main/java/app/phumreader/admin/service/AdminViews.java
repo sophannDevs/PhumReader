@@ -2,6 +2,7 @@ package app.phumreader.admin.service;
 
 import app.phumreader.admin.domain.ContentType;
 import app.phumreader.admin.domain.FlagKind;
+import app.phumreader.admin.domain.ReportTargetType;
 import app.phumreader.series.domain.AgeRating;
 import app.phumreader.series.domain.SeriesType;
 import java.math.BigDecimal;
@@ -51,9 +52,19 @@ public final class AdminViews {
             Instant createdAt,
             long openReports) {}
 
-    /** What a report points at; empty fields when the target no longer exists. */
+    /**
+     * What a report points at; empty fields when the target no longer exists.
+     *
+     * @param type series, episode, comment or user (an account)
+     * @param title series or episode title, the start of the comment, or the account's display name
+     * @param status series: draft, review, changes, published, hidden; episode: draft, scheduled,
+     *     published, hidden; comment: visible, hidden, deleted; user: active, banned,
+     *     deletion_pending, deleted
+     * @param seriesSlug for the link to the public page (null for an account)
+     * @param episodeNumber set for episodes and for comments on an episode
+     */
     public record ReportTarget(
-            ContentType type,
+            ReportTargetType type,
             UUID id,
             @Nullable String title,
             @Nullable String status,
@@ -63,8 +74,9 @@ public final class AdminViews {
     /**
      * @param status open, resolved or dismissed
      * @param caseNumber shown to the reporter as R-{caseNumber}
-     * @param accusedName the person behind the reported thing
-     * @param action what was done: remove, remove_warn, suspend or none (null while open)
+     * @param accusedName the person behind the reported thing (for an account report: the account)
+     * @param action what was done: remove, remove_warn, warn (account reports), suspend or none
+     *     (null while open)
      */
     public record AdminReport(
             UUID id,
@@ -121,6 +133,10 @@ public final class AdminViews {
      * @param seriesInReview series waiting for a review decision
      * @param oldestReviewAt when the longest-waiting of them was submitted; {@code null} when none
      *     waits
+     * @param openRefundRequests refund requests waiting for a decision (the rows of {@code GET
+     *     /admin/refund-requests?status=open})
+     * @param openStuckPayments "paid but no coins" payments not resolved yet (the rows of {@code
+     *     GET /admin/stuck-payments?status=open})
      */
     public record Overview(
             long openReports,
@@ -130,7 +146,9 @@ public final class AdminViews {
             long hiddenComments,
             long refundedOrders,
             long seriesInReview,
-            @Nullable Instant oldestReviewAt) {}
+            @Nullable Instant oldestReviewAt,
+            long openRefundRequests,
+            long openStuckPayments) {}
 
     /**
      * A series waiting for review (the admin's series queue, V21-01).

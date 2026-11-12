@@ -3,7 +3,7 @@
 import { ChevronRightIcon, SettingsIcon } from "lucide-react"
 import { useLocale } from "next-intl"
 import { useTranslations } from "@/i18n/translations"
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useId, useRef, useState } from "react"
 import { toast } from "sonner"
 import {
   AvatarRow,
@@ -52,7 +52,8 @@ import { cn } from "@/lib/utils"
  * Saving writes `settings` (+ `novelSettings.size`, the reader theme via useTheme, the display name). With the
  * real API the name goes to /me/profile and SettingsSync saves the reader theme and text size; the Notifications card
  * sums up the account's alert settings (changed on /notifications); the other choices stay on this device (the API
- * has no fields for them yet).
+ * has no fields for them yet). "Request data download" is simulated in the demo; with the real API it shows "Coming
+ * soon" with the button off (no export yet).
  */
 
 type Form = Pick<
@@ -177,6 +178,8 @@ export function SettingsPage() {
   const t = useTranslations("settings")
   const ta = useTranslations("account")
   const tt = useTranslations("toasts")
+  const te = useTranslations("errors")
+  const downloadSoonId = useId()
   const locale = useLocale() as Locale
   const router = useRouter()
   const pathname = usePathname()
@@ -656,9 +659,21 @@ export function SettingsPage() {
             </div>
             <Sep />
             <Row label={t("download")} hint={t("downloadHint")}>
-              <Button variant="outline" size="sm" disabled={dlBusy} onClick={requestDownload}>
-                {dlBusy ? t("preparing") : t("requestDownload")}
-              </Button>
+              {DEMO_MODE ? (
+                <Button variant="outline" size="sm" disabled={dlBusy} onClick={requestDownload}>
+                  {dlBusy ? t("preparing") : t("requestDownload")}
+                </Button>
+              ) : (
+                // Real API: the account has no data export yet (bug 4), so the row stays with the button off.
+                <span className="flex flex-wrap items-center justify-end gap-2">
+                  <Badge id={downloadSoonId} variant="warn">
+                    {te("codes.comingSoon")}
+                  </Badge>
+                  <Button variant="outline" size="sm" disabled aria-describedby={downloadSoonId}>
+                    {t("requestDownload")}
+                  </Button>
+                </span>
+              )}
             </Row>
           </Card>
 

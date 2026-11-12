@@ -56,7 +56,14 @@ public final class LibraryViews {
 
     public record SubscriptionEntry(Instant subscribedAt, SeriesCard series) {}
 
-    public record UnlockedEntry(Instant unlockedAt, SeriesCard series, EpisodeSummary episode) {}
+    /**
+     * An episode the reader unlocked with coins.
+     *
+     * @param coins the coins the unlock actually cost (the price at the time; prices can change
+     *     later)
+     */
+    public record UnlockedEntry(
+            Instant unlockedAt, SeriesCard series, EpisodeSummary episode, int coins) {}
 
     public record FollowedCreator(UUID id, String name, long seriesCount, Instant followedAt) {}
 

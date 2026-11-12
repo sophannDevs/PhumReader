@@ -16,8 +16,11 @@ import { useLocalize } from "@/lib/localize"
 export type UnlockState = "logged-out" | "enough" | "not-enough"
 export type UnlockMode = "one" | "all"
 
-/** The Fast Pass episodes still locked, when there are 2 or more ("All 3 Fast Pass episodes"). */
-export type UnlockBundle = { count: number; first: number; last: number; lastDate: string }
+/**
+ * The Fast Pass episodes still locked, when there are 2 or more ("All 3 Fast Pass episodes"). `cost`: what they cost
+ * together (real API: each at its own price); without it, `count` × the dialog's `price`.
+ */
+export type UnlockBundle = { count: number; first: number; last: number; lastDate: string; cost?: number }
 
 /**
  * Fast Pass unlock dialog (spec §2, screens 02-series-unlock-dialog-*): this episode or, with a `bundle`, every
@@ -48,7 +51,7 @@ export function UnlockDialog({
   kind?: "episode" | "chapter"
   loggedIn: boolean
   balance: number
-  /** Coins per episode */
+  /** Coins for this episode */
   price: number
   bundle?: UnlockBundle | null
   mode?: UnlockMode
@@ -63,7 +66,8 @@ export function UnlockDialog({
   const restoreFocus = useRestoreFocus()
   const all = mode === "all" && !!bundle
   const count = all ? bundle.count : 1
-  const cost = count * price
+  const bundleCost = bundle ? (bundle.cost ?? bundle.count * price) : 0
+  const cost = all ? bundleCost : price
   const state: UnlockState = !loggedIn ? "logged-out" : balance >= cost ? "enough" : "not-enough"
   const chapter = kind === "chapter"
   const freeDate = all ? bundle.lastDate : episode.freeDate
@@ -115,7 +119,7 @@ export function UnlockDialog({
               className="items-center gap-3"
               title={<span className="text-[13px] font-semibold">{t(chapter ? "allChapters" : "allEpisodes", { count: bundle.count })}</span>}
               description={t(chapter ? "rangeChapters" : "rangeEpisodes", { first: bundle.first, last: bundle.last })}
-              aside={coinCost(bundle.count * price)}
+              aside={coinCost(bundleCost)}
             />
           </div>
         ) : null}

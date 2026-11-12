@@ -114,7 +114,8 @@ class CoinApiTest {
                 .andExpect(jsonPath("$.items[1].reason").value("adjustment"))
                 .andExpect(jsonPath("$.items[1].amount").value(12));
         mvc.perform(get("/api/v1/me/unlocked").with(sessions.as(reader)))
-                .andExpect(jsonPath("$.items[0].episode.n").value(66));
+                .andExpect(jsonPath("$.items[0].episode.n").value(66))
+                .andExpect(jsonPath("$.items[0].coins").value(5));
     }
 
     @Test

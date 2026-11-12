@@ -78,6 +78,7 @@ export async function fetchCoinsPage(signedIn: boolean): Promise<RealCoinsPage> 
     faq: faq(),
     firstPurchaseBonus: demoData.firstPurchaseBonus,
     khqrExpiryMinutes: shop.orderExpiryMinutes,
+    // An estimate for "≈ N episodes" and the packs: real episodes carry their own price (`episodePrice`).
     fastPassPrice: demoData.fastPass.price,
     simulator: shop.simulator,
   }

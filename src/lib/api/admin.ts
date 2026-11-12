@@ -17,8 +17,12 @@ export type ReviewQueueItem = Schemas["ReviewQueueItem"];
 /** A change "Request changes" asks for: contact, cover, title, age or images. */
 export type ReviewItemKey = Schemas["ChangesRequest"]["items"][number];
 export type ContentType = AdminContent["type"];
-/** dismiss = no violation, hide = remove, remove_warn = remove and warn, suspend = remove and suspend the account. */
-export type ReportAction = "dismiss" | "resolve" | "hide" | "remove_warn" | "suspend";
+/**
+ * dismiss = no violation, hide = remove, remove_warn = remove and warn, suspend = remove and suspend the account.
+ * An account report (target type user) takes dismiss, resolve, warn or suspend (hide is 400 invalid_action); warn is
+ * for account reports only.
+ */
+export type ReportAction = "dismiss" | "resolve" | "hide" | "remove_warn" | "warn" | "suspend";
 
 type Page<T> = { items: T[]; nextCursor?: string | null };
 export type ListFilter = { q?: string; status?: string };

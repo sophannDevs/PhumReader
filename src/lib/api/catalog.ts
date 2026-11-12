@@ -42,6 +42,9 @@ export function toSeries(c: Card): Series {
     type: c.type,
     genre: c.genre as Genre,
     creator: c.creator,
+    // The creator's account and profile address (every card has them; older answers did not).
+    ...(c.creatorId ? { creatorId: c.creatorId } : {}),
+    ...(c.creatorHandle ? { creatorHandle: c.creatorHandle } : {}),
     cover: c.cover ?? PLACEHOLDER_COVER,
     views: formatCount(c.views),
     likes: formatCount(c.likes),
@@ -68,6 +71,8 @@ export function toEpisode(e: Summary, fallbackThumb: string): Episode {
     thumb: e.thumb ?? fallbackThumb,
     access: e.access,
     isUp: e.isUp,
+    // The episode's own Fast Pass price (only while it is still Fast Pass); see `episodePrice`.
+    ...(e.price != null ? { price: e.price } : {}),
   }
 }
 

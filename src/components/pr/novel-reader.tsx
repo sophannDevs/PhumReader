@@ -13,7 +13,7 @@ import { novelVars, useNovelSettings } from "@/components/pr/reader-theme"
 import { ResumeChip } from "@/components/pr/resume-chip"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
-import { fastPassPrice, type Episode, type NovelBlock, type NovelChapter, type Series } from "@/data"
+import { episodePrice, episodesCost, fastPassPrice, type Episode, type NovelBlock, type NovelChapter, type Series } from "@/data"
 import { Link } from "@/i18n/navigation"
 import { inlineMarks } from "@/lib/inline-marks"
 import { useLocalize } from "@/lib/localize"
@@ -121,6 +121,7 @@ export function NovelReader({ slug, n }: { slug: string; n: number }) {
           total={lock.total}
           font={settings.font}
           lockedByApi
+          lockPrice={lock.episode.price}
           refetch={query.refetch}
         />
       </NovelRoot>
@@ -166,6 +167,8 @@ type BodyProps = {
   total: number
   font: NovelSettings["font"]
   lockedByApi?: boolean
+  /** Real API: the price the 402 named for this chapter */
+  lockPrice?: number
   refetch: () => unknown
 }
 
@@ -182,18 +185,21 @@ type Nav = ReturnType<typeof useReaderNav>
 const h1 = "mt-1.5 text-[30px] leading-[38px] font-bold tracking-[-0.02em] max-md:text-2xl max-md:leading-[30px]"
 
 /** Mounted once the store and the chapter list are known (the saved place is read on mount). */
-function NovelReaderView({ series, chapter, total, font, nav }: BodyProps & { nav: Nav }) {
+function NovelReaderView({ series, chapter, total, font, lockPrice, nav }: BodyProps & { nav: Nav }) {
   const t = useTranslations("reader")
   const loc = useLocalize()
   const user = useUser()
   const { settings } = useNovelSettings()
   const n = chapter.n
-  const price = fastPassPrice()
   const { go, list, listEpisodes, isLocked, coins, request, handOff, dialog, locked, finishRef } = nav
   const nextEpisode = list.find((e) => e.n === n + 1)
-  const here = list.find((e) => e.n === n)
+  const listed = list.find((e) => e.n === n)
+  // This chapter at its own price (real API: the one its 402 named, else the list's); the demo's are all 5 coins.
+  const here = listed && lockPrice != null ? { ...listed, price: lockPrice } : listed
+  const price = episodePrice(here)
   const position = useReadingPosition({ seriesId: series.id, n, savePos: !locked })
-  const bundle = list.filter((e) => isLocked(e)).length
+  const lockedList = list.filter((e) => isLocked(e))
+  const bundle = lockedList.length
   const textClass = cn("type-novel", font === "serif" && "font-novel")
   const btn = "text-reader-text hover:bg-accent hover:text-reader-text focus-visible:ring-offset-reader-page"
 
@@ -210,7 +216,7 @@ function NovelReaderView({ series, chapter, total, font, nav }: BodyProps & { na
             episodes={listEpisodes}
             current={n}
             coins={coins}
-            price={price}
+            price={fastPassPrice()}
             onSelect={go}
             triggerClassName={btn}
           />
@@ -245,7 +251,7 @@ function NovelReaderView({ series, chapter, total, font, nav }: BodyProps & { na
               price={price}
               coins={coins}
               loggedIn={!!user}
-              bundle={bundle > 1 ? { count: bundle } : null}
+              bundle={bundle > 1 ? { count: bundle, cost: episodesCost(lockedList) } : null}
               onLogin={() => here && handOff("login", here)}
               onUnlock={() => here && request(here, "one")}
               onGetCoins={() => here && handOff("coins", here)}
@@ -273,7 +279,7 @@ function NovelReaderView({ series, chapter, total, font, nav }: BodyProps & { na
               series={series}
               chapter={chapter}
               total={total}
-              price={price}
+              price={episodePrice(nextEpisode)}
               nextLocked={!!nextEpisode && isLocked(nextEpisode)}
               onPrev={() => go(n - 1)}
               onNext={() => go(n + 1)}

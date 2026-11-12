@@ -25,6 +25,8 @@ public final class CatalogViews {
      *
      * @param genre the genre's name, e.g. "Slice of life"
      * @param creator the creator's pen name
+     * @param creatorId the creator's account id (follow / unfollow, report)
+     * @param creatorHandle the address of the creator's profile, {@code /creators/<handle>}
      * @param cover public path or URL of the cover image
      * @param views total views
      * @param likes total likes
@@ -44,6 +46,8 @@ public final class CatalogViews {
             SeriesType type,
             String genre,
             String creator,
+            UUID creatorId,
+            String creatorHandle,
             @Nullable String cover,
             long views,
             long likes,

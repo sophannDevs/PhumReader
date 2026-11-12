@@ -14,6 +14,8 @@ const BLOCKS: BlockedAccount[] = [{ userId: "u-1", name: "Rude Rithy", avatarUrl
 const REPORTS: MyReport[] = [
   { caseNumber: 20481, targetType: "comment", seriesTitle: "Glass Compass", episodeNumber: null, accusedName: "Rude Rithy", reason: "harass", status: "removed", createdAt: "2026-11-09T03:00:00Z" },
   { caseNumber: 20482, targetType: "episode", seriesTitle: "Glass Compass", episodeNumber: 12, accusedName: "Mina", reason: "spam", status: "in_review", createdAt: "2026-11-10T03:00:00Z" },
+  // An account report (B4): no series, the account is the accused.
+  { caseNumber: 20483, targetType: "user", seriesTitle: null, episodeNumber: null, accusedName: "Rude Rithy", reason: "harass", status: "in_review", createdAt: "2026-11-11T03:00:00Z" },
 ]
 
 describe("ModerationSync", () => {
@@ -32,11 +34,12 @@ describe("ModerationSync", () => {
     renderUi(<ModerationSync />)
     await waitFor(() => expect(useAppStore.getState().blocked).toEqual(["Rude Rithy"]))
     expect(useAppStore.getState().blockedIds).toEqual({ "Rude Rithy": "u-1" })
-    await waitFor(() => expect(useAppStore.getState().reports).toHaveLength(2))
-    const [removed, review] = useAppStore.getState().reports
+    await waitFor(() => expect(useAppStore.getState().reports).toHaveLength(3))
+    const [removed, review, account] = useAppStore.getState().reports
     expect(removed).toMatchObject({ id: "R-20481", kind: "comment", who: "Rude Rithy", status: "Removed" })
     expect(review).toMatchObject({ id: "R-20482", kind: "series", status: "In review" })
     expect(review.target).toContain("Glass Compass")
+    expect(account).toMatchObject({ id: "R-20483", kind: "user", target: "Profile of Rude Rithy", who: "Rude Rithy", status: "In review" })
   })
 })
 

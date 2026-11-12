@@ -9,16 +9,19 @@ vi.mock("@/components/pr/comic-end-section", () => ({
   ComicEndSection: ({
     next,
     nextLocked,
+    price,
     onNext,
     commentsEnabled = true,
   }: {
     next?: { n: number }
     nextLocked: boolean
+    price: number
     onNext: () => void
     commentsEnabled?: boolean
   }) => (
     <section aria-label="End of episode">
       {next ? <button onClick={onNext}>{nextLocked ? `Unlock next ${next.n}` : `Next ${next.n}`}</button> : <span>Last episode</span>}
+      {next && nextLocked ? <span>{`Next costs ${price}`}</span> : null}
       <span>{commentsEnabled ? "Comment box" : "Comments off"}</span>
     </section>
   ),
@@ -45,7 +48,16 @@ const seriesCard = {
   ageRating: "all",
   badges: { isNew: false, up: false },
 }
-const summary = (n: number, access: "free" | "fastpass" = "free") => ({ n, title: `Episode ${n}`, date: "2026-11-01", isUp: false, likes: 1, access, thumb: "/covers/x.svg" })
+const summary = (n: number, access: "free" | "fastpass" = "free", price?: number) => ({
+  n,
+  title: `Episode ${n}`,
+  date: "2026-11-01",
+  isUp: false,
+  likes: 1,
+  access,
+  thumb: "/covers/x.svg",
+  ...(price === undefined ? {} : { price }),
+})
 const content = (n: number, panels = [{ src: "/panels/a.svg", alt: "Page one", width: 800, height: 1200 }]) => ({
   series: seriesCard,
   episode: summary(n),
@@ -104,6 +116,38 @@ describe("ComicReader: states", () => {
     expect(screen.getByRole("button", { name: "Log in to unlock" })).toBeInTheDocument()
     expect(screen.queryByRole("img", { name: "Page one" })).not.toBeInTheDocument()
     expect(router.replace).not.toHaveBeenCalled()
+  })
+})
+
+describe("ComicReader: the API's Fast Pass price", () => {
+  const seriesPage = http.get(`${API}/series/${SLUG}`, () =>
+    HttpResponse.json({ series: seriesCard, synopsis: "A witch.", stats: { subscribers: 1, comments: 0 }, related: [], creatorSeriesCount: 1, creatorId: "c1" }),
+  )
+
+  it("the lock screen quotes the price the 402 names (not the demo's 5 coins)", async () => {
+    server.use(
+      http.get(`${API}/series/${SLUG}/episodes/3`, () => apiError(402, "episode_locked", { price: 7 })),
+      seriesPage,
+      episodes(summary(1), summary(2), summary(3, "fastpass", 6)),
+    )
+    renderUi(<ComicReader slug={SLUG} n={3} />)
+    expect(await screen.findByText(/Read it now for 7 coins/)).toBeInTheDocument()
+  })
+
+  it("uses the episode's own price from the list when the 402 has none", async () => {
+    server.use(
+      http.get(`${API}/series/${SLUG}/episodes/3`, () => apiError(402, "episode_locked")),
+      seriesPage,
+      episodes(summary(1), summary(2), summary(3, "fastpass", 6)),
+    )
+    renderUi(<ComicReader slug={SLUG} n={3} />)
+    expect(await screen.findByText(/Read it now for 6 coins/)).toBeInTheDocument()
+  })
+
+  it("the end of the episode quotes the next episode's own price", async () => {
+    server.use(episodes(summary(1), summary(2), summary(3, "fastpass", 7)), episodeAt(2))
+    renderUi(<ComicReader slug={SLUG} n={2} />)
+    expect(await screen.findByText("Next costs 7")).toBeInTheDocument()
   })
 })
 

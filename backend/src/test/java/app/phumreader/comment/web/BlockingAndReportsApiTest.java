@@ -341,7 +341,171 @@ class BlockingAndReportsApiTest {
                 .isEqualTo(2);
     }
 
+    // ---------- account reports ----------
+
+    @Test
+    void anAccountIsReportedWithTheAccountReasonsAndShowsAsAUserReport() throws Exception {
+        UUID reader = sessions.newReader("Dara");
+        UUID creator = sessions.creatorId("Chan Sreyleak");
+        String name = displayName(creator);
+        String url = "/api/v1/users/" + creator + "/report";
+
+        // The account reasons (spam, impersonate, harass, other); other needs details.
+        report(reader, url, "{\"reason\":\"copyright\"}")
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error.fields.reason").value("invalid_reason"));
+        report(reader, url, "{\"reason\":\"other\"}")
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error.fields.details").value("details_required"));
+
+        JsonNode receipt =
+                body(
+                        report(
+                                        reader,
+                                        url,
+                                        "{\"reason\":\"impersonate\","
+                                                + "\"details\":\"Uses another creator's work\"}")
+                                .andExpect(status().isAccepted())
+                                .andExpect(jsonPath("$.accusedId").value(creator.toString()))
+                                .andExpect(jsonPath("$.accusedName").value(name)));
+        int caseNumber = receipt.get("caseNumber").asInt();
+        assertThat(caseNumber).isGreaterThanOrEqualTo(20481);
+        // The same open case comes back for a second report on the account.
+        report(reader, url, "{\"reason\":\"spam\"}")
+                .andExpect(status().isAccepted())
+                .andExpect(jsonPath("$.caseNumber").value(caseNumber));
+
+        // Not yourself, not an account that does not exist (or was deleted), not signed out.
+        report(reader, "/api/v1/users/" + reader + "/report", "{\"reason\":\"spam\"}")
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error.code").value("cannot_report_self"));
+        report(reader, "/api/v1/users/" + UUID.randomUUID() + "/report", "{\"reason\":\"spam\"}")
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.error.code").value("user_not_found"));
+        UUID gone = sessions.newReader("Gone");
+        jdbc.sql("update users set status = 'DELETED' where id = :id").param("id", gone).update();
+        report(reader, "/api/v1/users/" + gone + "/report", "{\"reason\":\"spam\"}")
+                .andExpect(status().isNotFound());
+        mvc.perform(
+                        post(url)
+                                .with(sessions.guest())
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("{\"reason\":\"spam\"}"))
+                .andExpect(status().isUnauthorized());
+
+        // "Your reports" and the admin queue.
+        mvc.perform(get("/api/v1/me/reports").with(sessions.as(reader)))
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].caseNumber").value(caseNumber))
+                .andExpect(jsonPath("$[0].targetType").value("user"))
+                .andExpect(jsonPath("$[0].accusedName").value(name))
+                .andExpect(jsonPath("$[0].seriesTitle").doesNotExist())
+                .andExpect(jsonPath("$[0].reason").value("impersonate"))
+                .andExpect(jsonPath("$[0].status").value("in_review"));
+        String item = "$.items[?(@.caseNumber == " + caseNumber + ")]";
+        mvc.perform(
+                        get("/api/v1/admin/reports?status=open&limit=100")
+                                .with(sessions.as(admin, "ADMIN")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath(item + ".target.type").value("user"))
+                .andExpect(jsonPath(item + ".target.id").value(creator.toString()))
+                .andExpect(jsonPath(item + ".target.title").value(name))
+                .andExpect(jsonPath(item + ".target.status").value("active"))
+                .andExpect(jsonPath(item + ".accusedId").value(creator.toString()))
+                .andExpect(jsonPath(item + ".reason").value("impersonate"));
+    }
+
+    @Test
+    void anAccountReportIsWarnedSuspendedOrDismissedButNeverHidden() throws Exception {
+        UUID rude = sessions.newReader("Rude Rithy");
+        UUID first = sessions.newReader("Dara");
+        UUID second = sessions.newReader("Sokha");
+        UUID third = sessions.newReader("Vanna");
+        int warned = accountCase(first, rude, "harass");
+        int suspended = accountCase(second, rude, "spam");
+        int dismissed = accountCase(third, rude, "spam");
+
+        // There is nothing to hide on an account; warn is for accounts only.
+        settle(reportId(warned), "{\"action\":\"hide\"}")
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error.fields.action").value("invalid_action"));
+        String comment = postComment(sessions.newReader("Author"), "Hello.");
+        settle(reportId(caseOf(first, comment, "spam")), "{\"action\":\"warn\"}")
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error.fields.action").value("invalid_action"));
+
+        settle(reportId(warned), "{\"action\":\"warn\",\"note\":\"First warning\"}")
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("resolved"))
+                .andExpect(jsonPath("$.action").value("warn"))
+                .andExpect(jsonPath("$.target.type").value("user"))
+                .andExpect(jsonPath("$.target.status").value("active"));
+        assertThat(accountStatus(rude)).isEqualTo("ACTIVE");
+
+        settle(reportId(suspended), "{\"action\":\"suspend\",\"days\":3}")
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("resolved"))
+                .andExpect(jsonPath("$.action").value("suspend"))
+                .andExpect(jsonPath("$.target.status").value("banned"));
+        assertThat(accountStatus(rude)).isEqualTo("BANNED");
+        assertThat(
+                        jdbc.sql("select suspended_until from users where id = :id")
+                                .param("id", rude)
+                                .query(java.time.OffsetDateTime.class)
+                                .single()
+                                .toInstant())
+                .isEqualTo(DEMO_NOON.plusSeconds(3 * 86_400L));
+
+        settle(reportId(dismissed), "{\"action\":\"dismiss\"}")
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("dismissed"))
+                .andExpect(jsonPath("$.action").value("none"));
+
+        // Each reporter hears the outcome; nothing was taken down.
+        assertThat(
+                        jdbc.sql(
+                                        "select count(*) from notifications"
+                                                + " where user_id in (:a, :b, :c)"
+                                                + " and data ->> 'targetType' = 'user'"
+                                                + " and (data ->> 'hidden')::boolean = false")
+                                .param("a", first)
+                                .param("b", second)
+                                .param("c", third)
+                                .query(Long.class)
+                                .single())
+                .isEqualTo(3);
+        mvc.perform(get("/api/v1/me/reports").with(sessions.as(third)))
+                .andExpect(jsonPath("$[0].status").value("no_violation"));
+    }
+
+    @Test
+    void removeWarnOnAnAccountReportIsAWarning() throws Exception {
+        UUID rude = sessions.newReader("Rude Rithy");
+        int number = accountCase(sessions.newReader("Dara"), rude, "harass");
+        settle(reportId(number), "{\"action\":\"remove_warn\"}")
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.action").value("warn"));
+        assertThat(accountStatus(rude)).isEqualTo("ACTIVE");
+    }
+
     // ---------- helpers ----------
+
+    private int accountCase(UUID reporter, UUID account, String reason) throws Exception {
+        return body(report(
+                                reporter,
+                                "/api/v1/users/" + account + "/report",
+                                "{\"reason\":\"" + reason + "\"}")
+                        .andExpect(status().isAccepted()))
+                .get("caseNumber")
+                .asInt();
+    }
+
+    private String displayName(UUID user) {
+        return jdbc.sql("select display_name from users where id = :id")
+                .param("id", user)
+                .query(String.class)
+                .single();
+    }
 
     private ResultActions putAs(UUID user, String url) throws Exception {
         return mvc.perform(MockMvcRequestBuilders.put(url).with(sessions.as(user)));

@@ -211,6 +211,16 @@ public class CommentQueries {
                 .single();
     }
 
+    /** The account can be reported: it exists and is not deleted. */
+    public boolean accountExists(UUID id) {
+        return jdbc.sql(
+                        "select exists (select 1 from users where id = :id"
+                                + " and status in ('ACTIVE', 'BANNED', 'DELETION_PENDING'))")
+                .param("id", id)
+                .query(Boolean.class)
+                .single();
+    }
+
     /** A report as the filing returns it. */
     public record FiledReport(
             int caseNumber, @Nullable UUID accusedId, @Nullable String accusedName) {}

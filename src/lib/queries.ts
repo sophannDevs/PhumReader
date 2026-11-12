@@ -1,6 +1,6 @@
 "use client"
 
-import { useQuery } from "@tanstack/react-query"
+import { keepPreviousData, useQuery } from "@tanstack/react-query"
 import { useSyncExternalStore } from "react"
 import type { Genre } from "@/data"
 import { usePathname } from "@/i18n/navigation"
@@ -95,12 +95,17 @@ export const useGenre = (genre: Genre) => {
   })
 }
 
-/** `limit` defaults to 8 (the API allows up to 20). */
-export const useSearchSeries = (query: string, limit = 8) => {
+/**
+ * `limit` defaults to 8 (the API allows up to 20). `enabled` (default true) holds the request back; `keepPrevious`
+ * keeps the last results on screen while the next query loads (the ⌘K search).
+ */
+export const useSearchSeries = (query: string, limit = 8, opts: { enabled?: boolean; keepPrevious?: boolean } = {}) => {
   const flag = useDemoFlag()
   return useQuery({
     queryKey: catalogKeys.search(query, flag, limit),
     queryFn: () => (DEMO_MODE ? getDemo().then((m) => m.search(query, limit)) : real.search(query, limit)),
+    enabled: opts.enabled ?? true,
+    placeholderData: opts.keepPrevious ? keepPreviousData : undefined,
   })
 }
 

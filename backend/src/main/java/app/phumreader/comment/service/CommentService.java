@@ -60,7 +60,9 @@ public class CommentService {
     public enum TargetType {
         SERIES,
         EPISODE,
-        COMMENT
+        COMMENT,
+        /** An account (the creator profile's Report). */
+        USER
     }
 
     private final CommentQueries queries;
@@ -204,17 +206,22 @@ public class CommentService {
     private static final Set<String> CONTENT_REASONS =
             Set.of("copyright", "spam", "harass", "hate", "sexual", "violence", "rating", "other");
 
+    private static final Set<String> ACCOUNT_REASONS =
+            Set.of("spam", "impersonate", "harass", "other");
+
     /** These reasons need a few words from the reporter. */
     private static final Set<String> NEEDS_DETAILS = Set.of("other", "copyright");
 
     static final int MIN_DETAILS = 10;
 
     /**
-     * Reports a series ({@code slug}), an episode ({@code slug} + {@code episode}) or a comment to
-     * the admin queue and returns the case number. A second report on the same target while the
-     * first is open changes nothing and returns the first case. 400 {@code invalid_reason} (the
-     * reason is not one for this kind of target) and {@code details_required} (other and copyright
-     * need at least {@value #MIN_DETAILS} characters).
+     * Reports a series ({@code slug}), an episode ({@code slug} + {@code episode}), a comment
+     * ({@code id}) or an account ({@code id}) to the admin queue and returns the case number. A
+     * second report on the same target while the first is open changes nothing and returns the
+     * first case. 400 {@code invalid_reason} (the reason is not one for this kind of target) and
+     * {@code details_required} (other and copyright need at least {@value #MIN_DETAILS}
+     * characters). Accounts: 400 {@code cannot_report_self}, 404 {@code user_not_found} (no such
+     * account, or a deleted one).
      */
     @Transactional
     public ReportReceipt report(
@@ -222,7 +229,7 @@ public class CommentService {
             TargetType type,
             @Nullable String slug,
             @Nullable Integer episode,
-            @Nullable UUID commentId,
+            @Nullable UUID id,
             String reason,
             @Nullable String details) {
         String key = reason.strip().toLowerCase(Locale.ROOT);
@@ -240,13 +247,31 @@ public class CommentService {
                 target = catalog.requireEpisode(series, require(episode)).id();
                 accused = series.creatorId();
             }
-            default -> {
-                CommentInfo info = visible(require(commentId));
+            case COMMENT -> {
+                CommentInfo info = visible(require(id));
                 target = info.id();
                 accused = info.authorId();
             }
+            case USER -> {
+                UUID account = require(id);
+                if (account.equals(user.id())) {
+                    throw ApiException.badRequest(
+                            "cannot_report_self", "You cannot report yourself.");
+                }
+                if (!queries.accountExists(account)) {
+                    throw ApiException.notFound("user_not_found", "No such account.");
+                }
+                target = account;
+                accused = account;
+            }
+            default -> throw new IllegalStateException("Unknown report target " + type);
         }
-        Set<String> allowed = type == TargetType.COMMENT ? COMMENT_REASONS : CONTENT_REASONS;
+        Set<String> allowed =
+                switch (type) {
+                    case COMMENT -> COMMENT_REASONS;
+                    case USER -> ACCOUNT_REASONS;
+                    default -> CONTENT_REASONS;
+                };
         if (!allowed.contains(key)) {
             throw ApiException.invalidField(
                     "reason", "invalid_reason", "Choose one of the listed reasons.");

@@ -57,6 +57,7 @@ export function ModerationSync() {
   const email = useAccountEmail()
   const t = useTranslations("comments")
   const td = useTranslations("data")
+  const tp = useTranslations("profile")
   const enabled = !DEMO_MODE && !!email
   const blocks = useQuery({ queryKey: meKeys.blocks(email ?? ""), queryFn: real.fetchBlocks, enabled })
   const reports = useQuery({ queryKey: meKeys.reports(email ?? ""), queryFn: real.fetchMyReports, enabled })
@@ -76,15 +77,18 @@ export function ModerationSync() {
 
   useEffect(() => {
     if (!reports.data) return
+    // An account report (B4) reads as the Report dialog saved it: "Profile of Dara Vann".
     const target = (r: real.MyReport) =>
       r.targetType === "comment"
         ? t("commentBy", { name: r.accusedName ?? "" })
-        : r.targetType === "episode" && r.episodeNumber
-          ? `${r.seriesTitle ?? ""} · ${td("episode", { n: r.episodeNumber })}`
-          : (r.seriesTitle ?? "")
+        : r.targetType === "user"
+          ? tp("reportTarget", { name: r.accusedName ?? "" })
+          : r.targetType === "episode" && r.episodeNumber
+            ? `${r.seriesTitle ?? ""} · ${td("episode", { n: r.episodeNumber })}`
+            : (r.seriesTitle ?? "")
     const list: StoredReport[] = reports.data.map((r) => ({
       id: `R-${r.caseNumber}`,
-      kind: r.targetType === "comment" ? "comment" : "series",
+      kind: r.targetType === "comment" ? "comment" : r.targetType === "user" ? "user" : "series",
       target: target(r),
       who: r.accusedName ?? "",
       reason: r.reason,
@@ -93,7 +97,7 @@ export function ModerationSync() {
       status: STATUS[r.status],
     }))
     useAppStore.setState({ reports: list })
-  }, [reports.data, t, td])
+  }, [reports.data, t, td, tp])
 
   return null
 }

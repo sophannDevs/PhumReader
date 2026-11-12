@@ -1,8 +1,9 @@
+import { toast } from "sonner"
 import { describe, expect, it } from "vitest"
 import { useAppStore } from "@/lib/store"
 import { SearchPage } from "@/components/pr/search-page"
 import { setSearch } from "@/test/navigation"
-import { renderUi, screen } from "@/test/render"
+import { renderUi, screen, waitFor } from "@/test/render"
 import { API, apiError, http, HttpResponse, server } from "@/test/server"
 
 const card = (id: string, title: string) => ({
@@ -133,5 +134,205 @@ describe("SearchPage", () => {
     await screen.findByText(/results?$/)
     await user.click(screen.getByRole("tab", { name: /Web novels/ }))
     expect(await screen.findByText("1 web novel")).toBeInTheDocument()
+  })
+})
+
+describe("SearchPage: following a creator (real API)", () => {
+  const profile = (over: Record<string, unknown> = {}) => ({
+    id: "c-1",
+    handle: "mei-tanaka",
+    name: "Mei Tanaka",
+    avatarUrl: null,
+    bio: null,
+    location: null,
+    since: "2025-03-01T00:00:00Z",
+    followers: 41,
+    views: 1000,
+    likes: 250,
+    following: false,
+    owner: false,
+    series: [],
+    ...over,
+  })
+  /** The cards name the creator's account and profile handle (B1). */
+  const withCreator = (...titles: string[]) =>
+    http.get(`${API}/search`, () =>
+      HttpResponse.json({ items: titles.map((t, i) => ({ ...card(`s${i}`, t), creatorId: "c-1", creatorHandle: "mei-t" })) }),
+    )
+  const followed = (ids: string[]) => ({
+    items: ids.map((id) => ({ id, name: "Mei Tanaka", seriesCount: 1, followedAt: "2026-11-01T00:00:00Z" })),
+    nextCursor: null,
+  })
+  /** Signed in: the result rows' Subscribe buttons read the reader's subscriptions too. */
+  const signIn = () => {
+    useAppStore.getState().login({ name: "Sokha", email: "sokha@example.com" })
+    server.use(http.get(`${API}/me/subscriptions`, () => HttpResponse.json({ items: [], nextCursor: null })))
+  }
+  const followButton = () => screen.findByRole("button", { name: "Follow" })
+  /** Fails the test if the page looks the creator up by a handle guessed from the name. */
+  const noProfileLookup = () => {
+    let asked = false
+    server.use(
+      http.get(`${API}/creators/:handle`, () => {
+        asked = true
+        return HttpResponse.json(profile())
+      }),
+    )
+    return () => asked
+  }
+
+  it("follows the card's creator account (PUT /creators/{id}/follow), reading the state from /me/follows", async () => {
+    signIn()
+    setSearch("q=mei")
+    const asked = noProfileLookup()
+    let following: string[] = []
+    let calls = 0
+    server.use(
+      withCreator("Ink Witch"),
+      http.get(`${API}/me/follows`, () => HttpResponse.json(followed(following))),
+      http.put(`${API}/creators/c-1/follow`, () => {
+        calls++
+        following = ["c-1"]
+        return HttpResponse.json({ following: true })
+      }),
+    )
+    const { user } = renderUi(<SearchPage />)
+    const button = await followButton()
+    await waitFor(() => expect(button).toBeEnabled())
+    expect(button).toHaveAttribute("aria-pressed", "false")
+    await user.click(button)
+    expect(await screen.findByRole("button", { name: "Following" })).toHaveAttribute("aria-pressed", "true")
+    expect(calls).toBe(1)
+    expect(toast.success).toHaveBeenCalledWith("Following Mei Tanaka")
+    expect(useAppStore.getState().follows).toEqual([])
+    expect(asked()).toBe(false)
+  })
+
+  it("waits for one Follow to finish before taking another click (no PUT and DELETE racing)", async () => {
+    signIn()
+    setSearch("q=mei")
+    let release = () => {}
+    const calls: string[] = []
+    server.use(
+      withCreator("Ink Witch"),
+      http.get(`${API}/me/follows`, () => HttpResponse.json(followed(calls.includes("put") ? ["c-1"] : []))),
+      http.put(`${API}/creators/c-1/follow`, async () => {
+        calls.push("put")
+        await new Promise<void>((resolve) => (release = resolve))
+        return HttpResponse.json({ following: true })
+      }),
+      http.delete(`${API}/creators/c-1/follow`, () => {
+        calls.push("delete")
+        return HttpResponse.json({ following: false })
+      }),
+    )
+    const { user } = renderUi(<SearchPage />)
+    const button = await followButton()
+    await waitFor(() => expect(button).toBeEnabled())
+    await user.click(button)
+    // Shown at once, but off until the API answers.
+    const pending = await screen.findByRole("button", { name: "Following" })
+    expect(pending).toHaveAttribute("aria-pressed", "true")
+    await waitFor(() => expect(pending).toBeDisabled())
+    expect(calls).toEqual(["put"])
+    release()
+    await waitFor(() => expect(screen.getByRole("button", { name: "Following" })).toBeEnabled())
+    expect(screen.getByRole("button", { name: "Following" })).toHaveAttribute("aria-pressed", "true")
+    expect(calls).toEqual(["put"])
+  })
+
+  it("links the creator to the API's handle", async () => {
+    signIn()
+    setSearch("q=mei")
+    server.use(withCreator("Ink Witch"), http.get(`${API}/me/follows`, () => HttpResponse.json(followed([]))))
+    renderUi(<SearchPage />)
+    expect(await screen.findByRole("link", { name: "Mei Tanaka" })).toHaveAttribute("href", "/creators/mei-t")
+  })
+
+  it("shows Following for a creator in /me/follows, and unfollows with DELETE", async () => {
+    signIn()
+    setSearch("q=mei")
+    let following = ["c-1"]
+    let deleted = false
+    server.use(
+      withCreator("Ink Witch"),
+      http.get(`${API}/me/follows`, () => HttpResponse.json(followed(following))),
+      http.delete(`${API}/creators/c-1/follow`, () => {
+        deleted = true
+        following = []
+        return HttpResponse.json({ following: false })
+      }),
+    )
+    const { user } = renderUi(<SearchPage />)
+    await user.click(await screen.findByRole("button", { name: "Following" }))
+    expect(await followButton()).toHaveAttribute("aria-pressed", "false")
+    expect(deleted).toBe(true)
+  })
+
+  it("shows the change at once and puts it back when the API refuses", async () => {
+    signIn()
+    setSearch("q=mei")
+    server.use(
+      withCreator("Ink Witch"),
+      http.get(`${API}/me/follows`, () => HttpResponse.json(followed([]))),
+      http.put(`${API}/creators/c-1/follow`, () => apiError(500, "internal_error")),
+    )
+    const { user } = renderUi(<SearchPage />)
+    const button = await followButton()
+    await waitFor(() => expect(button).toBeEnabled())
+    await user.click(button)
+    await waitFor(() => expect(toast.error).toHaveBeenCalled())
+    expect(await followButton()).toHaveAttribute("aria-pressed", "false")
+  })
+
+  it("asks a logged-out reader to log in, without asking the API", async () => {
+    setSearch("q=mei")
+    let asked = false
+    server.use(
+      withCreator("Ink Witch"),
+      http.get(`${API}/me/follows`, () => {
+        asked = true
+        return HttpResponse.json(followed([]))
+      }),
+    )
+    const { user } = renderUi(<SearchPage />)
+    await user.click(await followButton())
+    expect(toast.success).toHaveBeenCalledWith("Log in to do this")
+    expect(asked).toBe(false)
+  })
+
+  describe("cards without the creator's account (an older API)", () => {
+    it("finds the account through the profile and follows it", async () => {
+      signIn()
+      setSearch("q=mei")
+      let following = false
+      server.use(
+        results("Ink Witch"),
+        http.get(`${API}/me/follows`, () => HttpResponse.json(followed([]))),
+        http.get(`${API}/creators/mei-tanaka`, () => HttpResponse.json(profile({ following }))),
+        http.put(`${API}/creators/c-1/follow`, () => {
+          following = true
+          return HttpResponse.json({ following: true })
+        }),
+      )
+      const { user } = renderUi(<SearchPage />)
+      const button = await followButton()
+      await waitFor(() => expect(button).toBeEnabled())
+      await user.click(button)
+      expect(await screen.findByRole("button", { name: "Following" })).toHaveAttribute("aria-pressed", "true")
+    })
+
+    it("hides Follow when the name has no creator profile", async () => {
+      signIn()
+      setSearch("q=mei")
+      server.use(
+        results("Ink Witch"),
+        http.get(`${API}/me/follows`, () => HttpResponse.json(followed([]))),
+        http.get(`${API}/creators/mei-tanaka`, () => apiError(404, "not_found")),
+      )
+      renderUi(<SearchPage />)
+      expect(await screen.findByRole("link", { name: "Mei Tanaka" })).toHaveAttribute("href", "/creators/mei-tanaka")
+      await waitFor(() => expect(screen.queryByRole("button", { name: "Follow" })).not.toBeInTheDocument())
+    })
   })
 })

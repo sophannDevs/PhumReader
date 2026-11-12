@@ -1,6 +1,7 @@
 package app.phumreader.admin.repository;
 
 import app.phumreader.admin.domain.ContentType;
+import app.phumreader.admin.domain.ReportTargetType;
 import java.math.BigDecimal;
 import java.sql.Array;
 import java.sql.ResultSet;
@@ -45,9 +46,13 @@ public class AdminQueries {
             OffsetDateTime createdAt,
             long openReports) {}
 
+    /**
+     * A report with its target: for an account, {@code targetTitle} is its display name and {@code
+     * targetStatus} its status (active, banned ...).
+     */
     public record ReportRow(
             UUID id,
-            ContentType targetType,
+            ReportTargetType targetType,
             UUID targetId,
             String reason,
             @Nullable String details,
@@ -95,7 +100,7 @@ public class AdminQueries {
     /** A report still waiting for an admin, with its target. */
     public record OpenReport(
             UUID id,
-            ContentType targetType,
+            ReportTargetType targetType,
             UUID targetId,
             String status,
             @Nullable UUID accusedId) {}
@@ -103,6 +108,8 @@ public class AdminQueries {
     /**
      * @param seriesInReview series waiting for a review decision
      * @param oldestReviewAt when the longest-waiting of them was submitted
+     * @param openRefundRequests refund requests waiting for a decision
+     * @param openStuckPayments "paid but no coins" payments not resolved yet
      */
     public record Counts(
             long openReports,
@@ -112,7 +119,9 @@ public class AdminQueries {
             long hiddenComments,
             long refundedOrders,
             long seriesInReview,
-            @Nullable OffsetDateTime oldestReviewAt) {}
+            @Nullable OffsetDateTime oldestReviewAt,
+            long openRefundRequests,
+            long openStuckPayments) {}
 
     /**
      * A series waiting for review, as the queue lists it (V21-01).
@@ -410,10 +419,11 @@ public class AdminQueries {
                     + " r.resolved_at, r.resolution_note, rep.display_name as reporter,"
                     + " res.display_name as resolver,"
                     + " case r.target_type when 'SERIES' then ts.title"
-                    + "   when 'EPISODE' then te.title else left(tc.body, 200) end as target_title,"
+                    + "   when 'EPISODE' then te.title when 'COMMENT' then left(tc.body, 200)"
+                    + "   when 'USER' then tu.display_name end as target_title,"
                     + " case r.target_type when 'SERIES' then lower(ts.visibility)"
-                    + "   when 'EPISODE' then lower(te.status) else lower(tc.status) end"
-                    + "   as target_status,"
+                    + "   when 'EPISODE' then lower(te.status) when 'COMMENT' then lower(tc.status)"
+                    + "   when 'USER' then lower(tu.status) end as target_status,"
                     + " coalesce(ts.slug, tes.slug, tcs.slug) as series_slug,"
                     + " coalesce(te.number, tce.number) as episode_number,"
                     + " r.case_number, r.accused_id, acc.display_name as accused, r.action"
@@ -425,7 +435,8 @@ public class AdminQueries {
                     + " left join series tes on tes.id = te.series_id"
                     + " left join comments tc on r.target_type = 'COMMENT' and tc.id = r.target_id"
                     + " left join series tcs on tcs.id = tc.series_id"
-                    + " left join episodes tce on tce.id = tc.episode_id";
+                    + " left join episodes tce on tce.id = tc.episode_id"
+                    + " left join users tu on r.target_type = 'USER' and tu.id = r.target_id";
 
     public List<ReportRow> reports(@Nullable String status, @Nullable Key after, int limit) {
         String sql =
@@ -454,7 +465,7 @@ public class AdminQueries {
                 .query((rs, n) ->
                         new OpenReport(
                                 rs.getObject("id", UUID.class),
-                                ContentType.valueOf(rs.getString("target_type")),
+                                ReportTargetType.valueOf(rs.getString("target_type")),
                                 rs.getObject("target_id", UUID.class),
                                 rs.getString("status"),
                                 rs.getObject("accused_id", UUID.class)))
@@ -489,7 +500,10 @@ public class AdminQueries {
                 .list();
     }
 
-    /** Closes one report and records what was done ({@code REMOVE}, {@code REMOVE_WARN} ...). */
+    /**
+     * Closes one report and records what was done ({@code REMOVE}, {@code REMOVE_WARN}, {@code
+     * WARN} ...).
+     */
     public void closeReport(
             UUID id,
             String status,
@@ -756,7 +770,11 @@ public class AdminQueries {
                                 + " (select count(*) from episodes where status = 'HIDDEN') as e,"
                                 + " (select count(*) from comments where status = 'HIDDEN') as c,"
                                 + " (select count(*) from payment_orders where status = 'REFUNDED')"
-                                + " as refunds, q.waiting, q.oldest"
+                                + " as refunds,"
+                                + " (select count(*) from refund_requests where status = 'OPEN')"
+                                + " as refund_requests,"
+                                + " (select count(*) from payment_stuck where resolved_at is null)"
+                                + " as stuck, q.waiting, q.oldest"
                                 + " from (select count(*) as waiting, min(r.submitted_at) as oldest"
                                 + " from series_reviews r join series s on s.id = r.series_id"
                                 + " where r.decided_at is null and s.visibility = 'REVIEW') q")
@@ -769,7 +787,9 @@ public class AdminQueries {
                                 rs.getLong("c"),
                                 rs.getLong("refunds"),
                                 rs.getLong("waiting"),
-                                rs.getObject("oldest", OffsetDateTime.class)))
+                                rs.getObject("oldest", OffsetDateTime.class),
+                                rs.getLong("refund_requests"),
+                                rs.getLong("stuck")))
                 .single();
     }
 
@@ -808,7 +828,7 @@ public class AdminQueries {
     private static ReportRow report(ResultSet rs) throws SQLException {
         return new ReportRow(
                 rs.getObject("id", UUID.class),
-                ContentType.valueOf(rs.getString("target_type")),
+                ReportTargetType.valueOf(rs.getString("target_type")),
                 rs.getObject("target_id", UUID.class),
                 rs.getString("reason"),
                 rs.getString("details"),

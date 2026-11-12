@@ -181,9 +181,10 @@ docs/BACKEND_CHECKLIST.md, "V2.1 API additions" (V21-01 … V21-07).
   dictionary entry (109 strings changed); everything else keeps the V1 Khmer.
 - V2-7 (upgrade) **No downloads**: missing shadcn components are written by hand on the installed `radix-ui` package
   instead of `npx shadcn add`; charts are plain SVG/CSS (no chart library).
-- V2-8 (upgrade) **Real mode**: V2.1 features the API does not have yet (reports and blocking, welcome picks,
-  earnings, creator profile, admin payments) run on the local store in real mode too. Notifications use the API
-  since V21-03 (V2-70).
+- V2-8 (upgrade) **Real mode**: V2.1 features the API does not have yet (welcome picks, birth year, the Help form,
+  the dashboard chart and comments, the creator profile's Updates tab, and the Settings options listed in V2-81) run
+  on the local store in real mode too. Notifications use the API since V21-03 (V2-70), reports and blocking since
+  V21-04 (V2-21), earnings and the creator profile since V21-05 (V2-48, V2-49), admin payments since V21-06 (V2-55).
 - V2-9 (F01) **Store field names**: one persisted object (`phumireader.app`, version 2). The spec's keys map to
   `subs` → `subscriptions`, `read` → `lastRead`, `novel` → `novelSettings`; `receipt` and `legalDoc` are URL
   params (`/coins/orders/[id]`, `/legal/[doc]`). Extra keys for prototype state: `welcomed`, `recentSearches`,
@@ -215,8 +216,10 @@ docs/BACKEND_CHECKLIST.md, "V2.1 API additions" (V21-01 … V21-07).
 - V2-20 (i18n) **Messages per namespace**: `src/messages/<locale>/<namespace>.json`, merged by the generated
   `src/messages/<locale>/index.ts` (`npm run i18n:index`); `npm run i18n:km [-- <namespace>…]` works per namespace.
 - V2-21 (T14) **Report and Block** is one app-wide dialog (`ReportProvider` in `src/lib/query.tsx`, `useReport()`).
-  Reports are stored locally (`reports`, case numbers R-20481 up) in both modes; callers can also send them to the
-  API (`onSend`, used for comments in real mode). Blocking is local (`blocked`); the API has no block list yet.
+  Demo: reports are stored locally (`reports`, case numbers R-20481 up) and blocking is local (`blocked`). Real mode
+  (V21-04): callers send the report to the API (`onSend`: comments, series, episodes, and accounts, V2-77) and the
+  case number is the API's; blocking is `GET /me/blocks` and `PUT` / `DELETE /users/{id}/block`; `ModerationSync`
+  fills `reports` ("Your reports") and `blocked` from the account.
 - V2-22 (F06) **Series details come from the data**: Glass Compass shows "Completed" (its `status`; the prototype hard-codes
   "Ongoing"); tags are built from the data (#genre, #format, #language); the sidebar moves under the tabs below 1024 px.
 - V2-23 (F06) **Unavailable series**: `?demo=unavailable` on any series page in the demo; in real mode a 404 for a series
@@ -299,8 +302,9 @@ docs/BACKEND_CHECKLIST.md, "V2.1 API additions" (V21-01 … V21-07).
   404 (except the signed-in creator's own `?view=owner`). Followers = the series' subscribers summed; Follow uses store
   `follows`; owner edits are saved with the handle. Demo mode only: in real mode (V21-05) the page reads
   GET /creators/{handle} (any handle; an unknown one is the 404 page), Follow uses the creator's account, Edit profile
-  is PATCH /creator/profile, and the series page links to the handle the API sends. The profile's Report button and the
-  Updates tab (demo posts) stay local / empty; search still links creators by name-derived handle.
+  is PATCH /creator/profile, and the series page links to the handle the API sends. The Updates tab (demo posts)
+  stays empty. The profile's Report button sends the report to the API (V2-77), and search links creators by the handle
+  on each card (V2-74).
 - V2-49 (T33) **Earnings**: demo numbers in demo mode; real mode (V21-05) reads GET /creator/earnings (the last 6 months of
   Fast Pass unlocks, by series; "readers" are added up by month) and saves the payout method kind (aba / bank, no
   account details). The payout history lists finished months, paid on the 1st of the next one, "On hold" without a
@@ -323,12 +327,15 @@ docs/BACKEND_CHECKLIST.md, "V2.1 API additions" (V21-01 … V21-07).
 - V2-54 (F26) **Reports**: demo queue = `adminReportQueue` + the reader's own "In review" reports (their content isn't
   stored, so it shows "(Content as reported)"). Real mode (V21-04) settles with the API's own actions: remove = hide, warn =
   remove_warn, suspend = suspend (7 days), No violation = dismiss. Blocked accounts and "Your reports" come from the account
-  (`ModerationSync`); reports on an account (profile) and the warning sent to the accused stay local until V21-05.
+  (`ModerationSync`). Reports on an account (profile) are in the same queue with their own actions (V2-77). The API
+  records a warning but sends nothing to the accused (no inbox item for it yet).
 - V2-55 (F27) **Payments**: demo rows come from the prototype (`src/lib/admin.ts`); Add coins adds to this device's wallet
   (one device plays reader and admin). Real mode (V21-06): refund requests come from the receipt (POST
   /coins/orders/{n}/refund-request), "Paid but no coins" from PayWay reconciliation (amount mismatch); Refund takes back the
-  coins still unused, the money is sent from PayWay's dashboard; `[REFUND WINDOW]` is not enforced. Real mode lists paid orders with eligibility and refunds after a reason;
-  "Paid but no coins" is hidden (no such API list).
+  coins still unused, the money is sent from PayWay's dashboard; `[REFUND WINDOW]` is not enforced. Real mode shows the
+  API's lists only (the demo rows are never loaded there): refund requests (GET /admin/refund-requests), "Paid but no
+  coins" (GET /admin/stuck-payments; Add coins credits the order once) and paid orders with eligibility, refunded after
+  a reason. The overview and the side menu count them too (V2-75).
 - V2-56 (F21) **Create series** on `/creator/new` (V1 `/creator/series/new` redirects, keeping the query): the draft
   autosaves to store `draftSeries` ("new" or the work id; `?draft=C3` continues the dashboard draft). Demo: the cover
   is a sample cover from the catalogue ("Demo: a sample cover was added"); Submit adds the work to `myWorks` with status
@@ -456,3 +463,68 @@ docs/BACKEND_CHECKLIST.md, "V2.1 API additions" (V21-01 … V21-07).
   (the section shows its loading skeleton then anyway). The open tab follows today until the reader picks a day.
   Library's "Recently updated" (days since the latest update day) and the admin dashboard's date line still use the
   pinned date.
+- V2-72 (Fix) **Fast Pass price per episode (real mode)**: the API gives each Fast Pass episode its own price (3–10
+  coins, default 5) and sends it on the episode while it is still Fast Pass. The lock card, unlock dialog, episode
+  rows, "Unlock for N coins" and the next-episode card show that episode's price (`episodePrice` in
+  `src/data/selectors.ts`); a 402's `price` wins over the list's in the comic and novel readers. A bundle ("Unlock all
+  N") costs the sum of its episodes' prices (`episodesCost`); this replaces "Coins needed = one episode's price" in
+  V2-25 and "Unlock for 5 coins" in V2-37 for real mode. Demo episodes have no price, so the demo stays at 5 everywhere.
+  Store `shopReturn` has two optional fields: `price` (the picked episode's price, also when the reader chose the
+  bundle) and `novel`, so Coins' "You need N more coins" and its episode / chapter wording survive the trip; stored
+  values without them fall back to the demo's 5 and the series' type. Coins' "≈ N Fast Pass episodes" stays an
+  estimate at 5 coins (the backend default).
+- V2-73 (Fix) **⌘K search (real mode)**: the dialog calls `GET /search` 250 ms after typing stops (up to 8 results; an
+  empty query is "Popular now", 6 results) and keeps the last results on screen while the next ones load. "Searching…"
+  is a polite live region and a failed request is an alert, both outside the results list (a listbox may hold options
+  only). Demo still filters the demo catalogue as you type. It is the same request the Search page uses (V2-40).
+- V2-74 (Fix) **Follow on search creators (real mode)** replaces "Follow uses the store's `follows` in both modes" in
+  V2-40 for real mode. Every series card carries the creator's account id and profile handle (`creatorId`,
+  `creatorHandle`). A creator result reads whether the reader follows them from `GET /me/follows` and saves with `PUT`
+  / `DELETE /creators/{id}/follow`: the button changes at once and goes back (with the error toast) if the call fails,
+  and it is disabled while it saves or while the list loads. If the list cannot load there is no button. A card without
+  an id (an older API) uses the creator's profile (`GET /creators/{handle}`, `following`); without that there is no
+  Follow either. Following from a profile or a series page refreshes the follows list, so the buttons agree. Creator
+  links use the card's handle (`creatorHref(name, handle)`). Demo keeps the store's `follows` and the name-derived
+  handle. Logged out, Follow still asks to log in.
+- V2-75 (Fix) **Admin overview and side menu (real mode)**: the admin pages no longer run the demo fetch in real mode
+  (`useAdminQueues` loads demo data in demo mode only), so `?demo=` flags do nothing there and the overview waits for
+  the API only. The side menu's Payments badge is the open refund requests, as in the prototype and the demo: the
+  overview's `openRefundRequests` minus the decisions made on this device. "Paid but no coins" is not in the badge. The
+  overview's four cards are the design's: Series to review, Open reports, Refund requests and "Paid, no coins"
+  (`openStuckPayments`, "Fix today" / "All done"). The last two replace V1's "Refunded orders" and "Suspended users"
+  cards (both lists stay at /admin/orders and /admin/users); `kpi_refunded` and `kpi_banned` are now unused strings and
+  stay in the message files. Against an older API without the two counts, the badge and cards count the loaded rows,
+  with "N+" while more pages wait.
+- V2-76 (Fix) **Admin reports queue (real mode)**: `GET /admin/reports?status=open` is read 20 at a time, with Load more
+  under the queue. The header's count is the larger of the loaded rows and the overview's `openReports` minus the
+  decisions made on this device (the series queue's rule). The filter chips (All / Urgent / High / Normal) and the side
+  menu's urgent marker count the loaded rows only, so the header can say 22 while "All" says 20. When no loaded row is
+  left but more pages wait, the "all done" card shows with Load more under it.
+- V2-77 (Fix) **Reporting an account (real mode)**: the creator profile's Report button sends the report with
+  `POST /users/{id}/report` and the dialog shows the case number R-xxxxx; demo keeps the report on this device.
+  Reasons: spam, impersonate, harass, other (other needs 10+ characters). A second open report from the same reader on
+  the same account returns the same case. Report and Block are hidden on your own public profile (the API answers 400
+  `cannot_report_self`). "Your reports" lists it as "Profile of <name>". In the admin queue the report shows "Reported
+  account" with the account's name and status badge (no link: the report names no series) and three actions: "Warn the
+  account" (sends `warn`), "Suspend 7 days" (`suspend`) and "No violation" (`dismiss`); nothing can be removed (`hide`
+  is 400 `invalid_action`). The decision log reads "account warned" / "account suspended for 7 days". Open, not
+  decided: (1) a resolved account report (warned or suspended) shows as "Removed" in the reporter's "Your reports"
+  (`CommentService` maps RESOLVED to removed); (2) warning or suspending an account does not close other readers' open
+  reports on it (hiding content does close the content's reports); (3) the Report dialog requires details for
+  "impersonate", the API does not.
+- V2-78 (Fix) **Draft rows on the creator dashboard (real mode)**: `GET /creator/series` has no summary, so each draft's
+  summary is read from `GET /creator/series/{id}` (same request and cache key as Manage series) to say what the draft is
+  missing (V2-47). While it loads, or if it fails, the summary is unknown: the row shows a skeleton or nothing and does
+  not claim anything is missing. The API's placeholder cover counts as no cover. Only drafts are read: one request per
+  draft per visit (the app's 30 s cache). Later backend improvement: `summary` / `hasSummary` on `GET /creator/series`.
+- V2-79 (Fix) **Library "coins spent" (real mode)**: on the Unlocked tab a series' "N coins spent" is the sum of the
+  `coins` of its entries in `GET /me/unlocked` (each unlock's own price), not episodes × 5. If an entry has no `coins`
+  (an older API) the page falls back to episodes × the demo's 5. Demo: episodes × 5.
+- V2-80 (Fix) **Request data download (Settings, real mode)** (owner decision 2026-11-12): the API has no data export,
+  so the Privacy and safety row shows a disabled "Request data download" button with a "Coming soon" badge
+  (`errors.codes.comingSoon`) instead of a button that pretends to prepare a file. Demo keeps the simulated flow. A real
+  export endpoint is a later task; whether the site must offer a download at all goes to the lawyer review.
+- V2-81 (Fix) **Settings options saved only in the browser (open)**: `/me/settings` has no fields for these, so in real
+  mode they stay in the store and do not follow the reader to a new device: reading mode, image quality, auto-next,
+  data saver, region, story languages, public library, mature content, the Google and Facebook toggles, and the comic
+  reader's background and width. This lists what V2-31 calls "the rest". Not decided which of them get API fields.

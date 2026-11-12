@@ -1,5 +1,6 @@
 "use client"
 
+import { useQueries } from "@tanstack/react-query"
 import { AlertCircleIcon, CheckCircle2Icon, HeartIcon, LayersIcon, PlusIcon, UploadIcon } from "lucide-react"
 import Image from "next/image"
 import { useSearchParams } from "next/navigation"
@@ -17,10 +18,13 @@ import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
 import type { Weekday } from "@/data"
 import { Link } from "@/i18n/navigation"
+import { PLACEHOLDER_COVER } from "@/lib/api/catalog"
 import { DEMO_MODE } from "@/lib/api/config"
-import { useMySeries } from "@/lib/creator"
+import { fetchSeriesEdit } from "@/lib/api/creator"
+import { creatorKeys, useMySeries } from "@/lib/creator"
 import { addDays, firstName, formatCount, formatShortDate, formatTime, ictDate, initials, today, weekdayOf } from "@/lib/format"
 import { useLocalize } from "@/lib/localize"
+import { useAccountEmail } from "@/lib/me"
 import { useCreator, useDemoFlag } from "@/lib/queries"
 import { useAppStore } from "@/lib/store"
 import { cn } from "@/lib/utils"
@@ -31,8 +35,9 @@ import { cn } from "@/lib/utils"
  * inline reply and like, and the 3-step guide for a creator without series.
  * Demo: the series are the store's `myWorks` (?demo=empty shows the new-creator state). Real API: the series come
  * from GET /creator/series (their status from `visibility`: in review and changes requested too, the submission date
- * from `review`) and the totals from GET /creator/dashboard. The chart, the to-do list's comment item and the comments
- * are demo data in both modes (the API has none of them yet); replies and likes last for the visit.
+ * from `review`) and the totals from GET /creator/dashboard; a draft's summary comes from GET /creator/series/{id} (the
+ * list has none), and the placeholder cover counts as no cover. The chart, the to-do list's comment item and the
+ * comments are demo data in both modes (the API has none of them yet); replies and likes last for the visit.
  */
 
 type Status = "published" | "review" | "changes" | "draft" | "hidden"
@@ -48,7 +53,10 @@ type Row = {
   subs: string
   /** The next update day (a series can have several, V21-02) */
   day?: Weekday | null
-  summary: string
+  /** null while it is not known yet (real API: a draft's summary is loading): it is not called missing */
+  summary: string | null
+  /** Real API: the draft's summary is loading */
+  checking?: boolean
   /** ISO date it was submitted for review (real API); demo shows yesterday */
   submitted?: string | null
 }
@@ -105,6 +113,18 @@ function Dashboard() {
   const flag = useDemoFlag()
   const dashboard = useCreator()
   const real = useMySeries({ q: "", visibility: "" }, !DEMO_MODE)
+  const email = useAccountEmail()
+  // Real API: the list has no summary; each draft's comes from its edit view (same cache as Manage series).
+  const draftIds = (real.data ?? []).filter((r) => r.visibility === "draft").map((r) => r.series.id)
+  const drafts = useQueries({
+    queries: draftIds.map((id) => ({
+      queryKey: creatorKeys.seriesEdit(email ?? "", id),
+      queryFn: () => fetchSeriesEdit(id),
+      enabled: !DEMO_MODE && !!email,
+      retry: false,
+    })),
+  })
+  const draftEdit = new Map(draftIds.map((id, i) => [id, drafts[i]]))
   const storeWorks = useAppStore((s) => s.myWorks)
   const [now] = useState(() => Date.now())
   const [filter, setFilter] = useState<Filter>("all")
@@ -118,20 +138,26 @@ function Dashboard() {
     ? flag === "empty"
       ? []
       : storeWorks
-    : (real.data ?? []).map(({ series: s, visibility, subscribers, review }) => ({
-        id: s.id,
-        title: s.title,
-        cover: s.cover,
-        format: s.type,
-        genre: s.genre,
-        status: visibility,
-        eps: s.totalEpisodes,
-        views: s.views,
-        subs: formatCount(subscribers),
-        day: nextDay(s.updateDays, ictDate(now)),
-        summary: "",
-        submitted: review ? ictDate(Date.parse(review.submittedAt)) : null,
-      }))
+    : (real.data ?? []).map(({ series: s, visibility, subscribers, review }) => {
+        const edit = draftEdit.get(s.id)
+        return {
+          id: s.id,
+          title: s.title,
+          // The API's placeholder means the series has no cover yet.
+          cover: s.cover === PLACEHOLDER_COVER ? "" : s.cover,
+          format: s.type,
+          genre: s.genre,
+          status: visibility,
+          eps: s.totalEpisodes,
+          views: s.views,
+          subs: formatCount(subscribers),
+          day: nextDay(s.updateDays, ictDate(now)),
+          // Only drafts show what is missing; their summary is unknown until their edit view loads.
+          summary: visibility !== "draft" ? "" : edit?.data ? edit.data.summary : null,
+          checking: visibility === "draft" && !!edit?.isPending,
+          submitted: review ? ictDate(Date.parse(review.submittedAt)) : null,
+        }
+      })
   const subsTotal = DEMO_MODE ? 0 : (real.data ?? []).reduce((n, s) => n + s.subscribers, 0)
 
   const base = DEMO_MODE ? today : ictDate(now)
@@ -419,7 +445,8 @@ function WorkRow({ w, base }: { w: Row; base: string }) {
   const iso = w.day ? nextRelease(w.day, base) : undefined
   const date = iso && w.day ? (locale === "km" ? `${td(`dayFull.${w.day}`)} ${formatShortDate(iso, locale)}` : `${w.day}, ${formatShortDate(iso, "en")}`) : ""
   const missing = [
-    ...(w.summary.trim() ? [] : [t("missSummary")]),
+    // An unknown summary (still loading) is not called missing.
+    ...(w.summary === null || w.summary.trim() ? [] : [t("missSummary")]),
     ...(w.cover ? [] : [t("missCover")]),
     ...(w.eps > 0 ? [] : [t("missFirst", { unit })]),
   ]
@@ -433,7 +460,9 @@ function WorkRow({ w, base }: { w: Row; base: string }) {
           ? t("metaReview", { unit, count: w.eps })
           : missing.length
             ? t("metaDraft", { list: listed })
-            : t("metaDraftReady")
+            : w.summary === null
+              ? null
+              : t("metaDraftReady")
   const next =
     w.status === "published"
       ? iso
@@ -461,7 +490,11 @@ function WorkRow({ w, base }: { w: Row; base: string }) {
           <Badge variant="outline">{loc.genre(w.genre)}</Badge>
         </div>
         <span className="type-h4 truncate">{w.title}</span>
-        <span className="text-xs leading-4 text-muted-foreground">{meta}</span>
+        {meta !== null ? (
+          <span className="text-xs leading-4 text-muted-foreground">{meta}</span>
+        ) : w.checking ? (
+          <Skeleton className="h-4 w-40 max-w-full" />
+        ) : null}
         {next ? <span className={cn("text-xs leading-4", w.status === "published" ? "text-brand-ink" : "text-muted-foreground")}>{next}</span> : null}
       </div>
       <div className="flex shrink-0 gap-1.5 max-md:w-full max-md:pl-[68px] max-md:[&>*]:flex-1">
@@ -505,6 +538,8 @@ function TodoCard({ works, base, time, dayName, unreplied }: { works: Row[]; bas
     } else if (w.status === "changes") {
       items.push({ key: w.id, icon: "!", tone: "plain", title: t("todoChanges", { title: w.title }), desc: t("todoChangesDesc") })
     } else if (w.status === "draft") {
+      // Real API: wait for the draft's summary before saying what it needs.
+      if (w.summary === null) continue
       const need = !w.summary.trim() ? "Summary" : !w.cover ? "Cover" : w.eps === 0 ? "First" : "Ready"
       items.push({
         key: w.id,

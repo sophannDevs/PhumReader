@@ -17,7 +17,7 @@ import { comicVars } from "@/components/pr/reader-theme"
 import { ResumeChip } from "@/components/pr/resume-chip"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
-import { fastPassPrice, type Episode, type Panel, type Series } from "@/data"
+import { episodePrice, episodesCost, fastPassPrice, type Episode, type Panel, type Series } from "@/data"
 import { Link } from "@/i18n/navigation"
 import { useLocalize } from "@/lib/localize"
 import { useEpisode } from "@/lib/queries"
@@ -128,7 +128,8 @@ function ComicReaderView({ series, episode, total, panels, commentsEnabled = tru
   const autoNext = useAppStore((s) => s.settings.autoNext)
   const saveData = useAppStore((s) => s.settings.saveData)
   const n = episode.n
-  const price = fastPassPrice()
+  // This episode's Fast Pass price (real API: its own, or the one its 402 named); the demo's are all 5 coins.
+  const price = episodePrice(episode)
   const title = loc.title(episode.title)
   const { go, list, listEpisodes, isLocked, coins, request, handOff, dialog, locked, finishRef } = nav
   const next = list.find((e) => e.n === n + 1)
@@ -201,7 +202,8 @@ function ComicReaderView({ series, episode, total, panels, commentsEnabled = tru
   }, [pageMode, n])
 
   const progress = locked ? 0 : pageMode ? (panels.length ? (pg + 1) / panels.length : 0) : position.pct
-  const bundle = list.filter((e) => isLocked(e)).length
+  const lockedList = list.filter((e) => isLocked(e))
+  const bundle = lockedList.length
   const btn = barButton
 
   return (
@@ -216,7 +218,7 @@ function ComicReaderView({ series, episode, total, panels, commentsEnabled = tru
         nextDisabled={n >= total}
         onPrev={() => go(n - 1)}
         onNext={() => go(n + 1)}
-        listSlot={<EpisodeListPopover episodes={listEpisodes} current={n} coins={coins} price={price} onSelect={go} triggerClassName={btn} />}
+        listSlot={<EpisodeListPopover episodes={listEpisodes} current={n} coins={coins} price={fastPassPrice()} onSelect={go} triggerClassName={btn} />}
         settingsSlot={<ComicSettingsPopover triggerClassName={btn} />}
       />
 
@@ -247,7 +249,7 @@ function ComicReaderView({ series, episode, total, panels, commentsEnabled = tru
             price={price}
             coins={coins}
             loggedIn={!!user}
-            bundle={bundle > 1 ? { count: bundle } : null}
+            bundle={bundle > 1 ? { count: bundle, cost: episodesCost(lockedList) } : null}
             onLogin={() => handOff("login", episode)}
             onUnlock={() => request(episode, "one")}
             onGetCoins={() => handOff("coins", episode)}
@@ -314,7 +316,7 @@ function ComicReaderView({ series, episode, total, panels, commentsEnabled = tru
             episode={episode}
             next={next}
             nextLocked={nextLocked}
-            price={price}
+            price={episodePrice(next)}
             onNext={() => {
               setCountdown(null)
               go(n + 1)

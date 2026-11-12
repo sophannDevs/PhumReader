@@ -123,7 +123,9 @@ public class AdminService {
                 c.hiddenComments(),
                 c.refundedOrders(),
                 c.seriesInReview(),
-                c.oldestReviewAt() == null ? null : c.oldestReviewAt().toInstant());
+                c.oldestReviewAt() == null ? null : c.oldestReviewAt().toInstant(),
+                c.openRefundRequests(),
+                c.openStuckPayments());
     }
 
     // ---------- users ----------
@@ -368,6 +370,11 @@ public class AdminService {
      * remove_warn} (the same, and the warning is recorded) or {@code suspend} (the same, and the
      * accused cannot sign in for {@code days}, default 7). The reporters get a notification
      * (V21-03). 409 {@code no_accused} / {@code cannot_ban_admin} for {@code suspend}.
+     *
+     * <p>An account report (target {@code user}) has nothing to take down: {@code warn} (or {@code
+     * remove_warn}) records a warning, {@code suspend} suspends the account, {@code dismiss} and
+     * {@code resolve} work as above; {@code hide} is 400 {@code invalid_action}. {@code warn} on a
+     * content report is 400 {@code invalid_action} too (use {@code remove_warn}).
      */
     @Transactional
     public AdminReport settle(
@@ -388,6 +395,19 @@ public class AdminService {
             throw ApiException.conflict(
                     "report_closed", "This report was already settled by another admin.");
         }
+        ContentType content = report.targetType().content();
+        if (content == null && action == ReportAction.HIDE) {
+            throw ApiException.invalidField(
+                    "action",
+                    "invalid_action",
+                    "An account cannot be hidden; warn or suspend it, or dismiss the report.");
+        }
+        if (content != null && action == ReportAction.WARN) {
+            throw ApiException.invalidField(
+                    "action",
+                    "invalid_action",
+                    "Content reports use remove_warn; warn is for account reports.");
+        }
         UserRow accused = null;
         if (action == ReportAction.SUSPEND) {
             UUID accusedId = report.accusedId();
@@ -400,26 +420,29 @@ public class AdminService {
                         "cannot_ban_admin", "An admin account cannot be suspended here.");
             }
         }
+        String reason = note == null || note.isBlank() ? "Reported" : note;
         switch (action) {
-            case HIDE, REMOVE_WARN, SUSPEND -> {
-                String reason = note == null || note.isBlank() ? "Reported" : note;
-                var state = queries.state(report.targetType(), report.targetId());
-                if (state.isPresent() && state.get().equals(report.targetType().live())) {
-                    hide(admin, report.targetType(), report.targetId(), reason);
+            case HIDE, REMOVE_WARN, WARN, SUSPEND -> {
+                if (content != null) {
+                    var state = queries.state(content, report.targetId());
+                    if (state.isPresent() && state.get().equals(content.live())) {
+                        hide(admin, content, report.targetId(), reason);
+                    }
                 }
                 // Hidden by hand or by another report meanwhile: this one is still handled.
                 queries.closeReport(
                         reportId,
                         RESOLVED,
                         switch (action) {
-                            case REMOVE_WARN -> "REMOVE_WARN";
+                            case REMOVE_WARN -> content == null ? "WARN" : "REMOVE_WARN";
+                            case WARN -> "WARN";
                             case SUSPEND -> "SUSPEND";
                             default -> "REMOVE";
                         },
                         admin.id(),
                         note,
                         now());
-                inbox.reportsResolved(List.of(reportId), true, admin.id());
+                inbox.reportsResolved(List.of(reportId), content != null, admin.id());
                 if (action == ReportAction.SUSPEND) {
                     suspend(admin, accused, days == null ? DEFAULT_SUSPEND_DAYS : days, reason);
                 }
@@ -487,6 +510,9 @@ public class AdminService {
         HIDE,
         @JsonProperty("remove_warn")
         REMOVE_WARN,
+        /** Account reports only: record a warning (nothing is removed). */
+        @JsonProperty("warn")
+        WARN,
         @JsonProperty("suspend")
         SUSPEND
     }

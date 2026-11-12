@@ -12,7 +12,8 @@ import type { NovelSettings } from "@/lib/store"
 import { useLocalize } from "@/lib/localize"
 import { cn } from "@/lib/utils"
 
-export type ListEpisode = { n: number; title: string; date: string; thumb: string; locked: boolean }
+/** `price`: this episode's Fast Pass price (real API); without it the popover's `price`. */
+export type ListEpisode = { n: number; title: string; date: string; thumb: string; locked: boolean; price?: number }
 
 const VISIBLE = 9
 
@@ -29,7 +30,7 @@ function nearby(episodes: ListEpisode[], current: number): ListEpisode[] {
  * - comic: always dark; "68 episodes" and "3 coins" on top, then the 9 episodes around this one, newest first, with
  *   a 40 px thumbnail, the date, a lock on locked ones and "Now" on this one.
  * - novel (`readerTheme`): in the reader theme; "116 chapters", the 9 chapters around this one, oldest first, with
- *   the date and "🔒 5" on locked ones.
+ *   the date and "🔒 5" (its price) on locked ones.
  * Picking a row closes it and calls `onSelect(n)` (the reader navigates or opens the UnlockDialog).
  */
 export function EpisodeListPopover({
@@ -44,7 +45,7 @@ export function EpisodeListPopover({
   episodes: ListEpisode[]
   current: number
   coins: number
-  /** Fast Pass price (the novel list shows it on locked chapters) */
+  /** Fast Pass price for rows without their own (the novel list shows it on locked chapters) */
   price: number
   /** Set in the novel reader: chapters, coloured with its theme */
   readerTheme?: NovelSettings["theme"]
@@ -125,7 +126,7 @@ export function EpisodeListPopover({
                     novel ? (
                       <Badge variant="warn" className="tabular-nums">
                         <LockIcon aria-hidden />
-                        {price}
+                        {e.price ?? price}
                         <span className="sr-only">{t("locked")}</span>
                       </Badge>
                     ) : (

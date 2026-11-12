@@ -11,7 +11,7 @@ import type { UnlockMode } from "@/components/pr/unlock-dialog"
 import { StateBox } from "@/components/pr/v2-primitives"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { fastPassPrice, type Episode, type Series } from "@/data"
+import { episodePrice, episodesCost, type Episode, type Series } from "@/data"
 import { Link, useRouter } from "@/i18n/navigation"
 import { formatShortDate } from "@/lib/format"
 import { useLocalize } from "@/lib/localize"
@@ -49,7 +49,6 @@ export function EpisodesTab({
   const [jumpErr, setJumpErr] = useState("")
   const jumpId = useId()
   const novel = series.type === "novel"
-  const price = fastPassPrice()
 
   const all = useMemo(() => query.data ?? [], [query.data])
   const sorted = useMemo(() => (newestFirst ? [...all].reverse() : all), [all, newestFirst])
@@ -58,6 +57,8 @@ export function EpisodesTab({
   const freeList = all.filter((e) => e.access === "free")
   const upNext = lastRead > 0 ? Math.min(lastRead + 1, freeList.length) : 0
   const isLocked = (e: Episode) => e.access === "fastpass" && !unlocked?.includes(e.n)
+  // The card and the group note quote the first locked episode's price (real API: each episode has its own).
+  const price = episodePrice(lockedFast[0] ?? fastAll[0])
 
   function stateOf(e: Episode): EpisodeState {
     if (e.access === "fastpass") return unlocked?.includes(e.n) ? "unlocked" : "locked"
@@ -131,7 +132,7 @@ export function EpisodesTab({
         series={series}
         episode={e}
         state={stateOf(e)}
-        price={price}
+        price={episodePrice(e)}
         upNext={e.access === "free" && e.n === upNext && e.n > lastRead}
         onLockedClick={(ep) => onUnlock(ep)}
       />
@@ -164,7 +165,7 @@ export function EpisodesTab({
             {lockedFast.length > 1 ? (
               <Button variant="brand" size="sm" onClick={() => onUnlock(lockedFast[0], "all")}>
                 <ZapIcon className="size-3.5" />
-                {t("unlockAll", { count: lockedFast.length, cost: lockedFast.length * price })}
+                {t("unlockAll", { count: lockedFast.length, cost: episodesCost(lockedFast) })}
               </Button>
             ) : null}
             {/* The balance is for logged-in readers only (assumption V2-66). */}
@@ -172,7 +173,7 @@ export function EpisodesTab({
               <Button asChild variant="outline" size="sm">
                 <Link
                   href="/coins"
-                  onClick={() => useAppStore.getState().setShopReturn({ page: seriesHref(series), episode: 0, title: series.title })}
+                  onClick={() => useAppStore.getState().setShopReturn({ page: seriesHref(series), episode: 0, title: series.title, price, novel })}
                 >
                   <CoinIcon size={16} />
                   {t("coinsGetMore", { count: coins })}

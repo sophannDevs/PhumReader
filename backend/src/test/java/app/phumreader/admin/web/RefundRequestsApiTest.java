@@ -28,6 +28,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Transactional;
+import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
 /**
@@ -242,6 +243,51 @@ class RefundRequestsApiTest {
     }
 
     @Test
+    void theOverviewCountsTheOpenRequestsAndStuckPaymentsLikeTheQueues() throws Exception {
+        JsonNode before = adminJson("/overview");
+        UUID reader = sessions.newReader("Dara");
+        String first = paidOrder(reader, 2, "refund-key-0008");
+        String second = paidOrder(reader, 2, "refund-key-0009");
+        ask(reader, first, "{\"reason\":\"" + REASON + "\"}").andExpect(status().isOk());
+        ask(reader, second, "{\"reason\":\"" + REASON + "\"}").andExpect(status().isOk());
+        // PayWay took a different amount than the order: "paid but no coins".
+        String pending = createOrder(reader, 2, "refund-key-0010");
+        UUID stuck =
+                jdbc.sql(
+                                "insert into payment_stuck (order_id, kind, paid_amount, currency)"
+                                        + " select id, 'AMOUNT_MISMATCH', 1.00, 'USD'"
+                                        + " from payment_orders where order_number = :n"
+                                        + " returning id")
+                        .param("n", pending)
+                        .query(UUID.class)
+                        .single();
+
+        JsonNode after = adminJson("/overview");
+        long requests = after.get("openRefundRequests").asLong();
+        long stuckPayments = after.get("openStuckPayments").asLong();
+        assertThat(requests).isEqualTo(before.get("openRefundRequests").asLong() + 2);
+        assertThat(stuckPayments).isEqualTo(before.get("openStuckPayments").asLong() + 1);
+        // The same rows the open queues list.
+        assertThat(adminJson("/refund-requests?status=open&limit=100").get("items").size())
+                .isEqualTo(requests);
+        assertThat(adminJson("/stuck-payments?status=open&limit=100").get("items").size())
+                .isEqualTo(stuckPayments);
+
+        // Decided requests and resolved payments leave the counts.
+        decide(requestId(first), "decline", "{\"reason\":\"The coins were used.\"}")
+                .andExpect(status().isOk());
+        mvc.perform(
+                        post(ADMIN + "/stuck-payments/" + stuck + "/add-coins")
+                                .with(sessions.as(admin, "ADMIN"))
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("{}"))
+                .andExpect(status().isOk());
+        JsonNode settled = adminJson("/overview");
+        assertThat(settled.get("openRefundRequests").asLong()).isEqualTo(requests - 1);
+        assertThat(settled.get("openStuckPayments").asLong()).isEqualTo(stuckPayments - 1);
+    }
+
+    @Test
     void onlyAdminsSeeTheQueues() throws Exception {
         UUID reader = sessions.newReader("Dara");
         for (String path : new String[] {"/refund-requests", "/stuck-payments"}) {
@@ -275,6 +321,15 @@ class RefundRequestsApiTest {
                         .with(sessions.as(admin, "ADMIN"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body));
+    }
+
+    private JsonNode adminJson(String path) throws Exception {
+        return json.readTree(
+                mvc.perform(get(ADMIN + path).with(sessions.as(admin, "ADMIN")))
+                        .andExpect(status().isOk())
+                        .andReturn()
+                        .getResponse()
+                        .getContentAsString(StandardCharsets.UTF_8));
     }
 
     private String requestId(String number) {

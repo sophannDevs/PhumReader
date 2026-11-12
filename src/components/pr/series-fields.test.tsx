@@ -17,6 +17,8 @@ const card = (over: Record<string, unknown> = {}) => ({
   type: "comic",
   genre: "Fantasy",
   creator: "Mei Tanaka",
+  creatorId: "c1",
+  creatorHandle: "mei-tanaka",
   cover: "/covers/x.svg",
   views: 1200,
   likes: 300,

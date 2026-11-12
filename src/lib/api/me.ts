@@ -33,6 +33,11 @@ export const putSubscription = (slug: string, on: boolean) =>
 export const putFollow = (creatorId: string, on: boolean) =>
   on ? api.put(`/creators/${creatorId}/follow`) : api.delete(`/creators/${creatorId}/follow`)
 
+export type FollowedCreator = Schemas["FollowedCreator"]
+
+/** Every creator the reader follows, most recent first (GET /me/follows). */
+export const fetchFollows = () => allPages<FollowedCreator>("/me/follows", {})
+
 export const putEpisodeLike = (slug: string, n: number, on: boolean) =>
   on
     ? api.put<Schemas["EpisodeLikeState"]>(`/series/${slug}/episodes/${n}/like`)
@@ -64,13 +69,17 @@ export async function fetchSubscriptions(): Promise<Series[]> {
   return list.map((e) => toSeries(e.series))
 }
 
-/** Unlocked episode numbers grouped by series, series in the order of the most recent unlock. */
-export async function fetchUnlocked(): Promise<{ series: Series; numbers: number[] }[]> {
+/**
+ * Unlocked episode numbers grouped by series, series in the order of the most recent unlock. `coins`: what the
+ * reader was actually charged for them (each unlock's own price); undefined if an older answer left it out.
+ */
+export async function fetchUnlocked(): Promise<{ series: Series; numbers: number[]; coins?: number }[]> {
   const list = await allPages<Schemas["UnlockedEntry"]>("/me/unlocked", { sort: "recent" })
-  const groups = new Map<string, { series: Series; numbers: number[] }>()
+  const groups = new Map<string, { series: Series; numbers: number[]; coins?: number }>()
   for (const e of list) {
-    const group = groups.get(e.series.id) ?? { series: toSeries(e.series), numbers: [] }
+    const group = groups.get(e.series.id) ?? { series: toSeries(e.series), numbers: [], coins: 0 }
     group.numbers.push(e.episode.n)
+    group.coins = group.coins === undefined || typeof e.coins !== "number" ? undefined : group.coins + e.coins
     groups.set(e.series.id, group)
   }
   return [...groups.values()].map((g) => ({ ...g, numbers: g.numbers.sort((a, b) => a - b) }))
@@ -165,6 +174,9 @@ export const reportSeries = (slug: string, reason: string, details: string) =>
   api.post<ReportReceipt>(`/series/${slug}/report`, { reason, details: details || undefined })
 export const reportEpisode = (slug: string, n: number, reason: string, details: string) =>
   api.post<ReportReceipt>(`/series/${slug}/episodes/${n}/report`, { reason, details: details || undefined })
+/** An account (spam, impersonate, harass, other); the receipt's accused is that account. 400 cannot_report_self. */
+export const reportUser = (id: string, reason: string, details: string) =>
+  api.post<ReportReceipt>(`/users/${id}/report`, { reason, details: details || undefined })
 
 // ---------------------------------------------------------------- blocking and "Your reports" (V21-04)
 
