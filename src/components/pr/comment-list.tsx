@@ -13,6 +13,7 @@ import { useAskToLogin } from "@/lib/me"
 import { useUser } from "@/lib/store"
 import { cn } from "@/lib/utils"
 import { Num } from "@/i18n/num"
+import { Effect } from "@animate-ui/react/primitives/effects/effect"
 
 /** A comment plus the state the page owns (stable id, whether this reader liked it). */
 export type CommentView = Comment & { id: string; liked?: boolean; canDelete?: boolean; mine?: boolean; authorId?: string }
@@ -61,84 +62,86 @@ export function CommentList({
       {comments.map((c) => {
         const count = c.likes + (c.liked ? 1 : 0)
         return (
-          <li key={c.id} className="flex items-start gap-3">
-            {dark || themed ? (
-              <span
-                aria-hidden
-                className={cn(
-                  "inline-flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold",
-                  dark ? "bg-surface-border text-surface-foreground" : "bg-reader-border text-reader-text"
-                )}
-              >
-                {initials(c.name)}
-              </span>
-            ) : (
-              <CommentAvatar name={c.name} mine={c.mine} />
-            )}
-            <div className="flex min-w-0 flex-1 flex-col gap-1">
-              <p className="flex flex-wrap items-center gap-1 text-[13px] leading-[18px]">
-                <strong className="font-semibold">{c.name}</strong>
-                <span className={dark ? "text-surface-quiet" : themed ? "text-reader-quiet" : "text-muted-foreground"}>· {c.when}</span>
-                {c.top ? (
-                  <Badge variant="brand" className="ml-1">
-                    {t("top")}
-                  </Badge>
-                ) : null}
-              </p>
-              <p className="text-sm leading-[21px] [overflow-wrap:anywhere]">{c.text}</p>
-              <div className="flex flex-wrap items-center gap-1">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  aria-pressed={!!c.liked}
-                  className={cn("tabular-nums", ghost, c.liked && (dark ? "text-primary" : "text-brand-ink"))}
-                  onClick={() => onToggleLike(c.id)}
+          <Effect key={c.id} asChild fade slide={{ direction: "up", offset: 8 }} inView>
+            <li className="flex items-start gap-3">
+              {dark || themed ? (
+                <span
+                  aria-hidden
+                  className={cn(
+                    "inline-flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold",
+                    dark ? "bg-surface-border text-surface-foreground" : "bg-reader-border text-reader-text"
+                  )}
                 >
-                  <ThumbsUpIcon className={cn("size-3.5", c.liked && "fill-primary")} aria-hidden />
-                  <span className="sr-only">{t("likeSr", { name: c.name })} </span>
-                  <Num>{formatCount(count)}</Num>
-                </Button>
-                <Button variant="ghost" size="sm" className={ghost} onClick={() => onReply(c.name)}>
-                  {t("reply")}
-                </Button>
-                {!c.mine ? (
-                  <>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className={quiet}
-                      aria-label={t("reportBy", { name: c.name })}
-                      onClick={gate(() =>
-                        openReport({
-                          kind: "comment",
-                          target: t("commentBy", { name: c.name }),
-                          who: c.name,
-                          whoId: c.authorId,
-                          onSend: onReportSend ? (reason, details) => onReportSend(c.id, reason, details) : undefined,
-                        })
-                      )}
-                    >
-                      {t("report")}
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className={quiet}
-                      aria-label={t("blockName", { name: c.name })}
-                      onClick={gate(() => openBlock(c.name, c.authorId))}
-                    >
-                      {t("block")}
-                    </Button>
-                  </>
-                ) : null}
-                {c.canDelete && onDelete ? (
-                  <Button variant="ghost" size="sm" className={quiet} onClick={() => onDelete(c.id)}>
-                    {t("delete")}
+                  {initials(c.name)}
+                </span>
+              ) : (
+                <CommentAvatar name={c.name} mine={c.mine} />
+              )}
+              <div className="flex min-w-0 flex-1 flex-col gap-1">
+                <p className="flex flex-wrap items-center gap-1 text-[13px] leading-[18px]">
+                  <strong className="font-semibold">{c.name}</strong>
+                  <span className={dark ? "text-surface-quiet" : themed ? "text-reader-quiet" : "text-muted-foreground"}>· {c.when}</span>
+                  {c.top ? (
+                    <Badge variant="brand" className="ml-1">
+                      {t("top")}
+                    </Badge>
+                  ) : null}
+                </p>
+                <p className="text-sm leading-[21px] [overflow-wrap:anywhere]">{c.text}</p>
+                <div className="flex flex-wrap items-center gap-1">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    aria-pressed={!!c.liked}
+                    className={cn("tabular-nums", ghost, c.liked && (dark ? "text-primary" : "text-brand-ink"))}
+                    onClick={() => onToggleLike(c.id)}
+                  >
+                    <ThumbsUpIcon className={cn("size-3.5", c.liked && "fill-primary")} aria-hidden />
+                    <span className="sr-only">{t("likeSr", { name: c.name })} </span>
+                    <Num>{formatCount(count)}</Num>
                   </Button>
-                ) : null}
+                  <Button variant="ghost" size="sm" className={ghost} onClick={() => onReply(c.name)}>
+                    {t("reply")}
+                  </Button>
+                  {!c.mine ? (
+                    <>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className={quiet}
+                        aria-label={t("reportBy", { name: c.name })}
+                        onClick={gate(() =>
+                          openReport({
+                            kind: "comment",
+                            target: t("commentBy", { name: c.name }),
+                            who: c.name,
+                            whoId: c.authorId,
+                            onSend: onReportSend ? (reason, details) => onReportSend(c.id, reason, details) : undefined,
+                          })
+                        )}
+                      >
+                        {t("report")}
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className={quiet}
+                        aria-label={t("blockName", { name: c.name })}
+                        onClick={gate(() => openBlock(c.name, c.authorId))}
+                      >
+                        {t("block")}
+                      </Button>
+                    </>
+                  ) : null}
+                  {c.canDelete && onDelete ? (
+                    <Button variant="ghost" size="sm" className={quiet} onClick={() => onDelete(c.id)}>
+                      {t("delete")}
+                    </Button>
+                  ) : null}
+                </div>
               </div>
-            </div>
-          </li>
+            </li>
+          </Effect>
         )
       })}
     </ul>

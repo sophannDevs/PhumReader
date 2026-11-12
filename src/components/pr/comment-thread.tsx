@@ -177,182 +177,184 @@ export function CommentThread({
   }
 
   return (
-    <li
-      className={cn(
-        "flex flex-col gap-2",
-        c.pinned ? "mb-2 rounded-xl border border-brand-soft-border bg-selected p-4" : "border-b py-4",
-        className
-      )}
-    >
-      {c.pinned ? (
-        <span className="inline-flex items-center gap-1.5 text-xs leading-4 font-semibold text-brand-ink">
-          <BookmarkIcon className="size-3" aria-hidden />
-          {t("pinned")}
-        </span>
-      ) : null}
-      <div className="flex items-start gap-3">
-        <CommentAvatar name={c.name} creator={c.creator} mine={c.mine} />
-        <div className="flex min-w-0 flex-1 flex-col gap-1">
-          <NameLine c={c} edited={c.edited} />
-          {editing ? (
-            <form
-              className="flex flex-col gap-1.5"
-              onSubmit={(e) => {
-                e.preventDefault()
-                if (!edText.trim()) return
-                onEdit(c.id, edText.trim())
-                setEditing(false)
-              }}
-            >
-              <label className="sr-only" htmlFor={`${uid}-ed`}>
-                {t("editLabel")}
-              </label>
-              <Textarea
-                id={`${uid}-ed`}
-                rows={2}
-                maxLength={MAX}
-                value={edText}
-                autoFocus
-                onChange={(e) => setEdText(e.target.value.slice(0, MAX))}
-                className="min-h-16"
-              />
-              <div className="flex gap-1.5">
-                <Button type="submit" variant="brand" size="sm" disabled={!edText.trim()}>
-                  {t("save")}
-                </Button>
-                <Button type="button" variant="ghost" size="sm" onClick={() => setEditing(false)}>
-                  {t("cancel")}
-                </Button>
-              </div>
-            </form>
-          ) : c.spoiler && !revealed ? (
-            <button
-              type="button"
-              onClick={() => setRevealed(true)}
-              className="self-start rounded-control border border-dashed border-[#a1a1aa] bg-[repeating-linear-gradient(135deg,#f4f4f5_0_8px,#fafafa_8px_16px)] px-3 py-2 text-[13px] font-semibold text-[#3f3f46] outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            >
-              {t("spoilerHidden")}
-            </button>
-          ) : (
-            <p className="text-sm leading-[21px] [overflow-wrap:anywhere] whitespace-pre-wrap text-[#27272a]">{c.text}</p>
-          )}
-          <div className="-ml-2 flex flex-wrap gap-0.5">
-            <LikeButton c={c} onLike={gate(() => onLike(c.id))} />
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={gate(() => {
-                setReplying(true)
-                setOpen(true)
-              })}
-            >
-              {t("reply")}
-            </Button>
-            {others ? (
-              <>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className={quiet}
-                  aria-label={t("reportBy", { name: c.name })}
-                  onClick={gate(() => report(c.id, c.name, false, c.authorId))}
-                >
-                  {t("report")}
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className={quiet}
-                  aria-label={t("blockName", { name: c.name })}
-                  onClick={gate(() => openBlock(c.name, c.authorId))}
-                >
-                  {t("block")}
-                </Button>
-              </>
-            ) : null}
-            {c.canEdit && !editing ? (
+    <Effect asChild fade slide={{ direction: "up", offset: 8 }} inView>
+      <li
+        className={cn(
+          "flex flex-col gap-2",
+          c.pinned ? "mb-2 rounded-xl border border-brand-soft-border bg-selected p-4" : "border-b py-4",
+          className
+        )}
+      >
+        {c.pinned ? (
+          <span className="inline-flex items-center gap-1.5 text-xs leading-4 font-semibold text-brand-ink">
+            <BookmarkIcon className="size-3" aria-hidden />
+            {t("pinned")}
+          </span>
+        ) : null}
+        <div className="flex items-start gap-3">
+          <CommentAvatar name={c.name} creator={c.creator} mine={c.mine} />
+          <div className="flex min-w-0 flex-1 flex-col gap-1">
+            <NameLine c={c} edited={c.edited} />
+            {editing ? (
+              <form
+                className="flex flex-col gap-1.5"
+                onSubmit={(e) => {
+                  e.preventDefault()
+                  if (!edText.trim()) return
+                  onEdit(c.id, edText.trim())
+                  setEditing(false)
+                }}
+              >
+                <label className="sr-only" htmlFor={`${uid}-ed`}>
+                  {t("editLabel")}
+                </label>
+                <Textarea
+                  id={`${uid}-ed`}
+                  rows={2}
+                  maxLength={MAX}
+                  value={edText}
+                  autoFocus
+                  onChange={(e) => setEdText(e.target.value.slice(0, MAX))}
+                  className="min-h-16"
+                />
+                <div className="flex gap-1.5">
+                  <Button type="submit" variant="brand" size="sm" disabled={!edText.trim()}>
+                    {t("save")}
+                  </Button>
+                  <Button type="button" variant="ghost" size="sm" onClick={() => setEditing(false)}>
+                    {t("cancel")}
+                  </Button>
+                </div>
+              </form>
+            ) : c.spoiler && !revealed ? (
+              <button
+                type="button"
+                onClick={() => setRevealed(true)}
+                className="self-start rounded-control border border-dashed border-[#a1a1aa] bg-[repeating-linear-gradient(135deg,#f4f4f5_0_8px,#fafafa_8px_16px)] px-3 py-2 text-[13px] font-semibold text-[#3f3f46] outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                {t("spoilerHidden")}
+              </button>
+            ) : (
+              <p className="text-sm leading-[21px] [overflow-wrap:anywhere] whitespace-pre-wrap text-[#27272a]">{c.text}</p>
+            )}
+            <div className="-ml-2 flex flex-wrap gap-0.5">
+              <LikeButton c={c} onLike={gate(() => onLike(c.id))} />
               <Button
                 variant="ghost"
                 size="sm"
-                className={quiet}
-                onClick={() => {
-                  setEdText(c.text)
-                  setEditing(true)
-                }}
+                onClick={gate(() => {
+                  setReplying(true)
+                  setOpen(true)
+                })}
               >
-                {t("edit")}
+                {t("reply")}
               </Button>
-            ) : null}
-            {c.canDelete ? (
-              <Button variant="ghost" size="sm" className={quiet} onClick={() => onDelete(c.id)}>
-                {t("delete")}
-              </Button>
-            ) : null}
+              {others ? (
+                <>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className={quiet}
+                    aria-label={t("reportBy", { name: c.name })}
+                    onClick={gate(() => report(c.id, c.name, false, c.authorId))}
+                  >
+                    {t("report")}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className={quiet}
+                    aria-label={t("blockName", { name: c.name })}
+                    onClick={gate(() => openBlock(c.name, c.authorId))}
+                  >
+                    {t("block")}
+                  </Button>
+                </>
+              ) : null}
+              {c.canEdit && !editing ? (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className={quiet}
+                  onClick={() => {
+                    setEdText(c.text)
+                    setEditing(true)
+                  }}
+                >
+                  {t("edit")}
+                </Button>
+              ) : null}
+              {c.canDelete ? (
+                <Button variant="ghost" size="sm" className={quiet} onClick={() => onDelete(c.id)}>
+                  {t("delete")}
+                </Button>
+              ) : null}
+            </div>
           </div>
         </div>
-      </div>
 
-      {replies.length > 0 ? (
-        <button
-          type="button"
-          aria-expanded={open}
-          onClick={() => setOpen((o) => !o)}
-          className="ml-11 self-start rounded-sm text-[13px] font-semibold text-brand-ink outline-none focus-visible:ring-2 focus-visible:ring-ring max-md:ml-0"
-        >
-          {open ? t("hideReplies") : t(withCreator ? "viewRepliesCreator" : "viewReplies", { count: replies.length })}
-        </button>
-      ) : null}
+        {replies.length > 0 ? (
+          <button
+            type="button"
+            aria-expanded={open}
+            onClick={() => setOpen((o) => !o)}
+            className="ml-11 self-start rounded-sm text-[13px] font-semibold text-brand-ink outline-none focus-visible:ring-2 focus-visible:ring-ring max-md:ml-0"
+          >
+            {open ? t("hideReplies") : t(withCreator ? "viewRepliesCreator" : "viewReplies", { count: replies.length })}
+          </button>
+        ) : null}
 
-      {open && replies.length > 0 ? (
-        <ul className="ml-11 flex flex-col gap-3 border-l-2 pl-3.5 max-md:ml-3">
-          {replies.map((r) => (
-            <li key={r.id} className="flex items-start gap-3">
-              <CommentAvatar name={r.name} creator={r.creator} mine={r.mine} small />
-              <div className="flex min-w-0 flex-1 flex-col gap-[3px]">
-                <NameLine c={r} />
-                <p className="text-sm leading-[21px] [overflow-wrap:anywhere] whitespace-pre-wrap text-[#27272a]">{r.text}</p>
-                <div className="-ml-2 flex flex-wrap gap-0.5">
-                  <LikeButton c={r} onLike={gate(() => onLike(r.id))} />
-                  {!r.mine && !r.creator ? (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className={quiet}
-                      aria-label={t("reportReplyBy", { name: r.name })}
-                      onClick={gate(() => report(r.id, r.name, true))}
-                    >
-                      {t("report")}
-                    </Button>
-                  ) : null}
+        {open && replies.length > 0 ? (
+          <ul className="ml-11 flex flex-col gap-3 border-l-2 pl-3.5 max-md:ml-3">
+            {replies.map((r) => (
+              <li key={r.id} className="flex items-start gap-3">
+                <CommentAvatar name={r.name} creator={r.creator} mine={r.mine} small />
+                <div className="flex min-w-0 flex-1 flex-col gap-[3px]">
+                  <NameLine c={r} />
+                  <p className="text-sm leading-[21px] [overflow-wrap:anywhere] whitespace-pre-wrap text-[#27272a]">{r.text}</p>
+                  <div className="-ml-2 flex flex-wrap gap-0.5">
+                    <LikeButton c={r} onLike={gate(() => onLike(r.id))} />
+                    {!r.mine && !r.creator ? (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className={quiet}
+                        aria-label={t("reportReplyBy", { name: r.name })}
+                        onClick={gate(() => report(r.id, r.name, true))}
+                      >
+                        {t("report")}
+                      </Button>
+                    ) : null}
+                  </div>
                 </div>
-              </div>
-            </li>
-          ))}
-        </ul>
-      ) : null}
+              </li>
+            ))}
+          </ul>
+        ) : null}
 
-      {replying ? (
-        <form className="ml-11 flex gap-1.5 max-md:ml-0 max-md:flex-wrap" onSubmit={sendReply}>
-          <label className="sr-only" htmlFor={`${uid}-rp`}>
-            {t("replyTo", { name: c.name })}
-          </label>
-          <Input
-            id={`${uid}-rp`}
-            value={rpText}
-            maxLength={MAX_REPLY}
-            autoFocus
-            placeholder={t("replyToPh", { name: c.name })}
-            onChange={(e) => setRpText(e.target.value.slice(0, MAX_REPLY))}
-            className="max-md:basis-full"
-          />
-          <Button type="submit" variant="brand" size="sm" className="h-9" loading={sending} disabled={!rpText.trim()}>
-            {t("reply")}
-          </Button>
-          <Button type="button" variant="ghost" size="sm" className="h-9" onClick={() => setReplying(false)}>
-            {t("cancel")}
-          </Button>
-        </form>
-      ) : null}
-    </li>
+        {replying ? (
+          <form className="ml-11 flex gap-1.5 max-md:ml-0 max-md:flex-wrap" onSubmit={sendReply}>
+            <label className="sr-only" htmlFor={`${uid}-rp`}>
+              {t("replyTo", { name: c.name })}
+            </label>
+            <Input
+              id={`${uid}-rp`}
+              value={rpText}
+              maxLength={MAX_REPLY}
+              autoFocus
+              placeholder={t("replyToPh", { name: c.name })}
+              onChange={(e) => setRpText(e.target.value.slice(0, MAX_REPLY))}
+              className="max-md:basis-full"
+            />
+            <Button type="submit" variant="brand" size="sm" className="h-9" loading={sending} disabled={!rpText.trim()}>
+              {t("reply")}
+            </Button>
+            <Button type="button" variant="ghost" size="sm" className="h-9" onClick={() => setReplying(false)}>
+              {t("cancel")}
+            </Button>
+          </form>
+        ) : null}
+      </li>
+    </Effect>
   )
 }
