@@ -1,7 +1,14 @@
 "use client"
 
+import { AnimateIcon } from "@animate-ui/react/icons"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
-import { AlertCircleIcon, ClockIcon, HeartIcon, RefreshCwIcon, SearchIcon, TrendingUpIcon, XIcon } from "lucide-react"
+import { CircleAlertIcon as AlertCircleIcon } from "@/components/animate-ui/icons/circle-alert"
+import { ClockIcon } from "@/components/animate-ui/icons/clock"
+import { HeartIcon } from "@/components/animate-ui/icons/heart"
+import { RefreshCwIcon } from "@/components/animate-ui/icons/refresh-cw"
+import { SearchIcon } from "@/components/animate-ui/icons/search"
+import { TrendingUpIcon } from "@/components/animate-ui/icons/trending-up"
+import { XIcon } from "@/components/animate-ui/icons/x"
 import Image from "next/image"
 import { useSearchParams } from "next/navigation"
 import { useTranslations } from "@/i18n/translations"
@@ -13,6 +20,7 @@ import { SeriesCard } from "@/components/pr/series-card"
 import { phoneSwipeRow, StateBox } from "@/components/pr/v2-primitives"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { ParticleBurst, useBurstOnPress } from "@/components/pr/particle-burst"
 import { Skeleton } from "@/components/ui/skeleton"
 import { genres, type Genre, type Series, type Weekday } from "@/data"
 import { Link } from "@/i18n/navigation"
@@ -276,22 +284,22 @@ function Landing({ onSearch }: { onSearch: (q: string) => void }) {
           <ul className="flex flex-wrap gap-2">
             {recent.map((q) => (
               <li key={q} className="inline-flex h-8 max-w-full items-center overflow-hidden rounded-full border bg-background">
-                <button
+                <AnimateIcon asChild animateOnHover><button
                   type="button"
                   onClick={() => onSearch(q)}
                   className={cn("inline-flex h-full min-w-0 items-center gap-1.5 pr-1.5 pl-3 text-[13px] font-medium hover:bg-accent", focusRing)}
                 >
                   <ClockIcon className="size-3 shrink-0" aria-hidden />
                   <span className="truncate">{q}</span>
-                </button>
-                <button
+                </button></AnimateIcon>
+                <AnimateIcon asChild animateOnHover><button
                   type="button"
                   aria-label={t("recentRemove", { q })}
                   onClick={() => useAppStore.getState().removeRecentSearch(q)}
                   className={cn("inline-flex h-full w-7 shrink-0 items-center justify-center text-muted-foreground hover:bg-accent", focusRing)}
                 >
                   <XIcon className="size-3" aria-hidden />
-                </button>
+                </button></AnimateIcon>
               </li>
             ))}
           </ul>
@@ -641,6 +649,7 @@ function CreatorItem({ name, series, k, index }: { name: string; series: Series[
   const [saving, setSaving] = useState(false)
   // Real API, signed in: Follow needs the creator's account and the reader's follows (could not load: no button).
   const showFollow = !api || loading || (cardId ? !!follows.data : !!profile.data)
+  const [followBurst, armFollow] = useBurstOnPress(on)
 
   /** Shows the change at once, saves it, and puts it back if the API refuses. */
   async function save<T>(key: readonly unknown[], change: (old: T | undefined) => T | undefined, id: string, next: boolean) {
@@ -666,6 +675,7 @@ function CreatorItem({ name, series, k, index }: { name: string; series: Series[
   async function follow() {
     if (saving) return
     if (!user) return askToLogin()
+    armFollow()
     if (DEMO_MODE) {
       useAppStore.getState().toggleFollow(name)
       toast.success(tt(on ? "unfollowed" : "followed", { name }))
@@ -717,7 +727,7 @@ function CreatorItem({ name, series, k, index }: { name: string; series: Series[
         </div>
         {showFollow ? (
           <Button variant="outline" size="sm" aria-pressed={on} disabled={loading || saving} onClick={() => void follow()}>
-            {on ? t("following") : t("follow")}
+            <ParticleBurst burst={followBurst}>{on ? t("following") : t("follow")}</ParticleBurst>
           </Button>
         ) : null}
       </li>

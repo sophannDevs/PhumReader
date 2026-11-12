@@ -1,7 +1,14 @@
 "use client"
 
+import { AnimateIcon } from "@animate-ui/react/icons"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
-import { AlertCircleIcon, ArrowDownIcon, ArrowUpIcon, LayersIcon, PlusIcon, RotateCcwIcon, XIcon } from "lucide-react"
+import { CircleAlertIcon as AlertCircleIcon } from "@/components/animate-ui/icons/circle-alert"
+import { ArrowDownIcon } from "@/components/animate-ui/icons/arrow-down"
+import { ArrowUpIcon } from "@/components/animate-ui/icons/arrow-up"
+import { LayersIcon } from "@/components/animate-ui/icons/layers"
+import { PlusIcon } from "@/components/animate-ui/icons/plus"
+import { RotateCcwIcon } from "@/components/animate-ui/icons/rotate-ccw"
+import { XIcon } from "@/components/animate-ui/icons/x"
 import { useSearchParams } from "next/navigation"
 import { useTranslations } from "@/i18n/translations"
 import { useEffect, useRef, useState } from "react"
@@ -612,7 +619,7 @@ function UploadForm({
                         e.target.value = ""
                       }}
                     />
-                    <button
+                    <AnimateIcon asChild animateOnHover><button
                       type="button"
                       disabled={items.length >= MAX_PANELS}
                       onClick={() => fileRef.current?.click()}
@@ -638,7 +645,7 @@ function UploadForm({
                       <PlusIcon className="size-[22px]" aria-hidden />
                       <span className="text-[13px] leading-[18px] font-semibold">{items.length ? t("addMoreImages") : t("chooseImages")}</span>
                       <span className="text-xs leading-4 text-muted-foreground">{t("imageRules", { max: MAX_PANELS })}</span>
-                    </button>
+                    </button></AnimateIcon>
                     {uploads.tooMany ? (
                       <FieldHint error>
                         <span role="alert">{t("tooManyImages", { max: MAX_PANELS })}</span>

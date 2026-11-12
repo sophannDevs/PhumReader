@@ -2,7 +2,7 @@
 
 import { useMutation } from "@tanstack/react-query"
 import { REGEXP_ONLY_DIGITS } from "input-otp"
-import { MailIcon } from "lucide-react"
+import { MailIcon } from "@/components/animate-ui/icons/mail"
 import { useTranslations } from "@/i18n/translations"
 import { useEffect, useRef, useState } from "react"
 import { toast } from "sonner"

@@ -1,6 +1,10 @@
 "use client"
 
-import { AlertCircleIcon, CalendarIcon, ChevronDownIcon, HeartIcon, RefreshCwIcon } from "lucide-react"
+import { CircleAlertIcon as AlertCircleIcon } from "@/components/animate-ui/icons/circle-alert"
+import { CalendarIcon } from "@/components/animate-ui/icons/calendar"
+import { ChevronDownIcon } from "@/components/animate-ui/icons/chevron-down"
+import { HeartIcon } from "@/components/animate-ui/icons/heart"
+import { RefreshCwIcon } from "@/components/animate-ui/icons/refresh-cw"
 import { useTranslations } from "@/i18n/translations"
 import { useEffect, useRef, useState, useSyncExternalStore } from "react"
 import { SeriesCard } from "@/components/pr/series-card"

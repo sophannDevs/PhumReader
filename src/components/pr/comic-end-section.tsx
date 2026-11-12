@@ -1,6 +1,13 @@
 "use client";
 
-import { ArrowRightIcon, BellIcon, HeartIcon, ListIcon, MessageSquareIcon, Share2Icon, ZapIcon } from "lucide-react"
+import { AnimateIcon } from "@animate-ui/react/icons"
+import { ArrowRightIcon } from "@/components/animate-ui/icons/arrow-right"
+import { BellIcon } from "@/components/animate-ui/icons/bell"
+import { HeartIcon } from "@/components/animate-ui/icons/heart"
+import { ListIcon } from "@/components/animate-ui/icons/list"
+import { MessageSquareIcon } from "@/components/animate-ui/icons/message-square"
+import { Share2Icon } from "@/components/animate-ui/icons/share-2"
+import { ZapIcon } from "@/components/animate-ui/icons/zap"
 import Image from "next/image"
 import { useTranslations } from "@/i18n/translations"
 import { useMemo, useState } from "react"
@@ -24,6 +31,7 @@ import { useAppStore, useUser } from "@/lib/store"
 import { cn } from "@/lib/utils"
 import { Num } from "@/i18n/num"
 import { Effect } from "@animate-ui/react/primitives/effects/effect"
+import { ParticleBurst, useBurstOnPress } from "@/components/pr/particle-burst"
 
 /** `.vw-card`: the reader's card colours (set on the reader root), 14 px radius. */
 const card = "rounded-[14px] border bg-card p-6 text-card-foreground max-md:p-[18px]"
@@ -76,6 +84,8 @@ export function ComicEndSection({
   const { openReport } = useReport()
   const { liked, likeCount, toggleLike } = useEpisodeReactions({ series, n: episode.n, kind: "comic", likes: episode.likes })
   const { subscribed, toggle: toggleSubscribe } = useSubscribe(series)
+  const [likeBurst, armLike] = useBurstOnPress(liked)
+  const [subBurst, armSub] = useBurstOnPress(subscribed)
 
   async function share() {
     try {
@@ -88,6 +98,7 @@ export function ComicEndSection({
 
   function like() {
     const liking = !liked
+    armLike()
     void toggleLike()
     if (liking && (DEMO_MODE || user)) toast.success(t("thanksLike"))
   }
@@ -114,11 +125,23 @@ export function ComicEndSection({
               className={cn(pill, "tabular-nums", liked && "bg-foreground text-background hover:bg-foreground/90 hover:text-background")}
               onClick={like}
             >
-              <HeartIcon className={cn(liked && "fill-destructive text-destructive")} aria-hidden />
+              <ParticleBurst burst={likeBurst} tone="destructive">
+                <HeartIcon className={cn(liked && "fill-destructive text-destructive")} aria-hidden />
+              </ParticleBurst>
               <Num>{formatCount(likeCount)}</Num>
             </Button>
-            <Button variant="outline" aria-pressed={subscribed} className={pill} onClick={() => void toggleSubscribe()}>
-              <BellIcon aria-hidden />
+            <Button
+              variant="outline"
+              aria-pressed={subscribed}
+              className={pill}
+              onClick={() => {
+                armSub()
+                void toggleSubscribe()
+              }}
+            >
+              <ParticleBurst burst={subBurst}>
+                <BellIcon aria-hidden />
+              </ParticleBurst>
               {subscribed ? t("subscribed") : t("subscribe")}
             </Button>
             <Button variant="outline" className={pill} onClick={share}>
@@ -152,7 +175,7 @@ export function ComicEndSection({
                 </Button>
               </div>
             ) : null}
-            <button
+            <AnimateIcon asChild animateOnHover><button
               type="button"
               onClick={onNext}
               className="group flex w-full items-center gap-4 rounded-[14px] border bg-card p-4 text-left text-card-foreground transition-colors outline-none hover:border-input focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background max-md:flex-wrap"
@@ -172,7 +195,7 @@ export function ComicEndSection({
                 {nextLocked ? t("unlock") : t("readNext")}
                 <ArrowRightIcon className="size-3.5" aria-hidden />
               </span>
-            </button>
+            </button></AnimateIcon>
           </>
         ) : (
           <div className={cn(card, "text-center text-[13px] leading-[18px] text-foreground/80")}>{caughtUp}</div>

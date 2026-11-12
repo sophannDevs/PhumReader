@@ -1,6 +1,6 @@
 "use client"
 
-import { ChevronRightIcon } from "lucide-react"
+import { ChevronRightIcon } from "@/components/animate-ui/icons/chevron-right"
 import { useTranslations } from "@/i18n/translations"
 import { ContinueCard } from "@/components/pr/continue-card"
 import { SkeletonRow } from "@/components/pr/skeletons"

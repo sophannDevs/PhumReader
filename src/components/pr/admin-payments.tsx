@@ -1,6 +1,7 @@
 "use client"
 
-import { CheckIcon, SearchIcon } from "lucide-react"
+import { CheckIcon } from "@/components/animate-ui/icons/check"
+import { SearchIcon } from "@/components/animate-ui/icons/search"
 import { useLocale } from "next-intl"
 import { useTranslations } from "@/i18n/translations"
 import { useEffect, useState } from "react"

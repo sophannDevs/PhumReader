@@ -561,7 +561,7 @@ docs/BACKEND_CHECKLIST.md, "V2.1 API additions" (V21-01 … V21-07).
   (`MotionGlobalConfig.skipAnimations`) and adds jsdom stand-ins for `SVGGeometryElement` and
   `Element.animate/getAnimations`, which Animate UI's checkbox and OTP input use. Playwright runs the real animations.
 - ANIM-6 (animations) **Skipped**: Animate UI's Page Transition and its registry icons (Heart, Bell) were not added
-  (their install steps were not verified); the comment Like icon pops with `Effect` instead.
+  (their install steps were not verified); the comment Like icon pops with `Effect` instead. ANIM-15 adds a particle burst on top of that pop.
 - ANIM-7 (animations) **Round 2**: the series page now uses Animate UI Tabs (it used Radix directly before), the hero
   fades from half opacity (it holds the LCP cover), episode rows and the sidebar fade in; coin packs stagger in; the
   checkout card eases to the next step's height (`AutoHeight`) and the success check bursts a ring of dots
@@ -621,3 +621,30 @@ docs/BACKEND_CHECKLIST.md, "V2.1 API additions" (V21-01 … V21-07).
   `src/test/select.ts`, and e2e uses `selectOption` in `e2e/helpers.ts`. Not verified: the select edits in
   `e2e/real.spec.ts` (they need the backend on :8080) and the Admin Filter in the browser (demo mode shows "needs the
   real API").
+- ANIM-15 (animations) **Particles burst**: not in the design pack (like ANIM-4), so check against `design/screens`
+  before launch. Animate UI's Particles primitive (`@animate-ui/react/primitives/effects/particles`, installed and
+  approved in ANIM-1) is wrapped in `src/components/pr/particle-burst.tsx`: `useBurstOnPress(on)` returns
+  `[burst, arm]`, plus `ParticleBurst` and `SuccessBurst`. Test: `particle-burst.test.tsx`. The request was "also use
+  this animation", read as "add the burst", so existing animations stay (the comment Like's `Effect` pop still plays
+  and gains the burst). The press burst plays only when a toggle is switched ON by a real press: never on page load,
+  when state loads from localStorage or the query, when switching off, or on a logged-out press that only opens the
+  log-in prompt (`arm()` lapses after 1.5 s). It has 8 dots, `size-1`, radius 20, 0.6 s. The success burst plays once
+  on mount: 10 dots, `size-2`, radius 40 (32 on the Help badge), 0.25 s delay (the same numbers as the checkout
+  success check, which now uses `SuccessBurst`). Press bursts: comment Like (threads, replies, reader list),
+  end-of-episode Like and Subscribe, novel-end Like and Bookmark, Subscribe (series hero, home spotlight, list rows
+  in Rankings, Genres and Search), Follow creator (series sidebar, creator profile, search results), and "Add" on the
+  welcome Done step. Success bursts: auth done, welcome done, Help contact sent, checkout. Heart likes use
+  `bg-destructive`, everything else `bg-primary`; no new colours, strings or packages. Left out on purpose: Series
+  unavailable (it only has "Remove from library", no switch-on toggle), the receipt "Paid" icon (a record page
+  reopened from history), the unlock dialog (it closes and a toast confirms), the header coin chip (SlidingNumber),
+  Admin (ANIM-4, ANIM-11), comic panels and novel text (ANIM-12) and rating (the app has none). Behaviour: the burst
+  plays straight away because state updates optimistically; a failed real-mode save flips the state back after the
+  burst has played. The dots are `aria-hidden` and `pointer-events-none`, skipped under reduced motion, and stay
+  mounted at opacity 0 after playing. The nodes are `div`s inside a `span` inside a `button` (invalid content model;
+  browsers accept it; checkout did the same before). Unit tests: `setup.tsx` turns motion off (ANIM-5), so the dots
+  mount in their final state and tests count `[data-particle]`.
+  Open items found by QA, not caused by ANIM-15: at 320 px `/creators/owen-blake` already overflows horizontally by
+  7 px (the Block button), and the "Following" label makes it 27 px after pressing Follow; `/novel/ink-witch/1`
+  "Next chapter" overflows by 4 px. Both break the "no horizontal scroll from 320 px" rule and need a layout fix
+  (for example let the Follow/Block row wrap). Also, `signup-view.test.tsx` can hit the 5 s per-test timeout under
+  parallel load (it passes alone); this is unrelated.

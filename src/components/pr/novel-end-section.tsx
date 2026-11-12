@@ -1,6 +1,10 @@
 "use client"
 
-import { BookmarkIcon, ChevronLeftIcon, ChevronRightIcon, HeartIcon, Share2Icon } from "lucide-react"
+import { BookmarkIcon } from "@/components/animate-ui/icons/bookmark"
+import { ChevronLeftIcon } from "@/components/animate-ui/icons/chevron-left"
+import { ChevronRightIcon } from "@/components/animate-ui/icons/chevron-right"
+import { HeartIcon } from "@/components/animate-ui/icons/heart"
+import { Share2Icon } from "@/components/animate-ui/icons/share-2"
 import { useTranslations } from "@/i18n/translations"
 import { toast } from "sonner"
 import { useReport } from "@/components/pr/report-dialog"
@@ -16,6 +20,7 @@ import { seriesHref } from "@/lib/routes"
 import { useUser } from "@/lib/store"
 import { cn } from "@/lib/utils"
 import { Effect } from "@animate-ui/react/primitives/effects/effect"
+import { ParticleBurst, useBurstOnPress } from "@/components/pr/particle-burst"
 
 /** `.card.nr-card`: card colours of the reader theme (set on the reader root). */
 const card = "rounded-card border bg-card text-reader-text"
@@ -52,6 +57,8 @@ export function NovelEndSection({
   const { openReport } = useReport()
   const n = chapter.n
   const { liked, bookmarked, toggleLike, toggleBookmark } = useEpisodeReactions({ series, n, kind: "novel", likes: chapter.likes })
+  const [likeBurst, armLike] = useBurstOnPress(liked)
+  const [markBurst, armMark] = useBurstOnPress(bookmarked)
 
   async function share() {
     try {
@@ -68,12 +75,32 @@ export function NovelEndSection({
         <div ref={finishRef} className={cn(card, "flex flex-col items-center gap-3.5 p-6 text-center")}>
           <p className="text-xs leading-4 font-semibold tracking-[0.06em] text-reader-quiet uppercase">{t("endOfChapter", { n })}</p>
           <div className="flex flex-wrap justify-center gap-2">
-            <Button variant="outline" className={outline} aria-pressed={liked} onClick={() => void toggleLike()}>
-              <HeartIcon className={cn(liked && "fill-destructive text-destructive")} aria-hidden />
+            <Button
+              variant="outline"
+              className={outline}
+              aria-pressed={liked}
+              onClick={() => {
+                armLike()
+                void toggleLike()
+              }}
+            >
+              <ParticleBurst burst={likeBurst} tone="destructive">
+                <HeartIcon className={cn(liked && "fill-destructive text-destructive")} aria-hidden />
+              </ParticleBurst>
               {liked ? t("liked") : t("like")}
             </Button>
-            <Button variant="outline" className={outline} aria-pressed={bookmarked} onClick={() => void toggleBookmark()}>
-              <BookmarkIcon className={cn(bookmarked && "fill-current")} aria-hidden />
+            <Button
+              variant="outline"
+              className={outline}
+              aria-pressed={bookmarked}
+              onClick={() => {
+                armMark()
+                void toggleBookmark()
+              }}
+            >
+              <ParticleBurst burst={markBurst}>
+                <BookmarkIcon className={cn(bookmarked && "fill-current")} aria-hidden />
+              </ParticleBurst>
               {bookmarked ? t("bookmarked") : t("bookmark")}
             </Button>
             <Button variant="outline" className={outline} onClick={share}>

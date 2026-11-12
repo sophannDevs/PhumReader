@@ -1,6 +1,6 @@
 "use client";
 
-import { InfoIcon } from "lucide-react";
+import { InfoIcon } from "@/components/animate-ui/icons/info"
 import { useLocale } from "next-intl";
 import { useTranslations } from "@/i18n/translations";
 import { useState } from "react";

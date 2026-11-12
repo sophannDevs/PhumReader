@@ -1,6 +1,9 @@
 "use client"
 
-import { AlertCircleIcon, LogInIcon, PenLineIcon, type LucideIcon } from "lucide-react"
+import { PencilLineIcon as PenLineIcon } from "@/components/animate-ui/icons/pencil-line"
+import { CircleAlertIcon as AlertCircleIcon } from "@/components/animate-ui/icons/circle-alert"
+import { LogInIcon } from "@/components/animate-ui/icons/log-in"
+import type { AnimatedIcon as AnimatedIcon } from "@/components/animate-ui/icons/types"
 import { useTranslations } from "@/i18n/translations"
 import { useState } from "react"
 import { BecomeCreatorDialog } from "@/components/pr/become-creator-dialog"
@@ -105,7 +108,7 @@ export function CreatorGate({ title, eyebrow, children }: { title: string; eyebr
 }
 
 /** Prototype `.cr-start` look: soft green fade, round icon, title, text and buttons. */
-function GateCard({ icon: Icon, title, text, actions }: { icon: LucideIcon; title: string; text: string; actions: React.ReactNode }) {
+function GateCard({ icon: Icon, title, text, actions }: { icon: AnimatedIcon; title: string; text: string; actions: React.ReactNode }) {
   return (
     <Effect asChild fade slide={{ direction: "up", offset: 10 }}>
       <section className="flex flex-col items-center gap-3 rounded-[16px] border bg-background bg-[image:linear-gradient(135deg,#effcf4,#ffffff_70%)] px-5 py-12 text-center shadow-xs md:rounded-hero md:px-8 md:py-14">

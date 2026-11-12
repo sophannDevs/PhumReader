@@ -1,17 +1,22 @@
 "use client"
 
+import { AnimateIcon } from "@animate-ui/react/icons"
 import { useQueryClient } from "@tanstack/react-query"
-import { BellIcon, CheckIcon, ChevronLeftIcon, InfoIcon } from "lucide-react"
+import { BellIcon } from "@/components/animate-ui/icons/bell"
+import { CheckIcon } from "@/components/animate-ui/icons/check"
+import { ChevronLeftIcon } from "@/components/animate-ui/icons/chevron-left"
+import { InfoIcon } from "@/components/animate-ui/icons/info"
 import Image from "next/image"
 import { useLocale } from "next-intl"
 import { useTranslations } from "@/i18n/translations"
-import { useEffect, useState } from "react"
+import { type ReactNode, useEffect, useState } from "react"
 import { toast } from "sonner"
 import { Logo } from "@/components/layout/logo"
 import { SkipLink } from "@/components/layout/skip-link"
 import { Chip, Segmented } from "@/components/pr/v2-primitives"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
+import { ParticleBurst, SuccessBurst, useBurstOnPress } from "@/components/pr/particle-burst"
 import { demoData, getSeries, getSeriesById, seriesByGenre, type Genre } from "@/data"
 import { usePathname, useRouter } from "@/i18n/navigation"
 import type { Locale } from "@/i18n/routing"
@@ -270,8 +275,8 @@ export function WelcomeFlow() {
                 {GENRE_CARDS.map(({ genre, cover }) => {
                   const on = state.picked.includes(genre)
                   return (
-                    <button
-                      key={genre}
+                    <AnimateIcon asChild animateOnHover key={genre}><button
+                     
                       type="button"
                       aria-pressed={on}
                       onClick={() =>
@@ -294,7 +299,7 @@ export function WelcomeFlow() {
                           <CheckIcon className="size-3.5" />
                         </span>
                       ) : null}
-                    </button>
+                    </button></AnimateIcon>
                   )
                 })}
               </div>
@@ -344,9 +349,11 @@ export function WelcomeFlow() {
             </section>
           ) : (
             <section aria-labelledby="wl-title" className="flex w-full flex-col items-center gap-[18px] pt-3">
-              <span aria-hidden className="inline-flex size-14 items-center justify-center rounded-full bg-primary text-primary-foreground">
-                <CheckIcon className="size-[26px]" />
-              </span>
+              <SuccessBurst>
+                <span aria-hidden className="inline-flex size-14 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                  <CheckIcon className="size-[26px]" />
+                </span>
+              </SuccessBurst>
               <Title>{t("doneTitle")}</Title>
               <Sub>{doneLine}</Sub>
               <div className="flex w-full flex-col gap-2.5">
@@ -363,16 +370,13 @@ export function WelcomeFlow() {
                             {t("meta", { genre: localize.genre(s.genre), likes: s.likes })}
                           </span>
                         </span>
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant={on ? "secondary" : "outline"}
-                          aria-pressed={on}
-                          aria-label={t(on ? "removeAria" : "addAria", { title: s.title })}
-                          onClick={() => update({ subs: on ? state.subs.filter((x) => x !== s.id) : [...state.subs, s.id] })}
+                        <AddPick
+                          on={on}
+                          label={t(on ? "removeAria" : "addAria", { title: s.title })}
+                          onToggle={() => update({ subs: on ? state.subs.filter((x) => x !== s.id) : [...state.subs, s.id] })}
                         >
                           {on ? t("added") : t("add")}
-                        </Button>
+                        </AddPick>
                       </li>
                     )
                   })}
@@ -444,4 +448,24 @@ function Title({ children }: { children: React.ReactNode }) {
 
 function Sub({ children }: { children: React.ReactNode }) {
   return <p className="m-0 text-[15px] leading-[23px] text-muted-foreground">{children}</p>
+}
+
+/** Done step "Add" / "Added" toggle: the label bursts into a small ring of dots when the reader adds the series. */
+function AddPick({ on, label, onToggle, children }: { on: boolean; label: string; onToggle: () => void; children: ReactNode }) {
+  const [burst, arm] = useBurstOnPress(on)
+  return (
+    <Button
+      type="button"
+      size="sm"
+      variant={on ? "secondary" : "outline"}
+      aria-pressed={on}
+      aria-label={label}
+      onClick={() => {
+        arm()
+        onToggle()
+      }}
+    >
+      <ParticleBurst burst={burst}>{children}</ParticleBurst>
+    </Button>
+  )
 }

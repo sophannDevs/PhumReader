@@ -1,6 +1,8 @@
 "use client"
 
-import { BellIcon, CheckIcon, HomeIcon } from "lucide-react"
+import { BellIcon } from "@/components/animate-ui/icons/bell"
+import { CheckIcon } from "@/components/animate-ui/icons/check"
+import { HouseIcon as HomeIcon } from "@/components/animate-ui/icons/house"
 import { useTranslations } from "@/i18n/translations"
 import { useState } from "react"
 import { toast } from "sonner"

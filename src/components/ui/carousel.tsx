@@ -7,7 +7,8 @@ import useEmblaCarousel, {
 } from "@animate-ui/react/primitives/carousel"
 
 import { Button } from "@/components/ui/button"
-import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react"
+import { ChevronLeftIcon } from "@/components/animate-ui/icons/chevron-left"
+import { ChevronRightIcon } from "@/components/animate-ui/icons/chevron-right"
 
 type CarouselApi = UseEmblaCarouselType[1]
 type UseCarouselParameters = Parameters<typeof useEmblaCarousel>

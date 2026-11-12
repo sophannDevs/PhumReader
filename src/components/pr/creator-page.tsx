@@ -1,7 +1,12 @@
 "use client"
 
 import { useQueries } from "@tanstack/react-query"
-import { AlertCircleIcon, CheckCircle2Icon, HeartIcon, LayersIcon, PlusIcon, UploadIcon } from "lucide-react"
+import { CircleAlertIcon as AlertCircleIcon } from "@/components/animate-ui/icons/circle-alert"
+import { CircleCheckIcon as CheckCircle2Icon } from "@/components/animate-ui/icons/circle-check"
+import { HeartIcon } from "@/components/animate-ui/icons/heart"
+import { LayersIcon } from "@/components/animate-ui/icons/layers"
+import { PlusIcon } from "@/components/animate-ui/icons/plus"
+import { UploadIcon } from "@/components/animate-ui/icons/upload"
 import Image from "next/image"
 import { useSearchParams } from "next/navigation"
 import { useLocale } from "next-intl"

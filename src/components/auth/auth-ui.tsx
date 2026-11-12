@@ -1,6 +1,8 @@
 "use client"
 
-import { ArrowLeftIcon, CheckIcon } from "lucide-react"
+import { AnimateIcon } from "@animate-ui/react/icons"
+import { ArrowLeftIcon } from "@/components/animate-ui/icons/arrow-left"
+import { CheckIcon } from "@/components/animate-ui/icons/check"
 import { useTranslations } from "@/i18n/translations"
 import { passwordChecks } from "@/components/auth/auth-schemas"
 import { Button } from "@/components/ui/button"
@@ -62,14 +64,14 @@ export function SubmitButton({ loading, children }: { loading?: boolean; childre
 /** `.au-back`: "← Back to log in", "← Change email". */
 export function BackButton({ onClick, children }: { onClick: () => void; children: React.ReactNode }) {
   return (
-    <button
+    <AnimateIcon asChild animateOnHover><button
       type="button"
       onClick={onClick}
       className="-ml-1.5 inline-flex h-8 items-center gap-1.5 self-start rounded-lg pr-2.5 pl-1.5 text-[13px] font-semibold outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
     >
       <ArrowLeftIcon className="size-3.5" aria-hidden />
       {children}
-    </button>
+    </button></AnimateIcon>
   )
 }
 

@@ -1,10 +1,12 @@
 "use client"
 
 import { useQueries } from "@tanstack/react-query"
-import { CheckIcon, PlusIcon } from "lucide-react"
+import { CheckIcon } from "@/components/animate-ui/icons/check"
+import { PlusIcon } from "@/components/animate-ui/icons/plus"
 import { useRef } from "react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { ParticleBurst, useBurstOnPress } from "@/components/pr/particle-burst"
 import { genres, type Series } from "@/data"
 import * as real from "@/lib/api/catalog"
 import { DEMO_MODE } from "@/lib/api/config"
@@ -115,16 +117,23 @@ export function SubscribeButton({
   const user = useUser()
   const askToLogin = useAskToLogin()
   const subscribed = hydrated && stored
+  const [burst, arm] = useBurstOnPress(subscribed)
   return (
     <Button
       type="button"
       size="sm"
       variant={subscribed && filled ? "secondary" : "outline"}
       aria-pressed={subscribed}
-      onClick={() => (user ? void toggle() : askToLogin())}
+      onClick={() => {
+        if (!user) return askToLogin()
+        arm()
+        void toggle()
+      }}
       className={cn("shrink-0", className)}
     >
-      {subscribed ? <CheckIcon className="size-3.5" aria-hidden /> : <PlusIcon className="size-3.5" aria-hidden />}
+      <ParticleBurst burst={burst}>
+        {subscribed ? <CheckIcon className="size-3.5" aria-hidden /> : <PlusIcon className="size-3.5" aria-hidden />}
+      </ParticleBurst>
       {subscribed ? labels[1] : labels[0]}
       <span className="sr-only"> {title}</span>
     </Button>

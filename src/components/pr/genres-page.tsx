@@ -1,6 +1,9 @@
 "use client"
 
-import { AlertCircleIcon, RefreshCwIcon, SearchIcon, XIcon } from "lucide-react"
+import { CircleAlertIcon as AlertCircleIcon } from "@/components/animate-ui/icons/circle-alert"
+import { RefreshCwIcon } from "@/components/animate-ui/icons/refresh-cw"
+import { SearchIcon } from "@/components/animate-ui/icons/search"
+import { XIcon } from "@/components/animate-ui/icons/x"
 import Image from "next/image"
 import { useSearchParams } from "next/navigation"
 import { useTranslations } from "@/i18n/translations"

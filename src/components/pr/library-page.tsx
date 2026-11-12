@@ -1,7 +1,14 @@
 "use client"
 
+import { AnimateIcon } from "@animate-ui/react/icons"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
-import { AlertCircleIcon, CheckIcon, LibraryIcon, RefreshCwIcon, SparklesIcon, XIcon, ZapIcon } from "lucide-react"
+import { LibraryBigIcon as LibraryIcon } from "@/components/animate-ui/icons/library-big"
+import { CircleAlertIcon as AlertCircleIcon } from "@/components/animate-ui/icons/circle-alert"
+import { CheckIcon } from "@/components/animate-ui/icons/check"
+import { RefreshCwIcon } from "@/components/animate-ui/icons/refresh-cw"
+import { SparklesIcon } from "@/components/animate-ui/icons/sparkles"
+import { XIcon } from "@/components/animate-ui/icons/x"
+import { ZapIcon } from "@/components/animate-ui/icons/zap"
 import Image from "next/image"
 import { useLocale } from "next-intl"
 import { useTranslations } from "@/i18n/translations"
@@ -369,7 +376,7 @@ export function LibraryPage() {
             {editing ? (
               <>
                 <div className="flex items-center gap-2.5">
-                  <label className="flex cursor-pointer items-center gap-2 text-[13px] leading-[18px]">
+                  <AnimateIcon asChild animateOnHover><label className="flex cursor-pointer items-center gap-2 text-[13px] leading-[18px]">
                     <input
                       type="checkbox"
                       className="peer sr-only"
@@ -388,7 +395,7 @@ export function LibraryPage() {
                       </span>
                     </span>
                     {t("selectAll")}
-                  </label>
+                  </label></AnimateIcon>
                   <span className="text-[13px] leading-[18px] text-muted-foreground" aria-live="polite">
                     {sel.length ? t("selected", { count: sel.length }) : t("selectHint")}
                   </span>
@@ -408,7 +415,7 @@ export function LibraryPage() {
               <>
                 <div className="flex flex-wrap items-center gap-2">
                   {tab === "subs" ? (
-                    <button
+                    <AnimateIcon asChild animateOnHover><button
                       type="button"
                       aria-pressed={newOnly}
                       onClick={() => setNewOnly(!newOnly)}
@@ -420,7 +427,7 @@ export function LibraryPage() {
                     >
                       <SparklesIcon className="size-3" aria-hidden />
                       {t("newFilter", { count: withNew.length })}
-                    </button>
+                    </button></AnimateIcon>
                   ) : null}
                   <span className="text-[13px] leading-[18px] text-muted-foreground">
                     {t("seriesCount", { count: tab === "subs" ? subView.length : recent.length })}

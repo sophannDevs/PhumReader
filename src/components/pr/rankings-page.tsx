@@ -1,6 +1,10 @@
 "use client"
 
-import { AlertCircleIcon, HeartIcon, InfoIcon, RefreshCwIcon, TrendingUpIcon } from "lucide-react"
+import { CircleAlertIcon as AlertCircleIcon } from "@/components/animate-ui/icons/circle-alert"
+import { HeartIcon } from "@/components/animate-ui/icons/heart"
+import { InfoIcon } from "@/components/animate-ui/icons/info"
+import { RefreshCwIcon } from "@/components/animate-ui/icons/refresh-cw"
+import { TrendingUpIcon } from "@/components/animate-ui/icons/trending-up"
 import Image from "next/image"
 import { useTranslations } from "@/i18n/translations"
 import { useState } from "react"

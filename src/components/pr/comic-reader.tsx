@@ -1,6 +1,7 @@
 "use client"
 
-import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react"
+import { ChevronLeftIcon } from "@/components/animate-ui/icons/chevron-left"
+import { ChevronRightIcon } from "@/components/animate-ui/icons/chevron-right"
 import { notFound } from "next/navigation"
 import { useTranslations } from "@/i18n/translations"
 import Image from "next/image"

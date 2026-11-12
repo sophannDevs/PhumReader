@@ -1,6 +1,7 @@
 "use client"
 
-import { GlobeIcon } from "lucide-react"
+import { AnimateIcon } from "@animate-ui/react/icons"
+import { GlobeIcon } from "@/components/animate-ui/icons/globe"
 import { useLocale } from "next-intl"
 import { useTranslations } from "@/i18n/translations"
 import { usePathname, useRouter } from "@/i18n/navigation"
@@ -124,7 +125,7 @@ export function LanguageToggleLink({ className }: { className?: string }) {
   const other: Locale = locale === "en" ? "km" : "en"
 
   return (
-    <button
+    <AnimateIcon asChild animateOnHover><button
       type="button"
       onClick={() => {
         useAppStore.getState().setLang(other)
@@ -143,6 +144,6 @@ export function LanguageToggleLink({ className }: { className?: string }) {
           , {t("switchTo")} <span lang={other}>{labels[other]}</span>
         </span>
       </span>
-    </button>
+    </button></AnimateIcon>
   )
 }

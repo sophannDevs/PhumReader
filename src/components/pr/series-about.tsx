@@ -1,6 +1,6 @@
 "use client"
 
-import { CircleAlertIcon } from "lucide-react"
+import { CircleAlertIcon } from "@/components/animate-ui/icons/circle-alert"
 import { useTranslations } from "@/i18n/translations"
 import { useReport } from "@/components/pr/report-dialog"
 import { Badge } from "@/components/ui/badge"

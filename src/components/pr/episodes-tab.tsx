@@ -1,6 +1,9 @@
 "use client"
 
-import { ArrowUpDownIcon, BookOpenIcon, RotateCcwIcon, ZapIcon } from "lucide-react"
+import { ArrowUpDownIcon } from "@/components/animate-ui/icons/arrow-up-down"
+import { BookOpenIcon } from "@/components/animate-ui/icons/book-open"
+import { RotateCcwIcon } from "@/components/animate-ui/icons/rotate-ccw"
+import { ZapIcon } from "@/components/animate-ui/icons/zap"
 import { useLocale } from "next-intl"
 import { useTranslations } from "@/i18n/translations"
 import { useId, useMemo, useState } from "react"

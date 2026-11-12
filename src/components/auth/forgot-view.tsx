@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useMutation } from "@tanstack/react-query"
-import { MailCheckIcon } from "lucide-react"
+import { MailCheckIcon } from "@/components/animate-ui/icons/mail-check"
 import { useTranslations } from "@/i18n/translations"
 import { useEffect } from "react"
 import { useForm, useWatch } from "react-hook-form"

@@ -1,6 +1,9 @@
 "use client"
 
-import { BookOpenIcon, CopyIcon, HomeIcon, RefreshCwIcon } from "lucide-react"
+import { BookOpenIcon } from "@/components/animate-ui/icons/book-open"
+import { CopyIcon } from "@/components/animate-ui/icons/copy"
+import { HouseIcon as HomeIcon } from "@/components/animate-ui/icons/house"
+import { RefreshCwIcon } from "@/components/animate-ui/icons/refresh-cw"
 import { useTranslations } from "@/i18n/translations"
 import { startTransition, useEffect, useRef, useState } from "react"
 import { toast } from "sonner"

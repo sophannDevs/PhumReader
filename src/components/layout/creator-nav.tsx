@@ -1,6 +1,6 @@
 "use client"
 
-import { PenLineIcon } from "lucide-react"
+import { PencilLineIcon as PenLineIcon } from "@/components/animate-ui/icons/pencil-line"
 import { useTranslations } from "@/i18n/translations"
 import { useEffect, useRef } from "react"
 import { Link, usePathname } from "@/i18n/navigation"

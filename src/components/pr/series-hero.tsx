@@ -1,12 +1,16 @@
 "use client"
 
-import { BookOpenIcon, CalendarIcon, ChevronRightIcon, ShareIcon } from "lucide-react"
+import { BookOpenIcon } from "@/components/animate-ui/icons/book-open"
+import { CalendarIcon } from "@/components/animate-ui/icons/calendar"
+import { ChevronRightIcon } from "@/components/animate-ui/icons/chevron-right"
+import { ShareIcon } from "@/components/animate-ui/icons/share"
 import Image from "next/image"
 import { useTranslations } from "@/i18n/translations"
 import { useEffect, useState } from "react"
 import { toast } from "sonner"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { ParticleBurst, useBurstOnPress } from "@/components/pr/particle-burst"
 import { Link } from "@/i18n/navigation"
 import type { Series } from "@/data"
 import { initials } from "@/lib/format"
@@ -69,6 +73,7 @@ export function SeriesHero({
   const loc = useLocalize()
   const tt = useTranslations("toasts")
   const { subscribed, toggle: toggleSubscribe } = useSubscribe(series)
+  const [subBurst, armSub] = useBurstOnPress(subscribed)
   const { episode, continuing } = useContinueTarget(series)
   const progress = useProgress(series)
   const novel = series.type === "novel"
@@ -187,8 +192,17 @@ export function SeriesHero({
                 {readLabel}
               </Link>
             </Button>
-            <Button variant="outline" size="lg" aria-pressed={subscribed} className={ghostDark} onClick={() => void toggleSubscribe()}>
-              {subscribed ? t("subscribedLabel") : t("subscribeLabel")}
+            <Button
+              variant="outline"
+              size="lg"
+              aria-pressed={subscribed}
+              className={ghostDark}
+              onClick={() => {
+                armSub()
+                void toggleSubscribe()
+              }}
+            >
+              <ParticleBurst burst={subBurst}>{subscribed ? t("subscribedLabel") : t("subscribeLabel")}</ParticleBurst>
             </Button>
             <Button variant="outline" size="icon" className={cn(ghostDark, "size-11 rounded-[10px]")} aria-label={t("copyLink")} onClick={share}>
               <ShareIcon />

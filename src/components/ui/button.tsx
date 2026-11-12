@@ -1,8 +1,9 @@
 import * as React from "react"
 import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "cn"
-import { Loader2Icon } from "lucide-react"
+import { LoaderIcon as Loader2Icon } from "@/components/animate-ui/icons/loader"
 import { Slot } from "radix-ui"
+import { AnimateIcon } from "@animate-ui/react/icons"
 
 const buttonVariants = cva(
   // 8 px radius, 2 px --ring focus ring with a 2 px gap in the page colour.
@@ -57,6 +58,8 @@ function Button({
   const Comp = asChild ? Slot.Root : "button"
 
   return (
+    // Hovering anywhere on the button plays the animation of the icons inside it.
+    <AnimateIcon asChild animateOnHover>
     <Comp
       data-slot="button"
       data-variant={variant}
@@ -75,6 +78,7 @@ function Button({
         </>
       )}
     </Comp>
+    </AnimateIcon>
   )
 }
 

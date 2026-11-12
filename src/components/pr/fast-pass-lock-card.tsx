@@ -1,6 +1,8 @@
 "use client"
 
-import { ChevronLeftIcon, CoinsIcon, ZapIcon } from "lucide-react"
+import { WalletIcon as CoinsIcon } from "@/components/animate-ui/icons/wallet"
+import { ChevronLeftIcon } from "@/components/animate-ui/icons/chevron-left"
+import { ZapIcon } from "@/components/animate-ui/icons/zap"
 import { useTranslations } from "@/i18n/translations"
 import { daysUntilFree } from "@/components/pr/episode-row"
 import { Badge } from "@/components/ui/badge"

@@ -1,4 +1,5 @@
-import { HeartIcon } from "lucide-react"
+import { AnimateIcon } from "@animate-ui/react/icons"
+import { HeartIcon } from "@/components/animate-ui/icons/heart"
 import Image from "next/image"
 import { useTranslations } from "@/i18n/translations"
 import { Badge } from "@/components/ui/badge"
@@ -49,7 +50,7 @@ export function SeriesCard({
   const novel = badges !== "none" && series.type === "novel"
 
   const card = (
-    <Link
+    <AnimateIcon asChild animateOnHover><Link
       href={seriesHref(series)}
       onClick={onClick}
       className={cn(
@@ -92,7 +93,7 @@ export function SeriesCard({
           </p>
         )}
       </div>
-    </Link>
+    </Link></AnimateIcon>
   )
 
   // Cards above the fold (priority) render visible at once so they never flash or delay LCP.

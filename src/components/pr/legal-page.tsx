@@ -1,6 +1,8 @@
 "use client"
 
-import { AlertCircleIcon, InfoIcon } from "lucide-react"
+import { AnimateIcon } from "@animate-ui/react/icons"
+import { CircleAlertIcon as AlertCircleIcon } from "@/components/animate-ui/icons/circle-alert"
+import { InfoIcon } from "@/components/animate-ui/icons/info"
 import { useLocale } from "next-intl"
 import { useTranslations } from "@/i18n/translations"
 import { useEffect, useRef } from "react"
@@ -63,10 +65,10 @@ export function LegalPage({ doc }: { doc: PolicyId }) {
           )
         })}
         <hr className="my-2.5 hidden border-border lg:block" />
-        <Link href="/help" className={cn(navItem, "hidden lg:flex")}>
+        <AnimateIcon asChild animateOnHover><Link href="/help" className={cn(navItem, "hidden lg:flex")}>
           <InfoIcon className="size-3.5" aria-hidden />
           {t("helpCenter")}
-        </Link>
+        </Link></AnimateIcon>
       </nav>
 
       <article className="flex min-w-0 flex-col gap-5">

@@ -1,12 +1,18 @@
 "use client"
 
-import { ArrowRightIcon, CheckIcon, ClockIcon, MessageSquareIcon, ShieldIcon, SmartphoneIcon, XIcon } from "lucide-react"
+import { ShieldCheckIcon as ShieldIcon } from "@/components/animate-ui/icons/shield-check"
+import { ArrowRightIcon } from "@/components/animate-ui/icons/arrow-right"
+import { CheckIcon } from "@/components/animate-ui/icons/check"
+import { ClockIcon } from "@/components/animate-ui/icons/clock"
+import { MessageSquareIcon } from "@/components/animate-ui/icons/message-square"
+import { SmartphoneIcon } from "@/components/animate-ui/icons/smartphone"
+import { XIcon } from "@/components/animate-ui/icons/x"
 import { useTranslations } from "@/i18n/translations"
 import { useCallback, useEffect, useState } from "react"
 import { type Flow, packTotal } from "@/components/pr/checkout-flow"
 import { AutoHeight } from "@animate-ui/react/primitives/effects/auto-height"
 import { Effect } from "@animate-ui/react/primitives/effects/effect"
-import { Particles, ParticlesEffect } from "@animate-ui/react/primitives/effects/particles"
+import { SuccessBurst } from "@/components/pr/particle-burst"
 import type { Checkout } from "@/lib/api/coins"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -116,14 +122,13 @@ function SuccessPanel({ flow, onReset }: { flow: Extract<Flow, { step: "success"
   return (
     <div role="status" className="flex flex-col items-center gap-3 px-5 py-9 text-center">
       {/* The check zooms in, then a small ring of dots bursts out of it (Animate UI Particles). */}
-      <Particles animate className="flex size-14 text-primary" aria-hidden>
+      <SuccessBurst>
         <Effect asChild fade zoom={{ initialScale: 0.4 }}>
-          <span className="inline-flex size-14 items-center justify-center rounded-full bg-primary text-primary-foreground">
+          <span aria-hidden className="inline-flex size-14 items-center justify-center rounded-full bg-primary text-primary-foreground">
             <CheckIcon className="size-[26px]" strokeWidth={2.5} aria-hidden />
           </span>
         </Effect>
-        <ParticlesEffect side="top" align="center" sideOffset={-28} count={10} radius={40} duration={0.8} holdDelay={0.02} delay={0.25} className="size-2 rounded-full bg-primary" />
-      </Particles>
+      </SuccessBurst>
       <h2 id="co-title" className="type-h2 tabular-nums">{t("successTitle", { count: flow.added })}</h2>
       <p className="text-[13px] leading-[18px] text-muted-foreground">
         {t.rich("successBody", {

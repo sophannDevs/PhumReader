@@ -1,7 +1,7 @@
 "use client"
 
 import { useQueryClient } from "@tanstack/react-query"
-import { CheckIcon } from "lucide-react"
+import { CheckIcon } from "@/components/animate-ui/icons/check"
 import { useTranslations } from "@/i18n/translations"
 import { createContext, useCallback, useContext, useMemo, useState } from "react"
 import { toast } from "sonner"

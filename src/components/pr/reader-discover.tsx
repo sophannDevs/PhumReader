@@ -1,6 +1,7 @@
 "use client";
 
-import { ChevronRightIcon } from "lucide-react";
+import { AnimateIcon } from "@animate-ui/react/icons"
+import { ChevronRightIcon } from "@/components/animate-ui/icons/chevron-right"
 import Image from "next/image";
 import { useTranslations } from "@/i18n/translations";
 import type { ReactNode } from "react";
@@ -85,13 +86,13 @@ function Block({
   return (
     <section>
       <h2 className="mb-1 flex items-center gap-1 border-b pb-3 text-xl font-semibold">
-        <Link
+        <AnimateIcon asChild animateOnHover><Link
           href="/rankings"
           className="flex items-center gap-1 rounded-sm outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring"
         >
           {title}
           <ChevronRightIcon className="size-5" aria-hidden />
-        </Link>
+        </Link></AnimateIcon>
       </h2>
       <ol className={cn("flex flex-col", tones[tone].line)}>{children}</ol>
     </section>

@@ -2,7 +2,11 @@
 
 import { useTheme } from "@/lib/theme"
 import { Toaster as Sonner, type ToasterProps } from "sonner"
-import { CheckIcon, InfoIcon, TriangleAlertIcon, XIcon, Loader2Icon } from "lucide-react"
+import { CheckIcon } from "@/components/animate-ui/icons/check"
+import { InfoIcon } from "@/components/animate-ui/icons/info"
+import { TriangleAlertIcon } from "@/components/animate-ui/icons/triangle-alert"
+import { XIcon } from "@/components/animate-ui/icons/x"
+import { LoaderIcon as Loader2Icon } from "@/components/animate-ui/icons/loader"
 
 /**
  * Popover-coloured card (follows the theme), green check dot, md shadow, top-right.

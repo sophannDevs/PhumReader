@@ -1,6 +1,7 @@
 "use client"
 
-import { SettingsIcon, SparklesIcon } from "lucide-react"
+import { SettingsIcon } from "@/components/animate-ui/icons/settings"
+import { SparklesIcon } from "@/components/animate-ui/icons/sparkles"
 import { useQueryClient } from "@tanstack/react-query"
 import { useTranslations } from "@/i18n/translations"
 import { useState } from "react"

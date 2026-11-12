@@ -1,6 +1,8 @@
 "use client"
 
-import { CheckIcon, type LucideIcon } from "lucide-react"
+import { AnimateIcon } from "@animate-ui/react/icons"
+import { CheckIcon } from "@/components/animate-ui/icons/check"
+import type { AnimatedIcon as AnimatedIcon } from "@/components/animate-ui/icons/types"
 import { cn } from "@/lib/utils"
 import { Num } from "@/i18n/num"
 import { SlidingTab, SlidingTabs } from "@/components/ui/sliding-tabs"
@@ -22,7 +24,7 @@ export function StateBox({
   className,
   role,
 }: {
-  icon: LucideIcon
+  icon: AnimatedIcon
   tone?: "default" | "bad"
   title: string
   text?: string
@@ -74,7 +76,7 @@ export function Chip({
   className?: string
 }) {
   return (
-    <button
+    <AnimateIcon asChild animateOnHover><button
       type="button"
       role={role}
       aria-checked={role === "radio" ? selected : undefined}
@@ -91,7 +93,7 @@ export function Chip({
       {count !== undefined ? (
         <span className={cn("text-[11px] tabular-nums", selected ? "text-[#d4d4d8]" : "text-muted-foreground")}><Num>{count}</Num></span>
       ) : null}
-    </button>
+    </button></AnimateIcon>
   )
 }
 
@@ -165,7 +167,7 @@ export function SectionHead({
   subtitle?: string
   action?: React.ReactNode
   size?: "h2" | "h3"
-  icon?: LucideIcon
+  icon?: AnimatedIcon
   className?: string
 }) {
   return (

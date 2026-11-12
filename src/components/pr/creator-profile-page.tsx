@@ -2,7 +2,13 @@
 
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
-import { AlertCircleIcon, BookOpenIcon, CheckIcon, EyeIcon, MegaphoneIcon, PlusIcon, ShareIcon } from "lucide-react"
+import { CircleAlertIcon as AlertCircleIcon } from "@/components/animate-ui/icons/circle-alert"
+import { BookOpenIcon } from "@/components/animate-ui/icons/book-open"
+import { CheckIcon } from "@/components/animate-ui/icons/check"
+import { EyeIcon } from "@/components/animate-ui/icons/eye"
+import { MegaphoneIcon } from "@/components/animate-ui/icons/megaphone"
+import { PlusIcon } from "@/components/animate-ui/icons/plus"
+import { ShareIcon } from "@/components/animate-ui/icons/share"
 import Image from "next/image"
 import { useLocale } from "next-intl"
 import { useTranslations } from "@/i18n/translations"
@@ -16,6 +22,7 @@ import { useReport } from "@/components/pr/report-dialog"
 import { StateBox } from "@/components/pr/v2-primitives"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { ParticleBurst, useBurstOnPress } from "@/components/pr/particle-burst"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -146,6 +153,7 @@ function Profile({ handle, baseName, isOwner, api }: { handle: string; baseName:
   const failed = useFailed()
   const storeFollowing = useAppStore((s) => s.follows.includes(baseName))
   const following = api ? api.following : storeFollowing
+  const [followBurst, armFollow] = useBurstOnPress(following)
   const blocked = useAppStore((s) => s.blocked.includes(baseName))
   const [editing, setEditing] = useState(false)
   const [tab, setTab] = useState("series")
@@ -217,6 +225,7 @@ function Profile({ handle, baseName, isOwner, api }: { handle: string; baseName:
 
   async function toggleFollow() {
     if (!user) return askToLogin()
+    armFollow()
     if (!api) {
       useAppStore.getState().toggleFollow(baseName)
       toast.success(tt(following ? "unfollowed" : "followed", { name }))
@@ -342,7 +351,7 @@ function Profile({ handle, baseName, isOwner, api }: { handle: string; baseName:
                 <div className="flex shrink-0 items-center gap-2 max-md:w-full">
                   {isOwner ? null : (
                     <Button variant={following ? "secondary" : "brand"} aria-pressed={following} className="max-md:flex-1" onClick={() => void toggleFollow()}>
-                      {following ? <CheckIcon aria-hidden /> : <PlusIcon aria-hidden />}
+                      <ParticleBurst burst={followBurst}>{following ? <CheckIcon aria-hidden /> : <PlusIcon aria-hidden />}</ParticleBurst>
                       {following ? t("following") : t("follow")}
                     </Button>
                   )}

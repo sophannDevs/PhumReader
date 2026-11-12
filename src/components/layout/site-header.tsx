@@ -1,6 +1,14 @@
 "use client"
 
-import { BellIcon, BookOpenIcon, CoinsIcon, LogOutIcon, PenLineIcon, SearchIcon, ShieldCheckIcon, SlidersHorizontalIcon } from "lucide-react"
+import { AnimateIcon } from "@animate-ui/react/icons"
+import { WalletIcon as CoinsIcon } from "@/components/animate-ui/icons/wallet"
+import { PencilLineIcon as PenLineIcon } from "@/components/animate-ui/icons/pencil-line"
+import { BellIcon } from "@/components/animate-ui/icons/bell"
+import { BookOpenIcon } from "@/components/animate-ui/icons/book-open"
+import { LogOutIcon } from "@/components/animate-ui/icons/log-out"
+import { SearchIcon } from "@/components/animate-ui/icons/search"
+import { ShieldCheckIcon } from "@/components/animate-ui/icons/shield-check"
+import { SlidersHorizontalIcon } from "@/components/animate-ui/icons/sliders-horizontal"
 import { useLocale } from "next-intl"
 import { useTranslations } from "@/i18n/translations"
 import { useSyncExternalStore } from "react"
@@ -100,7 +108,7 @@ export function SiteHeader({
 
         <div className="ml-auto flex items-center gap-2 max-[420px]:gap-1">
           {/* Desktop: 280 px trigger with ⌘K; tablet: 36 px icon; phone: ghost icon */}
-          <button
+          <AnimateIcon asChild animateOnHover><button
             type="button"
             onClick={onSearchOpen}
             aria-label={t("searchPlaceholder")}
@@ -115,7 +123,7 @@ export function SiteHeader({
             >
               ⌘K
             </kbd>
-          </button>
+          </button></AnimateIcon>
           <Button variant="ghost" size="icon" aria-label={t("search")} onClick={onSearchOpen} className="md:hidden">
             <SearchIcon className="size-[18px]" />
           </Button>

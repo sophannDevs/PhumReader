@@ -1,6 +1,7 @@
 "use client"
 
-import { SearchIcon, XIcon } from "lucide-react"
+import { SearchIcon } from "@/components/animate-ui/icons/search"
+import { XIcon } from "@/components/animate-ui/icons/x"
 import { useTranslations } from "@/i18n/translations"
 import { useMemo, useState } from "react"
 import { HelpContact } from "@/components/pr/help-contact"

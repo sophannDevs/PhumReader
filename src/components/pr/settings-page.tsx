@@ -1,7 +1,8 @@
 "use client"
 
 import { useQueryClient } from "@tanstack/react-query"
-import { ChevronRightIcon, SettingsIcon } from "lucide-react"
+import { ChevronRightIcon } from "@/components/animate-ui/icons/chevron-right"
+import { SettingsIcon } from "@/components/animate-ui/icons/settings"
 import { useLocale } from "next-intl"
 import { useTranslations } from "@/i18n/translations"
 import { useEffect, useId, useRef, useState } from "react"

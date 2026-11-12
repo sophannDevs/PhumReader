@@ -1,7 +1,8 @@
 "use client"
 
 import { useQueryClient } from "@tanstack/react-query"
-import { AlertCircleIcon, CheckIcon } from "lucide-react"
+import { CircleAlertIcon as AlertCircleIcon } from "@/components/animate-ui/icons/circle-alert"
+import { CheckIcon } from "@/components/animate-ui/icons/check"
 import { useLocale } from "next-intl"
 import { useTranslations } from "@/i18n/translations"
 import { createContext, useCallback, useContext, useEffect, useRef } from "react"

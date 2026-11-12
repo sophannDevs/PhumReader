@@ -3,7 +3,8 @@
 import * as React from "react"
 import { cn } from "cn"
 import { Accordion as AccordionPrimitive } from "@animate-ui/react/primitives/radix-ui"
-import { ChevronDownIcon, ChevronUpIcon } from "lucide-react"
+import { ChevronDownIcon } from "@/components/animate-ui/icons/chevron-down"
+import { ChevronUpIcon } from "@/components/animate-ui/icons/chevron-up"
 
 function Accordion({
   className,

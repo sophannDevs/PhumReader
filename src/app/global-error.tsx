@@ -1,7 +1,9 @@
 "use client"
 
+import { AnimateIcon } from "@animate-ui/react/icons"
 import "./globals.css"
-import { RefreshCwIcon, HomeIcon } from "lucide-react"
+import { RefreshCwIcon } from "@/components/animate-ui/icons/refresh-cw"
+import { HouseIcon as HomeIcon } from "@/components/animate-ui/icons/house"
 import { useEffect, useState, useSyncExternalStore } from "react"
 import { ErrorArt } from "@/components/pr/error-art"
 import { reportError } from "@/lib/error-report"
@@ -64,15 +66,15 @@ export default function GlobalError({ error, reset }: { error: Error & { digest?
                 </h1>
                 <p className="m-0 max-w-[52ch] text-[15px] leading-6 text-muted-foreground md:text-base md:leading-[26px]">{t.server.body}</p>
                 <div className="flex flex-wrap gap-2 pt-1 max-md:[&>*]:flex-auto">
-                  <button type="button" onClick={reset} className={`${button} bg-primary font-semibold text-primary-foreground hover:bg-primary-hover`}>
+                  <AnimateIcon asChild animateOnHover><button type="button" onClick={reset} className={`${button} bg-primary font-semibold text-primary-foreground hover:bg-primary-hover`}>
                     <RefreshCwIcon aria-hidden />
                     {t.retry}
-                  </button>
+                  </button></AnimateIcon>
                   {/* A full page load: the app's own navigation may be what failed. */}
-                  <a href={home} className={`${button} border bg-background shadow-xs hover:bg-accent`}>
+                  <AnimateIcon asChild animateOnHover><a href={home} className={`${button} border bg-background shadow-xs hover:bg-accent`}>
                     <HomeIcon aria-hidden />
                     {t.home}
-                  </a>
+                  </a></AnimateIcon>
                 </div>
               </div>
             </div>

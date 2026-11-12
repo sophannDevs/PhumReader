@@ -1,6 +1,6 @@
 "use client"
 
-import { HomeIcon } from "lucide-react"
+import { HouseIcon as HomeIcon } from "@/components/animate-ui/icons/house"
 import { useSearchParams } from "next/navigation"
 import { useTranslations } from "@/i18n/translations"
 import { ErrorHelp, ErrorHero, errorActions } from "@/components/pr/error-page"

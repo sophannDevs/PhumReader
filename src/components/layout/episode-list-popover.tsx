@@ -1,6 +1,8 @@
 "use client"
 
-import { ListIcon, LockIcon } from "lucide-react"
+import { AnimateIcon } from "@animate-ui/react/icons"
+import { ListIcon } from "@/components/animate-ui/icons/list"
+import { LockIcon } from "@/components/animate-ui/icons/lock"
 import Image from "next/image"
 import { useTranslations } from "@/i18n/translations"
 import { useState } from "react"
@@ -65,12 +67,12 @@ export function EpisodeListPopover({
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
+      <AnimateIcon asChild animateOnHover><PopoverTrigger asChild>
         <Button variant="ghost" size="sm" className={triggerClassName}>
           <ListIcon className="size-3.5" aria-hidden />
           <span className="max-md:sr-only">{t(novel ? "chapters" : "episodes")}</span>
         </Button>
-      </PopoverTrigger>
+      </PopoverTrigger></AnimateIcon>
       <PopoverContent
         align="end"
         sideOffset={8}
@@ -98,7 +100,7 @@ export function EpisodeListPopover({
             const isCurrent = e.n === current
             return (
               <li key={e.n}>
-                <button
+                <AnimateIcon asChild animateOnHover><button
                   type="button"
                   aria-current={isCurrent ? "true" : undefined}
                   onClick={() => pick(e.n)}
@@ -137,7 +139,7 @@ export function EpisodeListPopover({
                     )
                   ) : null}
                   {isCurrent && !novel ? <Badge variant="new">{t("now")}</Badge> : null}
-                </button>
+                </button></AnimateIcon>
               </li>
             )
           })}

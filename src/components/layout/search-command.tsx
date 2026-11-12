@@ -1,7 +1,7 @@
 "use client"
 
 import { Command as CommandPrimitive } from "cmdk"
-import { SearchIcon } from "lucide-react"
+import { SearchIcon } from "@/components/animate-ui/icons/search"
 import Image from "next/image"
 import { useEffect, useMemo, useState } from "react"
 import { useTranslations } from "@/i18n/translations"

@@ -1,18 +1,16 @@
 "use client"
 
-import {
-  AlertCircleIcon,
-  CheckIcon,
-  ChevronRightIcon,
-  ClockIcon,
-  CopyIcon,
-  ExternalLinkIcon,
-  LogInIcon,
-  MessageSquareIcon,
-  ReceiptTextIcon,
-  Undo2Icon,
-  XIcon,
-} from "lucide-react"
+import { ExternalLinkIcon as ExternalLinkIcon } from "@/components/animate-ui/icons/external-link"
+import { FileTextIcon as ReceiptTextIcon } from "@/components/animate-ui/icons/file-text"
+import { Undo2Icon as Undo2Icon } from "@/components/animate-ui/icons/undo-2"
+import { CircleAlertIcon as AlertCircleIcon } from "@/components/animate-ui/icons/circle-alert"
+import { CheckIcon } from "@/components/animate-ui/icons/check"
+import { ChevronRightIcon } from "@/components/animate-ui/icons/chevron-right"
+import { ClockIcon } from "@/components/animate-ui/icons/clock"
+import { CopyIcon } from "@/components/animate-ui/icons/copy"
+import { LogInIcon } from "@/components/animate-ui/icons/log-in"
+import { MessageSquareIcon } from "@/components/animate-ui/icons/message-square"
+import { XIcon } from "@/components/animate-ui/icons/x"
 import { useQueryClient } from "@tanstack/react-query"
 import { useLocale } from "next-intl"
 import { useTranslations } from "@/i18n/translations"

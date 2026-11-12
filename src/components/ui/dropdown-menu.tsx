@@ -3,7 +3,9 @@
 import * as React from "react"
 import { cn } from "cn"
 import { DropdownMenu as DropdownMenuPrimitive } from "@animate-ui/react/primitives/radix-ui"
-import { CheckIcon, ChevronRightIcon } from "lucide-react"
+import { AnimateIcon } from "@animate-ui/react/icons"
+import { CheckIcon } from "lucide-react"
+import { ChevronRightIcon } from "@/components/animate-ui/icons/chevron-right"
 
 function DropdownMenu({
   ...props
@@ -67,6 +69,7 @@ function DropdownMenuItem({
   variant?: "default" | "destructive"
 }) {
   return (
+    <AnimateIcon asChild animateOnHover>
     <DropdownMenuPrimitive.Item
       data-slot="dropdown-menu-item"
       data-inset={inset}
@@ -77,6 +80,7 @@ function DropdownMenuItem({
       )}
       {...props}
     />
+    </AnimateIcon>
   )
 }
 

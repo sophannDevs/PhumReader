@@ -1,6 +1,8 @@
 "use client"
 
-import { AlertCircleIcon, CheckCircle2Icon, ChevronRightIcon } from "lucide-react"
+import { CircleAlertIcon as AlertCircleIcon } from "@/components/animate-ui/icons/circle-alert"
+import { CircleCheckIcon as CheckCircle2Icon } from "@/components/animate-ui/icons/circle-check"
+import { ChevronRightIcon } from "@/components/animate-ui/icons/chevron-right"
 import { useLocale } from "next-intl"
 import { useTranslations } from "@/i18n/translations"
 import { ErrorArt, type ErrorArtKind } from "@/components/pr/error-art"

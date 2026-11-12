@@ -1,6 +1,9 @@
 "use client"
 
-import { CircleAlertIcon, CoinsIcon, InfoIcon, ZapIcon } from "lucide-react"
+import { WalletIcon as CoinsIcon } from "@/components/animate-ui/icons/wallet"
+import { CircleAlertIcon } from "@/components/animate-ui/icons/circle-alert"
+import { InfoIcon } from "@/components/animate-ui/icons/info"
+import { ZapIcon } from "@/components/animate-ui/icons/zap"
 import Image from "next/image"
 import { useTranslations } from "@/i18n/translations"
 import { CoinIcon } from "@/components/pr/coin-icon"

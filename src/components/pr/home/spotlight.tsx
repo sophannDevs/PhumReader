@@ -1,11 +1,16 @@
 "use client"
 
-import { ArrowRightIcon, BookOpenIcon, CalendarIcon, HeartIcon, UserIcon } from "lucide-react"
+import { ArrowRightIcon } from "@/components/animate-ui/icons/arrow-right"
+import { BookOpenIcon } from "@/components/animate-ui/icons/book-open"
+import { CalendarIcon } from "@/components/animate-ui/icons/calendar"
+import { HeartIcon } from "@/components/animate-ui/icons/heart"
+import { UserIcon } from "@/components/animate-ui/icons/user"
 import Image from "next/image"
 import { useTranslations } from "@/i18n/translations"
 import { useState } from "react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { ParticleBurst, useBurstOnPress } from "@/components/pr/particle-burst"
 import { Skeleton } from "@/components/ui/skeleton"
 import type { HeroSlideView } from "@/data"
 import { Link } from "@/i18n/navigation"
@@ -86,6 +91,7 @@ function SpotlightMain({ slide }: { slide: HeroSlideView }) {
   const s = slide.seriesData
   const novel = s.type === "novel"
   const { subscribed, toggle } = useSubscribe(s)
+  const [subBurst, armSub] = useBurstOnPress(subscribed)
 
   return (
     <article
@@ -140,10 +146,13 @@ function SpotlightMain({ slide }: { slide: HeroSlideView }) {
             type="button"
             size="lg"
             aria-pressed={subscribed}
-            onClick={() => void toggle()}
+            onClick={() => {
+              armSub()
+              void toggle()
+            }}
             className="border-white/20 bg-white/10 text-[#fafafa] hover:bg-white/[0.18]"
           >
-            {subscribed ? t("subscribed") : t("subscribe")}
+            <ParticleBurst burst={subBurst}>{subscribed ? t("subscribed") : t("subscribe")}</ParticleBurst>
           </Button>
           <Button asChild variant="link" size="lg" className="text-[#fafafa] no-underline hover:text-white">
             <Link href={seriesHref(s)}>

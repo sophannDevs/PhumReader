@@ -1,6 +1,7 @@
 "use client"
 
-import { GiftIcon, ZapIcon } from "lucide-react"
+import { GiftIcon } from "@/components/animate-ui/icons/gift"
+import { ZapIcon } from "@/components/animate-ui/icons/zap"
 import { useTranslations } from "@/i18n/translations"
 import { useEffect, useRef } from "react"
 import { CheckoutCard } from "@/components/pr/checkout-card"

@@ -1,4 +1,6 @@
-import { BellIcon, BookmarkIcon, ZapIcon } from "lucide-react"
+import { BellIcon } from "@/components/animate-ui/icons/bell"
+import { BookmarkIcon } from "@/components/animate-ui/icons/bookmark"
+import { ZapIcon } from "@/components/animate-ui/icons/zap"
 import Image from "next/image"
 import { useTranslations } from "@/i18n/translations"
 import { AuthCardTop } from "@/components/auth/auth-card-top"

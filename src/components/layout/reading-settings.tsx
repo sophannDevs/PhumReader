@@ -1,6 +1,10 @@
 "use client"
 
-import { MinusIcon, PlusIcon, SlidersHorizontalIcon, TypeIcon } from "lucide-react"
+import { AnimateIcon } from "@animate-ui/react/icons"
+import { MinusIcon } from "@/components/animate-ui/icons/minus"
+import { PlusIcon } from "@/components/animate-ui/icons/plus"
+import { SlidersHorizontalIcon } from "@/components/animate-ui/icons/sliders-horizontal"
+import { TypeIcon } from "@/components/animate-ui/icons/type"
 import { useTranslations } from "@/i18n/translations"
 import { useId } from "react"
 import { toast } from "sonner"
@@ -85,11 +89,11 @@ export function ComicSettingsPopover({ triggerClassName }: { triggerClassName?: 
 
   return (
     <Popover>
-      <PopoverTrigger asChild>
+      <AnimateIcon asChild animateOnHover><PopoverTrigger asChild>
         <Button variant="ghost" size="icon-sm" aria-label={t("settings")} className={triggerClassName}>
           <SlidersHorizontalIcon aria-hidden />
         </Button>
-      </PopoverTrigger>
+      </PopoverTrigger></AnimateIcon>
       <PopoverContent
         align="end"
         sideOffset={8}
@@ -235,12 +239,12 @@ export function ReadingSettingsPopover({ triggerClassName }: { triggerClassName?
 
   return (
     <Popover>
-      <PopoverTrigger asChild>
+      <AnimateIcon asChild animateOnHover><PopoverTrigger asChild>
         <Button variant="ghost" size="sm" aria-label={t("settings")} className={triggerClassName}>
           <TypeIcon className="size-3.5" aria-hidden />
           <span className="max-md:hidden">{t("settingsLabel")}</span>
         </Button>
-      </PopoverTrigger>
+      </PopoverTrigger></AnimateIcon>
       <PopoverContent
         align="end"
         sideOffset={8}

@@ -1,6 +1,6 @@
 "use client"
 
-import { PenLineIcon } from "lucide-react"
+import { PencilLineIcon as PenLineIcon } from "@/components/animate-ui/icons/pencil-line"
 import Image from "next/image"
 import { useTranslations } from "@/i18n/translations"
 import { Eyebrow, SectionHead } from "@/components/pr/v2-primitives"

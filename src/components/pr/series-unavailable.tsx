@@ -1,6 +1,8 @@
 "use client"
 
-import { BookOpenIcon, ChevronRightIcon, HomeIcon } from "lucide-react"
+import { BookOpenIcon } from "@/components/animate-ui/icons/book-open"
+import { ChevronRightIcon } from "@/components/animate-ui/icons/chevron-right"
+import { HouseIcon as HomeIcon } from "@/components/animate-ui/icons/house"
 import Image from "next/image"
 import { useLocale } from "next-intl"
 import { useTranslations } from "@/i18n/translations"

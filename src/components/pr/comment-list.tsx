@@ -1,7 +1,8 @@
 "use client"
 
-import { ThumbsUpIcon } from "lucide-react"
+import { ThumbsUpIcon } from "@/components/animate-ui/icons/thumbs-up"
 import { useTranslations } from "@/i18n/translations"
+import type { ReactNode } from "react"
 import { CommentAvatar } from "@/components/pr/comment-thread"
 import { useReport } from "@/components/pr/report-dialog"
 import { Badge } from "@/components/ui/badge"
@@ -14,9 +15,42 @@ import { useUser } from "@/lib/store"
 import { cn } from "@/lib/utils"
 import { Num } from "@/i18n/num"
 import { Effect } from "@animate-ui/react/primitives/effects/effect"
+import { ParticleBurst, useBurstOnPress } from "@/components/pr/particle-burst"
 
 /** A comment plus the state the page owns (stable id, whether this reader liked it). */
 export type CommentView = Comment & { id: string; liked?: boolean; canDelete?: boolean; mine?: boolean; authorId?: string }
+
+/** The Like toggle: the thumb bursts into a small ring of dots when the reader's press likes the comment. */
+function LikeToggle({
+  liked,
+  className,
+  onToggle,
+  children,
+}: {
+  liked: boolean
+  className?: string
+  onToggle: () => void
+  children: ReactNode
+}) {
+  const [burst, arm] = useBurstOnPress(liked)
+  return (
+    <Button
+      variant="ghost"
+      size="sm"
+      aria-pressed={liked}
+      className={className}
+      onClick={() => {
+        arm()
+        onToggle()
+      }}
+    >
+      <ParticleBurst burst={burst}>
+        <ThumbsUpIcon className={cn("size-3.5", liked && "fill-primary")} aria-hidden />
+      </ParticleBurst>
+      {children}
+    </Button>
+  )
+}
 
 /**
  * Flat comments (series Comments tab preview, the readers' end cards): avatar, name · time, "Top" badge, then
@@ -89,17 +123,14 @@ export function CommentList({
                 </p>
                 <p className="text-sm leading-[21px] [overflow-wrap:anywhere]">{c.text}</p>
                 <div className="flex flex-wrap items-center gap-1">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    aria-pressed={!!c.liked}
+                  <LikeToggle
+                    liked={!!c.liked}
                     className={cn("tabular-nums", ghost, c.liked && (dark ? "text-primary" : "text-brand-ink"))}
-                    onClick={() => onToggleLike(c.id)}
+                    onToggle={() => onToggleLike(c.id)}
                   >
-                    <ThumbsUpIcon className={cn("size-3.5", c.liked && "fill-primary")} aria-hidden />
                     <span className="sr-only">{t("likeSr", { name: c.name })} </span>
                     <Num>{formatCount(count)}</Num>
-                  </Button>
+                  </LikeToggle>
                   <Button variant="ghost" size="sm" className={ghost} onClick={() => onReply(c.name)}>
                     {t("reply")}
                   </Button>

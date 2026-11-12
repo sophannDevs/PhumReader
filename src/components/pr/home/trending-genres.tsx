@@ -1,6 +1,10 @@
 "use client"
 
-import { AlertCircleIcon, RefreshCwIcon, SparklesIcon, TrendingUpIcon, TrophyIcon } from "lucide-react"
+import { CircleAlertIcon as AlertCircleIcon } from "@/components/animate-ui/icons/circle-alert"
+import { RefreshCwIcon } from "@/components/animate-ui/icons/refresh-cw"
+import { SparklesIcon } from "@/components/animate-ui/icons/sparkles"
+import { TrendingUpIcon } from "@/components/animate-ui/icons/trending-up"
+import { TrophyIcon } from "@/components/animate-ui/icons/trophy"
 import { useTranslations } from "@/i18n/translations"
 import { useState } from "react"
 import { toast } from "sonner"

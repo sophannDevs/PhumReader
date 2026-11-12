@@ -1,7 +1,11 @@
 "use client"
 
+import { AnimateIcon } from "@animate-ui/react/icons"
 import { useQueryClient } from "@tanstack/react-query"
-import { AlertCircleIcon, CheckIcon, ChevronLeftIcon, PlusIcon } from "lucide-react"
+import { CircleAlertIcon as AlertCircleIcon } from "@/components/animate-ui/icons/circle-alert"
+import { CheckIcon } from "@/components/animate-ui/icons/check"
+import { ChevronLeftIcon } from "@/components/animate-ui/icons/chevron-left"
+import { PlusIcon } from "@/components/animate-ui/icons/plus"
 import Image from "next/image"
 import { useSearchParams } from "next/navigation"
 import { useLocale } from "next-intl"
@@ -535,7 +539,7 @@ function Wizard({ workId, seed }: { workId: string | null; seed: Partial<Draft> 
             const isDone = i < ix
             return (
               <li key={s}>
-                <button
+                <AnimateIcon asChild animateOnHover><button
                   type="button"
                   disabled={i > ix}
                   aria-current={cur ? "step" : undefined}
@@ -560,7 +564,7 @@ function Wizard({ workId, seed }: { workId: string | null; seed: Partial<Draft> 
                     {t(`step.${s}`)}
                     {isDone ? <span className="sr-only"> ({t("tickDone")})</span> : null}
                   </span>
-                </button>
+                </button></AnimateIcon>
               </li>
             )
           })}
@@ -819,7 +823,7 @@ function Wizard({ workId, seed }: { workId: string | null; seed: Partial<Draft> 
                           </div>
                         </div>
                       ) : (
-                        <button
+                        <AnimateIcon asChild animateOnHover><button
                           type="button"
                           onClick={pickCover}
                           aria-describedby={bad("cover") ? "cs-cover-e" : undefined}
@@ -847,7 +851,7 @@ function Wizard({ workId, seed }: { workId: string | null; seed: Partial<Draft> 
                           <PlusIcon className="size-[22px]" aria-hidden />
                           <span className="text-[13px] leading-[18px] font-semibold">{t("chooseCover")}</span>
                           <span className="text-xs leading-4 text-muted-foreground">{t("orDrag")}</span>
-                        </button>
+                        </button></AnimateIcon>
                       )}
                       {coverError ? (
                         <FieldHint error>

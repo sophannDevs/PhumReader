@@ -1,9 +1,11 @@
 "use client"
 
-import { CheckIcon, Loader2Icon } from "lucide-react"
+import { CheckIcon } from "@/components/animate-ui/icons/check"
+import { LoaderIcon as Loader2Icon } from "@/components/animate-ui/icons/loader"
 import { useTranslations } from "@/i18n/translations"
 import { useEffect, useState } from "react"
 import { usePlaceName } from "@/components/auth/use-place-name"
+import { SuccessBurst } from "@/components/pr/particle-burst"
 import { useRouter } from "@/i18n/navigation"
 import type { Locale } from "@/i18n/routing"
 import { firstName } from "@/lib/format"
@@ -33,9 +35,11 @@ export function DoneView({ name, isNew, ui }: { name: string; isNew: boolean; ui
 
   return (
     <div className="flex flex-col items-center gap-[18px] py-6 text-center" role="status">
-      <span aria-hidden className="inline-flex size-14 items-center justify-center rounded-full bg-primary text-primary-foreground">
-        <CheckIcon className="size-[22px]" strokeWidth={2.5} />
-      </span>
+      <SuccessBurst>
+        <span aria-hidden className="inline-flex size-14 items-center justify-center rounded-full bg-primary text-primary-foreground">
+          <CheckIcon className="size-[22px]" strokeWidth={2.5} />
+        </span>
+      </SuccessBurst>
       <h1 id="auth-title" className="text-2xl leading-[30px] font-bold tracking-[-0.02em] max-md:text-[22px] max-md:leading-7">
         {t(isNew ? "helloNew" : "welcomeBack", { name: firstName(name) || name })}
       </h1>

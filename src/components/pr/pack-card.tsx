@@ -1,5 +1,6 @@
 "use client"
 
+import { AnimateIcon } from "@animate-ui/react/icons"
 import { useTranslations } from "@/i18n/translations"
 import { packTotal } from "@/components/pr/checkout-flow"
 import { CoinIcon } from "@/components/pr/coin-icon"
@@ -52,8 +53,9 @@ export function PackCard({
   ) : null
 
   return (
-    <Effect asChild fade slide={{ direction: "up", offset: 8 }} delay={Math.min(index, 10) * 50} inView>
-      <label
+    <AnimateIcon asChild animateOnHover>
+      <Effect asChild fade slide={{ direction: "up", offset: 8 }} delay={Math.min(index, 10) * 50} inView>
+        <label
         htmlFor={id}
         className={cn(
           radioCardClassName,
@@ -80,7 +82,8 @@ export function PackCard({
         </span>
         <span className="mt-auto pt-1 text-[13px] leading-[18px] font-semibold">{pack.priceUSD}</span>
         <span className="text-xs leading-4 text-muted-foreground">{pack.priceKHR}</span>
-      </label>
-    </Effect>
+        </label>
+      </Effect>
+    </AnimateIcon>
   )
 }

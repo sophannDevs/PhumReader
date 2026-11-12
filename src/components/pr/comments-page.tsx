@@ -1,6 +1,9 @@
 "use client"
 
-import { BookIcon, ChevronRightIcon, MessageSquareIcon, RotateCcwIcon } from "lucide-react"
+import { BookTextIcon as BookIcon } from "@/components/animate-ui/icons/book-text"
+import { ChevronRightIcon } from "@/components/animate-ui/icons/chevron-right"
+import { MessageSquareIcon } from "@/components/animate-ui/icons/message-square"
+import { RotateCcwIcon } from "@/components/animate-ui/icons/rotate-ccw"
 import Image from "next/image"
 import { notFound, useSearchParams } from "next/navigation"
 import { useTranslations } from "@/i18n/translations"

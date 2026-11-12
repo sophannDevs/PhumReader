@@ -1,14 +1,22 @@
 "use client"
 
+import { AnimateIcon } from "@animate-ui/react/icons"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useMutation } from "@tanstack/react-query"
-import { CheckIcon, ClockIcon, CoinsIcon, MailIcon, MessageSquareIcon, PlusIcon, ShieldIcon } from "lucide-react"
+import { WalletIcon as CoinsIcon } from "@/components/animate-ui/icons/wallet"
+import { ShieldCheckIcon as ShieldIcon } from "@/components/animate-ui/icons/shield-check"
+import { CheckIcon } from "@/components/animate-ui/icons/check"
+import { ClockIcon } from "@/components/animate-ui/icons/clock"
+import { MailIcon } from "@/components/animate-ui/icons/mail"
+import { MessageSquareIcon } from "@/components/animate-ui/icons/message-square"
+import { PlusIcon } from "@/components/animate-ui/icons/plus"
 import { useLocale } from "next-intl"
 import { useTranslations } from "@/i18n/translations"
 import { useEffect, useRef, useState } from "react"
 import { Controller, useForm, useWatch } from "react-hook-form"
 import { toast } from "sonner"
 import { z } from "zod"
+import { SuccessBurst } from "@/components/pr/particle-burst"
 import { NativeSelect } from "@/components/pr/settings-ui"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -139,9 +147,11 @@ export function HelpContact() {
         >
           {sent ? (
             <div className="flex flex-col items-start gap-2.5 p-5 max-md:p-4" role="status">
-              <span aria-hidden className="inline-flex size-11 items-center justify-center rounded-full bg-primary text-primary-foreground">
-                <CheckIcon className="size-5" />
-              </span>
+              <SuccessBurst radius={32}>
+                <span aria-hidden className="inline-flex size-11 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                  <CheckIcon className="size-5" />
+                </span>
+              </SuccessBurst>
               <h2 id="ct-title" ref={sentHeading} tabIndex={-1} className="type-h3 outline-none">
                 {t("sentTitle")}
               </h2>
@@ -341,14 +351,14 @@ function OtherWays() {
         {t("hours")}
       </p>
       <hr className="my-1 border-border" />
-      <Link href="/legal/community" className={link}>
+      <AnimateIcon asChild animateOnHover><Link href="/legal/community" className={link}>
         <ShieldIcon className="size-4 shrink-0" aria-hidden />
         {t("community")}
-      </Link>
-      <Link href="/legal/refund" className={link}>
+      </Link></AnimateIcon>
+      <AnimateIcon asChild animateOnHover><Link href="/legal/refund" className={link}>
         <CoinsIcon className="size-4 shrink-0" aria-hidden />
         {t("refunds")}
-      </Link>
+      </Link></AnimateIcon>
     </section>
   )
 }

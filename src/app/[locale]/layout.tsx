@@ -77,7 +77,8 @@ export default async function LocaleLayout({
       className={cn("h-full antialiased font-sans", inter.variable, kantumruy.variable, notoSerif.variable)}
       style={{ colorScheme: "light" }}
     >
-      <body className="min-h-full flex flex-col">
+      {/* Browser extensions (e.g. Grammarly) add attributes to <body> before React hydrates. */}
+      <body className="min-h-full flex flex-col" suppressHydrationWarning>
         <NextIntlClientProvider locale={locale} messages={messages}>
           <Providers>{children}</Providers>
           <ServiceWorker />

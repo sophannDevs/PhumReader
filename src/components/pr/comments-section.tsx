@@ -1,6 +1,8 @@
 "use client"
 
-import { ChevronRightIcon, MessageSquareIcon, RotateCcwIcon } from "lucide-react"
+import { ChevronRightIcon } from "@/components/animate-ui/icons/chevron-right"
+import { MessageSquareIcon } from "@/components/animate-ui/icons/message-square"
+import { RotateCcwIcon } from "@/components/animate-ui/icons/rotate-ccw"
 import { useTranslations } from "@/i18n/translations"
 import { useRef, useState } from "react"
 import { CommentComposer } from "@/components/pr/comment-composer"

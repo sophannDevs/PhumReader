@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useMutation } from "@tanstack/react-query"
-import { AlertCircleIcon } from "lucide-react"
+import { CircleAlertIcon as AlertCircleIcon } from "@/components/animate-ui/icons/circle-alert"
 import { useSearchParams } from "next/navigation"
 import { useLocale } from "next-intl"
 import { useTranslations } from "@/i18n/translations"

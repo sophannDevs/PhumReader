@@ -1,6 +1,8 @@
 "use client"
 
-import { CheckIcon, HomeIcon, RefreshCwIcon } from "lucide-react"
+import { CheckIcon } from "@/components/animate-ui/icons/check"
+import { HouseIcon as HomeIcon } from "@/components/animate-ui/icons/house"
+import { RefreshCwIcon } from "@/components/animate-ui/icons/refresh-cw"
 import { useTranslations } from "@/i18n/translations"
 import { useCallback, useEffect, useRef, useState } from "react"
 import { ErrorHelp, ErrorHero, ErrorStatus, errorActions } from "@/components/pr/error-page"

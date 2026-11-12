@@ -1,4 +1,5 @@
-import { PlayIcon } from "lucide-react"
+import { AnimateIcon } from "@animate-ui/react/icons"
+import { PlayIcon } from "@/components/animate-ui/icons/play"
 import { useTranslations } from "@/i18n/translations"
 import { LanguageToggleLink } from "@/components/layout/language-switch"
 import { Logo } from "@/components/layout/logo"
@@ -65,13 +66,13 @@ export function SiteFooter() {
               <ul aria-label={t("social")} className="flex gap-1.5">
                 {socials.map((s) => (
                   <li key={s.key}>
-                    <Link
+                    <AnimateIcon asChild animateOnHover><Link
                       href={`/coming-soon?topic=${s.key}`}
                       aria-label={t(s.key)}
                       className="flex size-8 items-center justify-center rounded-control border bg-background text-[13px] font-medium shadow-xs transition-colors outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                     >
                       {s.glyph ?? <PlayIcon className="size-3 fill-current" aria-hidden />}
-                    </Link>
+                    </Link></AnimateIcon>
                   </li>
                 ))}
               </ul>

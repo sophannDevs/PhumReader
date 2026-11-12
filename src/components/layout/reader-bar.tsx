@@ -1,4 +1,6 @@
-import { ArrowLeftIcon, ChevronLeftIcon, ChevronRightIcon } from "lucide-react"
+import { ArrowLeftIcon } from "@/components/animate-ui/icons/arrow-left"
+import { ChevronLeftIcon } from "@/components/animate-ui/icons/chevron-left"
+import { ChevronRightIcon } from "@/components/animate-ui/icons/chevron-right"
 import { useTranslations } from "@/i18n/translations"
 import { Effect } from "@animate-ui/react/primitives/effects/effect"
 import { Button } from "@/components/ui/button"

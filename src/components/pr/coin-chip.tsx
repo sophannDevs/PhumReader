@@ -1,5 +1,6 @@
 "use client"
 
+import { AnimateIcon } from "@animate-ui/react/icons"
 import { useTranslations } from "@/i18n/translations"
 import { CoinIcon } from "@/components/pr/coin-icon"
 import { Link } from "@/i18n/navigation"
@@ -14,7 +15,7 @@ export function CoinChip({ count, className }: { count: number; className?: stri
   // Animate UI numbers print Latin digits only; Khmer keeps ០–៩ (T44), so it shows the plain number.
   const khmer = useLocale() === "km"
   return (
-    <Link
+    <AnimateIcon asChild animateOnHover><Link
       href="/coins"
       className={cn(
         "inline-flex h-8 items-center gap-1.5 rounded-full border bg-background pr-2.5 pl-1.5 text-[13px] font-semibold tabular-nums transition-colors max-[420px]:px-2 outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
@@ -24,6 +25,6 @@ export function CoinChip({ count, className }: { count: number; className?: stri
       <CoinIcon size={20} />
       <span aria-hidden>{khmer ? <Num>{count}</Num> : <SlidingNumber number={count} thousandSeparator="," />}</span>
       <span className="sr-only">{t("balanceLabel", { count })}</span>
-    </Link>
+    </Link></AnimateIcon>
   )
 }

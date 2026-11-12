@@ -1,7 +1,8 @@
 "use client"
 
 import { useEffect, useRef, useState, useSyncExternalStore } from "react"
-import { WifiIcon, WifiOffIcon } from "lucide-react"
+import { WifiIcon } from "@/components/animate-ui/icons/wifi"
+import { WifiOffIcon } from "@/components/animate-ui/icons/wifi-off"
 import { useTranslations } from "@/i18n/translations"
 
 function getOnlineSnapshot(): boolean {

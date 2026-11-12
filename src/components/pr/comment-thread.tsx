@@ -1,6 +1,7 @@
 "use client"
 
-import { BookmarkIcon, ThumbsUpIcon } from "lucide-react"
+import { BookmarkIcon } from "@/components/animate-ui/icons/bookmark"
+import { ThumbsUpIcon } from "@/components/animate-ui/icons/thumbs-up"
 import { useTranslations } from "@/i18n/translations"
 import { useId, useState } from "react"
 import { useReport } from "@/components/pr/report-dialog"
@@ -15,6 +16,7 @@ import { useUser } from "@/lib/store"
 import { cn } from "@/lib/utils"
 import { Num } from "@/i18n/num"
 import { Effect } from "@animate-ui/react/primitives/effects/effect"
+import { ParticleBurst, useBurstOnPress } from "@/components/pr/particle-burst"
 
 /**
  * One comment thread (V2.1 Comments page, prototype Comments `.cm-item`): the comment with Creator / You badges,
@@ -97,22 +99,28 @@ function NameLine({ c, edited }: { c: ReplyView; edited?: boolean }) {
 function LikeButton({ c, onLike }: { c: ReplyView; onLike: () => void }) {
   const t = useTranslations("comments")
   const count = c.likes + (c.liked ? 1 : 0)
+  const [burst, arm] = useBurstOnPress(!!c.liked)
   return (
     <Button
       variant="ghost"
       size="sm"
       aria-pressed={c.liked}
       className={cn("tabular-nums", c.liked && "text-brand-ink")}
-      onClick={onLike}
+      onClick={() => {
+        arm()
+        onLike()
+      }}
     >
-      {c.liked ? (
-        // The icon pops each time the reader likes (the key restarts it).
-        <Effect key="liked" asChild fade={{ initialOpacity: 0.4 }} zoom={{ initialScale: 0.5 }}>
-          <ThumbsUpIcon className="size-3.5 fill-primary" aria-hidden />
-        </Effect>
-      ) : (
-        <ThumbsUpIcon className="size-3.5" aria-hidden />
-      )}
+      {/* The icon pops each time the reader likes (the key restarts it) and a ring of dots bursts out of it. */}
+      <ParticleBurst burst={burst}>
+        {c.liked ? (
+          <Effect key="liked" asChild fade={{ initialOpacity: 0.4 }} zoom={{ initialScale: 0.5 }}>
+            <ThumbsUpIcon className="size-3.5 fill-primary" aria-hidden />
+          </Effect>
+        ) : (
+          <ThumbsUpIcon className="size-3.5" aria-hidden />
+        )}
+      </ParticleBurst>
       <span className="sr-only">{t("likeSr", { name: c.name })} </span>
       <Num>{formatCount(count)}</Num>
     </Button>

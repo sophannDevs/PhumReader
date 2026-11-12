@@ -1,7 +1,12 @@
 "use client"
 
 import { useQuery } from "@tanstack/react-query"
-import { AlertCircleIcon, BellIcon, CheckIcon, PlayIcon, RefreshCwIcon, XIcon } from "lucide-react"
+import { CircleAlertIcon as AlertCircleIcon } from "@/components/animate-ui/icons/circle-alert"
+import { BellIcon } from "@/components/animate-ui/icons/bell"
+import { CheckIcon } from "@/components/animate-ui/icons/check"
+import { PlayIcon } from "@/components/animate-ui/icons/play"
+import { RefreshCwIcon } from "@/components/animate-ui/icons/refresh-cw"
+import { XIcon } from "@/components/animate-ui/icons/x"
 import { useLocale } from "next-intl"
 import { useTranslations } from "@/i18n/translations"
 import { useState, useSyncExternalStore } from "react"

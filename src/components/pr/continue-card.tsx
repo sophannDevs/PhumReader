@@ -1,4 +1,5 @@
-import { ChevronRightIcon } from "lucide-react"
+import { AnimateIcon } from "@animate-ui/react/icons"
+import { ChevronRightIcon } from "@/components/animate-ui/icons/chevron-right"
 import Image from "next/image"
 import { useTranslations } from "@/i18n/translations"
 import type { Series } from "@/data/types"
@@ -24,7 +25,7 @@ export function ContinueCard({
   const label = t(series.type === "novel" ? "chapterProgress" : "episodeProgress", { n: episode, percent })
 
   return (
-    <Link
+    <AnimateIcon asChild animateOnHover><Link
       href={readerHref(series, episode)}
       className={cn(
         "flex min-w-0 items-center gap-3 rounded-card border bg-card p-2.5 shadow-xs transition-colors outline-none hover:border-[#d4d4d8] hover:bg-[#fafafa] focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
@@ -56,6 +57,6 @@ export function ContinueCard({
       <span aria-hidden className="flex size-8 shrink-0 items-center justify-center rounded-control bg-secondary">
         <ChevronRightIcon className="size-3.5" />
       </span>
-    </Link>
+    </Link></AnimateIcon>
   )
 }

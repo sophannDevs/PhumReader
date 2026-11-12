@@ -2,7 +2,14 @@
 
 /* Developer reference page (/dev/foundations): English only, not part of the reader-facing UI (Assumption V2-19). */
 
-import { AlertCircleIcon, BellIcon, BookOpenIcon, CheckIcon, InfoIcon, LockIcon, Share2Icon, ZapIcon } from "lucide-react"
+import { CircleAlertIcon as AlertCircleIcon } from "@/components/animate-ui/icons/circle-alert"
+import { BellIcon } from "@/components/animate-ui/icons/bell"
+import { BookOpenIcon } from "@/components/animate-ui/icons/book-open"
+import { CheckIcon } from "@/components/animate-ui/icons/check"
+import { InfoIcon } from "@/components/animate-ui/icons/info"
+import { LockIcon } from "@/components/animate-ui/icons/lock"
+import { Share2Icon } from "@/components/animate-ui/icons/share-2"
+import { ZapIcon } from "@/components/animate-ui/icons/zap"
 import Image from "next/image"
 import { useState } from "react"
 import { LogoMark } from "@/components/layout/logo"

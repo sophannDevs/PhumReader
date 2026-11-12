@@ -3,6 +3,7 @@
 import Image from "next/image"
 import { useTranslations } from "@/i18n/translations"
 import { Button } from "@/components/ui/button"
+import { ParticleBurst, useBurstOnPress } from "@/components/pr/particle-burst"
 import type { Series } from "@/data"
 import { Link } from "@/i18n/navigation"
 import { initials } from "@/lib/format"
@@ -29,6 +30,7 @@ export function SeriesSidebar({
   const t = useTranslations("series")
   const loc = useLocalize()
   const { following, toggle: toggleFollow } = useFollow(series, creatorId)
+  const [followBurst, armFollow] = useBurstOnPress(following)
 
   return (
     <Effect asChild fade slide={{ direction: "up", offset: 12 }} delay={150}>
@@ -47,8 +49,17 @@ export function SeriesSidebar({
                 <span className="text-xs leading-4 text-muted-foreground">{t("seriesCount", { count: creatorSeriesCount })}</span>
               </div>
             </div>
-            <Button variant="outline" size="sm" aria-pressed={following} className="w-full" onClick={() => void toggleFollow()}>
-              {following ? t("following") : t("follow")}
+            <Button
+              variant="outline"
+              size="sm"
+              aria-pressed={following}
+              className="w-full"
+              onClick={() => {
+                armFollow()
+                void toggleFollow()
+              }}
+            >
+              <ParticleBurst burst={followBurst}>{following ? t("following") : t("follow")}</ParticleBurst>
             </Button>
           </div>
         </section>
