@@ -9,7 +9,6 @@ import { loadMessages } from "@/i18n/messages";
 import { routing } from "@/i18n/routing";
 import { ServiceWorker } from "@/components/pr/service-worker";
 import { Providers } from "@/lib/query";
-import { MotionProvider } from "@/components/ui/motion";
 import { cn } from "@/lib/utils";
 import { ACCENT_BOOT_SCRIPT } from "@/lib/accent";
 
@@ -84,9 +83,7 @@ export default async function LocaleLayout({
       </head>
       <body className="min-h-full flex flex-col">
         <NextIntlClientProvider locale={locale} messages={messages}>
-          <MotionProvider>
-            <Providers>{children}</Providers>
-          </MotionProvider>
+          <Providers>{children}</Providers>
           <ServiceWorker />
         </NextIntlClientProvider>
       </body>

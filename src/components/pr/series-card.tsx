@@ -2,7 +2,9 @@ import { HeartIcon } from "lucide-react"
 import Image from "next/image"
 import { useTranslations } from "@/i18n/translations"
 import { Badge } from "@/components/ui/badge"
-import { HoverLift, MotionLink } from "@/components/ui/motion"
+import { Effect } from "@animate-ui/react/primitives/effects/effect"
+import { Tilt, TiltContent } from "@animate-ui/react/primitives/effects/tilt"
+import { Link } from "@/i18n/navigation"
 import type { Series } from "@/data/types"
 import { seriesHref } from "@/lib/routes"
 import { cn } from "@/lib/utils"
@@ -46,38 +48,35 @@ export function SeriesCard({
   const isNew = badges === "all" && series.badges.isNew
   const novel = badges !== "none" && series.type === "novel"
 
-  return (
-    <MotionLink
+  const card = (
+    <Link
       href={seriesHref(series)}
       onClick={onClick}
-      // Cards above the fold (priority) render visible right away so they never flash or delay LCP.
-      initial={priority ? false : { opacity: 0, y: 12 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "0px 0px -40px 0px" }}
-      transition={{ duration: 0.35, ease: "easeOut" }}
       className={cn(
         "group flex min-w-0 flex-col gap-2.5 rounded-[10px] outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
         className
       )}
     >
-      <HoverLift lift={4} className="relative aspect-[3/4] w-full overflow-hidden rounded-[10px] bg-muted">
-        <Image
-          src={series.cover}
-          alt={t("cover", { title: series.title })}
-          width={360}
-          height={480}
-          sizes={sizes}
-          priority={priority}
-          className="cover-zoom size-full object-cover"
-        />
-        {up || isNew || novel ? (
-          <div className="absolute top-2 left-2 flex gap-1">
-            {up ? <Badge variant="up">{t("up")}</Badge> : null}
-            {isNew ? <Badge variant="new">{t("new")}</Badge> : null}
-            {novel ? <Badge variant="dark">{t("novel")}</Badge> : null}
-          </div>
-        ) : null}
-      </HoverLift>
+      <Tilt maxTilt={5} className="w-full">
+        <TiltContent className="relative aspect-[3/4] w-full overflow-hidden rounded-[10px] bg-muted">
+          <Image
+            src={series.cover}
+            alt={t("cover", { title: series.title })}
+            width={360}
+            height={480}
+            sizes={sizes}
+            priority={priority}
+            className="cover-zoom size-full object-cover"
+          />
+          {up || isNew || novel ? (
+            <div className="absolute top-2 left-2 flex gap-1">
+              {up ? <Badge variant="up">{t("up")}</Badge> : null}
+              {isNew ? <Badge variant="new">{t("new")}</Badge> : null}
+              {novel ? <Badge variant="dark">{t("novel")}</Badge> : null}
+            </div>
+          ) : null}
+        </TiltContent>
+      </Tilt>
       <div className={cn("flex min-w-0 flex-col", hook ? "gap-[3px]" : "gap-0.5")}>
         <h3 className="truncate text-sm leading-5 font-semibold max-md:text-[13px] max-md:leading-[18px]">{series.title}</h3>
         {hook ? <p className="line-clamp-2 text-[12.5px] leading-[17px] text-[#52525b]">{hook}</p> : null}
@@ -93,6 +92,14 @@ export function SeriesCard({
           </p>
         )}
       </div>
-    </MotionLink>
+    </Link>
+  )
+
+  // Cards above the fold (priority) render visible at once so they never flash or delay LCP.
+  if (priority) return card
+  return (
+    <Effect asChild fade slide={{ direction: "up", offset: 12 }} inView inViewMargin="0px 0px -40px 0px">
+      {card}
+    </Effect>
   )
 }

@@ -4,7 +4,7 @@ import { ArrowRightIcon, CheckIcon, ClockIcon, MessageSquareIcon, ShieldIcon, Sm
 import { useTranslations } from "@/i18n/translations"
 import { useCallback, useEffect, useState } from "react"
 import { type Flow, packTotal } from "@/components/pr/checkout-flow"
-import { PopIn } from "@/components/ui/motion"
+import { Effect } from "@animate-ui/react/primitives/effects/effect"
 import type { Checkout } from "@/lib/api/coins"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -113,9 +113,11 @@ function SuccessPanel({ flow, onReset }: { flow: Extract<Flow, { step: "success"
 
   return (
     <div role="status" className="flex flex-col items-center gap-3 px-5 py-9 text-center">
-      <PopIn className="inline-flex size-14 items-center justify-center rounded-full bg-primary text-primary-foreground">
-        <CheckIcon className="size-[26px]" strokeWidth={2.5} aria-hidden />
-      </PopIn>
+      <Effect asChild fade zoom={{ initialScale: 0.4 }}>
+        <span className="inline-flex size-14 items-center justify-center rounded-full bg-primary text-primary-foreground">
+          <CheckIcon className="size-[26px]" strokeWidth={2.5} aria-hidden />
+        </span>
+      </Effect>
       <h2 id="co-title" className="type-h2 tabular-nums">{t("successTitle", { count: flow.added })}</h2>
       <p className="text-[13px] leading-[18px] text-muted-foreground">
         {t.rich("successBody", {

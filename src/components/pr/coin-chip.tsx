@@ -4,11 +4,15 @@ import { useTranslations } from "@/i18n/translations"
 import { CoinIcon } from "@/components/pr/coin-icon"
 import { Link } from "@/i18n/navigation"
 import { cn } from "@/lib/utils"
-import { AnimatedNumber } from "@/components/ui/motion"
+import { useLocale } from "next-intl"
+import { SlidingNumber } from "@animate-ui/react/primitives/texts/sliding-number"
+import { Num } from "@/i18n/num"
 
 /** Pill with the coin balance. Links to /coins. */
 export function CoinChip({ count, className }: { count: number; className?: string }) {
   const t = useTranslations("coins")
+  // Animate UI numbers print Latin digits only; Khmer keeps ០–៩ (T44), so it shows the plain number.
+  const khmer = useLocale() === "km"
   return (
     <Link
       href="/coins"
@@ -18,7 +22,7 @@ export function CoinChip({ count, className }: { count: number; className?: stri
       )}
     >
       <CoinIcon size={20} />
-      <span aria-hidden><AnimatedNumber value={count} /></span>
+      <span aria-hidden>{khmer ? <Num>{count}</Num> : <SlidingNumber number={count} thousandSeparator="," />}</span>
       <span className="sr-only">{t("balanceLabel", { count })}</span>
     </Link>
   )
