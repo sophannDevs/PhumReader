@@ -111,7 +111,7 @@ export function CreatorGate({ title, eyebrow, children }: { title: string; eyebr
 function GateCard({ icon: Icon, title, text, actions }: { icon: AnimatedIcon; title: string; text: string; actions: React.ReactNode }) {
   return (
     <Effect asChild fade slide={{ direction: "up", offset: 10 }}>
-      <section className="flex flex-col items-center gap-3 rounded-[16px] border bg-background bg-[image:linear-gradient(135deg,#effcf4,#ffffff_70%)] px-5 py-12 text-center shadow-xs md:rounded-hero md:px-8 md:py-14">
+      <section className="flex flex-col items-center gap-3 rounded-[16px] border bg-background bg-[image:linear-gradient(135deg,var(--brand-wash-from),var(--brand-wash-to)_70%)] px-5 py-12 text-center shadow-xs md:rounded-hero md:px-8 md:py-14">
         <span aria-hidden className="inline-flex size-12 items-center justify-center rounded-full bg-brand-soft text-brand-ink">
           <Icon className="size-5" />
         </span>

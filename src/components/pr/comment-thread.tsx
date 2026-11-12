@@ -238,12 +238,12 @@ export function CommentThread({
               <button
                 type="button"
                 onClick={() => setRevealed(true)}
-                className="self-start rounded-control border border-dashed border-[#a1a1aa] bg-[repeating-linear-gradient(135deg,#f4f4f5_0_8px,#fafafa_8px_16px)] px-3 py-2 text-[13px] font-semibold text-[#3f3f46] outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="self-start rounded-control border border-dashed border-border-strong bg-[repeating-linear-gradient(135deg,#f4f4f5_0_8px,#fafafa_8px_16px)] px-3 py-2 text-[13px] font-semibold text-soft-foreground dark:bg-muted dark:bg-none outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
                 {t("spoilerHidden")}
               </button>
             ) : (
-              <p className="text-sm leading-[21px] [overflow-wrap:anywhere] whitespace-pre-wrap text-[#27272a]">{c.text}</p>
+              <p className="text-sm leading-[21px] [overflow-wrap:anywhere] whitespace-pre-wrap text-strong-foreground">{c.text}</p>
             )}
             <div className="-ml-2 flex flex-wrap gap-0.5">
               <LikeButton c={c} onLike={gate(() => onLike(c.id))} />
@@ -319,7 +319,7 @@ export function CommentThread({
                 <CommentAvatar name={r.name} creator={r.creator} mine={r.mine} small />
                 <div className="flex min-w-0 flex-1 flex-col gap-[3px]">
                   <NameLine c={r} />
-                  <p className="text-sm leading-[21px] [overflow-wrap:anywhere] whitespace-pre-wrap text-[#27272a]">{r.text}</p>
+                  <p className="text-sm leading-[21px] [overflow-wrap:anywhere] whitespace-pre-wrap text-strong-foreground">{r.text}</p>
                   <div className="-ml-2 flex flex-wrap gap-0.5">
                     <LikeButton c={r} onLike={gate(() => onLike(r.id))} />
                     {!r.mine && !r.creator ? (

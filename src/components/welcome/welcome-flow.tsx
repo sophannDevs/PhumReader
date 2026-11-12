@@ -194,8 +194,7 @@ export function WelcomeFlow() {
 
   return (
     <div
-      className="flex min-h-svh flex-1 flex-col"
-      style={{ background: "radial-gradient(900px 400px at 50% -10%, #d9f7e6 0%, rgba(217,247,230,0) 70%), #fafafa" }}
+      className="flex min-h-svh flex-1 flex-col bg-subtle bg-[image:radial-gradient(900px_400px_at_50%_-10%,#d9f7e6_0%,rgba(217,247,230,0)_70%)] dark:bg-[image:radial-gradient(900px_400px_at_50%_-10%,var(--brand-wash-from)_0%,transparent_70%)]"
     >
       <SkipLink />
       <header className="flex h-16 items-center justify-between px-6 max-md:px-4">
@@ -217,7 +216,7 @@ export function WelcomeFlow() {
           <div className="flex flex-col items-center gap-2" role="group" aria-label={t("stepsLabel")}>
             <div className="flex gap-[7px]" aria-hidden>
               {[0, 1, 2].map((i) => (
-                <span key={i} className={cn("h-1 w-12 rounded-full", i <= ix ? "bg-primary" : "bg-[#e4e4e7]")} />
+                <span key={i} className={cn("h-1 w-12 rounded-full", i <= ix ? "bg-primary" : "bg-border")} />
               ))}
             </div>
             <p className="text-xs text-muted-foreground tabular-nums">{t("stepOf", { n: ix + 1, total: 3 })}</p>
@@ -241,7 +240,7 @@ export function WelcomeFlow() {
                       aria-pressed={on}
                       onClick={() => pickLang(c.value)}
                       className={cn(
-                        "flex flex-col items-center gap-1.5 rounded-2xl border bg-white px-4 py-6 outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+                        "flex flex-col items-center gap-1.5 rounded-2xl border bg-card px-4 py-6 outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
                         on && "border-primary bg-selected shadow-[0_0_0_2px_var(--primary)]"
                       )}
                     >
@@ -282,7 +281,7 @@ export function WelcomeFlow() {
                         update({ picked: on ? state.picked.filter((g) => g !== genre) : [...state.picked, genre], tried: false })
                       }
                       className={cn(
-                        "relative flex flex-col overflow-hidden rounded-[14px] border-2 border-transparent bg-white shadow-xs outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+                        "relative flex flex-col overflow-hidden rounded-[14px] border-2 border-transparent bg-card shadow-xs outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
                         on && "border-primary"
                       )}
                     >
@@ -333,7 +332,7 @@ export function WelcomeFlow() {
               <Sub>{t("alertsSub")}</Sub>
               <ul className="flex flex-col gap-2.5 text-left">
                 {(["perk1", "perk2", "perk3"] as const).map((k) => (
-                  <li key={k} className="flex items-center gap-2.5 text-sm text-[#27272a]">
+                  <li key={k} className="flex items-center gap-2.5 text-sm text-strong-foreground">
                     <CheckIcon className="size-3.5 shrink-0 text-brand-ink" aria-hidden />
                     {t(k)}
                   </li>
@@ -357,7 +356,7 @@ export function WelcomeFlow() {
               <Sub>{doneLine}</Sub>
               <div className="flex w-full flex-col gap-2.5">
                 <span className="text-sm leading-5 font-medium">{t("startWith")}</span>
-                <ul className="flex flex-col overflow-hidden rounded-xl border bg-white">
+                <ul className="flex flex-col overflow-hidden rounded-xl border bg-card">
                   {picks.map((s) => {
                     const on = state.subs.includes(s.id)
                     return (
@@ -388,7 +387,7 @@ export function WelcomeFlow() {
 
       <footer
         className="sticky bottom-0 mx-auto flex w-full max-w-[640px] items-center gap-2 px-6 pt-4 pb-6 max-md:px-4 max-md:pt-3 max-md:pb-5"
-        style={{ background: "linear-gradient(rgba(250,250,250,0), #fafafa 30%)" }}
+        style={{ background: "linear-gradient(transparent, var(--subtle) 30%)" }}
       >
         {ix > 0 && state.step !== "done" ? (
           <Button variant="ghost" onClick={() => go(ORDER[ix - 1])}>

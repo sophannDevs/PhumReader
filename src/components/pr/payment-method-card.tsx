@@ -31,7 +31,7 @@ export function PaymentMethodCard({
       htmlFor={id}
       className={cn(radioCardClassName, "items-center gap-3 rounded-[10px] bg-background p-3.5 shadow-xs", className)}
     >
-      <RadioGroupItem id={id} value={method.id} disabled={disabled} className="border-[#a1a1aa]" />
+      <RadioGroupItem id={id} value={method.id} disabled={disabled} className="border-border-strong" />
       <span
         aria-hidden
         className="flex h-7 w-10 shrink-0 items-center justify-center rounded-md bg-muted text-[10px] font-extrabold tracking-[0.02em]"

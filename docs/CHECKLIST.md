@@ -182,15 +182,15 @@ docs/BACKEND_CHECKLIST.md, "V2.1 API additions" (V21-01 … V21-07).
   (backend code, out of V2.1 scope).
 - V2-5 (upgrade) **Storage**: old `phumreader.*` and `toonwave.*` keys are copied to `phumireader.*` once
   (`src/lib/storage-migration.ts`, run by StoreHydrator before the store loads), then removed. `phumreader.` wins
-  over `toonwave.`. There is no first-paint script any more (the site is light only), which also ends React's
-  "script tag" console error on client navigations.
+  over `toonwave.`. There is no first-paint script any more (the site was light only; V2-88 adds `themeInitScript` back), which
+  also ended React's "script tag" console error on client navigations.
 - V2-6 (upgrade) **Khmer strings**: `npm run i18n:km` copies the dictionary's Khmer for every English string that is a
   dictionary entry (109 strings changed); everything else keeps the V1 Khmer.
 - V2-7 (upgrade) **No downloads**: missing shadcn components are written by hand on the installed `radix-ui` package
   instead of `npx shadcn add`; charts are plain SVG/CSS (no chart library).
 - V2-8 (upgrade) **Real mode**: V2.1 features the API does not have yet (after V21-07: the dashboard chart and
-  comments, the creator profile's Updates tab, and the Settings options listed in V2-81) run on the local store in
-  real mode too. Reports, blocking, welcome picks, earnings, the creator profile, admin payments, the Help form and
+  comments, the creator profile's Updates tab, and the Google and Facebook toggles in Settings, V2-81) run on the
+  local store in real mode too. Reports, blocking, welcome picks, earnings, the creator profile, admin payments, the Help form and
   votes use the API now. Notifications use the API since V21-03 (V2-70).
 - V2-9 (F01) **Store field names**: one persisted object (`phumireader.app`, version 2). The spec's keys map to
   `subs` → `subscriptions`, `read` → `lastRead`, `novel` → `novelSettings`; `receipt` and `legalDoc` are URL
@@ -203,6 +203,7 @@ docs/BACKEND_CHECKLIST.md, "V2.1 API additions" (V21-01 … V21-07).
   display-only and don't end the first-purchase offer.
 - V2-12 (F03) **Light only**: the site no longer follows the OS dark mode (foundations.md "Light theme only"). The
   stored theme (light / dark / system, synced with the API) is the *reader* theme from Settings > Reading.
+  Superseded by V2-88: the site now follows the Settings theme.
 - V2-13 (F03) **Header**: an "Admin" item is added to the avatar menu for admin accounts (not in the design, which
   only shows the reader menu). The phone Search tab opens the Search page (V1 opened the ⌘K palette).
 - V2-14 (F03) **Footer social buttons** (Facebook, Telegram, YouTube) go to `/coming-soon?topic=…` until the real
@@ -420,7 +421,7 @@ docs/BACKEND_CHECKLIST.md, "V2.1 API additions" (V21-01 … V21-07).
   English time stamps on comments ("6d").
 - V2-68 (T45) **Real-API e2e on V2.1**: `e2e/real.spec.ts` tests 1–8, 14 and 15 follow the V2.1 screens (sign-up with
   birth year and the first-time setup, "+ Subscribe", Library edit mode with Undo, Settings saved with "Save changes"
-  where "Dark" is the reader theme and the site stays light, the password form in place, the creator gate and
+  where "Dark" is the reader theme and the site stays light (superseded by V2-88: "Dark" now darkens the site), the password form in place, the creator gate and
   dialog, the Creator studio empty state, the V2.1 Reports queue with "Remove content", and the delete dialog that
   asks for DELETE). Users, Content, All orders and Audit log are still the V1 screens (now separate pages). Tests 9–13
   are `test.fixme` until they are rewritten on a PC with S3 storage: without it the backend keeps uploads in memory
@@ -531,11 +532,12 @@ docs/BACKEND_CHECKLIST.md, "V2.1 API additions" (V21-01 … V21-07).
   so the Privacy and safety row shows a disabled "Request data download" button with a "Coming soon" badge
   (`errors.codes.comingSoon`) instead of a button that pretends to prepare a file. Demo keeps the simulated flow. A real
   export endpoint is a later task; whether the site must offer a download at all goes to the lawyer review.
-- V2-81 (Fix) **Settings options saved only in the browser (open)**: `/me/settings` has no fields for these, so in real
-  mode they stay in the store and do not follow the reader to a new device: reading mode, image quality, auto-next,
-  data saver, region, public library, mature content, the Google and Facebook toggles, and the comic reader's
-  background and width (story languages moved to the API in V21-07). This lists what V2-31 calls "the rest". Not
-  decided which of them get API fields.
+- V2-81 (Fix) **Settings options saved to the account (V21-08)**: `/me/settings` now holds `comics` (reading mode,
+  image quality, auto-next, data saver, background, width) and `privacy` (region, public library, mature content), so in
+  real mode they follow the reader to a new device. `src/lib/settings-sync.tsx` applies the account's values once per
+  account after login and saves only the changed keys 500 ms after the last change (same auto-save as theme and reader
+  defaults). Still browser only: the Google and Facebook toggles (V2-85). Mature and public library are saved only
+  (V2-83).
 - V2-82 (T45) **Real-API e2e on a new series**: a new series cannot be published directly (409 `review_required`), so
   the episode tests (11, 12) mark the series live in the database the way "Approve" does, without giving the test
   account the ADMIN role (test 14 checks it is not an admin yet). Test 13 checks the 409 and the submit, then does the
@@ -668,3 +670,38 @@ docs/BACKEND_CHECKLIST.md, "V2.1 API additions" (V21-01 … V21-07).
   sign-off from the design owner.
   Open question: the animated icons and the particle burst are not in the design pack (like ANIM-4), so check against
   `design/screens` before launch.
+- V2-83 (V21-08) **Mature content and public library are saved only**: the two switches reach the account
+  (`privacy.mature`, `privacy.publicLibrary`) but nothing reads them yet. No mature series is hidden and there is no
+  public library page. Both are later tasks.
+- V2-84 (V21-08) **Older API answers**: if a `/me/settings` answer has no `comics` or `privacy`, the website leaves the
+  local values alone and sends nothing. If a PATCH answer lacks a group, the cached group is treated as holding the
+  values just sent, so the same change is not saved again and again (an API like that never stores them).
+- V2-85 (V21-08) **Google and Facebook toggles stay local**: they mean linked sign-in providers, not a setting. They
+  stay in the store until a task "real account linking".
+- V2-86 (V21-08) **Region list**: `KH`, `TH`, `VN`, `OTHER` (`REGIONS` in `src/lib/store.ts`; the Settings select has the
+  same four). A stored region outside this list is never sent to the API. The API refuses other values with 400
+  `malformed_request`.
+- V2-87 (V21-08) **E2E test 4 and the seed dates**: `e2e/real.spec.ts` test 4 picks the last locked Fast Pass episode
+  instead of "Episode 66". The seed's glass-compass Fast Pass dates are fixed (episodes 66, 67 and 68 turn free on
+  2026-11-12, -19 and -26). From 2026-11-26 no episode is locked, so test 4 fails then; the seed dates must become
+  relative to today first.
+- V2-88 (F-dark) **Site follows the Settings theme** (owner decision 2026-11-13). This overrides design/foundations.md
+  line 4 "Light theme only"; design/ is not edited. Settings > Reading > Theme (light / dark / system) now sets the theme
+  of the whole site, not only the reader. It is applied when the user presses Save changes. The default stays "system".
+  The control stays in the Reading card, with a new hint `themeHint`. This replaces V2-12 and the theme part of V2-68.
+  - Dark values come from the existing `.dark` block in `src/app/globals.css`. The wordmark's "Reader" uses
+    `--brand-ink` `#4ade80` in dark.
+  - New tokens (light values equal the old prototype hex, so light mode looks the same): `subtle`, `soft-foreground`,
+    `strong-foreground`, `border-strong` (dark `#71717a`), `border-hover`, `track`, `brand-line`, `brand-wash-from` /
+    `brand-wash-to`, `info-soft` / `info-ink`, and `--shine`.
+  - First paint: the script `themeInitScript` in the server root layout (`src/app/[locale]/layout.tsx`) sets the class
+    before React loads, so there is no flash.
+  - Stay light in dark mode: QR codes, comic panels, surface heroes and bars, the SVG error illustrations and their
+    white frames, genre tiles and the genres banner (a fixed light tile), the phone mock in the upload preview, and
+    global-error. The novel sepia / light and the comic light background keep their own colours on a dark site
+    (`LIGHT_BASE` / `DARK_STEPS` in `reader-theme.ts`).
+  - The settings save bar inverts in dark.
+  - Khmer for `theme` ("រចនាប័ទ្ម") and `themeHint` is a draft and needs native review (T44).
+  - The error illustrations (`error-art.tsx`, `LockedBookArt`) are now drawn with `--art-*` variables (light values equal the old hex)
+    inside a `bg-card` frame, so they follow the theme. The dark art colours are my own choice: the design pack has no dark
+    version of them. `global-error` stays light.

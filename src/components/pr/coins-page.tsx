@@ -253,6 +253,7 @@ function CoinsBody({ data, offer, ret }: { data: CoinsData; offer: boolean; ret:
         <CheckoutCard
           flow={checkout.flow}
           remaining={checkout.remaining}
+          checkout={checkout.checkout}
           pack={pack}
           method={method}
           offer={offer}

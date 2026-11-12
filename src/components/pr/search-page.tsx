@@ -77,7 +77,7 @@ function Highlight({ text, k }: { text: string; k: string }) {
   while ((j = low.indexOf(k, i)) >= 0) {
     if (j > i) out.push(<Fragment key={`t${i}`}>{text.slice(i, j)}</Fragment>)
     out.push(
-      <mark key={`m${j}`} className="rounded-[2px] bg-[#fef08a] px-px text-inherit">
+      <mark key={`m${j}`} className="rounded-[2px] bg-[#fef08a] px-px dark:bg-warning-border text-inherit">
         {text.slice(j, j + k.length)}
       </mark>
     )
@@ -178,7 +178,7 @@ export function SearchPage() {
           e.preventDefault()
           run(draft, true)
         }}
-        className="flex h-14 items-center gap-2 rounded-[14px] border border-input bg-background pr-2 pl-4 shadow-xs transition-[border-color,box-shadow] focus-within:border-[#a1a1aa] focus-within:ring-[3px] focus-within:ring-[rgba(0,166,80,0.22)] max-md:h-[50px] max-md:pr-1.5 max-md:pl-3"
+        className="flex h-14 items-center gap-2 rounded-[14px] border border-input bg-background pr-2 pl-4 shadow-xs transition-[border-color,box-shadow] focus-within:border-border-strong focus-within:ring-[3px] focus-within:ring-[rgba(0,166,80,0.22)] max-md:h-[50px] max-md:pr-1.5 max-md:pl-3"
       >
         <SearchIcon className="size-5 shrink-0 text-muted-foreground" aria-hidden />
         <label htmlFor={inputId} className="sr-only">

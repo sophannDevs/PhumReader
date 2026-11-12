@@ -93,7 +93,7 @@ function SelectBox({ on, size = "md" }: { on: boolean; size?: "md" | "lg" }) {
           ? "border-primary bg-primary text-primary-foreground"
           : size === "lg"
             ? "bg-white/95 text-transparent"
-            : "border-[#a1a1aa] bg-background text-transparent"
+            : "border-border-strong bg-background text-transparent"
       )}
     >
       <CheckIcon className="size-3" strokeWidth={3} />
@@ -338,7 +338,7 @@ export function LibraryPage() {
       </div>
 
       {hydrated && !user ? (
-        <div className="flex items-center gap-4 rounded-card border bg-[linear-gradient(120deg,#f0fdf5_0%,#ffffff_70%)] p-5 shadow-xs max-md:flex-col max-md:items-start max-md:p-4">
+        <div className="flex items-center gap-4 rounded-card border bg-[linear-gradient(120deg,#f0fdf5_0%,#ffffff_70%)] dark:bg-[image:linear-gradient(120deg,var(--brand-wash-from)_0%,var(--brand-wash-to)_70%)] p-5 shadow-xs max-md:flex-col max-md:items-start max-md:p-4">
           <span aria-hidden className="inline-flex size-11 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground">
             <LibraryIcon className="size-5" />
           </span>
@@ -388,7 +388,7 @@ export function LibraryPage() {
                         aria-hidden
                         className={cn(
                           "inline-flex size-4 items-center justify-center rounded-[4px] border",
-                          allOn ? "border-primary bg-primary text-primary-foreground" : "border-[#a1a1aa] bg-background text-transparent"
+                          allOn ? "border-primary bg-primary text-primary-foreground" : "border-border-strong bg-background text-transparent"
                         )}
                       >
                         <CheckIcon className="size-3" strokeWidth={3} />
@@ -422,7 +422,7 @@ export function LibraryPage() {
                       className={cn(
                         "inline-flex h-8 items-center gap-1.5 rounded-full border px-3 text-[13px] font-medium whitespace-nowrap transition-colors",
                         focusRing,
-                        newOnly ? "border-foreground bg-foreground text-[#fafafa]" : "bg-background hover:bg-accent"
+                        newOnly ? "border-foreground bg-foreground text-background" : "bg-background hover:bg-accent"
                       )}
                     >
                       <SparklesIcon className="size-3" aria-hidden />

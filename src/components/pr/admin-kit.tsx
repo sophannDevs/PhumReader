@@ -318,7 +318,7 @@ export function FieldLabel({ children, id, as: As = "p" }: { children: React.Rea
 /** `.ad-quote`: grey box around quoted text. */
 export function Quote({ children }: { children: React.ReactNode }) {
   return (
-    <p className="m-0 rounded-[8px] border bg-[#fafafa] px-3 py-2.5 text-[13px] leading-[18px] text-[#3f3f46] dark:bg-muted dark:text-foreground">
+    <p className="m-0 rounded-[8px] border bg-subtle px-3 py-2.5 text-[13px] leading-[18px] text-soft-foreground">
       {children}
     </p>
   )
@@ -348,7 +348,7 @@ export function QueueRow({ selected, onPick, children }: { selected: boolean; on
           onClick={onPick}
           className={cn(
             "flex w-full items-center gap-2.5 px-3 py-2.5 text-left transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset",
-            selected ? "bg-brand-soft shadow-[inset_3px_0_0_var(--primary)]" : "hover:bg-[#fafafa] dark:hover:bg-muted"
+            selected ? "bg-brand-soft shadow-[inset_3px_0_0_var(--primary)]" : "hover:bg-subtle"
           )}
         >
           {children}

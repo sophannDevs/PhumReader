@@ -75,13 +75,13 @@ export function JoinPage() {
 
   return (
     <>
-      <section className="border-b bg-[#fafafa] bg-[image:radial-gradient(800px_300px_at_80%_0%,#d9f7e6_0%,rgba(217,247,230,0)_70%)]">
+      <section className="border-b bg-subtle bg-[image:radial-gradient(800px_300px_at_80%_0%,#d9f7e6_0%,rgba(217,247,230,0)_70%)] dark:bg-[image:radial-gradient(800px_300px_at_80%_0%,var(--brand-wash-from)_0%,transparent_70%)]">
         <div className="container grid items-center gap-12 pt-14 pb-14 max-md:pt-7 max-md:pb-8 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
           <Effect asChild fade slide={{ direction: "up", offset: 12 }}>
             <div className="flex min-w-0 flex-col gap-[18px]">
               <Eyebrow>{t("eyebrow")}</Eyebrow>
               <h1 className="text-[44px] leading-[50px] font-extrabold tracking-[-0.03em] max-md:text-[30px] max-md:leading-9">{t("title")}</h1>
-              <p className="max-w-[52ch] text-[17px] leading-[27px] text-[#3f3f46] max-md:text-[15px] max-md:leading-6">{t("lead")}</p>
+              <p className="max-w-[52ch] text-[17px] leading-[27px] text-soft-foreground max-md:text-[15px] max-md:leading-6">{t("lead")}</p>
               <div className="flex flex-wrap gap-2.5">
                 {start("lg", undefined, true)}
                 <Button asChild variant="outline" size="lg">
@@ -90,7 +90,7 @@ export function JoinPage() {
               </div>
               <ul className="m-0 flex list-none flex-wrap gap-x-[18px] gap-y-2 p-0">
                 {(["fact1", "fact2", "fact3"] as const).map((k) => (
-                  <li key={k} className="flex items-center gap-1.5 text-sm leading-5 text-[#27272a]">
+                  <li key={k} className="flex items-center gap-1.5 text-sm leading-5 text-strong-foreground">
                     <CheckIcon className="size-3.5 shrink-0 text-brand-ink" aria-hidden />
                     {t(k)}
                   </li>
@@ -107,7 +107,7 @@ export function JoinPage() {
                   alt=""
                   width={300}
                   height={400}
-                  className={cn("absolute aspect-[3/4] rounded-[14px] border-[3px] border-white object-cover shadow-[0_18px_40px_rgba(9,9,11,0.2)]", cls)}
+                  className={cn("absolute aspect-[3/4] rounded-[14px] border-[3px] border-background object-cover shadow-[0_18px_40px_rgba(9,9,11,0.2)]", cls)}
                 />
               ) : null
             )}
@@ -138,20 +138,20 @@ export function JoinPage() {
         <Effect asChild fade slide={{ direction: "up", offset: 12 }} inView>
           <section
             aria-labelledby="earn-title"
-            className="grid items-center gap-8 rounded-[16px] border border-[#c9f1da] bg-brand-soft bg-[image:linear-gradient(135deg,#effcf4,#e3f9ec)] p-8 max-md:p-[18px] md:rounded-hero lg:grid-cols-[minmax(0,1fr)_420px]"
+            className="grid items-center gap-8 rounded-[16px] border border-brand-line bg-brand-soft bg-[image:linear-gradient(135deg,#effcf4,#e3f9ec)] dark:bg-[image:linear-gradient(135deg,var(--brand-wash-from),var(--brand-wash-to))] p-8 max-md:p-[18px] md:rounded-hero lg:grid-cols-[minmax(0,1fr)_420px]"
           >
             <div className="flex min-w-0 flex-col gap-3">
               <h2 id="earn-title" className="type-h2">
                 {t("earnTitle")}
               </h2>
-              <p className="max-w-[52ch] text-[13px] leading-5 text-[#3f3f46]">{t("earnBody1", { price })}</p>
-              <p className="max-w-[52ch] text-[13px] leading-5 text-[#3f3f46]">{t("earnBody2")}</p>
+              <p className="max-w-[52ch] text-[13px] leading-5 text-soft-foreground">{t("earnBody1", { price })}</p>
+              <p className="max-w-[52ch] text-[13px] leading-5 text-soft-foreground">{t("earnBody2")}</p>
             </div>
             <div className="flex min-w-0 flex-col gap-4 rounded-card border bg-card p-5 shadow-xs">
               <h3 className="type-h4">{t("calcTitle")}</h3>
               <Range id="jn-readers" label={t("calcReaders")} min={10} max={2000} step={10} value={readers} onChange={setReaders} valueText={t("readersValue", { count: readers })} />
               <Range id="jn-eps" label={t("calcEpisodes")} min={1} max={12} step={1} value={eps} onChange={setEps} valueText={t("episodesValue", { count: eps })} />
-              <div role="status" aria-live="polite" className="flex flex-col gap-0.5 rounded-card border bg-[#fafafa] p-3.5">
+              <div role="status" aria-live="polite" className="flex flex-col gap-0.5 rounded-card border bg-subtle p-3.5">
                 <span className="text-xs leading-4 text-muted-foreground">{t("calcOutLabel")}</span>
                 <span className="type-h2 tabular-nums">{t("calcCoins", { coins: fmt(coins) })}</span>
                 <span className="text-xs leading-4 text-muted-foreground">{t("calcUsd")}</span>
@@ -191,7 +191,7 @@ export function JoinPage() {
           </div>
           <ul className="m-0 grid list-none gap-x-6 gap-y-2.5 p-0 md:grid-cols-2">
             {RULES.map((n) => (
-              <li key={n} className="flex items-start gap-2 text-sm leading-5 text-[#27272a]">
+              <li key={n} className="flex items-start gap-2 text-sm leading-5 text-strong-foreground">
                 <CheckIcon className="mt-0.5 size-3.5 shrink-0 text-brand-ink" aria-hidden />
                 {t(`rule${n}`)}
               </li>
@@ -212,7 +212,7 @@ export function JoinPage() {
                 <AccordionTrigger className="min-h-[54px] items-center py-3 text-[15px] font-medium hover:text-foreground hover:underline hover:underline-offset-4">
                   {t(`q${n}`)}
                 </AccordionTrigger>
-                <AccordionContent className="pb-4 text-sm leading-[22px] text-[#3f3f46]">{t(`a${n}`)}</AccordionContent>
+                <AccordionContent className="pb-4 text-sm leading-[22px] text-soft-foreground">{t(`a${n}`)}</AccordionContent>
               </AccordionItem>
             ))}
           </Accordion>

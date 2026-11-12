@@ -15,10 +15,14 @@ import app.phumreader.user.service.SettingsViews.AlertSwitch;
 import app.phumreader.user.service.SettingsViews.AlertSwitchChange;
 import app.phumreader.user.service.SettingsViews.AlertTypes;
 import app.phumreader.user.service.SettingsViews.AlertTypesChange;
+import app.phumreader.user.service.SettingsViews.ComicSettings;
+import app.phumreader.user.service.SettingsViews.ComicsChange;
 import app.phumreader.user.service.SettingsViews.NotificationSettings;
 import app.phumreader.user.service.SettingsViews.NotificationsChange;
 import app.phumreader.user.service.SettingsViews.Preferences;
 import app.phumreader.user.service.SettingsViews.PreferencesChange;
+import app.phumreader.user.service.SettingsViews.PrivacyChange;
+import app.phumreader.user.service.SettingsViews.PrivacySettings;
 import app.phumreader.user.service.SettingsViews.QuietHoursChange;
 import app.phumreader.user.service.SettingsViews.QuietHoursSetting;
 import app.phumreader.user.service.SettingsViews.ReaderChange;
@@ -270,7 +274,44 @@ public class UserService {
                 row.changeStoryLanguages(picks.storyLanguages().stream().distinct().toList());
             }
         }
+        ComicsChange comics = change.comics();
+        if (comics != null) {
+            changeComics(row, comics);
+        }
+        PrivacyChange privacy = change.privacy();
+        if (privacy != null) {
+            if (privacy.region() != null) {
+                row.changeRegion(privacy.region());
+            }
+            if (privacy.publicLibrary() != null) {
+                row.changePublicLibrary(privacy.publicLibrary());
+            }
+            if (privacy.mature() != null) {
+                row.changeMatureContent(privacy.mature());
+            }
+        }
         return view(row);
+    }
+
+    private static void changeComics(UserSettings row, ComicsChange comics) {
+        if (comics.mode() != null) {
+            row.changeComicMode(comics.mode());
+        }
+        if (comics.quality() != null) {
+            row.changeImageQuality(comics.quality());
+        }
+        if (comics.autoNext() != null) {
+            row.changeAutoNext(comics.autoNext());
+        }
+        if (comics.dataSaver() != null) {
+            row.changeDataSaver(comics.dataSaver());
+        }
+        if (comics.background() != null) {
+            row.changeComicBackground(comics.background());
+        }
+        if (comics.width() != null) {
+            row.changeComicWidth(comics.width());
+        }
     }
 
     // ---------- email change and deletion (called by the auth feature) ----------
@@ -381,7 +422,15 @@ public class UserService {
                         new QuietHoursSetting(
                                 row.isQuietHours(), row.getQuietFrom(), row.getQuietTo()),
                         row.isDailyDigest()),
-                new Preferences(row.getPreferredGenres(), row.getStoryLanguages()));
+                new Preferences(row.getPreferredGenres(), row.getStoryLanguages()),
+                new ComicSettings(
+                        row.getComicMode(),
+                        row.getImageQuality(),
+                        row.isAutoNext(),
+                        row.isDataSaver(),
+                        row.getComicBackground(),
+                        row.getComicWidth()),
+                new PrivacySettings(row.getRegion(), row.isPublicLibrary(), row.isMatureContent()));
     }
 
     private static AlertSwitch alert(UserSettings row, String type) {

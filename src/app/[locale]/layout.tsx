@@ -9,6 +9,7 @@ import { loadMessages } from "@/i18n/messages";
 import { routing } from "@/i18n/routing";
 import { ServiceWorker } from "@/components/pr/service-worker";
 import { Providers } from "@/lib/query";
+import { themeInitScript } from "@/lib/theme-script";
 import { cn } from "@/lib/utils";
 
 // Self-hosted by next/font. Latin falls to Inter, Khmer falls to Kantumruy Pro
@@ -75,8 +76,11 @@ export default async function LocaleLayout({
       lang={locale}
       suppressHydrationWarning
       className={cn("h-full antialiased font-sans", inter.variable, kantumruy.variable, notoSerif.variable)}
-      style={{ colorScheme: "light" }}
     >
+      <head>
+        {/* Sets the theme class before first paint (Settings > Reading > Theme); see src/lib/theme-script.ts. */}
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+      </head>
       {/* Browser extensions (e.g. Grammarly) add attributes to <body> before React hydrates. */}
       <body className="min-h-full flex flex-col" suppressHydrationWarning>
         <NextIntlClientProvider locale={locale} messages={messages}>

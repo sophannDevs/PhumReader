@@ -81,9 +81,9 @@ const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "
 
 const ICON_TILE: Record<NotificationKind, string> = {
   update: "bg-brand-soft text-brand-ink",
-  comment: "bg-[#eff6ff] text-[#1d4ed8]",
-  coins: "bg-[#fef3c7] text-[#92400e]",
-  system: "bg-muted text-[#3f3f46]",
+  comment: "bg-info-soft text-info-ink",
+  coins: "bg-[#fef3c7] text-[#92400e] dark:bg-warning-soft dark:text-warning-ink",
+  system: "bg-muted text-soft-foreground",
 }
 
 function KindIcon({ kind }: { kind: NotificationKind }) {
@@ -481,7 +481,7 @@ export function NotificationsPage() {
               <UndoBar
                 text={undoBar.current.text}
                 onUndo={undoBar.undo}
-                className="sticky bottom-4 self-center bg-[#09090b] py-2 pr-2 shadow-md max-md:bottom-[72px]"
+                className="sticky bottom-4 self-center bg-foreground text-[#fafafa] py-2 dark:text-background pr-2 shadow-md max-md:bottom-[72px]"
               />
             ) : null}
           </section>

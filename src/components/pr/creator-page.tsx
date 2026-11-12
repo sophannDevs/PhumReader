@@ -277,7 +277,7 @@ function StartGuide() {
   return (
     <section
       aria-labelledby="start-title"
-      className="flex flex-col gap-5 rounded-card border bg-background bg-[image:linear-gradient(135deg,#effcf4,#ffffff_70%)] p-7 shadow-xs max-md:p-[18px]"
+      className="flex flex-col gap-5 rounded-card border bg-background bg-[image:linear-gradient(135deg,var(--brand-wash-from),var(--brand-wash-to)_70%)] p-7 shadow-xs max-md:p-[18px]"
     >
       <div className="flex flex-col gap-1.5">
         <h2 id="start-title" className="type-h3">
@@ -573,7 +573,7 @@ function TodoCard({ works, base, time, dayName, unreplied }: { works: Row[]; bas
                 aria-hidden
                 className={cn(
                   "inline-flex size-[26px] shrink-0 items-center justify-center rounded-lg text-xs font-bold tabular-nums",
-                  it.tone === "go" ? "bg-brand-soft text-brand-ink" : it.tone === "wait" ? "bg-[#fef3c7] text-[#92400e]" : "bg-muted text-foreground"
+                  it.tone === "go" ? "bg-brand-soft text-brand-ink" : it.tone === "wait" ? "bg-[#fef3c7] text-[#92400e] dark:bg-warning-soft dark:text-warning-ink" : "bg-muted text-foreground"
                 )}
               >
                 {it.icon}
@@ -632,9 +632,9 @@ function CommentsCard({ live, talk, onTalk }: { live: Row; talk: Talk; onTalk: (
                   {t("commentWhere", { title: live.title, unit: live.format, n: Math.max(1, live.eps - c.back) })}
                 </span>
               </div>
-              <p className="text-[13px] leading-[19px] text-[#3f3f46]">{c.text}</p>
+              <p className="text-[13px] leading-[19px] text-soft-foreground">{c.text}</p>
               {reply ? (
-                <p className="rounded-r-md border-l-2 border-primary bg-selected px-2.5 py-1.5 text-xs leading-4 text-[#3f3f46]">{t("you", { text: reply })}</p>
+                <p className="rounded-r-md border-l-2 border-primary bg-selected px-2.5 py-1.5 text-xs leading-4 text-soft-foreground">{t("you", { text: reply })}</p>
               ) : open === c.id ? (
                 <form
                   className="flex gap-1.5"

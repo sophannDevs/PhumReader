@@ -563,7 +563,7 @@ function UploadForm({
                     <span className="text-sm leading-5 font-medium" id="up-no-l">
                       {t("numberLabel", { unit })}
                     </span>
-                    <div aria-labelledby="up-no-l" role="group" className="flex h-9 min-w-0 items-center gap-2.5 rounded-control border bg-[#fafafa] px-3 dark:bg-muted">
+                    <div aria-labelledby="up-no-l" role="group" className="flex h-9 min-w-0 items-center gap-2.5 rounded-control border bg-subtle px-3 dark:bg-muted">
                       <strong className="text-sm tabular-nums">{nLabel}</strong>
                       <span className="truncate text-xs leading-4 text-muted-foreground">
                         {edit ? t("numberFixed") : prev ? t("numberNext", { unit, n: prev }) : prev === 0 ? t("numberFirst", { unit }) : ""}
@@ -637,7 +637,7 @@ function UploadForm({
                         uploads.add(Array.from(e.dataTransfer.files))
                       }}
                       className={cn(
-                        "flex w-full flex-col items-center justify-center gap-2 rounded-card border-[1.5px] border-dashed border-[#a1a1aa] bg-[#fafafa] px-4 py-7 text-center transition-colors outline-none hover:border-primary hover:bg-selected focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-muted",
+                        "flex w-full flex-col items-center justify-center gap-2 rounded-card border-[1.5px] border-dashed border-border-strong bg-subtle px-4 py-7 text-center transition-colors outline-none hover:border-primary hover:bg-selected focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-muted",
                         dropping && "border-primary bg-selected",
                         tried && !items.length && "border-destructive"
                       )}
@@ -706,7 +706,7 @@ function UploadForm({
               <CardHead id="up-release" title={t("release")} />
               <div className="flex flex-col gap-4 p-5 max-md:p-4">
                 {live ? (
-                  <p className="rounded-lg border bg-[#fafafa] px-4 py-3 text-[13px] leading-[19px] text-muted-foreground dark:bg-muted">{t("liveNote", { unit })}</p>
+                  <p className="rounded-lg border bg-subtle px-4 py-3 text-[13px] leading-[19px] text-muted-foreground dark:bg-muted">{t("liveNote", { unit })}</p>
                 ) : (
                   <>
                     <div role="radiogroup" aria-label={t("whenLabel")} className="grid gap-2.5 md:grid-cols-2">

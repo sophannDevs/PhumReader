@@ -47,7 +47,7 @@ export function EpisodeGroupHead({ fastPass, title, note }: { fastPass?: boolean
     <li
       className={cn(
         "flex items-center justify-between gap-3 px-3.5 py-[9px] text-xs leading-4 font-semibold tracking-[0.02em]",
-        fastPass ? "bg-[#fff7e6] text-warning-ink" : "bg-muted text-foreground"
+        fastPass ? "bg-[#fff7e6] text-warning-ink dark:bg-warning-soft" : "bg-muted text-foreground"
       )}
     >
       <span className="flex items-center gap-1.5">{title}</span>
@@ -57,7 +57,7 @@ export function EpisodeGroupHead({ fastPass, title, note }: { fastPass?: boolean
 }
 
 const rowClass =
-  "group flex w-full min-w-0 items-center gap-3.5 bg-background px-3.5 py-2.5 text-left outline-none transition-colors hover:bg-[#fafafa] focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring max-md:gap-3 max-md:px-3"
+  "group flex w-full min-w-0 items-center gap-3.5 bg-background px-3.5 py-2.5 text-left outline-none transition-colors hover:bg-subtle focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring max-md:gap-3 max-md:px-3"
 
 /**
  * One episode (or novel chapter), prototype `.ep-row`: 64 px thumb (56 on phones), title with UP, date and likes,
@@ -148,7 +148,7 @@ export function EpisodeRow({
     </>
   )
 
-  const cls = cn(rowClass, upNext && "bg-[#effcf4] shadow-[inset_3px_0_0_var(--primary)] hover:bg-[#effcf4]")
+  const cls = cn(rowClass, upNext && "bg-brand-wash-from shadow-[inset_3px_0_0_var(--primary)] hover:bg-brand-wash-from")
 
   return (
     <Effect asChild fade slide={{ direction: "up", offset: 8 }} delay={Math.min(index, 10) * 40} inView>

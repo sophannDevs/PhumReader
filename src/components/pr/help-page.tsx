@@ -99,7 +99,7 @@ export function HelpPage() {
 
   return (
     <>
-      <section className="border-b bg-[#fafafa] bg-[image:radial-gradient(900px_300px_at_50%_-10%,#d9f7e6_0%,rgba(217,247,230,0)_70%)]">
+      <section className="border-b bg-subtle bg-[image:radial-gradient(900px_300px_at_50%_-10%,#d9f7e6_0%,rgba(217,247,230,0)_70%)] dark:bg-[image:radial-gradient(900px_300px_at_50%_-10%,var(--brand-wash-from)_0%,transparent_70%)]">
         <Effect asChild fade slide={{ direction: "up", offset: 10 }}>
           <div className="container flex flex-col items-center gap-3.5 pt-8 pb-8 text-center md:pt-10 md:pb-9">
             <h1 className="type-h1">{t("title")}</h1>
@@ -167,7 +167,7 @@ export function HelpPage() {
                     setOpen("")
                   }}
                   className={cn(
-                    "flex min-w-0 items-center gap-2.5 rounded-xl border bg-background p-3 text-left transition-colors hover:border-[#a1a1aa]",
+                    "flex min-w-0 items-center gap-2.5 rounded-xl border bg-background p-3 text-left transition-colors hover:border-border-strong",
                     on && "border-primary bg-selected shadow-[0_0_0_1px_var(--primary)] hover:border-primary",
                     focusRing
                   )}
@@ -227,7 +227,7 @@ export function HelpPage() {
                         </span>
                       </AccordionTrigger>
                       <AccordionContent className="pb-4">
-                        <div className="flex flex-col gap-2.5 text-sm leading-[22px] text-[#3f3f46]">
+                        <div className="flex flex-col gap-2.5 text-sm leading-[22px] text-soft-foreground">
                           <div>{a.a}</div>
                           {a.href && a.link ? (
                             <Link href={a.href} className="self-start rounded-sm text-[13px] leading-[18px] font-semibold text-brand-ink underline-offset-3 hover:text-brand-ink">

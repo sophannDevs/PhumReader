@@ -105,11 +105,11 @@ export function ErrorHero({
   const locale = useLocale()
   return (
     <>
-      <section className="border-b bg-[#fafafa] bg-[image:radial-gradient(1200px_400px_at_20%_0%,#effcf4_0%,rgba(239,252,244,0)_70%)]">
+      <section className="border-b bg-subtle bg-[image:radial-gradient(1200px_400px_at_20%_0%,var(--brand-wash-from)_0%,transparent_70%)]">
         <div className="container">
           <div className="mx-auto grid max-w-[976px] grid-cols-[minmax(0,1fr)] items-center gap-5 pt-6 pb-8 md:grid-cols-[240px_minmax(0,1fr)] md:gap-9 md:pt-12 md:pb-14 lg:grid-cols-[320px_minmax(0,1fr)] lg:gap-14 lg:pt-16 lg:pb-[72px]">
             <Effect asChild fade zoom={{ initialScale: 0.92 }}>
-              <div className="flex h-[150px] w-full items-center justify-center rounded-[18px] border bg-white shadow-md md:h-[220px] md:w-60 md:rounded-3xl lg:h-[280px] lg:w-80">
+              <div className="flex h-[150px] w-full items-center justify-center rounded-[18px] border bg-card shadow-md md:h-[220px] md:w-60 md:rounded-3xl lg:h-[280px] lg:w-80">
                 <ErrorArt kind={kind === "comingSoon" ? "maintenance" : kind} className="h-auto w-[150px] max-w-full md:w-[240px]" />
               </div>
             </Effect>

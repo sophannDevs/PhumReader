@@ -27,25 +27,25 @@ export function AuthSplitLayout({ children }: { children: React.ReactNode }) {
   const t = useTranslations("auth")
 
   return (
-    <div className="flex-1 bg-[#fafafa] pt-10 pb-16 max-md:pt-4 max-md:pb-8">
+    <div className="flex-1 bg-subtle pt-10 pb-16 max-md:pt-4 max-md:pb-8">
       <div className="mx-auto grid w-full max-w-[1120px] grid-cols-[minmax(0,1fr)_460px] items-stretch gap-7 px-8 max-lg:grid-cols-[minmax(0,1fr)_420px] max-lg:px-6 max-md:grid-cols-1 max-md:px-4">
         <Effect asChild fade slide={{ direction: "up", offset: 12 }}>
           <section
             aria-labelledby="auth-panel-title"
-            className="flex min-h-[560px] flex-col justify-between gap-8 overflow-hidden rounded-[20px] border border-[#c9f1da] bg-[linear-gradient(160deg,#e8fbf0_0%,#d9f7e6_100%)] p-10 max-md:hidden"
+            className="flex min-h-[560px] flex-col justify-between gap-8 overflow-hidden rounded-[20px] border border-brand-line bg-[linear-gradient(160deg,#e8fbf0_0%,#d9f7e6_100%)] dark:bg-[image:linear-gradient(160deg,var(--brand-wash-from)_0%,var(--brand-wash-to)_100%)] p-10 max-md:hidden"
           >
             <div className="flex flex-col gap-3.5">
               <span className="type-eyebrow">{t("panelEyebrow")}</span>
               <h2 id="auth-panel-title" className="m-0 max-w-[15ch] text-4xl leading-[44px] font-extrabold tracking-[-0.03em]">
                 {t("panelTitle")}
               </h2>
-              <p className="max-w-[44ch] text-[15px] leading-6 text-[#3f3f46]">{t("panelSub")}</p>
+              <p className="max-w-[44ch] text-[15px] leading-6 text-soft-foreground">{t("panelSub")}</p>
               <ul className="mt-1.5 flex flex-col gap-2.5">
                 {PERKS.map(({ icon: Icon, key }) => (
-                  <li key={key} className="flex items-center gap-2.5 text-sm leading-5 text-[#27272a]">
+                  <li key={key} className="flex items-center gap-2.5 text-sm leading-5 text-strong-foreground">
                     <span
                       aria-hidden
-                      className="inline-flex size-7 shrink-0 items-center justify-center rounded-lg bg-white text-brand-ink shadow-xs"
+                      className="inline-flex size-7 shrink-0 items-center justify-center rounded-lg bg-background text-brand-ink shadow-xs"
                     >
                       <Icon className="size-3.5" />
                     </span>

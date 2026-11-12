@@ -79,7 +79,7 @@ export function SeriesCard({
       </Tilt>
       <div className={cn("flex min-w-0 flex-col", hook ? "gap-[3px]" : "gap-0.5")}>
         <h3 className="truncate text-sm leading-5 font-semibold max-md:text-[13px] max-md:leading-[18px]">{series.title}</h3>
-        {hook ? <p className="line-clamp-2 text-[12.5px] leading-[17px] text-[#52525b]">{hook}</p> : null}
+        {hook ? <p className="line-clamp-2 text-[12.5px] leading-[17px] text-soft-foreground">{hook}</p> : null}
         <p className="truncate text-[13px] leading-[18px] text-muted-foreground max-md:text-xs">
           {meta === "creator" ? series.creator : `${series.creator} · ${loc.genre(series.genre)}`}
         </p>

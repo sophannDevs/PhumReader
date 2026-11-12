@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test"
-import { visible } from "./helpers"
+import { seed, SOKHA, visible } from "./helpers"
 
 /** Page behaviour kept from V1, on the V2.1 screens: readers, novel settings, ⌘K search. */
 test.describe("readers and search", () => {
@@ -46,5 +46,44 @@ test.describe("readers and search", () => {
 
     await page.goto("/search?q=glass")
     await expect(visible(page.getByRole("link", { name: /Glass Compass/ })).first()).toBeVisible()
+  })
+})
+
+/** Settings > Reading > Theme applies to the whole site (not only the novel reader). */
+test.describe("site theme", () => {
+  test("Settings: Dark + Save makes the whole site dark, and it stays dark after a reload", async ({ page }) => {
+    await seed(page, { user: SOKHA })
+    await page.goto("/settings")
+    await expect(page.locator("html")).not.toHaveClass(/dark/)
+    await visible(page.getByRole("radio", { name: "Dark" })).click()
+    // Applies on save, not on click.
+    await expect(page.locator("html")).not.toHaveClass(/dark/)
+    await visible(page.getByRole("button", { name: "Save changes" })).click()
+    await expect(page.locator("html")).toHaveClass(/dark/)
+    await page.reload()
+    await expect(page.locator("html")).toHaveClass(/dark/)
+    await page.goto("/")
+    await expect(page.locator("html")).toHaveClass(/dark/)
+  })
+
+  test("System follows a dark device", async ({ page }) => {
+    await page.emulateMedia({ colorScheme: "dark" })
+    await page.goto("/")
+    await expect(page.locator("html")).toHaveClass(/dark/)
+    await page.emulateMedia({ colorScheme: "light" })
+    await expect(page.locator("html")).not.toHaveClass(/dark/)
+  })
+
+  test("Novel reader keeps its own sepia theme on a dark site", async ({ page }) => {
+    await page.emulateMedia({ colorScheme: "dark" })
+    await page.goto("/novel/ink-witch/1")
+    await expect(page.locator("html")).toHaveClass(/dark/)
+    await visible(page.getByRole("button", { name: /Reading settings|Aa/ })).click()
+    const panel = visible(page.getByRole("dialog"))
+    await panel.getByRole("radio", { name: "Sepia" }).click()
+    await page.keyboard.press("Escape")
+    const root = visible(page.locator("[data-reader-theme]"))
+    await expect(root).toHaveAttribute("data-reader-theme", "sepia")
+    await expect(root).toHaveCSS("color-scheme", "light")
   })
 })

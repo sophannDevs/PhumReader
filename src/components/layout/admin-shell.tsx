@@ -56,7 +56,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
   const { access } = useAdminAccess()
   const ok = access === "ok"
   return (
-    <div className="flex min-h-svh flex-1 flex-col bg-[#fafafa] dark:bg-background">
+    <div className="flex min-h-svh flex-1 flex-col bg-subtle">
       <SkipLink />
       <AdminTopBar showUser={ok} />
       <AdminDecisions>

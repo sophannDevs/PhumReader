@@ -100,7 +100,7 @@ export function OptionCard({
       onClick={onSelect}
       className={cn(
         "flex w-full items-start gap-2.5 rounded-[10px] border bg-background px-3.5 py-3 text-left transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50",
-        selected ? "border-primary bg-selected shadow-[0_0_0_1px_var(--primary)]" : "hover:bg-[#fafafa]",
+        selected ? "border-primary bg-selected shadow-[0_0_0_1px_var(--primary)]" : "hover:bg-subtle",
         className
       )}
     >
@@ -108,7 +108,7 @@ export function OptionCard({
         aria-hidden
         className={cn(
           "mt-px inline-flex size-4 shrink-0 items-center justify-center rounded-full border-[1.5px]",
-          selected ? "border-brand-ink" : "border-[#a1a1aa]"
+          selected ? "border-brand-ink" : "border-border-strong"
         )}
       >
         {selected ? <span className="size-2 rounded-full bg-brand-ink" /> : null}
@@ -130,12 +130,12 @@ export function UndoBar({ text, onUndo, className }: { text: string; onUndo: () 
     <div
       role="status"
       className={cn(
-        "flex items-center justify-between gap-3 rounded-[10px] bg-foreground py-2.5 pr-2.5 pl-4 text-sm text-[#fafafa]",
+        "flex items-center justify-between gap-3 rounded-[10px] bg-foreground py-2.5 pr-2.5 pl-4 text-sm text-[#fafafa] dark:text-background",
         className
       )}
     >
       <span className="min-w-0">{text}</span>
-      <Button size="sm" onClick={onUndo} className="bg-[#fafafa] text-foreground hover:bg-[#e4e4e7]">
+      <Button size="sm" onClick={onUndo} className="bg-[#fafafa] text-foreground hover:bg-[#e4e4e7] dark:bg-background dark:hover:bg-border">
         {t("undo")}
       </Button>
     </div>
@@ -227,7 +227,7 @@ export function StatCard({
         <span
           className={cn(
             "text-xs font-semibold",
-            tone === "up" ? "text-brand-ink" : tone === "down" ? "text-[#b91c1c]" : "text-muted-foreground"
+            tone === "up" ? "text-brand-ink" : tone === "down" ? "text-[#b91c1c] dark:text-destructive-ink" : "text-muted-foreground"
           )}
         >
           {change}
@@ -244,7 +244,7 @@ export function StatCard({
       href={href}
       className={cn(
         base,
-        "transition-colors outline-none hover:bg-[#fafafa] focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+        "transition-colors outline-none hover:bg-subtle focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
       )}
     >
       {body}

@@ -109,7 +109,7 @@ export function SmallSwitch({ className, ...props }: React.ComponentProps<typeof
   return (
     <Switch
       className={cn(
-        "h-5 w-9 border-0 data-[state=unchecked]:bg-[#d4d4d8] [&>[data-slot=switch-thumb]]:size-4 [&>[data-slot=switch-thumb]]:data-[state=checked]:translate-x-[18px] [&>[data-slot=switch-thumb]]:data-[state=unchecked]:translate-x-0.5",
+        "h-5 w-9 border-0 data-[state=unchecked]:bg-track [&>[data-slot=switch-thumb]]:size-4 [&>[data-slot=switch-thumb]]:data-[state=checked]:translate-x-[18px] [&>[data-slot=switch-thumb]]:data-[state=unchecked]:translate-x-0.5",
         className
       )}
       {...props}
@@ -136,13 +136,13 @@ export function SaveBar({
       role="region"
       aria-label={t("unsavedRegion")}
       className={cn(
-        "sticky bottom-4 z-30 mx-auto flex w-[calc(100%-32px)] max-w-[760px] items-center justify-between gap-3 rounded-card bg-[#09090b] py-2.5 pr-3 pl-4 text-[#fafafa] shadow-md max-md:bottom-[72px] max-md:flex-wrap",
+        "sticky bottom-4 z-30 mx-auto flex w-[calc(100%-32px)] max-w-[760px] items-center justify-between gap-3 rounded-card bg-[#09090b] py-2.5 pr-3 pl-4 text-[#fafafa] shadow-md dark:bg-foreground dark:text-background max-md:bottom-[72px] max-md:flex-wrap",
         className
       )}
     >
       <span className="text-[13px] leading-[18px] font-semibold">{t("unsaved")}</span>
       <div className="flex gap-2">
-        <Button variant="ghost" size="sm" className="text-[#e4e4e7] hover:bg-white/10 hover:text-white" onClick={onDiscard}>
+        <Button variant="ghost" size="sm" className="text-[#e4e4e7] hover:bg-white/10 hover:text-white dark:text-background/80 dark:hover:bg-background/10 dark:hover:text-background" onClick={onDiscard}>
           {t("discard")}
         </Button>
         <Button variant="brand" size="sm" disabled={saveDisabled} loading={saving} onClick={onSave}>

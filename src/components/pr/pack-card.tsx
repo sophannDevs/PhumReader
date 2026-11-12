@@ -62,7 +62,7 @@ export function PackCard({
         )}
       >
         <span className="flex min-h-[22px] w-full items-center justify-between gap-2">
-          <RadioGroupItem id={id} value={String(pack.coins)} disabled={disabled} className="border-[#a1a1aa]" />
+          <RadioGroupItem id={id} value={String(pack.coins)} disabled={disabled} className="border-border-strong" />
           {tag}
         </span>
         <span className="flex items-center gap-2">

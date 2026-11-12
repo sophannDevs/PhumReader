@@ -254,7 +254,7 @@ export function SeriesStickyBar({ series, heroRef }: { series: Series; heroRef: 
     <div
       aria-hidden={!shown}
       className={cn(
-        "sticky bottom-[62px] z-30 mx-3 mb-3 flex items-center gap-3 rounded-[14px] border bg-white/[0.97] py-2.5 pr-2.5 pl-3.5 shadow-md transition-[opacity,transform] duration-200 motion-reduce:transition-none md:hidden",
+        "sticky bottom-[62px] z-30 mx-3 mb-3 flex items-center gap-3 rounded-[14px] border bg-background/[0.97] py-2.5 pr-2.5 pl-3.5 shadow-md transition-[opacity,transform] duration-200 motion-reduce:transition-none md:hidden",
         shown ? "opacity-100" : "pointer-events-none translate-y-3 opacity-0"
       )}
     >

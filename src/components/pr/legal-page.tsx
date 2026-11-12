@@ -107,7 +107,7 @@ export function LegalPage({ doc }: { doc: PolicyId }) {
             <h2 id="lg-short" className="type-h4">
               {t("short")}
             </h2>
-            <ul lang={english} className="mt-2 flex list-disc flex-col gap-1.5 pl-5 text-sm leading-[21px] text-[#27272a]">
+            <ul lang={english} className="mt-2 flex list-disc flex-col gap-1.5 pl-5 text-sm leading-[21px] text-strong-foreground">
               {policy.summary.map((s) => (
                 <li key={s}>{s}</li>
               ))}
@@ -139,7 +139,7 @@ export function LegalPage({ doc }: { doc: PolicyId }) {
               {i + 1}. {h}
             </h2>
             {ps.map((p) => (
-              <p key={p} className="m-0 max-w-[68ch] text-[15px] leading-[25px] text-[#3f3f46]">
+              <p key={p} className="m-0 max-w-[68ch] text-[15px] leading-[25px] text-soft-foreground">
                 {p}
               </p>
             ))}

@@ -557,7 +557,7 @@ Removes the profile picture (the website shows initials again). **Signed in.** *
 #### `GET /api/v1/me/settings`
 
 **Signed in.** **200** → [Settings](#settings). An account that never saved anything reads the website's
-defaults; the alert defaults (V21-03) are `update` push on / email off, `comment` on / off, `coins` on / on,
+defaults (comics: scroll, auto, auto-next on, data saver off, dark, fit; privacy: KH, public library off, mature off); the alert defaults (V21-03) are `update` push on / email off, `comment` on / off, `coins` on / on,
 `fastpass` on / off, `news` off / off, quiet hours on from 22 to 7, digest off.
 
 #### `PATCH /api/v1/me/settings`
@@ -580,6 +580,13 @@ all settings. **Signed in.**
 | `reader.wide` | boolean |
 | `preferences.genres` | up to 40 genre names (V21-07): the welcome / Home picks. `[]` means "Skip"; `GET` returns `null` until the reader chose |
 | `preferences.storyLanguages` | 1–2 of `en`, `km`: the languages of the stories to show |
+| `comics.mode` | `scroll`, `page` (V21-08): reading mode of the comic reader |
+| `comics.quality` | `auto`, `high`, `saver` |
+| `comics.autoNext` · `comics.dataSaver` | boolean |
+| `comics.background` | `dark`, `light` |
+| `comics.width` | `fit`, `narrow` |
+| `privacy.region` | `KH`, `TH`, `VN`, `OTHER` |
+| `privacy.publicLibrary` · `privacy.mature` | boolean; saved only, nothing reads them yet |
 | `notifications.types.<type>.push` · `.email` | boolean; `<type>`: `update` (new episodes of subscribed series), `fastpass` (a wanted Fast Pass episode is free), `comment`, `coins`, `news` |
 | `notifications.quiet.on` | boolean: no push during the quiet hours |
 | `notifications.quiet.from` · `.to` | 0–23, whole hours in Asia/Phnom_Penh; quiet from `from` up to (not including) `to`; may wrap midnight (22 → 7); the same hour twice means no quiet time |
@@ -593,7 +600,8 @@ email only while `types.update.email` is on (email ignores quiet hours); the inb
 The other types' push and email have no sender yet (V21-03 stores them).
 
 **200** → [Settings](#settings). **Errors:** `400 invalid_text_size` (field `reader.size`) ·
-`400 validation_failed` (fields `notifications.quiet.from` / `notifications.quiet.to`: not 0–23).
+`400 validation_failed` (fields `notifications.quiet.from` / `notifications.quiet.to`: not 0–23) ·
+`400 malformed_request` (an unknown value in `comics` or `privacy`).
 
 #### `PUT /api/v1/me/push-token`
 
@@ -2630,8 +2638,11 @@ interface SeriesViewer {
 
 ```ts
 interface Settings {
+  comics: { mode: "scroll" | "page"; quality: "auto" | "high" | "saver"; autoNext: boolean; dataSaver: boolean;
+            background: "dark" | "light"; width: "fit" | "narrow" };
   language: "en" | "km";
   notifications: NotificationSettings;
+  privacy: { region: "KH" | "TH" | "VN" | "OTHER"; publicLibrary: boolean; mature: boolean };
   reader: ReaderSettings;
   theme: "system" | "light" | "dark";
 }
@@ -2641,6 +2652,8 @@ interface Settings {
 
 ```ts
 interface SettingsChange {
+  comics?: { mode?; quality?; autoNext?; dataSaver?; background?; width? };  // same values as Settings.comics
+  privacy?: { region?; publicLibrary?; mature? };                           // same values as Settings.privacy
   language?: "en" | "km" | null;
   notifications?: NotificationsChange;
   reader?: ReaderChange;

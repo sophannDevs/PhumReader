@@ -2,9 +2,10 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
-/* Light by default; `.dark` (set on <html> by src/lib/theme.tsx) swaps the tokens below.
-   The comic reader and heroes use the fixed "surface" tokens, which stay dark in both
-   themes; the novel reader has its own themes. */
+/* Light by default; `.dark` (set on <html> before first paint by src/lib/theme-script.ts and kept
+   in sync by src/lib/theme.tsx, from Settings > Reading > Theme) swaps the tokens below for the
+   whole site. The comic reader and heroes use the fixed "surface" tokens, which stay dark in both
+   themes; the novel reader can still pick its own theme (Aa menu). */
 @custom-variant dark (&:is(.dark *));
 
 /* ------------------------------------------------------------------ */
@@ -72,11 +73,34 @@
   --social-google-green: #34a853;
   --social-facebook: #1877f2;
 
+  /* neutral steps used across pages (light values = the prototype's hex; dark below) */
+  --subtle: #fafafa; /* soft panel / row background */
+  --soft-foreground: #3f3f46; /* body text one step below foreground */
+  --strong-foreground: #27272a;
+  --border-strong: #a1a1aa; /* dashed upload frames, strong outlines */
+  --border-hover: #d4d4d8; /* card border on hover */
+  --track: #d4d4d8; /* progress tracks, dividers on muted */
+  --brand-line: #c9f1da; /* green-tinted card borders */
+  --brand-wash-from: #effcf4; /* green gradient washes */
+  --brand-wash-to: #ffffff;
+  --info-soft: #eff6ff;
+  --info-ink: #1d4ed8;
+  --shine: #ffffff; /* skeleton highlight */
+
   /* novel reader (light theme is the default) */
   --reader-page: #ffffff;
   --reader-text: #18181b;
   --reader-quiet: #71717a;
   --reader-border: #e4e4e7;
+
+  /* error illustrations (error-art.tsx, series-unavailable.tsx): the prototype's own hex in light */
+  --art-ink: #09090b;
+  --art-paper: #ffffff;
+  --art-faint: #fafafa;
+  --art-mint: #e8fbf0;
+  --art-line: #e4e4e7;
+  --art-line-strong: #d4d4d8;
+  --art-mark: #047a3a;
 }
 
 /* Dark theme: zinc neutrals, same green brand. Only colours change. */
@@ -115,6 +139,28 @@
 
   --up: #7f1d1d;
   --up-foreground: #fecaca;
+
+  --subtle: #111113;
+  --soft-foreground: #d4d4d8;
+  --strong-foreground: #e4e4e7;
+  --border-strong: #71717a;
+  --border-hover: #3f3f46;
+  --track: #3f3f46;
+  --brand-line: #14532d;
+  --brand-wash-from: #0a1f13;
+  --brand-wash-to: var(--card);
+  --info-soft: #172554;
+  --info-ink: #93c5fd;
+  --shine: rgba(255, 255, 255, 0.06);
+
+  /* error illustrations on the bg-card frame */
+  --art-ink: #e4e4e7;
+  --art-paper: #18181b;
+  --art-faint: #18181b;
+  --art-mint: #052e16;
+  --art-line: #3f3f46;
+  --art-line-strong: #3f3f46;
+  --art-mark: #4ade80;
 
   /* heroes and comic reader sit one step above the page so they stay visible */
   --surface: #000000;
@@ -201,6 +247,18 @@
   --color-social-google-yellow: var(--social-google-yellow);
   --color-social-google-green: var(--social-google-green);
   --color-social-facebook: var(--social-facebook);
+
+  --color-subtle: var(--subtle);
+  --color-soft-foreground: var(--soft-foreground);
+  --color-strong-foreground: var(--strong-foreground);
+  --color-border-strong: var(--border-strong);
+  --color-border-hover: var(--border-hover);
+  --color-track: var(--track);
+  --color-brand-line: var(--brand-line);
+  --color-brand-wash-from: var(--brand-wash-from);
+  --color-brand-wash-to: var(--brand-wash-to);
+  --color-info-soft: var(--info-soft);
+  --color-info-ink: var(--info-ink);
 
   --color-reader-page: var(--reader-page);
   --color-reader-text: var(--reader-text);

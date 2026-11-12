@@ -279,8 +279,8 @@ function MovePill({ move }: { move: Move }) {
       className={cn(
         "min-w-[34px] shrink-0 rounded-md px-1 py-0.5 text-center text-[11px] leading-4 font-bold tabular-nums max-md:min-w-[30px]",
         move.kind === "up" && "bg-brand-soft text-brand-ink",
-        move.kind === "down" && "bg-destructive-soft text-[#b91c1c]",
-        move.kind === "new" && "bg-[#eff6ff] text-[#1d4ed8]",
+        move.kind === "down" && "bg-destructive-soft text-[#b91c1c] dark:text-destructive-ink",
+        move.kind === "new" && "bg-info-soft text-info-ink",
         move.kind === "same" && "text-muted-foreground"
       )}
     >
@@ -305,7 +305,7 @@ function Podium({ entry: e, statLabel, index }: { entry: Entry; statLabel: strin
         "grid grid-cols-[96px_minmax(0,1fr)] grid-rows-[auto_auto] items-start gap-x-4 gap-y-3 rounded-[14px] border bg-background p-4 shadow-xs",
         "max-lg:grid-cols-[72px_minmax(0,1fr)_auto] max-lg:grid-rows-[auto]",
         "max-md:grid-cols-[64px_minmax(0,1fr)] max-md:gap-x-3 max-md:gap-y-2 max-md:p-3",
-        e.rank === 1 && "border-[#fde68a] bg-[image:linear-gradient(160deg,#fffbeb,#ffffff_60%)]"
+        e.rank === 1 && "border-warning-border bg-[image:linear-gradient(160deg,var(--warning-soft),var(--card)_60%)]"
       )}
     >
       <Link
@@ -369,7 +369,7 @@ function Row({ entry: e, statLabel, index }: { entry: Entry; statLabel: string; 
   const s = e.series
   return (
     <Effect asChild fade slide={{ direction: "up", offset: 8 }} delay={Math.min(index, 10) * 40} inView>
-    <li className="flex items-center gap-3.5 border-t bg-background px-4 py-2.5 transition-colors first:border-t-0 hover:bg-[#fafafa] max-md:gap-2.5 max-md:px-3">
+    <li className="flex items-center gap-3.5 border-t bg-background px-4 py-2.5 transition-colors first:border-t-0 hover:bg-subtle max-md:gap-2.5 max-md:px-3">
       <span className="w-7 shrink-0 text-center text-lg font-bold tabular-nums max-md:w-[22px] max-md:text-base">
         <span aria-hidden><Num>{e.rank}</Num></span>
         <span className="sr-only">{tc("rank", { rank: e.rank })}</span>

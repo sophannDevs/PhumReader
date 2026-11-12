@@ -73,7 +73,7 @@ export function CreatorNav({ active, className }: { active?: CreatorTab; classNa
   }, [current])
 
   return (
-    <div className={cn("border-b bg-[#fafafa]", className)}>
+    <div className={cn("border-b bg-subtle", className)}>
       <div className="container flex flex-col gap-3.5 pt-6">
         <p className="flex min-w-0 items-center gap-1.5 text-xs leading-4 text-muted-foreground">
           <PenLineIcon className="size-3 shrink-0" aria-hidden />

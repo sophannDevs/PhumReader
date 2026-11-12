@@ -349,7 +349,7 @@ function Payouts({ data, payoutSet, onMethod }: { data: EarningsData; payoutSet:
         {t("payouts")}
       </h2>
       <div className="flex flex-col gap-3.5 p-5 max-md:p-4">
-        <div className="flex flex-col gap-1 rounded-[10px] border border-[#c9f1da] bg-brand-soft bg-[image:linear-gradient(135deg,#effcf4,#e3f9ec)] p-4">
+        <div className="flex flex-col gap-1 rounded-[10px] border border-brand-line bg-brand-soft bg-[image:linear-gradient(135deg,#effcf4,#e3f9ec)] dark:bg-[image:linear-gradient(135deg,var(--brand-wash-from),var(--brand-wash-to))] p-4">
           <span className="text-xs leading-4 text-muted-foreground">{t("available")}</span>
           <span className="type-h2">[USD AMOUNT]</span>
           <span className="text-xs leading-4 text-muted-foreground">{t("availableFrom", { coins: fmt(data.coins[data.coins.length - 1] ?? 0) })}</span>
@@ -450,7 +450,7 @@ function MethodDialog({ open, onOpenChange, current }: { open: boolean; onOpenCh
           <OptionCard selected={method === "aba"} onSelect={() => setMethod("aba")} title={t("abaBank")} description={t("abaDesc")} />
           <OptionCard selected={method === "bank"} onSelect={() => setMethod("bank")} title={t("otherBank")} description={t("otherBankDesc")} />
         </div>
-        <div className="flex min-h-[120px] items-center justify-center rounded-[10px] border-[1.5px] border-dashed border-[#a1a1aa] bg-[#fafafa] text-[13px] font-bold text-[#3f3f46]">
+        <div className="flex min-h-[120px] items-center justify-center rounded-[10px] border-[1.5px] border-dashed border-border-strong bg-subtle text-[13px] font-bold text-soft-foreground">
           [PAYOUT PROVIDER FORM]
         </div>
         <Button variant="brand" className="w-full" loading={saving} onClick={() => void save()}>

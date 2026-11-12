@@ -212,7 +212,7 @@ export function LoginView({
               render={({ field }) => (
                 <Checkbox
                   id="login-remember"
-                  className="border-[#a1a1aa]"
+                  className="border-border-strong"
                   checked={field.value}
                   onCheckedChange={(c) => field.onChange(c === true)}
                 />
@@ -242,7 +242,7 @@ export function LoginView({
               variant="outline"
               disabled={busy && !pending}
               loading={pending}
-              className="h-11 w-full gap-2.5 rounded-full text-sm font-semibold shadow-none hover:border-[#d4d4d8]"
+              className="h-11 w-full gap-2.5 rounded-full text-sm font-semibold shadow-none hover:border-border-hover"
               onClick={() => {
                 setAlert(null)
                 if (socialReady(id)) social.mutate(id)

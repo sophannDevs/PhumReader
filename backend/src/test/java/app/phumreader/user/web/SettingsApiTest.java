@@ -73,7 +73,93 @@ class SettingsApiTest {
                 .andExpect(jsonPath("$.notifications.quiet.on").value(true))
                 .andExpect(jsonPath("$.notifications.quiet.from").value(22))
                 .andExpect(jsonPath("$.notifications.quiet.to").value(7))
-                .andExpect(jsonPath("$.notifications.digest").value(false));
+                .andExpect(jsonPath("$.notifications.digest").value(false))
+                // Comic reader and privacy (V21-08).
+                .andExpect(jsonPath("$.comics.mode").value("scroll"))
+                .andExpect(jsonPath("$.comics.quality").value("auto"))
+                .andExpect(jsonPath("$.comics.autoNext").value(true))
+                .andExpect(jsonPath("$.comics.dataSaver").value(false))
+                .andExpect(jsonPath("$.comics.background").value("dark"))
+                .andExpect(jsonPath("$.comics.width").value("fit"))
+                .andExpect(jsonPath("$.privacy.region").value("KH"))
+                .andExpect(jsonPath("$.privacy.publicLibrary").value(false))
+                .andExpect(jsonPath("$.privacy.mature").value(false));
+    }
+
+    @Test
+    void oneComicSettingChangesAndTheOthersStay() throws Exception {
+        UUID reader = sessions.newReader("Dara");
+        save(reader, "{\"theme\":\"dark\"}").andExpect(status().isOk());
+
+        save(reader, "{\"comics\":{\"mode\":\"page\"}}")
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.comics.mode").value("page"))
+                .andExpect(jsonPath("$.comics.quality").value("auto"))
+                .andExpect(jsonPath("$.comics.autoNext").value(true))
+                .andExpect(jsonPath("$.comics.dataSaver").value(false))
+                .andExpect(jsonPath("$.comics.background").value("dark"))
+                .andExpect(jsonPath("$.comics.width").value("fit"))
+                .andExpect(jsonPath("$.theme").value("dark"));
+
+        mvc.perform(get("/api/v1/me/settings").with(sessions.as(reader)))
+                .andExpect(jsonPath("$.comics.mode").value("page"))
+                .andExpect(jsonPath("$.comics.quality").value("auto"))
+                .andExpect(jsonPath("$.comics.autoNext").value(true))
+                .andExpect(jsonPath("$.comics.background").value("dark"))
+                .andExpect(jsonPath("$.comics.width").value("fit"))
+                .andExpect(jsonPath("$.privacy.region").value("KH"))
+                .andExpect(jsonPath("$.theme").value("dark"));
+    }
+
+    @Test
+    void comicAndPrivacyValuesAreChecked() throws Exception {
+        UUID reader = sessions.newReader("Dara");
+        for (String body :
+                new String[] {
+                    "{\"comics\":{\"mode\":\"book\"}}",
+                    "{\"comics\":{\"quality\":\"max\"}}",
+                    "{\"privacy\":{\"region\":\"US\"}}",
+                    "{\"comics\":{\"background\":\"red\"}}",
+                    // A bad value next to a good one: nothing is saved.
+                    "{\"comics\":{\"width\":\"narrow\",\"mode\":\"book\"}}"
+                }) {
+            save(reader, body)
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.error.code").value("malformed_request"));
+        }
+        mvc.perform(get("/api/v1/me/settings").with(sessions.as(reader)))
+                .andExpect(jsonPath("$.comics.mode").value("scroll"))
+                .andExpect(jsonPath("$.comics.quality").value("auto"))
+                .andExpect(jsonPath("$.comics.background").value("dark"))
+                .andExpect(jsonPath("$.comics.width").value("fit"))
+                .andExpect(jsonPath("$.privacy.region").value("KH"));
+    }
+
+    @Test
+    void comicAndPrivacySettingsComeBackOnTheNextLogin() throws Exception {
+        UUID reader = sessions.newReader("Dara");
+        save(
+                        reader,
+                        "{\"comics\":{\"mode\":\"page\",\"quality\":\"saver\","
+                                + "\"autoNext\":false,\"dataSaver\":true,"
+                                + "\"background\":\"light\",\"width\":\"narrow\"},"
+                                + "\"privacy\":{\"region\":\"OTHER\",\"publicLibrary\":true,"
+                                + "\"mature\":true}}")
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.privacy.region").value("OTHER"));
+
+        // A new session (a new login) for the same account.
+        mvc.perform(get("/api/v1/me/settings").with(sessions.as(reader)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.comics.mode").value("page"))
+                .andExpect(jsonPath("$.comics.quality").value("saver"))
+                .andExpect(jsonPath("$.comics.autoNext").value(false))
+                .andExpect(jsonPath("$.comics.dataSaver").value(true))
+                .andExpect(jsonPath("$.comics.background").value("light"))
+                .andExpect(jsonPath("$.comics.width").value("narrow"))
+                .andExpect(jsonPath("$.privacy.region").value("OTHER"))
+                .andExpect(jsonPath("$.privacy.publicLibrary").value(true))
+                .andExpect(jsonPath("$.privacy.mature").value(true));
     }
 
     @Test

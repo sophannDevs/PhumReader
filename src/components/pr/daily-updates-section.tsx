@@ -116,7 +116,7 @@ export function DailyUpdatesSection({
               className={cn(
                 "flex w-full flex-col items-center gap-0.5 rounded-[10px] border px-1 py-2 transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
                 on
-                  ? "border-foreground text-[#fafafa]"
+                  ? "border-foreground text-background"
                   : d === todayDay
                     ? "border-primary bg-background text-brand-ink hover:bg-accent"
                     : "bg-background text-muted-foreground hover:bg-accent hover:text-foreground"

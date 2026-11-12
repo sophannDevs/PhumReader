@@ -329,7 +329,6 @@ function ComicReaderView({ series, episode, total, panels, commentsEnabled = tru
               setCountdown(null)
               toast(t("autoNextCancelled"))
             }}
-            dark={bg === "dark"}
             commentsEnabled={commentsEnabled}
           />
         </div>

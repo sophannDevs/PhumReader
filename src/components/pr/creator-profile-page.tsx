@@ -323,7 +323,7 @@ function Profile({ handle, baseName, isOwner, api }: { handle: string; baseName:
               <div className="container flex items-end gap-6 pb-6 max-md:flex-col max-md:items-stretch max-md:gap-3">
                 <span
                   aria-hidden
-                  className="-mt-12 inline-flex size-[120px] shrink-0 self-start items-center justify-center rounded-full border-[5px] border-white bg-primary text-[40px] font-extrabold text-primary-foreground shadow-md max-md:-mt-10 max-md:size-[84px] max-md:border-4 max-md:text-[28px]"
+                  className="-mt-12 inline-flex size-[120px] shrink-0 self-start items-center justify-center rounded-full border-[5px] border-background bg-primary text-[40px] font-extrabold text-primary-foreground shadow-md max-md:-mt-10 max-md:size-[84px] max-md:border-4 max-md:text-[28px]"
                 >
                   {initials(name)}
                 </span>
@@ -338,7 +338,7 @@ function Profile({ handle, baseName, isOwner, api }: { handle: string; baseName:
                     </Badge>
                   </div>
                   <span className="text-[13px] leading-5 text-muted-foreground">{t("handleLine", { handle, place, year })}</span>
-                  <p className="max-w-[64ch] text-[15px] leading-[23px] text-[#3f3f46]">{bio}</p>
+                  <p className="max-w-[64ch] text-[15px] leading-[23px] text-soft-foreground">{bio}</p>
                   <dl className="flex flex-wrap gap-7 pt-1 max-md:gap-[18px]">
                     {stats.map((s) => (
                       <div key={s.k} className="flex flex-col-reverse">
@@ -417,7 +417,7 @@ function Profile({ handle, baseName, isOwner, api }: { handle: string; baseName:
                               {ago <= 0 ? t("today") : ago < 7 ? t("daysAgo", { count: ago }) : formatShortDate(p.date, locale)}
                             </span>
                             <span className="type-h4">{p.title}</span>
-                            <p className="text-[13px] leading-[19px] text-[#3f3f46]">{p.body}</p>
+                            <p className="text-[13px] leading-[19px] text-soft-foreground">{p.body}</p>
                             <span className="text-xs leading-4 text-muted-foreground">{t("postStats", { likes: p.likes, count: p.comments })}</span>
                           </li>
                         </Effect>
@@ -599,7 +599,7 @@ export function ProfileSkeleton({ bare = false }: { bare?: boolean }) {
     <div aria-hidden className={cn(!bare && "pb-16")}>
       <div className="h-40 bg-muted max-md:h-[110px]" />
       <div className="container flex items-end gap-6 pb-6 max-md:flex-col max-md:items-start max-md:gap-3">
-        <Skeleton className="-mt-12 size-[120px] shrink-0 rounded-full border-[5px] border-white max-md:-mt-10 max-md:size-[84px]" />
+        <Skeleton className="-mt-12 size-[120px] shrink-0 rounded-full border-[5px] border-background max-md:-mt-10 max-md:size-[84px]" />
         <div className="flex flex-1 flex-col gap-2 pt-4">
           <Skeleton className="h-7 w-56" />
           <Skeleton className="h-4 w-72 max-w-full" />

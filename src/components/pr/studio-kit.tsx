@@ -137,7 +137,7 @@ export function TickList({ items, mark, className, label }: { items: { ok: boole
   return (
     <ul aria-label={label} className={cn("m-0 flex list-none flex-col gap-2 p-0", className)}>
       {items.map((r) => (
-        <li key={r.text} className="flex items-center gap-2 text-[13px] leading-[18px] text-[#3f3f46] dark:text-foreground">
+        <li key={r.text} className="flex items-center gap-2 text-[13px] leading-[18px] text-soft-foreground">
           <Tick ok={r.ok} mark={mark} />
           <span>
             {r.text}

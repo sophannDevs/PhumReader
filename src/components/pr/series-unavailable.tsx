@@ -6,6 +6,7 @@ import { HouseIcon as HomeIcon } from "@/components/animate-ui/icons/house"
 import Image from "next/image"
 import { useLocale } from "next-intl"
 import { useTranslations } from "@/i18n/translations"
+import { ART, art } from "@/components/pr/error-art"
 import { SeriesCard } from "@/components/pr/series-card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -28,15 +29,14 @@ function LockedBookArt({ className }: { className?: string }) {
     <svg viewBox="0 0 240 200" width="240" height="200" fill="none" aria-hidden className={className}>
       <path
         d="M120 46c-22-14-56-16-84-8v118c28-8 62-6 84 8 22-14 56-16 84-8V38c-28-8-62-6-84 8z"
-        fill="#FFFFFF"
-        stroke="#09090B"
         strokeWidth="3"
         strokeLinejoin="round"
+        style={art(ART.paper, ART.ink)}
       />
-      <path d="M120 46v118" stroke="#09090B" strokeWidth="3" />
-      <rect x="96" y="96" width="48" height="40" rx="8" fill="#FDE68A" stroke="#09090B" strokeWidth="3" />
-      <path d="M106 96V84a14 14 0 0 1 28 0v12" stroke="#09090B" strokeWidth="3" />
-      <circle cx="120" cy="114" r="4" fill="#09090B" />
+      <path d="M120 46v118" strokeWidth="3" style={art(undefined, ART.ink)} />
+      <rect x="96" y="96" width="48" height="40" rx="8" fill="#FDE68A" strokeWidth="3" style={art(undefined, ART.ink)} />
+      <path d="M106 96V84a14 14 0 0 1 28 0v12" strokeWidth="3" style={art(undefined, ART.ink)} />
+      <circle cx="120" cy="114" r="4" style={art(ART.ink)} />
     </svg>
   )
 }
@@ -69,11 +69,11 @@ export function SeriesUnavailable({ series }: { series: Series }) {
 
   return (
     <>
-      <section className="border-b bg-[#fafafa] bg-[image:radial-gradient(1200px_400px_at_20%_0%,#effcf4_0%,rgba(239,252,244,0)_70%)]">
+      <section className="border-b bg-subtle bg-[image:radial-gradient(1200px_400px_at_20%_0%,var(--brand-wash-from)_0%,transparent_70%)]">
         <div className="container">
           <div className="mx-auto grid max-w-[976px] grid-cols-[minmax(0,1fr)] items-center gap-5 pt-6 pb-8 md:grid-cols-[240px_minmax(0,1fr)] md:gap-9 md:pt-12 md:pb-14 lg:grid-cols-[320px_minmax(0,1fr)] lg:gap-14 lg:pt-16 lg:pb-[72px]">
             <Effect asChild fade zoom={{ initialScale: 0.92 }}>
-              <div className="flex h-[150px] w-full items-center justify-center rounded-[18px] border bg-white shadow-md md:h-[220px] md:w-60 md:rounded-3xl lg:h-[280px] lg:w-80">
+              <div className="flex h-[150px] w-full items-center justify-center rounded-[18px] border bg-card shadow-md md:h-[220px] md:w-60 md:rounded-3xl lg:h-[280px] lg:w-80">
                 <LockedBookArt className="h-auto w-[150px] max-w-full md:w-[240px]" />
               </div>
             </Effect>

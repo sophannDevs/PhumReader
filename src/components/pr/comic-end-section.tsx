@@ -54,7 +54,6 @@ export function ComicEndSection({
   onNext,
   countdown,
   onCancelAuto,
-  dark,
   finishRef,
   commentsEnabled = true,
 }: {
@@ -69,8 +68,6 @@ export function ComicEndSection({
   /** Seconds left before the next episode opens; null when not counting. */
   countdown: number | null
   onCancelAuto: () => void
-  /** Dark reading background (comment text colour) */
-  dark: boolean
   /** Marks the episode finished once the end card scrolls into view. */
   finishRef?: (el: HTMLElement | null) => void
   /** Real API (V21-02): false when the creator turned comments off (no comment box) */
@@ -201,7 +198,7 @@ export function ComicEndSection({
           <div className={cn(card, "text-center text-[13px] leading-[18px] text-foreground/80")}>{caughtUp}</div>
         )}
 
-        <TopComments series={series} episode={episode} dark={dark} closed={!commentsEnabled} />
+        <TopComments series={series} episode={episode} closed={!commentsEnabled} />
 
         <Button asChild variant="outline" className={cn(pill, "self-center")}>
           <Link href={seriesHref(series)}>
@@ -215,7 +212,7 @@ export function ComicEndSection({
 }
 
 /** "Comments 1.2K · See all", a one-line composer and the top 3 threads (the reader's own new ones first). */
-function TopComments({ series, episode, dark, closed }: { series: Series; episode: Episode; dark: boolean; closed: boolean }) {
+function TopComments({ series, episode, closed }: { series: Series; episode: Episode; closed: boolean }) {
   const t = useTranslations("reader")
   const tc = useTranslations("comments")
   const user = useUser()
@@ -298,7 +295,7 @@ function TopComments({ series, episode, dark, closed }: { series: Series; episod
           </p>
         )
       ) : (
-        <ul aria-label={t("commentsTitle")} className={cn("flex flex-col [&>li:last-child]:border-b-0 [&>li:last-child]:pb-0", dark && "[&_p]:text-[#e4e4e7]")}>
+        <ul aria-label={t("commentsTitle")} className="flex flex-col [&>li:last-child]:border-b-0 [&>li:last-child]:pb-0">
           {top.map((c) => (
             <CommentThread
               key={c.id}

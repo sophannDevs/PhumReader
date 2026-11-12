@@ -258,7 +258,7 @@ function Banner({ genre, series, ready }: { genre: Genre; series: Series[]; read
     <Effect asChild fade slide={{ direction: "up", offset: 8 }}>
       <section
         aria-labelledby="gn-banner-h"
-        className="flex items-center justify-between gap-6 overflow-hidden rounded-2xl border border-[rgba(9,9,11,0.06)] px-7 py-6 max-md:gap-3 max-md:p-4"
+        className="flex items-center justify-between gap-6 overflow-hidden rounded-2xl border border-[rgba(9,9,11,0.06)] text-[#09090b] px-7 py-6 max-md:gap-3 max-md:p-4"
         style={{ background: bg }}
       >
         <div className="flex min-w-0 flex-col gap-1.5">

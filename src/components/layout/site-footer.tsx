@@ -56,7 +56,7 @@ export function SiteFooter() {
   const label = (key: string) => (["rankings", "genres", "novels"].includes(key) ? tn(key) : t(key))
 
   return (
-    <footer className="border-t bg-[#fafafa]">
+    <footer className="border-t bg-subtle">
       <Effect asChild fade slide={{ direction: "up", offset: 10 }} inView>
         <div className="container">
           <div className="grid grid-cols-2 gap-6 pt-8 pb-5 md:grid-cols-[1.6fr_repeat(3,1fr)] md:gap-8 md:pt-12 md:pb-8">

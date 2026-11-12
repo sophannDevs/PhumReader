@@ -27,7 +27,7 @@ export function Timeline({ steps, className, ...props }: { steps: TimelineStep[]
               aria-hidden
               className={cn(
                 "mt-1 size-3 shrink-0 rounded-full",
-                s.tone === "failed" ? "bg-destructive" : s.tone === "waiting" ? "bg-[#d4d4d8]" : "bg-primary"
+                s.tone === "failed" ? "bg-destructive" : s.tone === "waiting" ? "bg-track" : "bg-primary"
               )}
             />
             <span className="flex min-w-0 flex-col gap-px">

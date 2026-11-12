@@ -4,9 +4,9 @@ import { THEME_STORAGE_KEY } from "@/lib/theme-script"
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react"
 
 /**
- * Light / dark / system theme. Replaces next-themes, whose inline <script> inside a client component
- * makes React 19 log a console error. V2.1 keeps the site light (the stored choice is the reader theme), so
- * there is no first-paint script.
+ * Light / dark / system theme for the whole site (Settings > Reading > Theme). Replaces next-themes, whose inline
+ * <script> inside a client component makes React 19 log a console error; the first-paint script lives in the
+ * server root layout instead (src/lib/theme-script.ts). This provider keeps `.dark` in sync afterwards.
  */
 export type Theme = "light" | "dark" | "system"
 
@@ -32,14 +32,19 @@ function readStored(): Theme {
   }
 }
 
-/**
- * V2.1 is light only (foundations.md: "Light theme only"); the stored choice is the *reader* theme
- * (Settings > Reading), used by the novel reader. So the site itself always stays light.
- */
-function apply() {
+function systemPrefersDark(): boolean {
+  try {
+    return window.matchMedia("(prefers-color-scheme: dark)").matches
+  } catch {
+    return false
+  }
+}
+
+/** Puts the resolved theme on <html>: the `.dark` class swaps the tokens in globals.css. */
+function apply(resolved: "light" | "dark") {
   const root = document.documentElement
-  root.classList.remove("dark")
-  root.style.colorScheme = "light"
+  root.classList.toggle("dark", resolved === "dark")
+  root.style.colorScheme = resolved
 }
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
@@ -67,7 +72,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const resolvedTheme = theme === undefined ? undefined : theme === "system" ? (systemDark ? "dark" : "light") : theme
 
   useEffect(() => {
-    if (resolvedTheme) apply()
+    if (resolvedTheme) apply(resolvedTheme)
   }, [resolvedTheme])
 
   const setTheme = useCallback((next: Theme) => {
@@ -77,7 +82,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     } catch {
       /* storage blocked: the choice lasts for this visit only */
     }
-    apply()
+    apply(next === "system" ? (systemPrefersDark() ? "dark" : "light") : next)
   }, [])
 
   const value = useMemo(() => ({ theme, resolvedTheme, setTheme }), [theme, resolvedTheme, setTheme])

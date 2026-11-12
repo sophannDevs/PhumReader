@@ -85,7 +85,7 @@ export function OfflineView() {
       </div>
       <ul className="flex flex-col gap-2">
         {tips.map((tip) => (
-          <li key={tip} className="flex items-start gap-2 text-sm leading-5 text-[#3f3f46]">
+          <li key={tip} className="flex items-start gap-2 text-sm leading-5 text-soft-foreground">
             <span aria-hidden className="mt-px inline-flex size-[18px] shrink-0 items-center justify-center rounded-full bg-brand-soft text-brand-ink">
               <CheckIcon className="size-3" />
             </span>

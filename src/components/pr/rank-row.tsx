@@ -13,19 +13,19 @@ export function Movement({ value, className }: { value: string; className?: stri
   const base = "w-10 shrink-0 text-right text-xs font-semibold tabular-nums"
   if (value.startsWith("▲"))
     return (
-      <span className={cn(base, "text-[#15803d]", className)} aria-label={t("moveUp", { n })}>
+      <span className={cn(base, "text-[#15803d] dark:text-brand-ink", className)} aria-label={t("moveUp", { n })}>
         <Num>{value}</Num>
       </span>
     )
   if (value.startsWith("▼"))
     return (
-      <span className={cn(base, "text-[#b91c1c]", className)} aria-label={t("moveDown", { n })}>
+      <span className={cn(base, "text-[#b91c1c] dark:text-destructive-ink", className)} aria-label={t("moveDown", { n })}>
         <Num>{value}</Num>
       </span>
     )
   if (value.toUpperCase() === "NEW")
     return (
-      <span className={cn(base, "text-[#15803d]", className)} aria-label={t("moveNew")}>
+      <span className={cn(base, "text-[#15803d] dark:text-brand-ink", className)} aria-label={t("moveNew")}>
         {t("new")}
       </span>
     )

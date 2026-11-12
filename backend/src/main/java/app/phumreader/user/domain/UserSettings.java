@@ -71,6 +71,28 @@ public class UserSettings implements Persistable<UUID> {
     /** Story languages, comma-separated locale codes (at least one). */
     private String storyLanguages;
 
+    // Comic reader and data use (V21-08); enum names as in the other enum columns.
+    private String comicMode;
+
+    private String imageQuality;
+
+    private boolean autoNext;
+
+    private boolean dataSaver;
+
+    private String comicBackground;
+
+    private String comicWidth;
+
+    // Privacy (V21-08).
+    private String region;
+
+    /** Saved only: nothing is shown publicly yet. */
+    private boolean publicLibrary;
+
+    /** Saved only: 16+ / 18+ series are not filtered by it yet. */
+    private boolean matureContent;
+
     @UpdateTimestamp private Instant updatedAt;
 
     private transient boolean isNew;
@@ -103,6 +125,15 @@ public class UserSettings implements Persistable<UUID> {
         settings.quietTo = 7;
         settings.dailyDigest = false;
         settings.storyLanguages = "en,km";
+        settings.comicMode = "SCROLL";
+        settings.imageQuality = "AUTO";
+        settings.autoNext = true;
+        settings.dataSaver = false;
+        settings.comicBackground = "DARK";
+        settings.comicWidth = "FIT";
+        settings.region = "KH";
+        settings.publicLibrary = false;
+        settings.matureContent = false;
         settings.isNew = true;
         return settings;
     }
@@ -284,5 +315,79 @@ public class UserSettings implements Persistable<UUID> {
 
     public void changeNotifyFastPass(boolean value) {
         notifyFastPass = value;
+    }
+
+    public ComicMode getComicMode() {
+        return ComicMode.valueOf(comicMode);
+    }
+
+    public ImageQuality getImageQuality() {
+        return ImageQuality.valueOf(imageQuality);
+    }
+
+    public boolean isAutoNext() {
+        return autoNext;
+    }
+
+    public boolean isDataSaver() {
+        return dataSaver;
+    }
+
+    public ComicBackground getComicBackground() {
+        return ComicBackground.valueOf(comicBackground);
+    }
+
+    public ComicWidth getComicWidth() {
+        return ComicWidth.valueOf(comicWidth);
+    }
+
+    public Region getRegion() {
+        return Region.valueOf(region);
+    }
+
+    /** Saved only; the library is not shown to others yet. */
+    public boolean isPublicLibrary() {
+        return publicLibrary;
+    }
+
+    /** Saved only; series are not filtered by it yet. */
+    public boolean isMatureContent() {
+        return matureContent;
+    }
+
+    public void changeComicMode(ComicMode value) {
+        comicMode = value.name();
+    }
+
+    public void changeImageQuality(ImageQuality value) {
+        imageQuality = value.name();
+    }
+
+    public void changeAutoNext(boolean value) {
+        autoNext = value;
+    }
+
+    public void changeDataSaver(boolean value) {
+        dataSaver = value;
+    }
+
+    public void changeComicBackground(ComicBackground value) {
+        comicBackground = value.name();
+    }
+
+    public void changeComicWidth(ComicWidth value) {
+        comicWidth = value.name();
+    }
+
+    public void changeRegion(Region value) {
+        region = value.name();
+    }
+
+    public void changePublicLibrary(boolean value) {
+        publicLibrary = value;
+    }
+
+    public void changeMatureContent(boolean value) {
+        matureContent = value;
     }
 }

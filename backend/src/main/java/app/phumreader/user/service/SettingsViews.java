@@ -1,8 +1,13 @@
 package app.phumreader.user.service;
 
+import app.phumreader.user.domain.ComicBackground;
+import app.phumreader.user.domain.ComicMode;
+import app.phumreader.user.domain.ComicWidth;
+import app.phumreader.user.domain.ImageQuality;
 import app.phumreader.user.domain.Language;
 import app.phumreader.user.domain.ReaderFont;
 import app.phumreader.user.domain.ReaderTheme;
+import app.phumreader.user.domain.Region;
 import app.phumreader.user.domain.ThemeChoice;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
@@ -27,13 +32,45 @@ public final class SettingsViews {
      * @param language menus, buttons and emails
      * @param theme Settings &gt; Appearance
      * @param reader web novel reader defaults
+     * @param comics comic reader and data use (V21-08)
+     * @param privacy region and privacy switches (V21-08)
      */
     public record Settings(
             Language language,
             ThemeChoice theme,
             ReaderSettings reader,
             NotificationSettings notifications,
-            Preferences preferences) {}
+            Preferences preferences,
+            ComicSettings comics,
+            PrivacySettings privacy) {}
+
+    /**
+     * Comic reader and data use (Settings &gt; Reading, V21-08).
+     *
+     * @param mode one long scroll or page by page
+     * @param quality image quality
+     * @param autoNext go on to the next episode at the end
+     * @param dataSaver use less data
+     * @param background colour around the panels
+     * @param width panel width on wide screens
+     */
+    public record ComicSettings(
+            ComicMode mode,
+            ImageQuality quality,
+            boolean autoNext,
+            boolean dataSaver,
+            ComicBackground background,
+            ComicWidth width) {}
+
+    /**
+     * Settings &gt; Privacy (V21-08). {@code publicLibrary} and {@code mature} are saved only: the
+     * library is not shown to others and series are not filtered by them yet.
+     *
+     * @param region KH, TH, VN or OTHER
+     * @param publicLibrary others may see the reader's library (saved only)
+     * @param mature show 16+ / 18+ series (saved only)
+     */
+    public record PrivacySettings(Region region, boolean publicLibrary, boolean mature) {}
 
     /**
      * What the reader picked on the welcome page or Home (V21-07).
@@ -98,7 +135,25 @@ public final class SettingsViews {
             @Nullable ThemeChoice theme,
             @Nullable ReaderChange reader,
             @Nullable @Valid NotificationsChange notifications,
-            @Nullable @Valid PreferencesChange preferences) {}
+            @Nullable @Valid PreferencesChange preferences,
+            @Nullable ComicsChange comics,
+            @Nullable PrivacyChange privacy) {}
+
+    /** Comic reader settings; only what is sent changes. */
+    public record ComicsChange(
+            @Nullable ComicMode mode,
+            @Nullable ImageQuality quality,
+            @Nullable Boolean autoNext,
+            @Nullable Boolean dataSaver,
+            @Nullable ComicBackground background,
+            @Nullable ComicWidth width) {}
+
+    /**
+     * Privacy settings; only what is sent changes. {@code publicLibrary} and {@code mature} are
+     * saved only (no filtering yet).
+     */
+    public record PrivacyChange(
+            @Nullable Region region, @Nullable Boolean publicLibrary, @Nullable Boolean mature) {}
 
     /**
      * @param genres genre names (at most 40, each up to 40 characters); [] means "Skip"

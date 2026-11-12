@@ -278,7 +278,7 @@ function ReceiptView({ r }: { r: Receipt }) {
               key={row.k}
               className={cn(
                 "flex items-center justify-between gap-4 border-t px-3.5 py-2.5 text-sm leading-5 first:border-t-0",
-                row.total && "bg-[#fafafa] font-bold"
+                row.total && "bg-subtle font-bold"
               )}
             >
               <dt className={row.total ? "text-foreground" : "text-muted-foreground"}>{row.k}</dt>

@@ -243,6 +243,10 @@ const demoOrderTimes = [Date.UTC(2026, 9, 28, 7, 5), Date.UTC(2026, 9, 12, 2, 40
 const demoPurchases = (): StoredPurchase[] =>
   purchaseHistory().map((p, i) => ({ ...p, orderId: DEMO_ORDER_IDS[i], at: demoOrderTimes[i] }))
 
+/** The regions Settings offers (and the account accepts, V21-08); `settings.region` holds one of them. */
+export const REGIONS = ["KH", "TH", "VN", "OTHER"] as const
+export type Region = (typeof REGIONS)[number]
+
 export const defaultSettings: AppSettings = {
   mode: "scroll",
   quality: "auto",

@@ -164,7 +164,7 @@ export function EmailField({ email }: { email: string }) {
   return (
     <div className={field}>
       <span className={fieldLabel}>{t("email")}</span>
-      <div className="flex h-9 min-w-0 items-center gap-2 rounded-control border bg-[#fafafa] px-3 text-sm">
+      <div className="flex h-9 min-w-0 items-center gap-2 rounded-control border bg-subtle px-3 text-sm">
         <span className="truncate">{email}</span>
         <Badge variant="brand">
           <CheckIcon className="size-3" aria-hidden />
@@ -386,7 +386,7 @@ export function PasswordRow() {
         </Button>
       </div>
       {open ? (
-        <form className="flex flex-col gap-3.5 rounded-[10px] border bg-[#fafafa] p-4" onSubmit={submit} noValidate>
+        <form className="flex flex-col gap-3.5 rounded-[10px] border bg-subtle p-4" onSubmit={submit} noValidate>
           <div className={field}>
             <Label htmlFor="pw-cur">{t("currentPassword")}</Label>
             <PasswordInput id="pw-cur" autoComplete="current-password" value={pw.cur} onChange={onField("cur")} />

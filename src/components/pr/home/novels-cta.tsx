@@ -25,7 +25,7 @@ export function NovelsSection({ novels }: { novels: Series[] }) {
           <Link
             key={s.id}
             href={seriesHref(s)}
-            className="flex items-center gap-3.5 rounded-card border bg-card p-3 shadow-xs transition-colors outline-none hover:border-[#d4d4d8] hover:bg-[#fafafa] focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+            className="flex items-center gap-3.5 rounded-card border bg-card p-3 shadow-xs transition-colors outline-none hover:border-border-hover hover:bg-subtle focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           >
             <span className="relative aspect-[3/4] w-[84px] shrink-0 overflow-hidden rounded-[10px] bg-muted">
               <Image src={s.cover} alt="" fill sizes="84px" className="object-cover" />
@@ -35,7 +35,7 @@ export function NovelsSection({ novels }: { novels: Series[] }) {
                 {loc.genre(s.genre)}
               </Badge>
               <span className="truncate text-[15px] leading-[22px] font-semibold">{s.title}</span>
-              <span className="line-clamp-2 text-[12.5px] leading-[17px] text-[#52525b]">{loc.hook(s)}</span>
+              <span className="line-clamp-2 text-[12.5px] leading-[17px] text-soft-foreground">{loc.hook(s)}</span>
               <span className="text-xs leading-4 text-muted-foreground">
                 {t("chaptersMeta", { creator: s.creator, count: s.freeEpisodes })}
               </span>
@@ -52,7 +52,7 @@ export function CreatorCta({ covers }: { covers: Series[] }) {
   const t = useTranslations("home")
   return (
     <section aria-labelledby="cta-h">
-      <div className="flex items-center justify-between gap-8 rounded-card border bg-[linear-gradient(120deg,#f0fdf5_0%,#ffffff_60%)] px-10 py-8 shadow-xs max-md:px-5 max-md:py-6">
+      <div className="flex items-center justify-between gap-8 rounded-card border bg-[linear-gradient(120deg,#f0fdf5_0%,#ffffff_60%)] dark:bg-[image:linear-gradient(120deg,var(--brand-wash-from)_0%,var(--brand-wash-to)_60%)] px-10 py-8 shadow-xs max-md:px-5 max-md:py-6">
         <div className="flex max-w-[520px] flex-col gap-2">
           <Eyebrow>{t("ctaEyebrow")}</Eyebrow>
           <h2 id="cta-h" className="type-h2">

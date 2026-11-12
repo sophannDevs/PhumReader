@@ -4322,7 +4322,7 @@
         "tags" : [ "account" ]
       },
       "patch" : {
-        "description" : "Only the fields in the body change, e.g. {\"reader\":{\"size\":20}}, also inside notifications.types and notifications.quiet. notifications.episodes / fastPass are types.update.push / types.fastpass.push (types wins when both are sent). 400 invalid_text_size (field reader.size), validation_failed (quiet hours outside 0-23).",
+        "description" : "Only the fields in the body change, e.g. {\"reader\":{\"size\":20}}, also inside notifications.types and notifications.quiet. notifications.episodes / fastPass are types.update.push / types.fastpass.push (types wins when both are sent). comics (mode, quality, autoNext, dataSaver, background, width) and privacy (region, publicLibrary, mature) work the same way; privacy.publicLibrary and privacy.mature are saved only (nothing is filtered or shared by them yet). 400 invalid_text_size (field reader.size), validation_failed (quiet hours outside 0-23), malformed_request (a value that is not allowed, e.g. comics.mode \"book\" or privacy.region \"US\").",
         "operationId" : "updateSettings",
         "requestBody" : {
           "content" : {
@@ -6374,6 +6374,61 @@
         },
         "required" : [ "methods", "orderExpiryMinutes", "packs", "simulator" ]
       },
+      "ComicSettings" : {
+        "type" : "object",
+        "properties" : {
+          "autoNext" : {
+            "type" : "boolean"
+          },
+          "background" : {
+            "type" : "string",
+            "enum" : [ "dark", "light" ]
+          },
+          "dataSaver" : {
+            "type" : "boolean"
+          },
+          "mode" : {
+            "type" : "string",
+            "enum" : [ "scroll", "page" ]
+          },
+          "quality" : {
+            "type" : "string",
+            "enum" : [ "auto", "high", "saver" ]
+          },
+          "width" : {
+            "type" : "string",
+            "enum" : [ "fit", "narrow" ]
+          }
+        },
+        "required" : [ "autoNext", "background", "dataSaver", "mode", "quality", "width" ]
+      },
+      "ComicsChange" : {
+        "type" : "object",
+        "properties" : {
+          "autoNext" : {
+            "type" : [ "boolean", "null" ]
+          },
+          "background" : {
+            "type" : [ "string", "null" ],
+            "enum" : [ "dark", "light", null ]
+          },
+          "dataSaver" : {
+            "type" : [ "boolean", "null" ]
+          },
+          "mode" : {
+            "type" : [ "string", "null" ],
+            "enum" : [ "scroll", "page", null ]
+          },
+          "quality" : {
+            "type" : [ "string", "null" ],
+            "enum" : [ "auto", "high", "saver", null ]
+          },
+          "width" : {
+            "type" : [ "string", "null" ],
+            "enum" : [ "fit", "narrow", null ]
+          }
+        }
+      },
       "CommentAuthor" : {
         "type" : "object",
         "properties" : {
@@ -8149,6 +8204,37 @@
           }
         }
       },
+      "PrivacyChange" : {
+        "type" : "object",
+        "properties" : {
+          "mature" : {
+            "type" : [ "boolean", "null" ]
+          },
+          "publicLibrary" : {
+            "type" : [ "boolean", "null" ]
+          },
+          "region" : {
+            "type" : [ "string", "null" ],
+            "enum" : [ "KH", "TH", "VN", "OTHER", null ]
+          }
+        }
+      },
+      "PrivacySettings" : {
+        "type" : "object",
+        "properties" : {
+          "mature" : {
+            "type" : "boolean"
+          },
+          "publicLibrary" : {
+            "type" : "boolean"
+          },
+          "region" : {
+            "type" : "string",
+            "enum" : [ "KH", "TH", "VN", "OTHER" ]
+          }
+        },
+        "required" : [ "mature", "publicLibrary", "region" ]
+      },
       "ProfileRequest" : {
         "type" : "object",
         "properties" : {
@@ -9020,6 +9106,9 @@
       "Settings" : {
         "type" : "object",
         "properties" : {
+          "comics" : {
+            "$ref" : "#/components/schemas/ComicSettings"
+          },
           "language" : {
             "type" : "string",
             "enum" : [ "en", "km" ]
@@ -9030,6 +9119,9 @@
           "preferences" : {
             "$ref" : "#/components/schemas/Preferences"
           },
+          "privacy" : {
+            "$ref" : "#/components/schemas/PrivacySettings"
+          },
           "reader" : {
             "$ref" : "#/components/schemas/ReaderSettings"
           },
@@ -9038,11 +9130,14 @@
             "enum" : [ "system", "light", "dark" ]
           }
         },
-        "required" : [ "language", "notifications", "preferences", "reader", "theme" ]
+        "required" : [ "comics", "language", "notifications", "preferences", "privacy", "reader", "theme" ]
       },
       "SettingsChange" : {
         "type" : "object",
         "properties" : {
+          "comics" : {
+            "$ref" : "#/components/schemas/ComicsChange"
+          },
           "language" : {
             "type" : [ "string", "null" ],
             "enum" : [ "en", "km", null ]
@@ -9052,6 +9147,9 @@
           },
           "preferences" : {
             "$ref" : "#/components/schemas/PreferencesChange"
+          },
+          "privacy" : {
+            "$ref" : "#/components/schemas/PrivacyChange"
           },
           "reader" : {
             "$ref" : "#/components/schemas/ReaderChange"

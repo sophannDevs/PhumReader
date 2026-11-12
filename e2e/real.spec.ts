@@ -160,30 +160,41 @@ test("4. coins: buy the 10 pack with the simulator, then unlock a Fast Pass epis
   await page.reload();
   await expect(page.locator("tbody tr").first()).toContainText("Paid");
 
+  // The seed's Fast Pass episodes have fixed free dates (glass-compass 66/67/68 turn free on Nov 12/19/26, 2026), so
+  // pick whichever one is still locked: the list is newest first, so the last locked row is the next to turn free.
+  // From 2026-11-26 none is locked any more: make the seed dates relative to today then (see CHECKLIST Assumptions).
   await page.goto("/series/glass-compass");
-  await page.getByRole("button", { name: /Episode 66/ }).click();
+  const locked = page.getByRole("button", { name: /^Fast Pass, Episode \d+/ }).last();
+  const lockedName = (await locked.getAttribute("aria-label")) ?? (await locked.innerText());
+  const lockedN = /Episode (\d+)/.exec(lockedName)?.[1];
+  expect(lockedN).toBeTruthy();
+  await locked.click();
   await page
     .getByRole("dialog")
     .getByRole("button", { name: /Unlock for 5 coins/ })
     .click();
-  await expect(page).toHaveURL(/\/read\/glass-compass\/66$/);
+  await expect(page).toHaveURL(new RegExp(`/read/glass-compass/${lockedN}$`));
   await expect(headerCoins()).toHaveText("15");
   await page.goto("/library");
   await page.getByRole("tab", { name: "Unlocked" }).click();
   await expect(page.getByText("Glass Compass").first()).toBeVisible();
 });
 
-test("5. settings: name, appearance and text size are saved to the account", async () => {
+test("5. settings: name, appearance, text size, region and privacy are saved to the account", async () => {
   // V2.1 Settings: edit in place, then "Save changes" in the unsaved-changes bar.
   await page.goto("/settings");
   await page.waitForLoadState("networkidle");
   await visible(page.getByLabel("Display name")).fill("E2E Renamed");
   await visible(page.getByRole("radio", { name: "Dark" })).click();
   await visible(page.getByRole("radio", { name: "Large" })).click();
+  // V21-08: region and privacy are saved too. Reading mode, quality, data saver and the reader background stay at
+  // their defaults: later tests read comics with this account and expect them.
+  await selectOption(visible(page.getByRole("combobox", { name: "Region" })), "TH");
+  await visible(page.getByRole("switch", { name: "Show my library on my profile" })).setChecked(true);
   await visible(page.getByRole("button", { name: "Save changes" })).click();
   await expect(visible(page.getByText("Settings saved"))).toBeVisible();
-  // V2.1 keeps the site light: "Dark" is the reader theme (novel reader), not the page.
-  await expect(page.locator("html")).not.toHaveClass(/dark/);
+  // The theme applies to the whole site: "Dark" puts `.dark` on <html>.
+  await expect(page.locator("html")).toHaveClass(/dark/);
   await page.waitForTimeout(1500); // synced to the account half a second after the change
 
   // A different browser, logging in, gets the same settings.
@@ -197,6 +208,8 @@ test("5. settings: name, appearance and text size are saved to the account", asy
   await expect(visible(op.getByLabel("Display name"))).toHaveValue("E2E Renamed");
   await expect(visible(op.getByRole("radio", { name: "Dark" }))).toBeChecked();
   await expect(visible(op.getByRole("radio", { name: "Large" }))).toBeChecked();
+  await expect(visible(op.getByRole("combobox", { name: "Region" }))).toHaveAttribute("data-value", "TH");
+  await expect(visible(op.getByRole("switch", { name: "Show my library on my profile" }))).toBeChecked();
   await other.close();
 });
 

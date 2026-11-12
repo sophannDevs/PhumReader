@@ -948,6 +948,7 @@ as the plan tasks (tests, `./gradlew check`, OpenAPI + `npm run api:gen`); commi
     window. `e2e/real.spec.ts` test 15 (key flow 4) passes on the office PC up to the approval and the live series
     page; its "upload episode 1" step runs only with S3 storage. Tick once that step has passed at home. Vitest tests
     for the new screens are written but not run here (no Vitest on this PC).
+    Retried 2026-11-12 (during V21-08): still waiting for a clean real-mode run after the backend restart.
 
 - [x] **V21-02 Series and episode fields from the V2.1 forms**
   - Build: second genre, age 16+ / 18+, language "both" (two versions), several update days, release time (ICT),
@@ -1166,7 +1167,7 @@ as the plan tasks (tests, `./gradlew check`, OpenAPI + `npm run api:gen`); commi
     characters in `details`). Errors: 400 `cannot_report_self`, `invalid_reason`, `details_required`; 404
     `user_not_found` (unknown or deleted account); 429 `too_many_reports` (the shared 20 an hour); 401 for guests. A
     second open report from the same reader on the same account returns the first case number.
-    - **Migration V15** (`V15__report_accounts.sql`) widens `reports_target_type_check` (adds `USER`) and
+    - **Migration V16** (`V16__report_accounts.sql`; renumbered from V15 on 2026-11-12 so it runs after small fields, which the dev database had already applied as V15) widens `reports_target_type_check` (adds `USER`) and
       `reports_action_check` (adds `WARN`). For an account report `target_id` and `accused_id` are both the account.
     - **Admin.** `ReportTarget.type` gains `user` (`title` = the display name, `status` = the account status,
       `seriesSlug` and `episodeNumber` null). `SettleRequest.action` gains `warn`. An account report takes `dismiss`,
@@ -1190,7 +1191,7 @@ as the plan tasks (tests, `./gradlew check`, OpenAPI + `npm run api:gen`); commi
   - Depends on: P3-02, P3-17
   - Done when: each one is still there after a reload and on a new device in real mode.
   - Design (proposed 2026-11-11, not yet confirmed by the owner):
-    - **Migration V16** (`V16__small_fields.sql`; V15 before the rebase, V15 is now the account reports):
+    - **Migration V15** (`V15__small_fields.sql`; already applied to the dev database as V15):
       `user_settings.preferred_genres` (null until chosen, empty = "Skip") and `story_languages`; `users.birth_year`; `support_tickets` (numbers from 58214) and `help_votes` (one answer per account and article).
       Row level security on both new tables.
     - **Welcome / Home picks.** Part of `GET/PATCH /me/settings` as `preferences { genres, storyLanguages }` (names of
@@ -1212,6 +1213,31 @@ as the plan tasks (tests, `./gradlew check`, OpenAPI + `npm run api:gen`); commi
       test 22 passes (year, Home pick, ticket, vote; a second browser sees the pick and the vote). Also fixed the
       production build: the Daily updates "Today" tab read `Date.now()` while prerendering (`useSyncExternalStore`).
       `SUPPORT_EMAIL` is not set in `backend/.env`, so dev saves tickets without emailing.
+
+- [ ] **V21-08 Settings saved to the account**
+  - Build: the rest of the Settings options go to the account: reading mode, image quality, auto-next, data saver,
+    comic background and width (`comics`), region, public library and mature content (`privacy`).
+  - Depends on: V21-07
+  - Done when: every setting is still there after a reload and on a new device in real mode.
+  - Design: no new endpoints. `GET` and `PATCH /me/settings` gain `comics { mode scroll|page, quality
+    auto|high|saver, autoNext, dataSaver, background dark|light, width fit|narrow }` and `privacy { region
+    KH|TH|VN|OTHER, publicLibrary, mature }`. Both groups are always in the answer and optional in `PATCH` (only what
+    is sent changes). A bad value is 400 `malformed_request`. **Migration V17** (`V17__settings_extra.sql`): columns
+    `comic_mode`, `image_quality`, `auto_next`, `data_saver`, `comic_background`, `comic_width`, `region`,
+    `public_library`, `mature_content`; defaults are the store's (scroll, auto, true, false, dark, fit, KH, false,
+    false). Enums are stored in uppercase and sent in lowercase, except `region`.
+  - Built 2026-11-12 (box stays open): backend enums `ComicMode`, `ImageQuality`, `ComicBackground`, `ComicWidth`,
+    `Region`; `UserSettings`, `SettingsViews`, `UserService`, `SettingsController`; `SettingsApiTest` has 9 tests
+    (defaults, partial update, invalid values, persists on the next login). `./gradlew check` 360 tests green;
+    `openapi.json` and `schema.d.ts` regenerated. Website: `src/lib/settings-sync.tsx` maps the API to the store
+    and saves changed keys 500 ms after the last change (`settings-sync.test.tsx` 7 tests; 44 files / 506 tests green;
+    lint, typecheck, build and `api:check` green; demo Playwright flows, admin-flows and pages 18/18).
+    **Not verified:** `npm run test:e2e:real` has not run for this task. The dev backend on :8080 still runs without
+    V17 and was not restarted. `e2e/real.spec.ts` test 5 was extended (Region Thailand and "Show my library on my
+    profile", checked in a second browser) but has not run. Tick this box once test 5 passes against a backend with
+    V17. **Left out:** the Google and Facebook toggles stay in the browser (a later task "real account linking");
+    `mature` and `publicLibrary` are saved only (see V2-83 in `docs/CHECKLIST.md`).
+    Website notes: V2-81 and V2-83 to V2-87.
 
 ---
 

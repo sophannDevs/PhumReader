@@ -52,7 +52,7 @@ export function ForYouSection({ genres, all }: { genres: Genre[]; all: Series[] 
     }
     return (
       <section aria-labelledby="fy-h">
-        <div className="flex flex-col gap-4 rounded-card border bg-[linear-gradient(120deg,#f0fdf5_0%,#ffffff_70%)] p-6 shadow-xs max-md:p-[18px]">
+        <div className="flex flex-col gap-4 rounded-card border bg-[linear-gradient(120deg,#f0fdf5_0%,#ffffff_70%)] dark:bg-[image:linear-gradient(120deg,var(--brand-wash-from)_0%,var(--brand-wash-to)_70%)] p-6 shadow-xs max-md:p-[18px]">
           <div className="flex flex-col gap-1">
             <Eyebrow>{t("personalise")}</Eyebrow>
             <h2 id="fy-h" className="type-h3">

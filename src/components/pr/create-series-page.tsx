@@ -715,7 +715,7 @@ function Wizard({ workId, seed }: { workId: string | null; seed: Partial<Draft> 
                       <FieldLabel htmlFor={canTag ? "cs-tag" : undefined} id="cs-tags-l">
                         {t("tagsLabel")} <span className="text-xs leading-4 font-normal text-muted-foreground">{t("tagsMax", { max: MAX_TAGS })}</span>
                       </FieldLabel>
-                      <div className="flex min-h-11 flex-wrap items-center gap-1.5 rounded-control border border-input bg-background p-1.5 shadow-xs transition-colors focus-within:border-[#a1a1aa] focus-within:ring-[3px] focus-within:ring-[rgba(0,166,80,0.22)]">
+                      <div className="flex min-h-11 flex-wrap items-center gap-1.5 rounded-control border border-input bg-background p-1.5 shadow-xs transition-colors focus-within:border-border-strong focus-within:ring-[3px] focus-within:ring-[rgba(0,166,80,0.22)]">
                         <ul aria-labelledby="cs-tags-l" className="contents">
                           {d.tags.map((tag) => (
                             <li key={tag} className="inline-flex h-7 items-center gap-1 rounded-full bg-foreground pr-1 pl-2.5 text-[13px] font-medium text-background">
@@ -799,7 +799,7 @@ function Wizard({ workId, seed }: { workId: string | null; seed: Partial<Draft> 
                         />
                       ) : null}
                       {coverProgress !== null ? (
-                        <div role="status" className="flex aspect-[3/4] flex-col items-center justify-center gap-3 rounded-card border-[1.5px] border-dashed border-[#a1a1aa] bg-[#fafafa] p-4 text-center max-md:aspect-auto max-md:min-h-[180px] dark:bg-muted">
+                        <div role="status" className="flex aspect-[3/4] flex-col items-center justify-center gap-3 rounded-card border-[1.5px] border-dashed border-border-strong bg-subtle p-4 text-center max-md:aspect-auto max-md:min-h-[180px] dark:bg-muted">
                           <span className="text-[13px] leading-[18px] font-semibold">{t("coverUploading", { percent: coverProgress })}</span>
                           <Progress value={coverProgress} aria-label={t("coverLabel")} className="w-full" />
                         </div>
@@ -843,7 +843,7 @@ function Wizard({ workId, seed }: { workId: string | null; seed: Partial<Draft> 
                             else void pickFile(file)
                           }}
                           className={cn(
-                            "flex aspect-[3/4] w-full flex-col items-center justify-center gap-2 rounded-card border-[1.5px] border-dashed border-[#a1a1aa] bg-[#fafafa] p-3 text-center transition-colors outline-none hover:border-primary hover:bg-selected focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 max-md:aspect-auto max-md:min-h-[180px] dark:bg-muted",
+                            "flex aspect-[3/4] w-full flex-col items-center justify-center gap-2 rounded-card border-[1.5px] border-dashed border-border-strong bg-subtle p-3 text-center transition-colors outline-none hover:border-primary hover:bg-selected focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 max-md:aspect-auto max-md:min-h-[180px] dark:bg-muted",
                             dropping && "border-primary bg-selected",
                             bad("cover") && "border-destructive"
                           )}
@@ -971,7 +971,7 @@ function Wizard({ workId, seed }: { workId: string | null; seed: Partial<Draft> 
         <aside aria-label={t("readerPreview")} className="flex flex-col gap-3 max-md:hidden md:sticky md:top-20">
           <PreviewCaption>{t("readerPreview")}</PreviewCaption>
           <div className="overflow-hidden rounded-card border bg-card shadow-xs">
-            <div className="relative flex aspect-[3/4] items-center justify-center bg-[#fafafa] bg-[image:repeating-linear-gradient(135deg,#f4f4f5_0_12px,#fafafa_12px_24px)] text-xs text-muted-foreground dark:bg-muted dark:bg-none">
+            <div className="relative flex aspect-[3/4] items-center justify-center bg-subtle bg-[image:repeating-linear-gradient(135deg,#f4f4f5_0_12px,#fafafa_12px_24px)] text-xs text-muted-foreground dark:bg-muted dark:bg-none">
               {cover ? <Image src={cover} alt="" fill sizes="300px" unoptimized={!DEMO_MODE} className="object-cover" /> : t("coverFallback")}
             </div>
             <div className="flex flex-col gap-1.5 p-3.5">
@@ -987,7 +987,7 @@ function Wizard({ workId, seed }: { workId: string | null; seed: Partial<Draft> 
                   schedule: d.days.length ? t("previewEvery", { days: sortDays(d.days).map(dayLabel).join(", ") }) : t("previewNoSchedule"),
                 })}
               </span>
-              <p className="text-xs leading-4 break-words text-[#3f3f46] dark:text-foreground">{d.summary.trim() || t("summaryFallback")}</p>
+              <p className="text-xs leading-4 break-words text-soft-foreground">{d.summary.trim() || t("summaryFallback")}</p>
             </div>
           </div>
         </aside>

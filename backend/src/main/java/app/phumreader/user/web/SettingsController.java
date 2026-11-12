@@ -23,7 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 /**
  * Settings page: profile name, language, appearance, reader defaults, notifications (P3-17) and the
- * alert settings per type, quiet hours and digest (V21-03).
+ * alert settings per type, quiet hours and digest (V21-03), comic reader and privacy (V21-08).
  */
 @RestController
 @RequestMapping("/api/v1/me")
@@ -49,9 +49,14 @@ class SettingsController {
                     "Only the fields in the body change, e.g. {\"reader\":{\"size\":20}}, also"
                             + " inside notifications.types and notifications.quiet."
                             + " notifications.episodes / fastPass are types.update.push /"
-                            + " types.fastpass.push (types wins when both are sent). 400"
-                            + " invalid_text_size (field reader.size), validation_failed (quiet"
-                            + " hours outside 0-23).")
+                            + " types.fastpass.push (types wins when both are sent)."
+                            + " comics (mode, quality, autoNext, dataSaver, background, width) and"
+                            + " privacy (region, publicLibrary, mature) work the same way;"
+                            + " privacy.publicLibrary and privacy.mature are saved only (nothing"
+                            + " is filtered or shared by them yet). 400 invalid_text_size (field"
+                            + " reader.size), validation_failed (quiet hours outside 0-23),"
+                            + " malformed_request (a value that is not allowed, e.g. comics.mode"
+                            + " \"book\" or privacy.region \"US\").")
     Settings updateSettings(
             @Parameter(hidden = true) @AuthenticationPrincipal CurrentUser user,
             @Valid @RequestBody SettingsChange body) {

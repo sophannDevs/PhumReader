@@ -49,7 +49,7 @@ export function PurchaseHistory({ methods, purchases }: { methods: PaymentMethod
             <p className="p-6 text-center text-[13px] leading-[18px] text-muted-foreground">{t("noPurchases")}</p>
           ) : (
             <table className="w-full table-fixed border-collapse text-sm max-md:text-[13px]">
-              <thead className="bg-[#fafafa]">
+              <thead className="bg-subtle">
                 <tr className="border-b">
                   <th scope="col" className={cn(head, "w-[124px] max-md:w-[100px]")}>
                     {t("colDate")}

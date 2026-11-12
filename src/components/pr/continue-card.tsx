@@ -27,7 +27,7 @@ export function ContinueCard({
     <Link
       href={readerHref(series, episode)}
       className={cn(
-        "flex min-w-0 items-center gap-3 rounded-card border bg-card p-2.5 shadow-xs transition-colors outline-none hover:border-[#d4d4d8] hover:bg-[#fafafa] focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+        "flex min-w-0 items-center gap-3 rounded-card border bg-card p-2.5 shadow-xs transition-colors outline-none hover:border-border-hover hover:bg-subtle focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
         className
       )}
     >

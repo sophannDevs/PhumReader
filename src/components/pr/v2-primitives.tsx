@@ -35,7 +35,7 @@ export function StateBox({
     <div
       role={role ?? (tone === "bad" ? "alert" : undefined)}
       className={cn(
-        "flex flex-col items-center gap-2 rounded-card border border-dashed border-[#d4d4d8] px-5 py-9 text-center",
+        "flex flex-col items-center gap-2 rounded-card border border-dashed border-border-hover px-5 py-9 text-center",
         className
       )}
     >
@@ -83,14 +83,14 @@ export function Chip({
       onClick={onClick}
       className={cn(
         "inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full border px-3 text-[13px] font-medium whitespace-nowrap transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-        selected ? "border-foreground bg-foreground text-[#fafafa]" : "bg-background text-foreground hover:bg-accent",
+        selected ? "border-foreground bg-foreground text-[#fafafa] dark:text-background" : "bg-background text-foreground hover:bg-accent",
         className
       )}
     >
       {check && selected ? <CheckIcon className="size-3" aria-hidden /> : null}
       {children}
       {count !== undefined ? (
-        <span className={cn("text-[11px] tabular-nums", selected ? "text-[#d4d4d8]" : "text-muted-foreground")}><Num>{count}</Num></span>
+        <span className={cn("text-[11px] tabular-nums", selected ? "text-[#d4d4d8] dark:text-border-strong" : "text-muted-foreground")}><Num>{count}</Num></span>
       ) : null}
     </button>
   )

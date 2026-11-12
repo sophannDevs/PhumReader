@@ -1803,7 +1803,7 @@ export interface paths {
         head?: never;
         /**
          * Saves the settings that are sent and returns all of them
-         * @description Only the fields in the body change, e.g. {"reader":{"size":20}}, also inside notifications.types and notifications.quiet. notifications.episodes / fastPass are types.update.push / types.fastpass.push (types wins when both are sent). 400 invalid_text_size (field reader.size), validation_failed (quiet hours outside 0-23).
+         * @description Only the fields in the body change, e.g. {"reader":{"size":20}}, also inside notifications.types and notifications.quiet. notifications.episodes / fastPass are types.update.push / types.fastpass.push (types wins when both are sent). comics (mode, quality, autoNext, dataSaver, background, width) and privacy (region, publicLibrary, mature) work the same way; privacy.publicLibrary and privacy.mature are saved only (nothing is filtered or shared by them yet). 400 invalid_text_size (field reader.size), validation_failed (quiet hours outside 0-23), malformed_request (a value that is not allowed, e.g. comics.mode "book" or privacy.region "US").
          */
         patch: operations["updateSettings"];
         trace?: never;
@@ -2451,6 +2451,30 @@ export interface components {
             packs: components["schemas"]["CoinPack"][];
             simulator: boolean;
         };
+        ComicSettings: {
+            autoNext: boolean;
+            /** @enum {string} */
+            background: "dark" | "light";
+            dataSaver: boolean;
+            /** @enum {string} */
+            mode: "scroll" | "page";
+            /** @enum {string} */
+            quality: "auto" | "high" | "saver";
+            /** @enum {string} */
+            width: "fit" | "narrow";
+        };
+        ComicsChange: {
+            autoNext?: boolean | null;
+            /** @enum {string|null} */
+            background?: "dark" | "light" | null;
+            dataSaver?: boolean | null;
+            /** @enum {string|null} */
+            mode?: "scroll" | "page" | null;
+            /** @enum {string|null} */
+            quality?: "auto" | "high" | "saver" | null;
+            /** @enum {string|null} */
+            width?: "fit" | "narrow" | null;
+        };
         CommentAuthor: {
             avatarUrl?: string | null;
             /** Format: uuid */
@@ -3080,6 +3104,18 @@ export interface components {
             genres?: string[] | null;
             storyLanguages?: ("en" | "km")[] | null;
         };
+        PrivacyChange: {
+            mature?: boolean | null;
+            publicLibrary?: boolean | null;
+            /** @enum {string|null} */
+            region?: "KH" | "TH" | "VN" | "OTHER" | null;
+        };
+        PrivacySettings: {
+            mature: boolean;
+            publicLibrary: boolean;
+            /** @enum {string} */
+            region: "KH" | "TH" | "VN" | "OTHER";
+        };
         ProfileRequest: {
             displayName: string;
         };
@@ -3381,19 +3417,23 @@ export interface components {
             unlocked: number[];
         };
         Settings: {
+            comics: components["schemas"]["ComicSettings"];
             /** @enum {string} */
             language: "en" | "km";
             notifications: components["schemas"]["NotificationSettings"];
             preferences: components["schemas"]["Preferences"];
+            privacy: components["schemas"]["PrivacySettings"];
             reader: components["schemas"]["ReaderSettings"];
             /** @enum {string} */
             theme: "system" | "light" | "dark";
         };
         SettingsChange: {
+            comics?: components["schemas"]["ComicsChange"];
             /** @enum {string|null} */
             language?: "en" | "km" | null;
             notifications?: components["schemas"]["NotificationsChange"];
             preferences?: components["schemas"]["PreferencesChange"];
+            privacy?: components["schemas"]["PrivacyChange"];
             reader?: components["schemas"]["ReaderChange"];
             /** @enum {string|null} */
             theme?: "system" | "light" | "dark" | null;

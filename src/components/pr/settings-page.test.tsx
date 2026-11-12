@@ -201,8 +201,12 @@ describe("SettingsPage: appearance and reading", () => {
     expect(await screen.findByRole("radio", { name: "System" })).toBeChecked()
     await user.click(screen.getByRole("radio", { name: "Dark" }))
     expect(localStorage.getItem(THEME_STORAGE_KEY)).not.toBe("dark")
+    expect(document.documentElement).not.toHaveClass("dark")
     await save(user)
     await waitFor(() => expect(localStorage.getItem(THEME_STORAGE_KEY)).toBe("dark"))
+    // The whole site follows the theme, not only the novel reader.
+    expect(document.documentElement).toHaveClass("dark")
+    expect(screen.getByText("Applies to the whole site. The novel reader can still use its own theme from the Aa menu.")).toBeInTheDocument()
   })
 
   it("saves the web novel text size to the novel settings as well", async () => {
@@ -285,6 +289,8 @@ const accountSettings = (notifications: Partial<Settings["notifications"]> = {})
     ...notifications,
   },
   preferences: { genres: null, storyLanguages: ["en", "km"] },
+  comics: { mode: "scroll", quality: "auto", autoNext: true, dataSaver: false, background: "dark", width: "fit" },
+  privacy: { region: "KH", publicLibrary: false, mature: false },
 })
 
 describe("SettingsPage: notifications summary (real API)", () => {

@@ -19,7 +19,7 @@ export const authInput = "h-11 rounded-[10px] text-[15px] placeholder:text-[#a1a
 
 /** `.au-link`: underlined brand-ink text button. */
 export const authLink =
-  "rounded-[4px] text-[13px] font-semibold text-brand-ink underline underline-offset-[3px] outline-none hover:text-[#03632f] focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-default disabled:text-muted-foreground disabled:no-underline"
+  "rounded-[4px] text-[13px] font-semibold text-brand-ink underline underline-offset-[3px] outline-none hover:text-[#03632f] dark:hover:text-primary focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-default disabled:text-muted-foreground disabled:no-underline"
 
 export function AuthHead({ title, sub, icon }: { title: string; sub?: React.ReactNode; icon?: React.ReactNode }) {
   return (
@@ -155,7 +155,7 @@ export function PasswordMeter({ password, id }: { password: string; id: string }
         <div aria-hidden className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
           <span
             className={cn(
-              "block h-full rounded-full bg-[#d4d4d8] transition-[width] duration-200",
+              "block h-full rounded-full bg-track transition-[width] duration-200",
               level.tone === "weak" && "bg-destructive",
               level.tone === "fair" && "bg-[#f59e0b]",
               level.tone === "strong" && "bg-primary"
@@ -166,7 +166,7 @@ export function PasswordMeter({ password, id }: { password: string; id: string }
         <span
           className={cn(
             "min-w-12 text-right text-xs font-bold text-muted-foreground",
-            level.tone === "weak" && "text-[#b91c1c]",
+            level.tone === "weak" && "text-[#b91c1c] dark:text-destructive-ink",
             level.tone === "fair" && "text-warning",
             level.tone === "strong" && "text-brand-ink"
           )}
@@ -182,7 +182,7 @@ export function PasswordMeter({ password, id }: { password: string; id: string }
               aria-hidden
               className={cn(
                 "inline-flex size-3.5 shrink-0 items-center justify-center rounded-full border",
-                ok ? "border-primary bg-primary text-primary-foreground" : "border-[#d4d4d8] text-transparent"
+                ok ? "border-primary bg-primary text-primary-foreground" : "border-border-hover text-transparent"
               )}
             >
               <CheckIcon className="size-2.5" strokeWidth={3} />

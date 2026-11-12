@@ -81,8 +81,8 @@ function QrPlaceholder({ label }: { label: string }) {
 /** Dashed placeholder box (prototype `.placeholder`): ABA hand-off and the provider's card form. */
 function PlaceholderBox({ title, hint }: { title: string; hint: string }) {
   return (
-    <div className="flex min-h-[180px] flex-col items-center justify-center gap-1.5 rounded-[10px] border-[1.5px] border-dashed border-[#a1a1aa] bg-[#fafafa] p-4 text-center">
-      <span className="text-[13px] font-bold tracking-[0.02em] text-[#3f3f46]">{title}</span>
+    <div className="flex min-h-[180px] flex-col items-center justify-center gap-1.5 rounded-[10px] border-[1.5px] border-dashed border-border-strong bg-subtle p-4 text-center">
+      <span className="text-[13px] font-bold tracking-[0.02em] text-soft-foreground">{title}</span>
       <span className="text-xs leading-4 text-muted-foreground">{hint}</span>
     </div>
   )

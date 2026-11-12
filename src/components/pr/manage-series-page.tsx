@@ -868,8 +868,8 @@ function ManageView({ model, actions }: { model: Model; actions: Actions }) {
                 <li
                   key={`${i}-${x.title}`}
                   className={cn(
-                    "flex items-center gap-2.5 rounded-[10px] border bg-background px-3 py-2.5 text-[#3f3f46] dark:text-foreground",
-                    x.ok ? "border-[#c9f1da] dark:border-brand-soft-border" : "border-destructive-border"
+                    "flex items-center gap-2.5 rounded-[10px] border bg-background px-3 py-2.5 text-soft-foreground",
+                    x.ok ? "border-brand-line" : "border-destructive-border"
                   )}
                 >
                   <Tick ok={x.ok} mark="!" />

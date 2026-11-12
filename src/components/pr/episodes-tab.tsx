@@ -147,7 +147,7 @@ export function EpisodesTab({
   return (
     <div className="flex flex-col gap-5">
       {fastAll.length > 0 ? (
-        <div className="flex flex-wrap items-center justify-between gap-x-5 gap-y-3 rounded-card border border-[#c9f1da] bg-[linear-gradient(135deg,#effcf4,#e3f9ec)] px-4 py-3.5 max-md:p-3">
+        <div className="flex flex-wrap items-center justify-between gap-x-5 gap-y-3 rounded-card border border-brand-line bg-[linear-gradient(135deg,#effcf4,#e3f9ec)] dark:bg-[image:linear-gradient(135deg,var(--brand-wash-from),var(--brand-wash-to))] px-4 py-3.5 max-md:p-3">
           <div className="flex min-w-0 flex-[1_1_320px] items-start gap-3">
             <span aria-hidden className="inline-flex size-9 shrink-0 items-center justify-center rounded-[10px] bg-primary text-primary-foreground">
               <ZapIcon className="size-[18px]" />

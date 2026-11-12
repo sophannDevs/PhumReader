@@ -280,7 +280,7 @@ export function SignupView({
               render={({ field }) => (
                 <Checkbox
                   id="signup-terms"
-                  className="mt-0.5 border-[#a1a1aa]"
+                  className="mt-0.5 border-border-strong"
                   checked={field.value}
                   aria-invalid={!!errors.terms}
                   aria-describedby={errors.terms ? "signup-terms-error" : undefined}

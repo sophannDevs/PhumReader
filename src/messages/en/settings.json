@@ -47,7 +47,8 @@
     "high": "Sharpest images. Uses more data.",
     "saver": "Smaller images. Good for mobile data."
   },
-  "theme": "Reader theme",
+  "theme": "Theme",
+  "themeHint": "Applies to the whole site. The novel reader can still use its own theme from the Aa menu.",
   "themeLight": "Light",
   "themeDark": "Dark",
   "themeSystem": "System",

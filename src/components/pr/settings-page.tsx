@@ -38,6 +38,7 @@ import { logOut, toUser } from "@/lib/session"
 import {
   type AppSettings,
   type ReportStatus,
+  REGIONS,
   defaultNotifPrefs,
   useAppStore,
   useCoins,
@@ -53,10 +54,11 @@ import { Effect } from "@animate-ui/react/primitives/effects/effect"
  * Settings (spec §12, prototype Settings/): a side menu and one card per section. Account, Reading, Language and
  * region and Privacy switches are a form with a save bar ("You have unsaved changes · Discard / Save changes");
  * the app language, blocking, password, photo, downloads and account actions act at once.
- * Saving writes `settings` (+ `novelSettings.size`, the reader theme via useTheme, the display name). With the
- * real API the name goes to /me/profile and SettingsSync saves the reader theme and text size; the Notifications card
- * sums up the account's alert settings (changed on /notifications); the other choices stay on this device (the API
- * has no fields for them yet). "Request data download" is simulated in the demo; with the real API it shows "Coming
+ * Saving writes `settings` (+ `novelSettings.size`, the site theme via useTheme, the display name). With the
+ * real API the name goes to /me/profile, the story languages to /me/settings (V21-07), and SettingsSync saves the
+ * reader theme, text size, reading choices (mode, quality, auto-next, data saver) and the region and privacy switches
+ * (V21-08); only the Google / Facebook links stay on this device. The Notifications card sums up the account's alert
+ * settings (changed on /notifications). "Request data download" is simulated in the demo; with the real API it shows "Coming
  * soon" with the button off (no export yet).
  */
 
@@ -100,7 +102,7 @@ function Card({
       <section
         id={`set-${id}`}
         aria-labelledby={`h-${id}`}
-        className={cn("min-w-0 scroll-mt-20 rounded-card border bg-card shadow-xs", danger && "border-[#fecaca]")}
+        className={cn("min-w-0 scroll-mt-20 rounded-card border bg-card shadow-xs", danger && "border-destructive-border")}
       >
         <div className="flex flex-col gap-1 px-5 pt-5 max-md:px-4 max-md:pt-4">
           <h2 id={`h-${id}`} className="type-h3">
@@ -138,8 +140,10 @@ function PillGroup<T extends string>({
   onChange,
   options,
   stretch = false,
+  describedBy,
 }: {
   labelledBy: string
+  describedBy?: string
   value: T
   onChange: (value: T) => void
   options: { value: T; label: string; aria?: string; lang?: string }[]
@@ -149,6 +153,7 @@ function PillGroup<T extends string>({
     <div
       role="radiogroup"
       aria-labelledby={labelledBy}
+      aria-describedby={describedBy}
       className={cn(
         "inline-flex h-9 max-w-full items-center gap-0.5 overflow-x-auto rounded-[10px] bg-muted p-[3px] text-muted-foreground [scrollbar-width:none]",
         stretch && "flex w-full"
@@ -437,7 +442,7 @@ export function SettingsPage() {
               return (
                 <div key={key} className="-mt-1.5 flex items-center justify-between gap-4">
                   <div className="flex min-w-0 items-center gap-2.5">
-                    <span aria-hidden className="inline-flex size-8 shrink-0 items-center justify-center rounded-lg border bg-white text-sm font-extrabold">
+                    <span aria-hidden className="inline-flex size-8 shrink-0 items-center justify-center rounded-lg border bg-background text-sm font-extrabold">
                       {ic}
                     </span>
                     <div className="flex min-w-0 flex-col">
@@ -499,6 +504,7 @@ export function SettingsPage() {
                 </span>
                 <PillGroup
                   labelledBy="lbl-theme"
+                  describedBy="st-theme-h"
                   stretch
                   value={f.theme}
                   onChange={(v) => set("theme", v)}
@@ -508,6 +514,9 @@ export function SettingsPage() {
                     { value: "system", label: t("themeSystem") },
                   ]}
                 />
+                <span id="st-theme-h" className={fieldHint}>
+                  {t("themeHint")}
+                </span>
               </div>
             </div>
             <div className="flex flex-col gap-2">
@@ -523,7 +532,7 @@ export function SettingsPage() {
                 />
                 <p
                   lang="en"
-                  className="m-0 min-w-0 font-novel leading-[1.6] text-[#27272a]"
+                  className="m-0 min-w-0 font-novel leading-[1.6] text-strong-foreground"
                   style={{ fontSize: PREVIEW_PX[f.size] }}
                 >
                   {t("previewText")}
@@ -558,7 +567,7 @@ export function SettingsPage() {
                   {t("region")}
                 </label>
                 <NativeSelect id="st-region" value={f.region} aria-describedby="st-region-h" onChange={(e) => set("region", e.target.value)}>
-                  {(["KH", "TH", "VN", "OTHER"] as const).map((r) => (
+                  {REGIONS.map((r) => (
                     <option key={r} value={r}>
                       {t(`regions.${r}`)}
                     </option>

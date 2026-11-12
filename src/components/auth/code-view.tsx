@@ -150,7 +150,7 @@ export function CodeView({
                 <InputOTPSlot
                   key={i}
                   index={i}
-                  className="h-[50px] w-full rounded-[10px] text-[22px] md:h-14 md:w-full data-[active=true]:border-[#a1a1aa] data-[active=true]:ring-[3px] data-[active=true]:ring-ring/25 data-[active=true]:ring-offset-0"
+                  className="h-[50px] w-full rounded-[10px] text-[22px] md:h-14 md:w-full data-[active=true]:border-border-strong data-[active=true]:ring-[3px] data-[active=true]:ring-ring/25 data-[active=true]:ring-offset-0"
                 />
               ))}
             </InputOTPGroup>
