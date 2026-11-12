@@ -182,13 +182,13 @@ function Earnings() {
             <div className="grid grid-cols-2 gap-2.5 md:gap-4 lg:grid-cols-4">
               <StatCard
                 label={t("statCoins")}
-                value={fmt(total)}
+                value={total} countUp
                 change={<span className="font-normal">{total === 0 ? t("noCoinsShort") : n === 1 && pct !== null ? t("vsLastMonth", { pct }) : t("acrossMonths", { count: n })}</span>}
                 tone={total > 0 && n === 1 && pct !== null && pct > 0 ? "up" : "muted"}
               />
-              <StatCard label={t("statUnlocks")} value={fmt(unlocks)} change={<span className="font-normal">{t("coinsEach", { count: PRICE })}</span>} />
+              <StatCard label={t("statUnlocks")} value={unlocks} countUp change={<span className="font-normal">{t("coinsEach", { count: PRICE })}</span>} />
               <StatCard label={t("statEstimate")} value={<span className="font-bold">[USD AMOUNT]</span>} placeholder change={<span className="font-normal">{t("estimateNote")}</span>} />
-              <StatCard label={t("statReaders")} value={fmt(readers)} change={<span className="font-normal">{data?.readers ? t("readersNote") : t("unlocksEach", { n: UNLOCKS_PER_READER })}</span>} />
+              <StatCard label={t("statReaders")} value={readers} countUp change={<span className="font-normal">{data?.readers ? t("readersNote") : t("unlocksEach", { n: UNLOCKS_PER_READER })}</span>} />
             </div>
 
             <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">

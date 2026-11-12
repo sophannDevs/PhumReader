@@ -14,6 +14,7 @@ import { useAskToLogin } from "@/lib/me"
 import { useUser } from "@/lib/store"
 import { cn } from "@/lib/utils"
 import { Num } from "@/i18n/num"
+import { Effect } from "@animate-ui/react/primitives/effects/effect"
 
 /**
  * One comment thread (V2.1 Comments page, prototype Comments `.cm-item`): the comment with Creator / You badges,
@@ -104,7 +105,14 @@ function LikeButton({ c, onLike }: { c: ReplyView; onLike: () => void }) {
       className={cn("tabular-nums", c.liked && "text-brand-ink")}
       onClick={onLike}
     >
-      <ThumbsUpIcon className={cn("size-3.5", c.liked && "fill-primary")} aria-hidden />
+      {c.liked ? (
+        // The icon pops each time the reader likes (the key restarts it).
+        <Effect key="liked" asChild fade={{ initialOpacity: 0.4 }} zoom={{ initialScale: 0.5 }}>
+          <ThumbsUpIcon className="size-3.5 fill-primary" aria-hidden />
+        </Effect>
+      ) : (
+        <ThumbsUpIcon className="size-3.5" aria-hidden />
+      )}
       <span className="sr-only">{t("likeSr", { name: c.name })} </span>
       <Num>{formatCount(count)}</Num>
     </Button>

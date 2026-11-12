@@ -11,6 +11,7 @@ import { Link } from "@/i18n/navigation"
 import { useContinueEntries } from "@/lib/me"
 import { useAppStore } from "@/lib/store"
 import { cn } from "@/lib/utils"
+import { Skeleton } from "@/components/ui/skeleton"
 
 /**
  * Continue reading (spec §1): 4 cards (2 on tablets, a swipe row on phones). The demo entries, with the episode
@@ -63,8 +64,8 @@ export function ContinueReadingSkeleton() {
   return (
     <div className="flex flex-col gap-3.5" aria-hidden>
       <div className="flex flex-col gap-2">
-        <div className="h-6 w-44 animate-pulse rounded-md bg-muted" />
-        <div className="h-4 w-56 animate-pulse rounded-md bg-muted" />
+        <Skeleton className="h-6 w-44" />
+        <Skeleton className="h-4 w-56" />
       </div>
       <div className={cn("grid grid-cols-2 gap-3 min-[1100px]:grid-cols-4", phoneSwipeRow, "max-md:auto-cols-[82%]")}>
         {Array.from({ length: 4 }, (_, i) => (

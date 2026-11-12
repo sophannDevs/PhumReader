@@ -19,6 +19,7 @@ import { seriesHref } from "@/lib/routes"
 import { cn } from "@/lib/utils"
 import { Num } from "@/i18n/num"
 import { useDigits } from "@/i18n/local-digits"
+import { Effect } from "@animate-ui/react/primitives/effects/effect"
 
 type List = "trending" | "popular" | "new" | "rising"
 type Format = "all" | "comic" | "novel"
@@ -227,15 +228,15 @@ export function RankingsPage() {
           <>
             {top.length > 0 ? (
               <ol aria-label={t("top3")} className="grid grid-cols-3 gap-4 max-lg:grid-cols-[minmax(0,1fr)]">
-                {top.map((e) => (
-                  <Podium key={e.series.id} entry={e} statLabel={statLabel(e)} />
+                {top.map((e, i) => (
+                  <Podium key={e.series.id} entry={e} statLabel={statLabel(e)} index={i} />
                 ))}
               </ol>
             ) : null}
             {rows.length > 0 ? (
               <ol start={rows[0].rank} className="flex flex-col overflow-hidden rounded-[14px] border">
-                {rows.map((e) => (
-                  <Row key={e.series.id} entry={e} statLabel={statLabel(e)} />
+                {rows.map((e, i) => (
+                  <Row key={e.series.id} entry={e} statLabel={statLabel(e)} index={i} />
                 ))}
               </ol>
             ) : null}
@@ -288,12 +289,13 @@ function MovePill({ move }: { move: Move }) {
 const MEDAL = ["bg-[#f59e0b] text-[#422006]", "bg-[#a1a1aa] text-white", "bg-[#b45309] text-white"]
 
 /** Top 3 card (`.rk-podium`): cover with the medal, movement + badges, title, creator, period stat, likes, Subscribe. */
-function Podium({ entry: e, statLabel }: { entry: Entry; statLabel: string }) {
+function Podium({ entry: e, statLabel, index }: { entry: Entry; statLabel: string; index: number }) {
   const t = useTranslations("rankings")
   const tc = useTranslations("cards")
   const loc = useLocalize()
   const s = e.series
   return (
+    <Effect asChild fade slide={{ direction: "up", offset: 8 }} delay={Math.min(index, 10) * 40} inView>
     <li
       className={cn(
         "grid grid-cols-[96px_minmax(0,1fr)] grid-rows-[auto_auto] items-start gap-x-4 gap-y-3 rounded-[14px] border bg-background p-4 shadow-xs",
@@ -351,16 +353,18 @@ function Podium({ entry: e, statLabel }: { entry: Entry; statLabel: string }) {
         className="col-start-2 justify-self-start max-lg:col-start-auto max-lg:self-center max-md:col-start-2"
       />
     </li>
+    </Effect>
   )
 }
 
 /** `.rk-row`: rank, movement, cover, title + "creator · genre", period stat and likes (desktop), + Add. */
-function Row({ entry: e, statLabel }: { entry: Entry; statLabel: string }) {
+function Row({ entry: e, statLabel, index }: { entry: Entry; statLabel: string; index: number }) {
   const t = useTranslations("rankings")
   const tc = useTranslations("cards")
   const loc = useLocalize()
   const s = e.series
   return (
+    <Effect asChild fade slide={{ direction: "up", offset: 8 }} delay={Math.min(index, 10) * 40} inView>
     <li className="flex items-center gap-3.5 border-t bg-background px-4 py-2.5 transition-colors first:border-t-0 hover:bg-[#fafafa] max-md:gap-2.5 max-md:px-3">
       <span className="w-7 shrink-0 text-center text-lg font-bold tabular-nums max-md:w-[22px] max-md:text-base">
         <span aria-hidden><Num>{e.rank}</Num></span>
@@ -398,6 +402,7 @@ function Row({ entry: e, statLabel }: { entry: Entry; statLabel: string }) {
         className="w-[104px] max-md:w-auto max-md:px-2.5"
       />
     </li>
+    </Effect>
   )
 }
 

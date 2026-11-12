@@ -39,6 +39,7 @@ import { useDemoFlag } from "@/lib/queries"
 import { seriesHref } from "@/lib/routes"
 import { type NotifPrefs, useAppStore, useHydrated, useUser, visibleNotifications } from "@/lib/store"
 import { cn } from "@/lib/utils"
+import { Effect } from "@animate-ui/react/primitives/effects/effect"
 
 /**
  * Notifications (spec §13, prototype Notifications/): the inbox (tabs, Today / This week / Earlier groups, unread dot,
@@ -413,9 +414,9 @@ export function NotificationsPage() {
                           {t(`groups.${GROUP_KEY[g]}`)}
                         </h2>
                         <ul className="m-0 flex list-none flex-col divide-y overflow-hidden rounded-card border p-0">
-                          {items.map((n) => (
+                          {items.map((n, ni) => (
+                            <Effect key={n.id} asChild fade slide={{ direction: "up", offset: 8 }} delay={Math.min(ni, 10) * 40} inView>
                             <li
-                              key={n.id}
                               className={cn(
                                 "group flex items-start gap-3 py-3.5 pr-3 pl-4 max-md:gap-2.5 max-md:py-3 max-md:pr-2 max-md:pl-3",
                                 n.read ? "bg-background" : "bg-selected"
@@ -457,6 +458,7 @@ export function NotificationsPage() {
                                 </Button>
                               </div>
                             </li>
+                            </Effect>
                           ))}
                         </ul>
                       </div>

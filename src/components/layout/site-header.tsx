@@ -18,6 +18,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Link, usePathname } from "@/i18n/navigation"
+import { Effect } from "@animate-ui/react/primitives/effects/effect"
 import { initials } from "@/lib/format"
 import { cn } from "@/lib/utils"
 
@@ -129,12 +130,15 @@ export function SiteHeader({
                 <Link href="/notifications" aria-label={unread > 0 ? t("bellUnread", { count: unread }) : t("notifications")}>
                   <BellIcon className="size-[18px]" />
                   {unread > 0 ? (
-                    <span
-                      aria-hidden
-                      className="absolute top-0.5 right-0 h-4 min-w-4 rounded-full bg-[#ef4444] px-1 text-center text-[10px] leading-4 font-bold text-white tabular-nums ring-2 ring-background"
-                    >
-                      {unread > 9 ? "9+" : unread}
-                    </span>
+                    // Keyed by the count, so the badge pops again each time it changes.
+                    <Effect key={unread} asChild fade zoom={{ initialScale: 0.4 }}>
+                      <span
+                        aria-hidden
+                        className="absolute top-0.5 right-0 h-4 min-w-4 rounded-full bg-[#ef4444] px-1 text-center text-[10px] leading-4 font-bold text-white tabular-nums ring-2 ring-background"
+                      >
+                        {unread > 9 ? "9+" : unread}
+                      </span>
+                    </Effect>
                   ) : null}
                 </Link>
               </Button>

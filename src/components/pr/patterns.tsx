@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Link } from "@/i18n/navigation"
 import { cn } from "@/lib/utils"
 import { Num } from "@/i18n/num"
+import { CountingNumber } from "@animate-ui/react/primitives/texts/counting-number"
 
 /**
  * V2.1 patterns shared by several pages (foundations.md §8 "Patterns added"):
@@ -187,11 +188,14 @@ export function StatCard({
   tone = "muted",
   href,
   placeholder = false,
+  countUp = false,
   icon,
   className,
 }: {
   label: string
   value: React.ReactNode
+  /** With a numeric `value`: count up when the card scrolls into view (Animate UI CountingNumber, Latin digits). */
+  countUp?: boolean
   /** The coloured line under the number, e.g. "+12% vs last 14 days" */
   change?: React.ReactNode
   tone?: "up" | "down" | "muted"
@@ -216,7 +220,7 @@ export function StatCard({
             : "text-[26px] leading-8 font-bold tracking-[-0.02em] max-md:text-[22px] max-md:leading-7"
         )}
       >
-        {value}
+        {countUp && typeof value === "number" ? <CountingNumber number={value} thousandSeparator="," inView transition={{ duration: 1.2, ease: "easeOut" }} /> : value}
       </span>
       {change ? (
         <span

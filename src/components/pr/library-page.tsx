@@ -26,6 +26,7 @@ import { readerHref, seriesHref } from "@/lib/routes"
 import { useAppStore, useHydrated, useUser } from "@/lib/store"
 import { cn } from "@/lib/utils"
 import { Num } from "@/i18n/num"
+import { Effect } from "@animate-ui/react/primitives/effects/effect"
 
 /**
  * My library (spec §8, prototype Library/): tabs Subscribed / Recently read / Unlocked, the "New episodes" filter,
@@ -516,14 +517,15 @@ export function LibraryPage() {
                 aria-label={t("subsLabel")}
                 className="m-0 grid list-none grid-cols-3 gap-x-3 gap-y-4 p-0 md:grid-cols-4 md:gap-x-5 md:gap-y-6 lg:grid-cols-6"
               >
-                {subView.map((s) => {
+                {subView.map((s, si) => {
                   const n = newCount(s)
                   const last = lastOf(s)
                   const next = last > 0 ? Math.min(last + 1, s.freeEpisodes) : 1
                   const on = sel.includes(s.id)
                   const unit = unitShort(s)
                   return (
-                    <li key={s.id} className="relative flex min-w-0 flex-col gap-2.5 rounded-card">
+                    <Effect key={s.id} asChild fade slide={{ direction: "up", offset: 8 }} delay={Math.min(si, 10) * 40} inView>
+                    <li className="relative flex min-w-0 flex-col gap-2.5 rounded-card">
                       {editing ? (
                         <button
                           type="button"
@@ -580,6 +582,7 @@ export function LibraryPage() {
                         </Button>
                       ) : null}
                     </li>
+                    </Effect>
                   )
                 })}
               </ul>
@@ -587,7 +590,7 @@ export function LibraryPage() {
 
             <TabsContent value="recent" className="mt-0">
               <ul aria-label={t("tabRecent")} className="m-0 flex list-none flex-col divide-y overflow-hidden rounded-card border p-0">
-                {recentView.map((h) => {
+                {recentView.map((h, hi) => {
                   const s = h.series
                   const on = sel.includes(s.id)
                   const pct = Math.round(h.progress * 100)
@@ -595,8 +598,8 @@ export function LibraryPage() {
                   const unit = s.type === "novel" ? "chapter" : "episode"
                   const nextEp = done ? Math.min(h.episode + 1, s.freeEpisodes) : h.episode
                   return (
+                    <Effect key={s.id} asChild fade slide={{ direction: "up", offset: 8 }} delay={Math.min(hi, 10) * 40} inView>
                     <li
-                      key={s.id}
                       className={cn(
                         "flex items-center gap-3.5 bg-background px-4 py-3 max-md:gap-3 max-md:px-3 max-md:py-2.5",
                         on && "bg-brand-soft"
@@ -628,6 +631,7 @@ export function LibraryPage() {
                         </Button>
                       ) : null}
                     </li>
+                    </Effect>
                   )
                 })}
               </ul>
@@ -642,7 +646,7 @@ export function LibraryPage() {
                 </div>
               </div>
               <ul aria-label={t("unlockedLabel")} className="m-0 flex list-none flex-col divide-y overflow-hidden rounded-card border p-0">
-                {unlockedItems.map((u) => {
+                {unlockedItems.map((u, ui) => {
                   const s = u.series
                   const e = u.numbers
                   const unit = s.type === "novel" ? "chapter" : "episode"
@@ -652,7 +656,8 @@ export function LibraryPage() {
                   // Real API: the coins actually charged; demo: the demo price per episode.
                   const spent = u.coins ?? e.length * fastPassPrice()
                   return (
-                    <li key={s.id} className="flex items-center gap-3.5 bg-background px-4 py-3 max-md:gap-3 max-md:px-3 max-md:py-2.5">
+                    <Effect key={s.id} asChild fade slide={{ direction: "up", offset: 8 }} delay={Math.min(ui, 10) * 40} inView>
+                    <li className="flex items-center gap-3.5 bg-background px-4 py-3 max-md:gap-3 max-md:px-3 max-md:py-2.5">
                       <Thumb series={s} />
                       <div className="flex min-w-0 flex-1 flex-col gap-1">
                         <TitleLink series={s} />
@@ -669,6 +674,7 @@ export function LibraryPage() {
                         <Link href={readerHref(s, e[0])}>{t(`readAt.${unitShort(s)}`, { n: e[0] })}</Link>
                       </Button>
                     </li>
+                    </Effect>
                   )
                 })}
               </ul>

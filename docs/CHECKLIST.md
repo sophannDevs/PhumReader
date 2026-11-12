@@ -541,3 +541,24 @@ docs/BACKEND_CHECKLIST.md, "V2.1 API additions" (V21-01 … V21-07).
   account the ADMIN role (test 14 checks it is not an admin yet). Test 13 checks the 409 and the submit, then does the
   same. The V1 chapter block editor and the drag-to-reorder of panels no longer exist in V2.1 (plain text with
   `# `, `> ` and `* * *`; reorder with the buttons), so tests 11 and 12 cover what V2.1 has.
+- ANIM-1 (animations) **Animate UI**: all motion comes from `@animate-ui/react` (approved by the owner, a new npm
+  dependency; it needs the `motion` package). The Radix wrappers in `src/components/ui/` (Tabs, Dialog, Sheet,
+  Popover, Tooltip, DropdownMenu, Accordion, Switch, Checkbox, RadioGroup, Toggle, Progress, Carousel, InputOTP)
+  were converted with `npx @animate-ui/cli@latest animate <component>`, one component per commit. Avatar and
+  ScrollArea are not supported by Animate UI and stay as they were. The package respects `prefers-reduced-motion`.
+- ANIM-2 (animations) **Where the effects are used**: SeriesCard (fade and slide in when scrolled into view, a small
+  tilt on the cover; cards with `priority` skip the fade so they never delay LCP), ranking, notification and library
+  lists (staggered rows, capped at 10 steps), the phone tab bar (a `Highlight` pill slides behind the current tab),
+  the header bell badge, the comment Like icon, the reader bar, EmptyState and ErrorState (fade in), `Skeleton`
+  (`Shine` loop instead of `animate-pulse`), the checkout success check, and the coin and creator stat counters.
+- ANIM-3 (animations) **Khmer digits**: Animate UI's `SlidingNumber` and `CountingNumber` print Latin digits only.
+  The header coin chip therefore animates in English and keeps the plain Khmer-digit number (T44) in Khmer. The
+  creator and earnings stat cards already show Latin digits, so they count up in both languages (`StatCard countUp`).
+- ANIM-4 (animations) **Not in the design pack**: the phone tab bar's sliding pill (`bg-accent`), the cover tilt and
+  the stagger on lists are new; the V2.1 prototypes have only the cover hover zoom. Check them against
+  `design/screens` before launch. Admin pages have no added motion beyond the converted controls.
+- ANIM-5 (animations) **Unit tests**: `src/test/setup.tsx` turns motion animations off
+  (`MotionGlobalConfig.skipAnimations`) and adds jsdom stand-ins for `SVGGeometryElement` and
+  `Element.animate/getAnimations`, which Animate UI's checkbox and OTP input use. Playwright runs the real animations.
+- ANIM-6 (animations) **Skipped**: Animate UI's Page Transition and its registry icons (Heart, Bell) were not added
+  (their install steps were not verified); the comment Like icon pops with `Effect` instead.

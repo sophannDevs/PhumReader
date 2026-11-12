@@ -314,18 +314,18 @@ function Delta({ dir, value, after }: { dir: "up" | "down"; value: number; after
 function Stats({ subsTotal }: { subsTotal: number }) {
   const t = useTranslations("creator")
   const d = useCreator().data
-  const stats: { label: string; value: string; change?: React.ReactNode; tone?: "up" | "down"; href?: string }[] = DEMO_MODE
+  const stats: { label: string; value: string | number; change?: React.ReactNode; tone?: "up" | "down"; href?: string }[] = DEMO_MODE
     ? [
         { label: t("statViews"), value: "182.4K", change: <Delta dir="up" value={12} />, tone: "up" },
-        { label: t("statNewSubs"), value: "1,284", change: <Delta dir="up" value={8} />, tone: "up" },
+        { label: t("statNewSubs"), value: 1284, change: <Delta dir="up" value={8} />, tone: "up" },
         { label: t("statLikes"), value: "24.1K", change: <Delta dir="down" value={3} />, tone: "down" },
-        { label: t("statCoins"), value: "3,420", change: <Delta dir="up" value={21} after={t("seeEarnings")} />, tone: "up", href: "/creator/earnings" },
+        { label: t("statCoins"), value: 3420, change: <Delta dir="up" value={21} after={t("seeEarnings")} />, tone: "up", href: "/creator/earnings" },
       ]
     : [
         { label: t("statViews"), value: d?.totals.views ?? "0" },
         { label: t("statSubs"), value: formatCount(subsTotal) },
         { label: t("statLikes"), value: d?.totals.likes ?? "0" },
-        { label: t("statCoins"), value: (d?.earnedCoins ?? 0).toLocaleString("en-US"), change: t("seeEarnings"), tone: "up", href: "/creator/earnings" },
+        { label: t("statCoins"), value: d?.earnedCoins ?? 0, change: t("seeEarnings"), tone: "up", href: "/creator/earnings" },
       ]
   return (
     <section aria-labelledby="stats-title" className="flex flex-col gap-6 max-md:gap-4">
@@ -337,7 +337,7 @@ function Stats({ subsTotal }: { subsTotal: number }) {
       </div>
       <div className="grid grid-cols-2 gap-2.5 md:gap-4 lg:grid-cols-4">
         {stats.map((s) => (
-          <StatCard key={s.label} label={s.label} value={s.value} change={s.change} tone={s.tone} href={s.href} />
+          <StatCard key={s.label} label={s.label} value={s.value} countUp change={s.change} tone={s.tone} href={s.href} />
         ))}
       </div>
     </section>

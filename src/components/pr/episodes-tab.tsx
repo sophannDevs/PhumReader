@@ -19,6 +19,7 @@ import { useEpisodes } from "@/lib/queries"
 import { useSeriesViewer } from "@/lib/me"
 import { readerHref, seriesHref } from "@/lib/routes"
 import { useAppStore, useCoins, useUser } from "@/lib/store"
+import { Skeleton } from "@/components/ui/skeleton"
 
 const PAGE = 12
 
@@ -73,8 +74,8 @@ export function EpisodesTab({
   if (query.isPending) {
     return (
       <div className="flex flex-col gap-4" aria-hidden>
-        <div className="h-[74px] animate-pulse rounded-card bg-muted" />
-        <div className="h-8 w-full animate-pulse rounded-control bg-muted" />
+        <Skeleton className="h-[74px] rounded-card" />
+        <Skeleton className="h-8 w-full rounded-control" />
         <div className="flex flex-col gap-4 rounded-card border p-4">
           {Array.from({ length: 6 }, (_, i) => (
             <SkeletonRow key={i} />
