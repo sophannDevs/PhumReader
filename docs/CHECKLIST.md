@@ -449,3 +449,10 @@ docs/BACKEND_CHECKLIST.md, "V2.1 API additions" (V21-01 … V21-07).
   notification permission on /welcome saves "New episodes" push to the account. Not built (no API source yet, V21-03
   design): comment replies, "a Fast Pass episode is now free" items and the daily digest email (the switch is saved).
   The bell does not refresh right after a coin purchase (on the next focus or within 60 s).
+- V2-71 (Fix) **"Today" in Home's Daily updates** follows the real weekday in Cambodia (ICT, UTC+7), whatever the
+  device's time zone, not the demo's pinned date (replaces V1 assumption 67): the "Today" tab, its green outline and
+  "New today" on that day's UP series. The weekday is read in the browser only (`useSyncExternalStore`): the
+  prerendered page shell (`cacheComponents`) may not read the clock, so it has no tab picked until the page loads
+  (the section shows its loading skeleton then anyway). The open tab follows today until the reader picks a day.
+  Library's "Recently updated" (days since the latest update day) and the admin dashboard's date line still use the
+  pinned date.

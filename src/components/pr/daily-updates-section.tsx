@@ -2,7 +2,7 @@
 
 import { AlertCircleIcon, CalendarIcon, ChevronDownIcon, HeartIcon, RefreshCwIcon } from "lucide-react"
 import { useTranslations } from "@/i18n/translations"
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useRef, useState, useSyncExternalStore } from "react"
 import { SeriesCard } from "@/components/pr/series-card"
 import { phoneSwipeRow, SectionHead, Segmented, StateBox } from "@/components/pr/v2-primitives"
 import { Button } from "@/components/ui/button"
@@ -16,6 +16,13 @@ const DAYS: Weekday[] = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 type Kind = "all" | "comic" | "novel"
 
 const grid = cn("grid grid-cols-4 gap-5 min-[1100px]:grid-cols-6", phoneSwipeRow, "max-md:auto-cols-[38%]")
+
+const noSubscribe = () => () => {}
+/**
+ * Today's weekday in ICT, read in the browser only. The page shell is prerendered (cacheComponents), where a clock
+ * read is not allowed and would freeze the build day, so the server (and the hydration pass) see null.
+ */
+const useTodayIct = () => useSyncExternalStore(noSubscribe, () => realWeekdayIct(), () => null)
 
 /**
  * Daily updates (spec §1, prototype Home `#daily`): type filter, day tabs with counts (today outlined in green),
@@ -32,8 +39,10 @@ export function DailyUpdatesSection({
   onRetry: () => void
 }) {
   const t = useTranslations("home")
-  const todayDay = realWeekdayIct()
-  const [day, setDay] = useState<Weekday>(todayDay)
+  const todayDay = useTodayIct()
+  // The picked tab; until the reader picks one, today's tab (none in the prerendered shell).
+  const [picked, setPicked] = useState<Weekday | null>(null)
+  const day = picked ?? todayDay
   const [kind, setKind] = useState<Kind>("all")
   const [showAll, setShowAll] = useState(false)
   const [busy, setBusy] = useState(false)
@@ -41,12 +50,12 @@ export function DailyUpdatesSection({
   useEffect(() => () => clearTimeout(timer.current), [])
 
   const match = (s: Series) => kind === "all" || s.type === kind
-  const list = (daily[day] ?? []).filter(match)
-  const dayName = t(`dayFull.${day}`)
-  const isToday = day === todayDay
+  const list = day ? (daily[day] ?? []).filter(match) : []
+  const dayName = day ? t(`dayFull.${day}`) : ""
+  const isToday = day !== null && day === todayDay
 
   const pickDay = (d: Weekday) => {
-    setDay(d)
+    setPicked(d)
     setShowAll(false)
     setBusy(true)
     clearTimeout(timer.current)
