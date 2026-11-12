@@ -11,6 +11,7 @@ import { readerHref } from "@/lib/routes"
 import { cn } from "@/lib/utils"
 import { useLocalize } from "@/lib/localize"
 import { Num } from "@/i18n/num"
+import { Effect } from "@animate-ui/react/primitives/effects/effect"
 
 export type EpisodeState = "free" | "read" | "locked" | "unlocked"
 
@@ -65,6 +66,7 @@ export function EpisodeRow({
   state,
   price = 5,
   upNext = false,
+  index = 0,
   onLockedClick,
 }: {
   series: Pick<Series, "slug" | "type">
@@ -74,6 +76,8 @@ export function EpisodeRow({
   price?: number
   /** "Up next" badge and the green highlight (the next episode to read) */
   upNext?: boolean
+  /** Position in the list: staggers the entrance (capped at 10 steps) */
+  index?: number
   onLockedClick?: (episode: Episode) => void
 }) {
   const t = useTranslations("episodes")
@@ -143,20 +147,22 @@ export function EpisodeRow({
   const cls = cn(rowClass, upNext && "bg-[#effcf4] shadow-[inset_3px_0_0_var(--primary)] hover:bg-[#effcf4]")
 
   return (
-    <li>
-      {locked ? (
-        <button
-          type="button"
-          className={cls}
-          onClick={() => onLockedClick?.(episode)}
-        >
-          {body}
-        </button>
-      ) : (
-        <Link href={readerHref(series, episode.n)} className={cls}>
-          {body}
-        </Link>
-      )}
-    </li>
+    <Effect asChild fade slide={{ direction: "up", offset: 8 }} delay={Math.min(index, 10) * 40} inView>
+      <li>
+        {locked ? (
+          <button
+            type="button"
+            className={cls}
+            onClick={() => onLockedClick?.(episode)}
+          >
+            {body}
+          </button>
+        ) : (
+          <Link href={readerHref(series, episode.n)} className={cls}>
+            {body}
+          </Link>
+        )}
+      </li>
+    </Effect>
   )
 }

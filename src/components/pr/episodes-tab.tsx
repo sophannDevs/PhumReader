@@ -135,6 +135,7 @@ export function EpisodesTab({
         state={stateOf(e)}
         price={episodePrice(e)}
         upNext={e.access === "free" && e.n === upNext && e.n > lastRead}
+        index={rows.length}
         onLockedClick={(ep) => onUnlock(ep)}
       />
     )

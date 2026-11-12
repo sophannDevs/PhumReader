@@ -2,7 +2,7 @@
 
 import { notFound, useSearchParams } from "next/navigation"
 import { useTranslations } from "@/i18n/translations"
-import { Tabs as TabsPrimitive } from "radix-ui"
+import { Tabs as TabsPrimitive } from "@animate-ui/react/primitives/radix-ui"
 import { useRef, useState } from "react"
 import { CommentsSection } from "@/components/pr/comments-section"
 import { EpisodesTab } from "@/components/pr/episodes-tab"
@@ -20,6 +20,7 @@ import { useAccountEmail, useSubscriptions } from "@/lib/me"
 import { useSeries } from "@/lib/queries"
 import { seriesHref } from "@/lib/routes"
 import { Num } from "@/i18n/num"
+import { Effect } from "@animate-ui/react/primitives/effects/effect"
 
 export function SeriesSkeleton() {
   return (
@@ -91,9 +92,12 @@ function SeriesBody({ series, synopsis, stats, related, creatorSeriesCount, crea
 
   return (
     <>
-      <div ref={heroRef}>
-        <SeriesHero series={series} synopsis={synopsis} stats={stats} secondGenre={secondGenre} breakMessage={breakMessage} creatorHandle={creatorHandle} />
-      </div>
+      {/* A short fade from half opacity: the hero holds the cover (LCP), so it never starts invisible. */}
+      <Effect asChild fade={{ initialOpacity: 0.5 }}>
+        <div ref={heroRef}>
+          <SeriesHero series={series} synopsis={synopsis} stats={stats} secondGenre={secondGenre} breakMessage={breakMessage} creatorHandle={creatorHandle} />
+        </div>
+      </Effect>
       <div className="container grid grid-cols-[minmax(0,1fr)] items-start gap-7 pt-3 pb-[72px] md:gap-10 md:pt-6 lg:grid-cols-[minmax(0,1fr)_320px]">
         <TabsPrimitive.Root defaultValue="episodes" className="flex min-w-0 flex-col gap-5">
           <TabsPrimitive.List aria-label={t("tabsLabel")} className="flex gap-1 overflow-x-auto border-b [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
