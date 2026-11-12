@@ -1,7 +1,7 @@
 "use client"
 
 import { useQueryClient } from "@tanstack/react-query"
-import { CheckIcon, ChevronRightIcon, SettingsIcon } from "lucide-react"
+import { ChevronRightIcon, SettingsIcon } from "lucide-react"
 import { useLocale } from "next-intl"
 import { useTranslations } from "@/i18n/translations"
 import { useEffect, useId, useRef, useState } from "react"
@@ -44,7 +44,6 @@ import {
   useUser,
 } from "@/lib/store"
 import { unblockUser } from "@/lib/moderation"
-import { ACCENT_IDS, ACCENTS, type Accent, readAccent, saveAccent } from "@/lib/accent"
 import { useTheme } from "@/lib/theme"
 import { cn } from "@/lib/utils"
 
@@ -198,15 +197,6 @@ export function SettingsPage() {
   const blocked = useAppStore((s) => s.blocked)
   const reports = useAppStore((s) => s.reports)
   const { theme, setTheme } = useTheme()
-  const [accent, setAccent] = useState<Accent>("green")
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- reading browser storage after hydration
-    setAccent(readAccent())
-  }, [])
-  function pickAccent(next: Accent) {
-    setAccent(next)
-    saveAccent(next) // applied to the whole site at once, no Save needed
-  }
 
   const [draft, setDraft] = useState<Partial<Form>>({})
   const [langErr, setLangErr] = useState(false)
@@ -515,35 +505,6 @@ export function SettingsPage() {
                   ]}
                 />
               </div>
-            </div>
-            <div className="flex flex-col gap-2">
-              <span id="lbl-accent" className={fieldLabel}>
-                {t("accent")}
-              </span>
-              <div role="radiogroup" aria-labelledby="lbl-accent" className="flex flex-wrap gap-3">
-                {ACCENT_IDS.map((id) => {
-                  const on = id === accent
-                  return (
-                    <button
-                      key={id}
-                      type="button"
-                      role="radio"
-                      aria-checked={on}
-                      aria-label={t(`accents.${id}`)}
-                      title={t(`accents.${id}`)}
-                      onClick={() => pickAccent(id)}
-                      style={{ backgroundColor: ACCENTS[id].primary }}
-                      className={cn(
-                        "grid size-9 cursor-pointer place-items-center rounded-full border-2 border-background outline-none transition-shadow focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-                        on ? "shadow-[0_0_0_2px_var(--foreground)]" : "shadow-[0_0_0_1px_var(--border)]"
-                      )}
-                    >
-                      {on && <CheckIcon className="size-4" style={{ color: ACCENTS[id].fg }} aria-hidden />}
-                    </button>
-                  )
-                })}
-              </div>
-              <span className={fieldHint}>{t("accentHint")}</span>
             </div>
             <div className="flex flex-col gap-2">
               <span id="lbl-size" className={fieldLabel}>

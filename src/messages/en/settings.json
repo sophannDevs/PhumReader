@@ -51,16 +51,6 @@
   "themeLight": "Light",
   "themeDark": "Dark",
   "themeSystem": "System",
-  "accent": "Accent colour",
-  "accentHint": "Applies to the whole site right away and is remembered on this device.",
-  "accents": {
-    "green": "Green (default)",
-    "blue": "Blue",
-    "purple": "Purple",
-    "pink": "Pink",
-    "orange": "Orange",
-    "teal": "Teal"
-  },
   "size": "Web novel text size",
   "sizes": {
     "s": {
