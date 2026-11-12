@@ -571,27 +571,29 @@ function AlertSettings() {
             <span>{t("push")}</span>
             <span>{t("email")}</span>
           </div>
-          {PREF_ROWS.map((key) => {
+          {PREF_ROWS.map((key, ki) => {
             const [push, mail] = prefs[key]
             return (
-              <div key={key} className="grid grid-cols-[minmax(0,1fr)_44px_44px] items-center gap-2 py-2">
-                <span className="flex min-w-0 flex-col gap-0.5">
-                  <span className="text-[13px] leading-[18px] font-semibold">{t(`rows.${key}.label`)}</span>
-                  <span className="text-xs leading-4 text-muted-foreground">{t(`rows.${key}.desc`)}</span>
-                </span>
-                <SmallSwitch
-                  className="justify-self-center"
-                  checked={push}
-                  aria-label={t("pushAria", { label: t(`rows.${key}.label`) })}
-                  onCheckedChange={(v) => savePair(key, [v, mail])}
-                />
-                <SmallSwitch
-                  className="justify-self-center"
-                  checked={mail}
-                  aria-label={t("emailAria", { label: t(`rows.${key}.label`) })}
-                  onCheckedChange={(v) => savePair(key, [push, v])}
-                />
-              </div>
+              <Effect key={key} asChild fade slide={{ direction: "up", offset: 6 }} delay={Math.min(ki, 10) * 40} inView>
+                <div className="grid grid-cols-[minmax(0,1fr)_44px_44px] items-center gap-2 py-2">
+                  <span className="flex min-w-0 flex-col gap-0.5">
+                    <span className="text-[13px] leading-[18px] font-semibold">{t(`rows.${key}.label`)}</span>
+                    <span className="text-xs leading-4 text-muted-foreground">{t(`rows.${key}.desc`)}</span>
+                  </span>
+                  <SmallSwitch
+                    className="justify-self-center"
+                    checked={push}
+                    aria-label={t("pushAria", { label: t(`rows.${key}.label`) })}
+                    onCheckedChange={(v) => savePair(key, [v, mail])}
+                  />
+                  <SmallSwitch
+                    className="justify-self-center"
+                    checked={mail}
+                    aria-label={t("emailAria", { label: t(`rows.${key}.label`) })}
+                    onCheckedChange={(v) => savePair(key, [push, v])}
+                  />
+                </div>
+              </Effect>
             )
           })}
           <div className="my-2.5 h-px bg-border" />

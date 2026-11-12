@@ -58,6 +58,7 @@ import { useDemoFlag } from "@/lib/queries"
 import { useAppStore } from "@/lib/store"
 import { MAX_PANELS, canRetry, demoPanelUpload, usePanelUploads, type PanelItem } from "@/lib/use-panel-uploads"
 import { cn } from "@/lib/utils"
+import { Effect } from "@animate-ui/react/primitives/effects/effect"
 
 /**
  * Upload episode (spec §16, prototype Upload/): choose the series (the number fills in), the title, the images (comics:
@@ -533,287 +534,291 @@ function UploadForm({
       </div>
 
       <div className="grid items-start gap-6 md:grid-cols-[minmax(0,1fr)_240px] lg:grid-cols-[minmax(0,1fr)_300px]">
-        <form onSubmit={publish} noValidate className="flex min-w-0 flex-col gap-5">
-          <ErrorSummary title={t("fixBeforePublishing", { count: shown.length })} items={shown} />
+        <Effect asChild fade slide={{ direction: "up", offset: 12 }}>
+          <form onSubmit={publish} noValidate className="flex min-w-0 flex-col gap-5">
+            <ErrorSummary title={t("fixBeforePublishing", { count: shown.length })} items={shown} />
 
-          <StudioCard aria-labelledby="up-details">
-            <CardHead id="up-details" title={t("details")} />
-            <div className="flex flex-col gap-[18px] p-5 max-md:p-4">
-              <div className={fieldRow}>
-                <div className={fieldCol}>
-                  <FieldLabel htmlFor="up-series">{t("series")}</FieldLabel>
-                  <NativeSelect id="up-series" value={series.id} disabled={!!edit || !onSeries} onChange={(e) => onSeries?.(e.target.value)}>
-                    {options.map((o) => (
-                      <option key={o.id} value={o.id}>
-                        {o.inReview ? t("seriesInReview", { title: o.title }) : o.draft ? t("seriesDraft", { title: o.title }) : o.title}
-                      </option>
-                    ))}
-                  </NativeSelect>
-                </div>
-                <div className={fieldCol}>
-                  <span className="text-sm leading-5 font-medium" id="up-no-l">
-                    {t("numberLabel", { unit })}
-                  </span>
-                  <div aria-labelledby="up-no-l" role="group" className="flex h-9 min-w-0 items-center gap-2.5 rounded-control border bg-[#fafafa] px-3 dark:bg-muted">
-                    <strong className="text-sm tabular-nums">{nLabel}</strong>
-                    <span className="truncate text-xs leading-4 text-muted-foreground">
-                      {edit ? t("numberFixed") : prev ? t("numberNext", { unit, n: prev }) : prev === 0 ? t("numberFirst", { unit }) : ""}
-                    </span>
-                  </div>
-                </div>
-              </div>
-              <div className={fieldCol}>
-                <FieldLabel htmlFor="up-title" required>
-                  {t("titleLabel", { unit })}
-                </FieldLabel>
-                <Input
-                  id="up-title"
-                  value={title}
-                  maxLength={TITLE_MAX}
-                  placeholder={t(comic ? "titlePlaceholderComic" : "titlePlaceholderNovel")}
-                  aria-invalid={titleBad}
-                  aria-describedby="up-title-h"
-                  onChange={(e) => setTitle(e.target.value.slice(0, TITLE_MAX))}
-                />
-                <FieldHint id="up-title-h" error={titleBad}>
-                  {titleBad ? t("titleMissing") : shownAs}
-                </FieldHint>
-              </div>
-            </div>
-          </StudioCard>
-
-          <StudioCard aria-labelledby="up-content">
-            <CardHead
-              id="up-content"
-              title={comic ? t("images") : t("chapterText")}
-              aside={
-                comic ? (
-                  <span className="text-xs leading-4 text-muted-foreground tabular-nums">
-                    {items.length ? t("imagesSummary", { count: items.length, mb: mb(uploads.bytes) }) : t("noImages")}
-                  </span>
-                ) : null
-              }
-            />
-            <div className="flex flex-col gap-3.5 p-5 max-md:p-4">
-              {comic ? (
-                <>
-                  <input
-                    ref={fileRef}
-                    type="file"
-                    accept="image/jpeg,image/png"
-                    multiple
-                    className="sr-only"
-                    tabIndex={-1}
-                    aria-hidden
-                    onChange={(e) => {
-                      if (e.target.files?.length) uploads.add(Array.from(e.target.files))
-                      e.target.value = ""
-                    }}
-                  />
-                  <button
-                    type="button"
-                    disabled={items.length >= MAX_PANELS}
-                    onClick={() => fileRef.current?.click()}
-                    onDragOver={(e) => {
-                      if (e.dataTransfer.types.includes("Files")) {
-                        e.preventDefault()
-                        setDropping(true)
-                      }
-                    }}
-                    onDragLeave={() => setDropping(false)}
-                    onDrop={(e) => {
-                      if (!e.dataTransfer.types.includes("Files")) return
-                      e.preventDefault()
-                      setDropping(false)
-                      uploads.add(Array.from(e.dataTransfer.files))
-                    }}
-                    className={cn(
-                      "flex w-full flex-col items-center justify-center gap-2 rounded-card border-[1.5px] border-dashed border-[#a1a1aa] bg-[#fafafa] px-4 py-7 text-center transition-colors outline-none hover:border-primary hover:bg-selected focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-muted",
-                      dropping && "border-primary bg-selected",
-                      tried && !items.length && "border-destructive"
-                    )}
-                  >
-                    <PlusIcon className="size-[22px]" aria-hidden />
-                    <span className="text-[13px] leading-[18px] font-semibold">{items.length ? t("addMoreImages") : t("chooseImages")}</span>
-                    <span className="text-xs leading-4 text-muted-foreground">{t("imageRules", { max: MAX_PANELS })}</span>
-                  </button>
-                  {uploads.tooMany ? (
-                    <FieldHint error>
-                      <span role="alert">{t("tooManyImages", { max: MAX_PANELS })}</span>
-                    </FieldHint>
-                  ) : null}
-                  {items.length ? (
-                    <ol aria-label={t("imagesInOrder")} className="m-0 flex list-none flex-col overflow-hidden rounded-[10px] border p-0">
-                      {items.map((item, i) => (
-                        <ImageRow
-                          key={item.key}
-                          item={item}
-                          index={i}
-                          last={i === items.length - 1}
-                          mb={mb}
-                          onMove={(to) => move(i, to)}
-                          onRemove={() => {
-                            uploads.remove(item.key)
-                            toast(t("imageRemoved", { name: item.name }))
-                          }}
-                          onRetry={() => uploads.retry(item.key)}
-                        />
+            <StudioCard aria-labelledby="up-details">
+              <CardHead id="up-details" title={t("details")} />
+              <div className="flex flex-col gap-[18px] p-5 max-md:p-4">
+                <div className={fieldRow}>
+                  <div className={fieldCol}>
+                    <FieldLabel htmlFor="up-series">{t("series")}</FieldLabel>
+                    <NativeSelect id="up-series" value={series.id} disabled={!!edit || !onSeries} onChange={(e) => onSeries?.(e.target.value)}>
+                      {options.map((o) => (
+                        <option key={o.id} value={o.id}>
+                          {o.inReview ? t("seriesInReview", { title: o.title }) : o.draft ? t("seriesDraft", { title: o.title }) : o.title}
+                        </option>
                       ))}
-                    </ol>
-                  ) : null}
-                  <p className="sr-only" role="status" aria-live="polite">
-                    {announce}
-                  </p>
-                </>
-              ) : (
-                <>
-                  <label htmlFor="up-text" className="sr-only">
-                    {t("chapterText")}
-                  </label>
-                  <Textarea
-                    id="up-text"
-                    rows={14}
-                    value={text}
-                    placeholder={t("textPlaceholder")}
-                    aria-invalid={tried && words < MIN_WORDS}
-                    aria-describedby="up-text-h"
-                    onChange={(e) => setText(e.target.value)}
-                    className="min-h-[280px] font-novel text-base leading-[1.7]"
-                  />
-                  <div className="flex flex-wrap justify-between gap-x-3 gap-y-1">
-                    <FieldHint id="up-text-h" error={tried && words < MIN_WORDS}>
-                      {words < MIN_WORDS ? t("wordsNeeded", { min: MIN_WORDS }) : t("looksGood")}
-                    </FieldHint>
-                    <span className="text-xs leading-4 text-muted-foreground tabular-nums">
-                      {t("wordsRead", { count: words, mins: Math.max(1, Math.round(words / 220)) })}
+                    </NativeSelect>
+                  </div>
+                  <div className={fieldCol}>
+                    <span className="text-sm leading-5 font-medium" id="up-no-l">
+                      {t("numberLabel", { unit })}
                     </span>
-                  </div>
-                </>
-              )}
-            </div>
-          </StudioCard>
-
-          <StudioCard aria-labelledby="up-release">
-            <CardHead id="up-release" title={t("release")} />
-            <div className="flex flex-col gap-4 p-5 max-md:p-4">
-              {live ? (
-                <p className="rounded-lg border bg-[#fafafa] px-4 py-3 text-[13px] leading-[19px] text-muted-foreground dark:bg-muted">{t("liveNote", { unit })}</p>
-              ) : (
-                <>
-                  <div role="radiogroup" aria-label={t("whenLabel")} className="grid gap-2.5 md:grid-cols-2">
-                    <OptionCard selected={when === "now"} onSelect={() => setWhen("now")} title={<span className="text-[13px] leading-[18px] font-semibold">{t("publishNowOption")}</span>} description={t("publishNowDesc")} />
-                    <OptionCard selected={when === "schedule"} onSelect={() => setWhen("schedule")} title={<span className="text-[13px] leading-[18px] font-semibold">{t("scheduleOption")}</span>} description={t("scheduleDesc")} />
-                  </div>
-                  {when === "schedule" ? (
-                    <div className={fieldRow}>
-                      <div className={fieldCol}>
-                        <FieldLabel htmlFor="up-date">{t("date")}</FieldLabel>
-                        <NativeSelect id="up-date" value={date} onChange={(e) => setDate(e.target.value)}>
-                          {slots.map((x) => (
-                            <option key={x} value={x}>
-                              {dayDate(x)}
-                            </option>
-                          ))}
-                        </NativeSelect>
-                      </div>
-                      <div className={fieldCol}>
-                        <FieldLabel htmlFor="up-time">{t("timeIct")}</FieldLabel>
-                        <NativeSelect id="up-time" value={String(hour)} onChange={(e) => setHour(Number(e.target.value))}>
-                          {(RELEASE_HOURS as readonly number[]).concat(RELEASE_HOURS.includes(hour as never) ? [] : [hour]).map((h) => (
-                            <option key={h} value={h}>
-                              {hourLabel(h)}
-                            </option>
-                          ))}
-                        </NativeSelect>
-                      </div>
+                    <div aria-labelledby="up-no-l" role="group" className="flex h-9 min-w-0 items-center gap-2.5 rounded-control border bg-[#fafafa] px-3 dark:bg-muted">
+                      <strong className="text-sm tabular-nums">{nLabel}</strong>
+                      <span className="truncate text-xs leading-4 text-muted-foreground">
+                        {edit ? t("numberFixed") : prev ? t("numberNext", { unit, n: prev }) : prev === 0 ? t("numberFirst", { unit }) : ""}
+                      </span>
                     </div>
-                  ) : null}
-                </>
-              )}
-              <div className="h-px bg-border" />
-              <SwitchRow
-                id="up-fp"
-                label={t("fastPass")}
-                desc={fastPass ? t("fastPassOn", { coins: FAST_PASS_COINS, date: freeOn }) : t("fastPassOff")}
-                checked={fastPass}
-                onChange={setFastPass}
+                  </div>
+                </div>
+                <div className={fieldCol}>
+                  <FieldLabel htmlFor="up-title" required>
+                    {t("titleLabel", { unit })}
+                  </FieldLabel>
+                  <Input
+                    id="up-title"
+                    value={title}
+                    maxLength={TITLE_MAX}
+                    placeholder={t(comic ? "titlePlaceholderComic" : "titlePlaceholderNovel")}
+                    aria-invalid={titleBad}
+                    aria-describedby="up-title-h"
+                    onChange={(e) => setTitle(e.target.value.slice(0, TITLE_MAX))}
+                  />
+                  <FieldHint id="up-title-h" error={titleBad}>
+                    {titleBad ? t("titleMissing") : shownAs}
+                  </FieldHint>
+                </div>
+              </div>
+            </StudioCard>
+
+            <StudioCard aria-labelledby="up-content">
+              <CardHead
+                id="up-content"
+                title={comic ? t("images") : t("chapterText")}
+                aside={
+                  comic ? (
+                    <span className="text-xs leading-4 text-muted-foreground tabular-nums">
+                      {items.length ? t("imagesSummary", { count: items.length, mb: mb(uploads.bytes) }) : t("noImages")}
+                    </span>
+                  ) : null
+                }
               />
-              <SwitchRow id="up-cm" label={t("allowComments")} desc={t("allowCommentsDesc")} checked={comments} onChange={setComments} />
-              <div className={fieldCol}>
-                <FieldLabel htmlFor="up-note" optional>
-                  {t("creatorNote")}
-                </FieldLabel>
-                <Textarea
-                  id="up-note"
-                  rows={2}
-                  maxLength={NOTE_MAX}
-                  value={note}
-                  placeholder={t("notePlaceholder", { unit })}
-                  onChange={(e) => setNote(e.target.value.slice(0, NOTE_MAX))}
-                  className="min-h-[68px]"
-                />
-                <span className="self-end text-xs leading-4 text-muted-foreground tabular-nums">
-                  {note.length}/{NOTE_MAX}
-                </span>
-              </div>
-            </div>
-          </StudioCard>
-
-          <div className="sticky bottom-4 z-20 flex items-center justify-end gap-2 rounded-xl border bg-background/95 p-2.5 shadow-md backdrop-blur-sm max-md:bottom-[72px] max-md:[&>*]:flex-1">
-            {!live ? (
-              <Button type="button" variant="outline" loading={busy === "draft"} disabled={busy !== null} onClick={() => void saveDraft()}>
-                {t("saveDraft")}
-              </Button>
-            ) : null}
-            <Button type="submit" variant="brand" size="lg" loading={busy === "publish"} disabled={busy !== null}>
-              {primaryLabel}
-            </Button>
-          </div>
-        </form>
-
-        <aside className="flex min-w-0 flex-col gap-4 md:sticky md:top-20">
-          <StudioCard aria-labelledby="up-check">
-            <CardHead id="up-check" size="h4" title={t("beforePublish")} />
-            <TickList
-              mark="!"
-              className="px-5 pt-3 pb-5"
-              items={[
-                { ok: title.trim().length >= TITLE_MIN, text: t("checkTitle") },
-                comic
-                  ? { ok: items.length > 0 && !badImgs.length && !loading, text: t("checkImages", { ready: items.length - badImgs.length, total: items.length }) }
-                  : { ok: words >= MIN_WORDS, text: t("wordsNeeded", { min: MIN_WORDS }) },
-                { ok: true, text: live ? t("checkLive") : when === "now" ? t("checkNow") : t("checkScheduled", { when: whenText }) },
-                { ok: true, text: fastPass ? t("checkFastPass", { coins: FAST_PASS_COINS }) : t("checkFree") },
-              ]}
-            />
-          </StudioCard>
-          <section aria-label={t("phonePreview")} className="flex flex-col gap-2 max-md:hidden">
-            <PreviewCaption>{t("phonePreview")}</PreviewCaption>
-            <div className="w-[220px] self-center overflow-hidden rounded-[28px] border-8 border-[#09090b] bg-white shadow-md max-lg:w-[200px]">
-              <div className="flex flex-col border-b border-[#e4e4e7] px-2.5 py-2 text-[#09090b]">
-                <span className="text-xs leading-4 font-semibold">{t("unitN", { unit, n: nLabel })}</span>
-                <span className="truncate text-xs leading-4 text-[#71717a]">{title.trim() || t("untitled")}</span>
-              </div>
-              <div className="flex h-[300px] flex-col overflow-hidden bg-[#fafafa]">
+              <div className="flex flex-col gap-3.5 p-5 max-md:p-4">
                 {comic ? (
-                  items.filter((i) => i.status !== "error").length ? (
-                    items
-                      .filter((i) => i.status !== "error")
-                      .slice(0, 3)
-                      .map((i) => (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img key={i.key} src={i.preview} alt="" className="h-[150px] w-full shrink-0 object-cover" />
-                      ))
-                  ) : (
-                    <span className="px-3 py-10 text-center text-xs leading-4 text-[#71717a]">{t("previewImages")}</span>
-                  )
+                  <>
+                    <input
+                      ref={fileRef}
+                      type="file"
+                      accept="image/jpeg,image/png"
+                      multiple
+                      className="sr-only"
+                      tabIndex={-1}
+                      aria-hidden
+                      onChange={(e) => {
+                        if (e.target.files?.length) uploads.add(Array.from(e.target.files))
+                        e.target.value = ""
+                      }}
+                    />
+                    <button
+                      type="button"
+                      disabled={items.length >= MAX_PANELS}
+                      onClick={() => fileRef.current?.click()}
+                      onDragOver={(e) => {
+                        if (e.dataTransfer.types.includes("Files")) {
+                          e.preventDefault()
+                          setDropping(true)
+                        }
+                      }}
+                      onDragLeave={() => setDropping(false)}
+                      onDrop={(e) => {
+                        if (!e.dataTransfer.types.includes("Files")) return
+                        e.preventDefault()
+                        setDropping(false)
+                        uploads.add(Array.from(e.dataTransfer.files))
+                      }}
+                      className={cn(
+                        "flex w-full flex-col items-center justify-center gap-2 rounded-card border-[1.5px] border-dashed border-[#a1a1aa] bg-[#fafafa] px-4 py-7 text-center transition-colors outline-none hover:border-primary hover:bg-selected focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-muted",
+                        dropping && "border-primary bg-selected",
+                        tried && !items.length && "border-destructive"
+                      )}
+                    >
+                      <PlusIcon className="size-[22px]" aria-hidden />
+                      <span className="text-[13px] leading-[18px] font-semibold">{items.length ? t("addMoreImages") : t("chooseImages")}</span>
+                      <span className="text-xs leading-4 text-muted-foreground">{t("imageRules", { max: MAX_PANELS })}</span>
+                    </button>
+                    {uploads.tooMany ? (
+                      <FieldHint error>
+                        <span role="alert">{t("tooManyImages", { max: MAX_PANELS })}</span>
+                      </FieldHint>
+                    ) : null}
+                    {items.length ? (
+                      <ol aria-label={t("imagesInOrder")} className="m-0 flex list-none flex-col overflow-hidden rounded-[10px] border p-0">
+                        {items.map((item, i) => (
+                          <ImageRow
+                            key={item.key}
+                            item={item}
+                            index={i}
+                            last={i === items.length - 1}
+                            mb={mb}
+                            onMove={(to) => move(i, to)}
+                            onRemove={() => {
+                              uploads.remove(item.key)
+                              toast(t("imageRemoved", { name: item.name }))
+                            }}
+                            onRetry={() => uploads.retry(item.key)}
+                          />
+                        ))}
+                      </ol>
+                    ) : null}
+                    <p className="sr-only" role="status" aria-live="polite">
+                      {announce}
+                    </p>
+                  </>
                 ) : (
-                  <p className="m-0 p-3 font-novel text-[11px] leading-[1.7] whitespace-pre-wrap text-[#27272a]">{text.trim() ? text.trim().slice(0, 420) : t("previewText")}</p>
+                  <>
+                    <label htmlFor="up-text" className="sr-only">
+                      {t("chapterText")}
+                    </label>
+                    <Textarea
+                      id="up-text"
+                      rows={14}
+                      value={text}
+                      placeholder={t("textPlaceholder")}
+                      aria-invalid={tried && words < MIN_WORDS}
+                      aria-describedby="up-text-h"
+                      onChange={(e) => setText(e.target.value)}
+                      className="min-h-[280px] font-novel text-base leading-[1.7]"
+                    />
+                    <div className="flex flex-wrap justify-between gap-x-3 gap-y-1">
+                      <FieldHint id="up-text-h" error={tried && words < MIN_WORDS}>
+                        {words < MIN_WORDS ? t("wordsNeeded", { min: MIN_WORDS }) : t("looksGood")}
+                      </FieldHint>
+                      <span className="text-xs leading-4 text-muted-foreground tabular-nums">
+                        {t("wordsRead", { count: words, mins: Math.max(1, Math.round(words / 220)) })}
+                      </span>
+                    </div>
+                  </>
                 )}
               </div>
+            </StudioCard>
+
+            <StudioCard aria-labelledby="up-release">
+              <CardHead id="up-release" title={t("release")} />
+              <div className="flex flex-col gap-4 p-5 max-md:p-4">
+                {live ? (
+                  <p className="rounded-lg border bg-[#fafafa] px-4 py-3 text-[13px] leading-[19px] text-muted-foreground dark:bg-muted">{t("liveNote", { unit })}</p>
+                ) : (
+                  <>
+                    <div role="radiogroup" aria-label={t("whenLabel")} className="grid gap-2.5 md:grid-cols-2">
+                      <OptionCard selected={when === "now"} onSelect={() => setWhen("now")} title={<span className="text-[13px] leading-[18px] font-semibold">{t("publishNowOption")}</span>} description={t("publishNowDesc")} />
+                      <OptionCard selected={when === "schedule"} onSelect={() => setWhen("schedule")} title={<span className="text-[13px] leading-[18px] font-semibold">{t("scheduleOption")}</span>} description={t("scheduleDesc")} />
+                    </div>
+                    {when === "schedule" ? (
+                      <div className={fieldRow}>
+                        <div className={fieldCol}>
+                          <FieldLabel htmlFor="up-date">{t("date")}</FieldLabel>
+                          <NativeSelect id="up-date" value={date} onChange={(e) => setDate(e.target.value)}>
+                            {slots.map((x) => (
+                              <option key={x} value={x}>
+                                {dayDate(x)}
+                              </option>
+                            ))}
+                          </NativeSelect>
+                        </div>
+                        <div className={fieldCol}>
+                          <FieldLabel htmlFor="up-time">{t("timeIct")}</FieldLabel>
+                          <NativeSelect id="up-time" value={String(hour)} onChange={(e) => setHour(Number(e.target.value))}>
+                            {(RELEASE_HOURS as readonly number[]).concat(RELEASE_HOURS.includes(hour as never) ? [] : [hour]).map((h) => (
+                              <option key={h} value={h}>
+                                {hourLabel(h)}
+                              </option>
+                            ))}
+                          </NativeSelect>
+                        </div>
+                      </div>
+                    ) : null}
+                  </>
+                )}
+                <div className="h-px bg-border" />
+                <SwitchRow
+                  id="up-fp"
+                  label={t("fastPass")}
+                  desc={fastPass ? t("fastPassOn", { coins: FAST_PASS_COINS, date: freeOn }) : t("fastPassOff")}
+                  checked={fastPass}
+                  onChange={setFastPass}
+                />
+                <SwitchRow id="up-cm" label={t("allowComments")} desc={t("allowCommentsDesc")} checked={comments} onChange={setComments} />
+                <div className={fieldCol}>
+                  <FieldLabel htmlFor="up-note" optional>
+                    {t("creatorNote")}
+                  </FieldLabel>
+                  <Textarea
+                    id="up-note"
+                    rows={2}
+                    maxLength={NOTE_MAX}
+                    value={note}
+                    placeholder={t("notePlaceholder", { unit })}
+                    onChange={(e) => setNote(e.target.value.slice(0, NOTE_MAX))}
+                    className="min-h-[68px]"
+                  />
+                  <span className="self-end text-xs leading-4 text-muted-foreground tabular-nums">
+                    {note.length}/{NOTE_MAX}
+                  </span>
+                </div>
+              </div>
+            </StudioCard>
+
+            <div className="sticky bottom-4 z-20 flex items-center justify-end gap-2 rounded-xl border bg-background/95 p-2.5 shadow-md backdrop-blur-sm max-md:bottom-[72px] max-md:[&>*]:flex-1">
+              {!live ? (
+                <Button type="button" variant="outline" loading={busy === "draft"} disabled={busy !== null} onClick={() => void saveDraft()}>
+                  {t("saveDraft")}
+                </Button>
+              ) : null}
+              <Button type="submit" variant="brand" size="lg" loading={busy === "publish"} disabled={busy !== null}>
+                {primaryLabel}
+              </Button>
             </div>
-          </section>
-        </aside>
+          </form>
+        </Effect>
+
+        <Effect asChild fade slide={{ direction: "up", offset: 12 }} delay={120}>
+          <aside className="flex min-w-0 flex-col gap-4 md:sticky md:top-20">
+            <StudioCard aria-labelledby="up-check">
+              <CardHead id="up-check" size="h4" title={t("beforePublish")} />
+              <TickList
+                mark="!"
+                className="px-5 pt-3 pb-5"
+                items={[
+                  { ok: title.trim().length >= TITLE_MIN, text: t("checkTitle") },
+                  comic
+                    ? { ok: items.length > 0 && !badImgs.length && !loading, text: t("checkImages", { ready: items.length - badImgs.length, total: items.length }) }
+                    : { ok: words >= MIN_WORDS, text: t("wordsNeeded", { min: MIN_WORDS }) },
+                  { ok: true, text: live ? t("checkLive") : when === "now" ? t("checkNow") : t("checkScheduled", { when: whenText }) },
+                  { ok: true, text: fastPass ? t("checkFastPass", { coins: FAST_PASS_COINS }) : t("checkFree") },
+                ]}
+              />
+            </StudioCard>
+            <section aria-label={t("phonePreview")} className="flex flex-col gap-2 max-md:hidden">
+              <PreviewCaption>{t("phonePreview")}</PreviewCaption>
+              <div className="w-[220px] self-center overflow-hidden rounded-[28px] border-8 border-[#09090b] bg-white shadow-md max-lg:w-[200px]">
+                <div className="flex flex-col border-b border-[#e4e4e7] px-2.5 py-2 text-[#09090b]">
+                  <span className="text-xs leading-4 font-semibold">{t("unitN", { unit, n: nLabel })}</span>
+                  <span className="truncate text-xs leading-4 text-[#71717a]">{title.trim() || t("untitled")}</span>
+                </div>
+                <div className="flex h-[300px] flex-col overflow-hidden bg-[#fafafa]">
+                  {comic ? (
+                    items.filter((i) => i.status !== "error").length ? (
+                      items
+                        .filter((i) => i.status !== "error")
+                        .slice(0, 3)
+                        .map((i) => (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img key={i.key} src={i.preview} alt="" className="h-[150px] w-full shrink-0 object-cover" />
+                        ))
+                    ) : (
+                      <span className="px-3 py-10 text-center text-xs leading-4 text-[#71717a]">{t("previewImages")}</span>
+                    )
+                  ) : (
+                    <p className="m-0 p-3 font-novel text-[11px] leading-[1.7] whitespace-pre-wrap text-[#27272a]">{text.trim() ? text.trim().slice(0, 420) : t("previewText")}</p>
+                  )}
+                </div>
+              </div>
+            </section>
+          </aside>
+        </Effect>
       </div>
     </div>
   )

@@ -573,8 +573,7 @@ docs/BACKEND_CHECKLIST.md, "V2.1 API additions" (V21-01 … V21-07).
   in (keyed by the step) and Manage series fades each tab's panel; comment threads and lists fade up, and a comment
   you post slides in; the receipt timeline steps appear one after another; Settings cards fade up; the creator
   and earnings chart columns rise and fade in (Animate UI has no bar-growth effect, so the bar heights themselves do
-  not animate); the end-of-episode section and the 404 / error hero fade in. Not done: Upload episode (a single
-  form, no steps), `AutoHeight` on Create series (the card keeps its fixed footer) and on Settings (the quiet-hours
+  not animate); the end-of-episode section and the 404 / error hero fade in. Not done: `AutoHeight` on Create series (the card keeps its fixed footer) and on Settings (the quiet-hours
   reveal is on the Notifications page and its focus rings would be clipped), and a sliding underline on the
   hand-built Manage series tabs.
 - ANIM-9 (animations) **Reader Stars background**: `src/components/pr/stars-background.tsx` is new and is not in the
@@ -585,3 +584,8 @@ docs/BACKEND_CHECKLIST.md, "V2.1 API additions" (V21-01 … V21-07).
   Animate UI defaults. With reduced motion the stars stay still. Known nit: in the novel reader the star field
   remounts when the skeleton swaps to the loaded page. Open item (not caused by this): the novel reader already
   overflows horizontally by about 4 px at 320 px.
+- ANIM-10 (animations) **Round 4**: Genres (header, genre chips, banner and grid cards), the creator profile (header,
+  series and update cards), Help (hero and topic cards), the receipt (card and status icon), Join (hero and the three
+  sections), the full comments page header, the alert settings rows on Notifications and the Upload episode form and
+  preview panel fade up. Upload episode needs no steps, so only its two columns fade in; its sticky action bar still
+  sticks once the entrance has finished.
