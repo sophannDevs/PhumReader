@@ -3,6 +3,7 @@
 import { LogInIcon, ShieldAlertIcon } from "lucide-react"
 import { useTranslations } from "@/i18n/translations"
 import { useEffect, useRef } from "react"
+import { Highlight, HighlightItem } from "@animate-ui/react/primitives/effects/highlight"
 import { Logo } from "@/components/layout/logo"
 import { SkipLink } from "@/components/layout/skip-link"
 import { AdminDecisions, AdminError } from "@/components/pr/admin-kit"
@@ -216,13 +217,13 @@ function AdminNav() {
   const link = (item: NavItem) => {
     const on = pathname === item.href
     return (
+      <HighlightItem key={item.href} value={item.href} className="flex shrink-0 lg:shrink">
       <Link
-        key={item.href}
         href={item.href}
         aria-current={on ? "page" : undefined}
         className={cn(
-          "relative flex min-h-[38px] shrink-0 items-center gap-2 rounded-[8px] px-3 text-sm font-medium whitespace-nowrap transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset lg:shrink lg:py-2 lg:whitespace-normal",
-          on ? "bg-muted text-foreground" : "text-muted-foreground hover:bg-accent hover:text-foreground"
+          "flex min-h-[38px] grow items-center gap-2 rounded-[8px] px-3 text-sm font-medium whitespace-nowrap transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset lg:py-2 lg:whitespace-normal",
+          on ? "text-foreground" : "text-muted-foreground hover:bg-accent hover:text-foreground"
         )}
       >
         {/* Khmer labels are longer: they wrap in the 240 px menu instead of being cut. */}
@@ -234,8 +235,11 @@ function AdminNav() {
           </Badge>
         ) : null}
       </Link>
+      </HighlightItem>
     )
   }
+
+  const here = [...items, ...extras].find((x) => x.href === pathname)?.href ?? null
 
   return (
     <aside className="border-b bg-background lg:border-r lg:border-b-0">
@@ -244,13 +248,22 @@ function AdminNav() {
         aria-label={t("navLabel")}
         className="flex gap-0.5 overflow-x-auto px-3 py-2 [scrollbar-width:none] lg:sticky lg:top-14 lg:flex-col lg:overflow-visible lg:py-5 [&::-webkit-scrollbar]:hidden"
       >
-        {items.map(link)}
-        {extras.length ? (
-          <>
-            <div aria-hidden className="my-2.5 hidden h-px bg-border lg:block" />
-            {extras.map(link)}
-          </>
-        ) : null}
+        {/* Animate UI Highlight: one pill slides behind the current menu item (the shell stays mounted between pages). */}
+        <Highlight
+          controlledItems
+          click={false}
+          value={here}
+          className="inset-0 rounded-[8px] bg-muted"
+          transition={{ type: "spring", stiffness: 500, damping: 38 }}
+        >
+          {items.map(link)}
+          {extras.length ? (
+            <>
+              <div aria-hidden className="my-2.5 hidden h-px bg-border lg:block" />
+              {extras.map(link)}
+            </>
+          ) : null}
+        </Highlight>
         <div aria-hidden className="my-2.5 hidden h-px bg-border lg:block" />
         <Link
           href="/legal/community"
