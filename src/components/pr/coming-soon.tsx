@@ -33,7 +33,7 @@ export function ComingSoon() {
   return (
     <ErrorHero kind="comingSoon" title={t("title", { topic: name })} body={t("body")}>
       <div className={errorActions}>
-        <Button asChild variant="brand" size="lg">
+        <Button animateIcon asChild variant="brand" size="lg">
           <Link href="/">
             <HomeIcon />
             {t("home")}

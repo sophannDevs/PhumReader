@@ -1,6 +1,5 @@
 "use client"
 
-import { AnimateIcon } from "@animate-ui/react/icons"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { CircleAlertIcon as AlertCircleIcon } from "@/components/animate-ui/icons/circle-alert"
 import { ClockIcon } from "@/components/animate-ui/icons/clock"
@@ -284,22 +283,22 @@ function Landing({ onSearch }: { onSearch: (q: string) => void }) {
           <ul className="flex flex-wrap gap-2">
             {recent.map((q) => (
               <li key={q} className="inline-flex h-8 max-w-full items-center overflow-hidden rounded-full border bg-background">
-                <AnimateIcon asChild animateOnHover><button
+                <button
                   type="button"
                   onClick={() => onSearch(q)}
                   className={cn("inline-flex h-full min-w-0 items-center gap-1.5 pr-1.5 pl-3 text-[13px] font-medium hover:bg-accent", focusRing)}
                 >
                   <ClockIcon className="size-3 shrink-0" aria-hidden />
                   <span className="truncate">{q}</span>
-                </button></AnimateIcon>
-                <AnimateIcon asChild animateOnHover><button
+                </button>
+                <button
                   type="button"
                   aria-label={t("recentRemove", { q })}
                   onClick={() => useAppStore.getState().removeRecentSearch(q)}
                   className={cn("inline-flex h-full w-7 shrink-0 items-center justify-center text-muted-foreground hover:bg-accent", focusRing)}
                 >
                   <XIcon className="size-3" aria-hidden />
-                </button></AnimateIcon>
+                </button>
               </li>
             ))}
           </ul>

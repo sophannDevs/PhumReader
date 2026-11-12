@@ -72,11 +72,11 @@ export function OfflineView() {
     <ErrorHero kind="offline" title={t("offline.title")} body={t("offline.body")}>
       <ErrorStatus status={status} message={status === "ok" ? t("offline.ok") : t("offline.still")} />
       <div className={errorActions}>
-        <Button variant="brand" size="lg" onClick={retry} loading={busy} disabled={status === "ok"} data-offline-retry="">
+        <Button animateIcon variant="brand" size="lg" onClick={retry} loading={busy} disabled={status === "ok"} data-offline-retry="">
           {busy ? null : <RefreshCwIcon />}
           {busy ? t("trying") : t("retry")}
         </Button>
-        <Button asChild variant="outline" size="lg">
+        <Button animateIcon asChild variant="outline" size="lg">
           <Link href="/">
             <HomeIcon />
             {t("home")}

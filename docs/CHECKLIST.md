@@ -560,8 +560,10 @@ docs/BACKEND_CHECKLIST.md, "V2.1 API additions" (V21-01 … V21-07).
 - ANIM-5 (animations) **Unit tests**: `src/test/setup.tsx` turns motion animations off
   (`MotionGlobalConfig.skipAnimations`) and adds jsdom stand-ins for `SVGGeometryElement` and
   `Element.animate/getAnimations`, which Animate UI's checkbox and OTP input use. Playwright runs the real animations.
-- ANIM-6 (animations) **Skipped**: Animate UI's Page Transition and its registry icons (Heart, Bell) were not added
-  (their install steps were not verified); the comment Like icon pops with `Effect` instead. ANIM-15 adds a particle burst on top of that pop.
+- ANIM-6 (animations) **Skipped**: Animate UI's Page Transition was not added (its install steps were not verified);
+  the comment Like icon pops with `Effect` instead. ANIM-15 adds a particle burst on top of that pop. The registry
+  icons (Heart, Bell and more) were added app-wide later, in `src/components/animate-ui/icons/`, with the hover
+  trigger `AnimateIcon` from `@animate-ui/react/icons`. See ANIM-16.
 - ANIM-7 (animations) **Round 2**: the series page now uses Animate UI Tabs (it used Radix directly before), the hero
   fades from half opacity (it holds the LCP cover), episode rows and the sidebar fade in; coin packs stagger in; the
   checkout card eases to the next step's height (`AutoHeight`) and the success check bursts a ring of dots
@@ -648,3 +650,21 @@ docs/BACKEND_CHECKLIST.md, "V2.1 API additions" (V21-01 … V21-07).
   "Next chapter" overflows by 4 px. Both break the "no horizontal scroll from 320 px" rule and need a layout fix
   (for example let the Follow/Block row wrap). Also, `signup-view.test.tsx` can hit the 5 s per-test timeout under
   parallel load (it passes alone); this is unrelated.
+- ANIM-16 (animations) **Icon fixes**: follow-up to ANIM-15.
+  Icons with no same-glyph equivalent in the registry stay on lucide-react (foundations §6): Coins, Shield, Laptop,
+  SearchX, Inbox, Languages, ReceiptText, ShieldAlert, Loader2 (spinner), PenLine, Book and Library. They do not
+  animate on hover. Same-glyph renames are kept: CircleAlert (alert-circle), House (home), CircleCheck, TriangleAlert
+  and Ellipsis (more-horizontal). The 9 unused registry icon files (airplay, archive, book-text, file-text,
+  library-big, loader, octagon-alert, pencil-line, wallet) were deleted.
+  The phone tab bar is back to the full-width sticky bar of spec §0 and foundations (border-t, 11 px labels always
+  shown, 20 px icons). The floating pill with labels that fold away on scroll was dropped. The animated House, Search,
+  BookOpen and User icons and the Highlight pill are kept; Coins is lucide.
+  Performance: hover animation is opt-in on `Button` through `animateIcon` (default off). 9 state-page CTAs use it
+  (not-found, route-error, offline, maintenance, coming-soon, series-unavailable). `AnimateIcon` creates a motion
+  animation controller and two IntersectionObservers per instance, so it was removed from repeated items: series,
+  continue and pack cards, Chip, welcome genre cards, episode-list popover rows, dropdown menu items, recent-search
+  chips and the coin chip. It stays on single elements (header, tab bar, footer, toolbars, help, legal, create and
+  upload series, state pages). Consequence: menu items, chips and cards do not animate their icon on hover. This needs
+  sign-off from the design owner.
+  Open question: the animated icons and the particle burst are not in the design pack (like ANIM-4), so check against
+  `design/screens` before launch.

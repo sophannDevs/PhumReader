@@ -2,7 +2,7 @@
 
 import { AnimateIcon } from "@animate-ui/react/icons"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
-import { LibraryBigIcon as LibraryIcon } from "@/components/animate-ui/icons/library-big"
+import { LibraryIcon } from "lucide-react"
 import { CircleAlertIcon as AlertCircleIcon } from "@/components/animate-ui/icons/circle-alert"
 import { CheckIcon } from "@/components/animate-ui/icons/check"
 import { RefreshCwIcon } from "@/components/animate-ui/icons/refresh-cw"

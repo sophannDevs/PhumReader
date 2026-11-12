@@ -1,6 +1,6 @@
 "use client"
 
-import { WalletIcon as CoinsIcon } from "@/components/animate-ui/icons/wallet"
+import { CoinsIcon } from "lucide-react"
 import { ChevronLeftIcon } from "@/components/animate-ui/icons/chevron-left"
 import { ZapIcon } from "@/components/animate-ui/icons/zap"
 import { useTranslations } from "@/i18n/translations"

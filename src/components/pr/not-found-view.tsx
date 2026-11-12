@@ -176,7 +176,7 @@ export function NotFoundView() {
       </form>
 
       <div className={errorActions}>
-        <Button asChild variant="outline" size="lg">
+        <Button animateIcon asChild variant="outline" size="lg">
           <Link href="/">
             <HomeIcon />
             {te("home")}

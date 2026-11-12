@@ -1,9 +1,9 @@
 "use client"
 
-import { PencilLineIcon as PenLineIcon } from "@/components/animate-ui/icons/pencil-line"
+import { PenLineIcon } from "lucide-react"
 import { CircleAlertIcon as AlertCircleIcon } from "@/components/animate-ui/icons/circle-alert"
 import { LogInIcon } from "@/components/animate-ui/icons/log-in"
-import type { AnimatedIcon as AnimatedIcon } from "@/components/animate-ui/icons/types"
+import type { AnimatedIcon } from "@/components/animate-ui/icons/types"
 import { useTranslations } from "@/i18n/translations"
 import { useState } from "react"
 import { BecomeCreatorDialog } from "@/components/pr/become-creator-dialog"

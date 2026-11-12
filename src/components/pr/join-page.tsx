@@ -1,7 +1,6 @@
 "use client"
 
-import { WalletIcon as CoinsIcon } from "@/components/animate-ui/icons/wallet"
-import { GlobeIcon as LanguagesIcon } from "@/components/animate-ui/icons/globe"
+import { CoinsIcon, LanguagesIcon } from "lucide-react"
 import { ArrowRightIcon } from "@/components/animate-ui/icons/arrow-right"
 import { BadgeCheckIcon } from "@/components/animate-ui/icons/badge-check"
 import { CheckIcon } from "@/components/animate-ui/icons/check"

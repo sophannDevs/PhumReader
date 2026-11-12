@@ -1,6 +1,5 @@
 "use client"
 
-import { AnimateIcon } from "@animate-ui/react/icons"
 import { useQueryClient } from "@tanstack/react-query"
 import { BellIcon } from "@/components/animate-ui/icons/bell"
 import { CheckIcon } from "@/components/animate-ui/icons/check"
@@ -275,8 +274,8 @@ export function WelcomeFlow() {
                 {GENRE_CARDS.map(({ genre, cover }) => {
                   const on = state.picked.includes(genre)
                   return (
-                    <AnimateIcon asChild animateOnHover key={genre}><button
-                     
+                    <button
+                      key={genre}
                       type="button"
                       aria-pressed={on}
                       onClick={() =>
@@ -299,7 +298,7 @@ export function WelcomeFlow() {
                           <CheckIcon className="size-3.5" />
                         </span>
                       ) : null}
-                    </button></AnimateIcon>
+                    </button>
                   )
                 })}
               </div>

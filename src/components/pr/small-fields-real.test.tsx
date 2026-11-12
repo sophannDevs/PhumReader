@@ -29,6 +29,8 @@ const account = (genres: string[] | null) => ({
     digest: false,
   },
   preferences: { genres, storyLanguages: ["en", "km"] },
+  comics: { mode: "scroll", quality: "auto", autoNext: true, dataSaver: false, background: "dark", width: "fit" },
+  privacy: { region: "KH", publicLibrary: false, mature: false },
 })
 
 describe("Home picks (ForYouSection)", () => {

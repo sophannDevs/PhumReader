@@ -1,4 +1,4 @@
-import { ArchiveIcon as InboxIcon } from "@/components/animate-ui/icons/archive"
+import { InboxIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Effect } from "@animate-ui/react/primitives/effects/effect"
 

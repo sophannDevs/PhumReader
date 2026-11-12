@@ -48,11 +48,11 @@ export function MaintenanceView() {
         </div>
       </dl>
       <div className={errorActions}>
-        <Button variant="brand" size="lg" onClick={notify} aria-pressed={notifyOn}>
+        <Button animateIcon variant="brand" size="lg" onClick={notify} aria-pressed={notifyOn}>
           {notifyOn ? <CheckIcon /> : <BellIcon />}
           {notifyOn ? t("maintenance.notifyOn") : t("maintenance.notify")}
         </Button>
-        <Button asChild variant="outline" size="lg">
+        <Button animateIcon asChild variant="outline" size="lg">
           <Link href="/">
             <HomeIcon />
             {t("home")}

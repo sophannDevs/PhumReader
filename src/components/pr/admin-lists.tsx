@@ -1,8 +1,8 @@
 "use client";
 
 import type { UseInfiniteQueryResult } from "@tanstack/react-query";
-import { ArchiveIcon as InboxIcon } from "@/components/animate-ui/icons/archive"
-import { SearchIcon } from "@/components/animate-ui/icons/search"
+import { InboxIcon } from "lucide-react";
+import { SearchIcon } from "@/components/animate-ui/icons/search";
 import { useFormatter } from "next-intl";
 import { useTranslations } from "@/i18n/translations";
 import { useEffect, useState } from "react";

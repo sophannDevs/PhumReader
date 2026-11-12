@@ -1,10 +1,8 @@
 "use client"
 
-import { AnimateIcon } from "@animate-ui/react/icons"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useMutation } from "@tanstack/react-query"
-import { WalletIcon as CoinsIcon } from "@/components/animate-ui/icons/wallet"
-import { ShieldCheckIcon as ShieldIcon } from "@/components/animate-ui/icons/shield-check"
+import { CoinsIcon, ShieldIcon } from "lucide-react"
 import { CheckIcon } from "@/components/animate-ui/icons/check"
 import { ClockIcon } from "@/components/animate-ui/icons/clock"
 import { MailIcon } from "@/components/animate-ui/icons/mail"
@@ -351,14 +349,14 @@ function OtherWays() {
         {t("hours")}
       </p>
       <hr className="my-1 border-border" />
-      <AnimateIcon asChild animateOnHover><Link href="/legal/community" className={link}>
+      <Link href="/legal/community" className={link}>
         <ShieldIcon className="size-4 shrink-0" aria-hidden />
         {t("community")}
-      </Link></AnimateIcon>
-      <AnimateIcon asChild animateOnHover><Link href="/legal/refund" className={link}>
+      </Link>
+      <Link href="/legal/refund" className={link}>
         <CoinsIcon className="size-4 shrink-0" aria-hidden />
         {t("refunds")}
-      </Link></AnimateIcon>
+      </Link>
     </section>
   )
 }

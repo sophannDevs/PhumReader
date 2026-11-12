@@ -1,8 +1,7 @@
 "use client"
 
 import { AnimateIcon } from "@animate-ui/react/icons"
-import { WalletIcon as CoinsIcon } from "@/components/animate-ui/icons/wallet"
-import { PencilLineIcon as PenLineIcon } from "@/components/animate-ui/icons/pencil-line"
+import { CoinsIcon, PenLineIcon } from "lucide-react"
 import { BellIcon } from "@/components/animate-ui/icons/bell"
 import { BookOpenIcon } from "@/components/animate-ui/icons/book-open"
 import { LogOutIcon } from "@/components/animate-ui/icons/log-out"

@@ -1,7 +1,7 @@
 "use client"
 
 import { CheckIcon } from "@/components/animate-ui/icons/check"
-import { LoaderIcon as Loader2Icon } from "@/components/animate-ui/icons/loader"
+import { Loader2Icon } from "lucide-react"
 import { useTranslations } from "@/i18n/translations"
 import { useEffect, useState } from "react"
 import { usePlaceName } from "@/components/auth/use-place-name"

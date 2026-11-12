@@ -1,7 +1,7 @@
 "use client"
 
 import { useQuery, useQueryClient } from "@tanstack/react-query"
-import { SearchIcon as SearchXIcon } from "@/components/animate-ui/icons/search"
+import { SearchXIcon } from "lucide-react"
 import { CircleAlertIcon as AlertCircleIcon } from "@/components/animate-ui/icons/circle-alert"
 import { ArrowUpDownIcon } from "@/components/animate-ui/icons/arrow-up-down"
 import { ChevronRightIcon } from "@/components/animate-ui/icons/chevron-right"

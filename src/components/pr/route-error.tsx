@@ -162,11 +162,11 @@ export function RouteError({ error, reset }: { error: Error & { digest?: string 
     <ErrorHero kind="server" title={t("server.title")} body={t("server.body")}>
       <ErrorStatus status={status} message={status === "ok" ? t("server.ok") : t("server.still")} />
       <div className={errorActions}>
-        <Button variant="brand" size="lg" onClick={retry} loading={busy} disabled={status === "ok"}>
+        <Button animateIcon variant="brand" size="lg" onClick={retry} loading={busy} disabled={status === "ok"}>
           {busy ? null : <RefreshCwIcon />}
           {busy ? t("trying") : t("retry")}
         </Button>
-        <Button asChild variant="outline" size="lg">
+        <Button animateIcon asChild variant="outline" size="lg">
           <Link href="/">
             <HomeIcon />
             {t("home")}

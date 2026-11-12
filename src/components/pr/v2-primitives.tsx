@@ -1,8 +1,7 @@
 "use client"
 
-import { AnimateIcon } from "@animate-ui/react/icons"
 import { CheckIcon } from "@/components/animate-ui/icons/check"
-import type { AnimatedIcon as AnimatedIcon } from "@/components/animate-ui/icons/types"
+import type { AnimatedIcon } from "@/components/animate-ui/icons/types"
 import { cn } from "@/lib/utils"
 import { Num } from "@/i18n/num"
 import { SlidingTab, SlidingTabs } from "@/components/ui/sliding-tabs"
@@ -76,7 +75,7 @@ export function Chip({
   className?: string
 }) {
   return (
-    <AnimateIcon asChild animateOnHover><button
+    <button
       type="button"
       role={role}
       aria-checked={role === "radio" ? selected : undefined}
@@ -93,7 +92,7 @@ export function Chip({
       {count !== undefined ? (
         <span className={cn("text-[11px] tabular-nums", selected ? "text-[#d4d4d8]" : "text-muted-foreground")}><Num>{count}</Num></span>
       ) : null}
-    </button></AnimateIcon>
+    </button>
   )
 }
 

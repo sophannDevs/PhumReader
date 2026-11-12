@@ -1,8 +1,8 @@
 "use client"
 
-import { ExternalLinkIcon as ExternalLinkIcon } from "@/components/animate-ui/icons/external-link"
-import { FileTextIcon as ReceiptTextIcon } from "@/components/animate-ui/icons/file-text"
-import { Undo2Icon as Undo2Icon } from "@/components/animate-ui/icons/undo-2"
+import { ExternalLinkIcon } from "@/components/animate-ui/icons/external-link"
+import { ReceiptTextIcon } from "lucide-react"
+import { Undo2Icon } from "@/components/animate-ui/icons/undo-2"
 import { CircleAlertIcon as AlertCircleIcon } from "@/components/animate-ui/icons/circle-alert"
 import { CheckIcon } from "@/components/animate-ui/icons/check"
 import { ChevronRightIcon } from "@/components/animate-ui/icons/chevron-right"

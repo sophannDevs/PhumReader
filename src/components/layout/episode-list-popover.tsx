@@ -100,7 +100,7 @@ export function EpisodeListPopover({
             const isCurrent = e.n === current
             return (
               <li key={e.n}>
-                <AnimateIcon asChild animateOnHover><button
+                <button
                   type="button"
                   aria-current={isCurrent ? "true" : undefined}
                   onClick={() => pick(e.n)}
@@ -139,7 +139,7 @@ export function EpisodeListPopover({
                     )
                   ) : null}
                   {isCurrent && !novel ? <Badge variant="new">{t("now")}</Badge> : null}
-                </button></AnimateIcon>
+                </button>
               </li>
             )
           })}

@@ -129,7 +129,7 @@ export function SeriesUnavailable({ series }: { series: Series }) {
                 </div>
 
                 <div className="flex flex-wrap gap-2 pt-1">
-                  <Button asChild variant="brand" size="lg" className="max-md:flex-1">
+                  <Button animateIcon asChild variant="brand" size="lg" className="max-md:flex-1">
                     <Link href="/">
                       <HomeIcon />
                       {t("goHome")}

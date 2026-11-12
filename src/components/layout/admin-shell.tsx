@@ -1,6 +1,6 @@
 "use client"
 
-import { OctagonAlertIcon as ShieldAlertIcon } from "@/components/animate-ui/icons/octagon-alert"
+import { ShieldAlertIcon } from "lucide-react"
 import { LogInIcon } from "@/components/animate-ui/icons/log-in"
 import { useTranslations } from "@/i18n/translations"
 import { useEffect, useRef } from "react"

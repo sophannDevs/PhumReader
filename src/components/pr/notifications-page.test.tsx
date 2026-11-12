@@ -132,6 +132,8 @@ function accountSettings(alerts: Alerts = DEFAULT_ALERTS) {
       theme: "system",
       reader: { font: "sans", size: 18, theme: "light", wide: true },
       notifications: structuredClone(alerts),
+      comics: { mode: "scroll", quality: "auto", autoNext: true, dataSaver: false, background: "dark", width: "fit" },
+      privacy: { region: "KH", publicLibrary: false, mature: false },
     } as Settings,
     patches: [] as unknown[],
   }

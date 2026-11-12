@@ -1,6 +1,6 @@
 "use client"
 
-import { ShieldCheckIcon as ShieldIcon } from "@/components/animate-ui/icons/shield-check"
+import { ShieldIcon } from "lucide-react"
 import { ArrowRightIcon } from "@/components/animate-ui/icons/arrow-right"
 import { CheckIcon } from "@/components/animate-ui/icons/check"
 import { ClockIcon } from "@/components/animate-ui/icons/clock"

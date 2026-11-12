@@ -1,7 +1,7 @@
 import * as React from "react"
 import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "cn"
-import { LoaderIcon as Loader2Icon } from "@/components/animate-ui/icons/loader"
+import { Loader2Icon } from "lucide-react"
 import { Slot } from "radix-ui"
 import { AnimateIcon } from "@animate-ui/react/icons"
 
@@ -46,6 +46,7 @@ function Button({
   size = "default",
   asChild = false,
   loading = false,
+  animateIcon = false,
   disabled,
   children,
   ...props
@@ -54,12 +55,12 @@ function Button({
     asChild?: boolean
     /** Shows a spinner and disables the button (prevents double submits). */
     loading?: boolean
+    /** Plays the animated icons inside on hover. Opt in only for a few singleton CTAs (each one costs observers). */
+    animateIcon?: boolean
   }) {
   const Comp = asChild ? Slot.Root : "button"
 
-  return (
-    // Hovering anywhere on the button plays the animation of the icons inside it.
-    <AnimateIcon asChild animateOnHover>
+  const button = (
     <Comp
       data-slot="button"
       data-variant={variant}
@@ -78,6 +79,13 @@ function Button({
         </>
       )}
     </Comp>
+  )
+
+  if (!animateIcon) return button
+  // Hovering anywhere on the button plays the animation of the icons inside it.
+  return (
+    <AnimateIcon asChild animateOnHover>
+      {button}
     </AnimateIcon>
   )
 }
