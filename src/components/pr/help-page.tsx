@@ -11,6 +11,7 @@ import { demoData, type HelpArticle, type HelpTopic } from "@/data"
 import { Link } from "@/i18n/navigation"
 import { useHelpVotes } from "@/lib/help"
 import { cn } from "@/lib/utils"
+import { Effect } from "@animate-ui/react/primitives/effects/effect"
 
 /** Topic cards in the prototype's order, with its glyphs (text presentation, so they don't turn into emoji). */
 const TOPICS: { id: HelpTopic; glyph: string }[] = [
@@ -98,84 +99,87 @@ export function HelpPage() {
   return (
     <>
       <section className="border-b bg-[#fafafa] bg-[image:radial-gradient(900px_300px_at_50%_-10%,#d9f7e6_0%,rgba(217,247,230,0)_70%)]">
-        <div className="container flex flex-col items-center gap-3.5 pt-8 pb-8 text-center md:pt-10 md:pb-9">
-          <h1 className="type-h1">{t("title")}</h1>
-          <form role="search" className="relative w-full max-w-[620px]" onSubmit={(e) => e.preventDefault()}>
-            <label htmlFor="hp-q" className="sr-only">
-              {t("searchLabel")}
-            </label>
-            <SearchIcon className="pointer-events-none absolute top-1/2 left-4 size-[18px] -translate-y-1/2 text-muted-foreground" aria-hidden />
-            <Input
-              id="hp-q"
-              type="search"
-              value={q}
-              onChange={(e) => {
-                setQ(e.target.value)
-                setOpen("")
-              }}
-              placeholder={t("searchPh")}
-              className="h-12 rounded-xl px-11 text-base shadow-md placeholder:text-[#a1a1aa] md:h-[52px] [&::-webkit-search-cancel-button]:hidden"
-            />
-            {q ? (
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon-sm"
-                onClick={() => setQ("")}
-                aria-label={t("clear")}
-                className="absolute top-1/2 right-2 -translate-y-1/2"
-              >
-                <XIcon className="size-3.5" />
-              </Button>
-            ) : null}
-          </form>
-          <div className="flex flex-wrap items-center justify-center gap-1.5">
-            <span className="text-xs leading-4 text-muted-foreground">{t("popularLabel")}</span>
-            {(t.raw("popular") as string[]).map((p) => (
-              <button
-                key={p}
-                type="button"
-                onClick={() => pickPopular(p)}
-                className={cn(
-                  "inline-flex h-7 items-center rounded-full border bg-background px-3 text-xs font-medium whitespace-nowrap transition-colors hover:bg-accent",
-                  focusRing
-                )}
-              >
-                {p}
-              </button>
-            ))}
+        <Effect asChild fade slide={{ direction: "up", offset: 10 }}>
+          <div className="container flex flex-col items-center gap-3.5 pt-8 pb-8 text-center md:pt-10 md:pb-9">
+            <h1 className="type-h1">{t("title")}</h1>
+            <form role="search" className="relative w-full max-w-[620px]" onSubmit={(e) => e.preventDefault()}>
+              <label htmlFor="hp-q" className="sr-only">
+                {t("searchLabel")}
+              </label>
+              <SearchIcon className="pointer-events-none absolute top-1/2 left-4 size-[18px] -translate-y-1/2 text-muted-foreground" aria-hidden />
+              <Input
+                id="hp-q"
+                type="search"
+                value={q}
+                onChange={(e) => {
+                  setQ(e.target.value)
+                  setOpen("")
+                }}
+                placeholder={t("searchPh")}
+                className="h-12 rounded-xl px-11 text-base shadow-md placeholder:text-[#a1a1aa] md:h-[52px] [&::-webkit-search-cancel-button]:hidden"
+              />
+              {q ? (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  onClick={() => setQ("")}
+                  aria-label={t("clear")}
+                  className="absolute top-1/2 right-2 -translate-y-1/2"
+                >
+                  <XIcon className="size-3.5" />
+                </Button>
+              ) : null}
+            </form>
+            <div className="flex flex-wrap items-center justify-center gap-1.5">
+              <span className="text-xs leading-4 text-muted-foreground">{t("popularLabel")}</span>
+              {(t.raw("popular") as string[]).map((p) => (
+                <button
+                  key={p}
+                  type="button"
+                  onClick={() => pickPopular(p)}
+                  className={cn(
+                    "inline-flex h-7 items-center rounded-full border bg-background px-3 text-xs font-medium whitespace-nowrap transition-colors hover:bg-accent",
+                    focusRing
+                  )}
+                >
+                  {p}
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
+        </Effect>
       </section>
 
       <div className="container flex flex-col gap-7 pt-7 pb-16">
         <div role="group" aria-label={t("topicsLabel")} className="grid grid-cols-2 gap-2.5 md:grid-cols-3 lg:grid-cols-6">
-          {TOPICS.map(({ id, glyph }) => {
+          {TOPICS.map(({ id, glyph }, ti) => {
             const on = topic === id
             const n = articles.filter((a) => a.topic === id).length
             return (
-              <button
-                key={id}
-                type="button"
-                aria-pressed={on}
-                onClick={() => {
-                  setTopic(on ? "all" : id)
-                  setOpen("")
-                }}
-                className={cn(
-                  "flex min-w-0 items-center gap-2.5 rounded-xl border bg-background p-3 text-left transition-colors hover:border-[#a1a1aa]",
-                  on && "border-primary bg-selected shadow-[0_0_0_1px_var(--primary)] hover:border-primary",
-                  focusRing
-                )}
-              >
-                <span aria-hidden className="inline-flex size-[34px] shrink-0 items-center justify-center rounded-[10px] bg-muted text-base">
-                  {glyph}
-                </span>
-                <span className="flex min-w-0 flex-col gap-0.5">
-                  <span className="text-[13px] leading-[18px] font-semibold">{t(`topics.${id}`)}</span>
-                  <span className="text-xs leading-4 text-muted-foreground">{t("topicCount", { count: n })}</span>
-                </span>
-              </button>
+              <Effect key={id} asChild fade slide={{ direction: "up", offset: 8 }} delay={Math.min(ti, 10) * 40} inView>
+                <button
+                  type="button"
+                  aria-pressed={on}
+                  onClick={() => {
+                    setTopic(on ? "all" : id)
+                    setOpen("")
+                  }}
+                  className={cn(
+                    "flex min-w-0 items-center gap-2.5 rounded-xl border bg-background p-3 text-left transition-colors hover:border-[#a1a1aa]",
+                    on && "border-primary bg-selected shadow-[0_0_0_1px_var(--primary)] hover:border-primary",
+                    focusRing
+                  )}
+                >
+                  <span aria-hidden className="inline-flex size-[34px] shrink-0 items-center justify-center rounded-[10px] bg-muted text-base">
+                    {glyph}
+                  </span>
+                  <span className="flex min-w-0 flex-col gap-0.5">
+                    <span className="text-[13px] leading-[18px] font-semibold">{t(`topics.${id}`)}</span>
+                    <span className="text-xs leading-4 text-muted-foreground">{t("topicCount", { count: n })}</span>
+                  </span>
+                </button>
+              </Effect>
             )
           })}
         </div>

@@ -36,6 +36,7 @@ import { formatDate, formatShortDate, formatTime, ictDate } from "@/lib/format"
 import { useLocalize } from "@/lib/localize"
 import { useAppStore } from "@/lib/store"
 import { cn } from "@/lib/utils"
+import { Effect } from "@animate-ui/react/primitives/effects/effect"
 
 const statusBadge: Record<ReceiptStatus, "brand" | "up" | "secondary" | "warn"> = {
   Paid: "brand",
@@ -54,21 +55,23 @@ const action = "h-auto min-h-9 whitespace-normal py-2 max-md:w-full"
 function StatusIcon({ status }: { status: ReceiptStatus }) {
   const Icon = status === "Paid" ? CheckIcon : status === "Refunded" ? Undo2Icon : status === "Pending" ? ClockIcon : XIcon
   return (
-    <span
-      aria-hidden
-      className={cn(
-        "inline-flex size-14 items-center justify-center rounded-full",
-        status === "Paid"
-          ? "bg-primary text-primary-foreground"
-          : status === "Refunded"
-            ? "bg-muted text-secondary-foreground"
-            : status === "Pending"
-              ? "bg-warning-soft text-warning"
-              : "bg-destructive-soft text-destructive"
-      )}
-    >
-      <Icon className="size-6" strokeWidth={3} />
-    </span>
+    <Effect asChild fade zoom={{ initialScale: 0.5 }} delay={150}>
+      <span
+        aria-hidden
+        className={cn(
+          "inline-flex size-14 items-center justify-center rounded-full",
+          status === "Paid"
+            ? "bg-primary text-primary-foreground"
+            : status === "Refunded"
+              ? "bg-muted text-secondary-foreground"
+              : status === "Pending"
+                ? "bg-warning-soft text-warning"
+                : "bg-destructive-soft text-destructive"
+        )}
+      >
+        <Icon className="size-6" strokeWidth={3} />
+      </span>
+    </Effect>
   )
 }
 
@@ -258,107 +261,109 @@ function ReceiptView({ r }: { r: Receipt }) {
   }
 
   return (
-    <section aria-labelledby="rc-title" className={card}>
-      <div className="flex flex-col items-center gap-3">
-        <StatusIcon status={r.status} />
-        <div className="flex flex-col items-center gap-1 text-center">
-          <Badge variant={statusBadge[r.status]}>{t(`status${r.status}`)}</Badge>
-          <h1 id="rc-title" className="type-h2 tabular-nums">
-            {headline}
-          </h1>
-          <p className="m-0 max-w-[46ch] text-[13px] leading-[18px] text-balance text-muted-foreground">{subline}</p>
+    <Effect asChild fade slide={{ direction: "up", offset: 12 }}>
+      <section aria-labelledby="rc-title" className={card}>
+        <div className="flex flex-col items-center gap-3">
+          <StatusIcon status={r.status} />
+          <div className="flex flex-col items-center gap-1 text-center">
+            <Badge variant={statusBadge[r.status]}>{t(`status${r.status}`)}</Badge>
+            <h1 id="rc-title" className="type-h2 tabular-nums">
+              {headline}
+            </h1>
+            <p className="m-0 max-w-[46ch] text-[13px] leading-[18px] text-balance text-muted-foreground">{subline}</p>
+          </div>
         </div>
-      </div>
 
-      <dl className="m-0 flex flex-col overflow-hidden rounded-card border">
-        {rows.map((row) => (
-          <div
-            key={row.k}
+        <dl className="m-0 flex flex-col overflow-hidden rounded-card border">
+          {rows.map((row) => (
+            <div
+              key={row.k}
+              className={cn(
+                "flex items-center justify-between gap-4 border-t px-3.5 py-2.5 text-sm leading-5 first:border-t-0",
+                row.total && "bg-[#fafafa] font-bold"
+              )}
+            >
+              <dt className={row.total ? "text-foreground" : "text-muted-foreground"}>{row.k}</dt>
+              <dd className={cn("m-0 flex min-w-0 items-center gap-1 text-right tabular-nums", row.total ? "font-bold" : "font-medium")}>
+                <span className="min-w-0 break-words">{row.v}</span>
+                {row.copy ? (
+                  <Button variant="ghost" size="icon-sm" onClick={() => void copyId()} aria-label={t("copy")}>
+                    <CopyIcon className="size-3.5" />
+                  </Button>
+                ) : null}
+              </dd>
+            </div>
+          ))}
+        </dl>
+
+        <div className="flex flex-col gap-2">
+          <h2 className="text-sm leading-5 font-medium">{t("whatHappened")}</h2>
+          <Timeline steps={steps} />
+        </div>
+
+        <div className="flex flex-wrap justify-center gap-2">
+          {notCharged ? (
+            <Button variant="brand" className={action} onClick={retry}>
+              {t("tryAgain")}
+            </Button>
+          ) : null}
+          {r.status === "Pending" ? (
+            <Button variant="brand" className={action} onClick={retry}>
+              {t("continuePay")}
+            </Button>
+          ) : null}
+          {paid ? (
+            <Button variant="outline" className={action} onClick={() => toast(t("downloadToast"))}>
+              <ExternalLinkIcon className="size-3.5" aria-hidden />
+              {t("download")}
+            </Button>
+          ) : null}
+          <Button variant="outline" className={action} asChild>
+            <Link href="/help#contact" onClick={help("")}>
+              <MessageSquareIcon className="size-3.5" aria-hidden />
+              {t("getHelp")}
+            </Link>
+          </Button>
+          {canRefund ? (
+            DEMO_MODE ? (
+              <Button variant="ghost" className={action} asChild>
+                <Link href="/help#contact" onClick={help(t("refundMsg", { count: unused, id: r.id }))}>
+                  {t("askRefund")}
+                </Link>
+              </Button>
+            ) : (
+              <Button variant="ghost" className={action} onClick={() => setAsking(true)}>
+                {t("askRefund")}
+              </Button>
+            )
+          ) : null}
+        </div>
+
+        {r.refundRequest && r.status === "Paid" ? (
+          <p
+            role="status"
             className={cn(
-              "flex items-center justify-between gap-4 border-t px-3.5 py-2.5 text-sm leading-5 first:border-t-0",
-              row.total && "bg-[#fafafa] font-bold"
+              "m-0 rounded-control px-3 py-2 text-center text-[13px] leading-[18px]",
+              r.refundRequest.status === "declined" ? "bg-warning-soft text-warning-ink" : "bg-muted text-muted-foreground"
             )}
           >
-            <dt className={row.total ? "text-foreground" : "text-muted-foreground"}>{row.k}</dt>
-            <dd className={cn("m-0 flex min-w-0 items-center gap-1 text-right tabular-nums", row.total ? "font-bold" : "font-medium")}>
-              <span className="min-w-0 break-words">{row.v}</span>
-              {row.copy ? (
-                <Button variant="ghost" size="icon-sm" onClick={() => void copyId()} aria-label={t("copy")}>
-                  <CopyIcon className="size-3.5" />
-                </Button>
-              ) : null}
-            </dd>
-          </div>
-        ))}
-      </dl>
-
-      <div className="flex flex-col gap-2">
-        <h2 className="text-sm leading-5 font-medium">{t("whatHappened")}</h2>
-        <Timeline steps={steps} />
-      </div>
-
-      <div className="flex flex-wrap justify-center gap-2">
-        {notCharged ? (
-          <Button variant="brand" className={action} onClick={retry}>
-            {t("tryAgain")}
-          </Button>
+            {r.refundRequest.status === "declined"
+              ? t("refundDeclined", { note: r.refundRequest.note ?? "" })
+              : t("refundOpen", { date: shortDate(r.refundRequest.at) })}
+          </p>
         ) : null}
-        {r.status === "Pending" ? (
-          <Button variant="brand" className={action} onClick={retry}>
-            {t("continuePay")}
-          </Button>
-        ) : null}
+        {asking ? <RefundDialog id={r.id} unused={unused} onClose={() => setAsking(false)} /> : null}
+
         {paid ? (
-          <Button variant="outline" className={action} onClick={() => toast(t("downloadToast"))}>
-            <ExternalLinkIcon className="size-3.5" aria-hidden />
-            {t("download")}
-          </Button>
+          <p className="m-0 text-center text-xs leading-4 text-muted-foreground">
+            {canRefund ? t("refundLine", { count: unused }) : t("noRefundLine")}{" "}
+            <Link href="/legal/refund" className="rounded-sm text-brand-ink underline underline-offset-[3px] outline-none focus-visible:ring-2 focus-visible:ring-ring">
+              {t("refundPolicy")}
+            </Link>
+          </p>
         ) : null}
-        <Button variant="outline" className={action} asChild>
-          <Link href="/help#contact" onClick={help("")}>
-            <MessageSquareIcon className="size-3.5" aria-hidden />
-            {t("getHelp")}
-          </Link>
-        </Button>
-        {canRefund ? (
-          DEMO_MODE ? (
-            <Button variant="ghost" className={action} asChild>
-              <Link href="/help#contact" onClick={help(t("refundMsg", { count: unused, id: r.id }))}>
-                {t("askRefund")}
-              </Link>
-            </Button>
-          ) : (
-            <Button variant="ghost" className={action} onClick={() => setAsking(true)}>
-              {t("askRefund")}
-            </Button>
-          )
-        ) : null}
-      </div>
-
-      {r.refundRequest && r.status === "Paid" ? (
-        <p
-          role="status"
-          className={cn(
-            "m-0 rounded-control px-3 py-2 text-center text-[13px] leading-[18px]",
-            r.refundRequest.status === "declined" ? "bg-warning-soft text-warning-ink" : "bg-muted text-muted-foreground"
-          )}
-        >
-          {r.refundRequest.status === "declined"
-            ? t("refundDeclined", { note: r.refundRequest.note ?? "" })
-            : t("refundOpen", { date: shortDate(r.refundRequest.at) })}
-        </p>
-      ) : null}
-      {asking ? <RefundDialog id={r.id} unused={unused} onClose={() => setAsking(false)} /> : null}
-
-      {paid ? (
-        <p className="m-0 text-center text-xs leading-4 text-muted-foreground">
-          {canRefund ? t("refundLine", { count: unused }) : t("noRefundLine")}{" "}
-          <Link href="/legal/refund" className="rounded-sm text-brand-ink underline underline-offset-[3px] outline-none focus-visible:ring-2 focus-visible:ring-ring">
-            {t("refundPolicy")}
-          </Link>
-        </p>
-      ) : null}
-    </section>
+      </section>
+    </Effect>
   )
 }
 
