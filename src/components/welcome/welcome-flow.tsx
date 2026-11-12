@@ -25,6 +25,7 @@ import { saveAlertPrefs } from "@/lib/notifications"
 import { savePreferences } from "@/lib/preferences"
 import { useAppStore, useHydrated, useUser } from "@/lib/store"
 import { cn } from "@/lib/utils"
+import { Effect } from "@animate-ui/react/primitives/effects/effect"
 
 type Step = "language" | "genres" | "alerts" | "done"
 type Format = "all" | "comic" | "novel"
@@ -219,164 +220,167 @@ export function WelcomeFlow() {
           </div>
         ) : null}
 
-        {!hydrated ? null : state.step === "language" ? (
-          <section aria-labelledby="wl-title" className="flex w-full flex-col items-center gap-[18px] pt-3">
-            <Title>{name ? t("langTitle", { name }) : t("langTitleNoName")}</Title>
-            <Sub>{t("langSub")}</Sub>
-            <div role="group" aria-label={t("appLang")} className="grid w-full grid-cols-2 gap-3">
-              {LANG_CARDS.map((c) => {
-                const on = c.value === locale
-                return (
-                  <button
-                    key={c.value}
-                    type="button"
-                    lang={c.value}
-                    aria-pressed={on}
-                    onClick={() => pickLang(c.value)}
-                    className={cn(
-                      "flex flex-col items-center gap-1.5 rounded-2xl border bg-white px-4 py-6 outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-                      on && "border-primary bg-selected shadow-[0_0_0_2px_var(--primary)]"
-                    )}
-                  >
-                    <span className={cn("text-[26px] leading-[34px] font-bold", c.value === "km" && "font-khmer")}>{c.big}</span>
-                    <span className="text-[13px] leading-[18px] text-muted-foreground">{c.small}</span>
-                  </button>
-                )
-              })}
-            </div>
-            <div className="flex flex-col items-center gap-2">
-              <span id="wl-stories" className="text-sm leading-5 font-medium">
-                {t("storiesLabel")}
-              </span>
-              <div role="group" aria-labelledby="wl-stories" className="flex flex-wrap justify-center gap-2">
-                {LANG_CARDS.map((c) => (
-                  <Chip key={c.value} check selected={stories.includes(c.value)} onClick={() => toggleStory(c.value)}>
-                    <span lang={c.value} className={c.value === "km" ? "font-khmer" : undefined}>
-                      {c.big}
-                    </span>
-                  </Chip>
-                ))}
-              </div>
-            </div>
-          </section>
-        ) : state.step === "genres" ? (
-          <section aria-labelledby="wl-title" className="flex w-full flex-col items-center gap-[18px] pt-3">
-            <Title>{t("genresTitle")}</Title>
-            <Sub>{t("genresSub")}</Sub>
-            <div role="group" aria-label={t("genresLabel")} className="grid w-full grid-cols-4 gap-2.5 max-md:grid-cols-2">
-              {GENRE_CARDS.map(({ genre, cover }) => {
-                const on = state.picked.includes(genre)
-                return (
-                  <button
-                    key={genre}
-                    type="button"
-                    aria-pressed={on}
-                    onClick={() =>
-                      update({ picked: on ? state.picked.filter((g) => g !== genre) : [...state.picked, genre], tried: false })
-                    }
-                    className={cn(
-                      "relative flex flex-col overflow-hidden rounded-[14px] border-2 border-transparent bg-white shadow-xs outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-                      on && "border-primary"
-                    )}
-                  >
-                    {cover ? (
-                      <Image src={cover} alt="" width={240} height={180} sizes="(max-width: 767px) 50vw, 150px" className="aspect-[4/3] w-full object-cover" />
-                    ) : null}
-                    <span className="p-2 text-[13px] font-semibold">{localize.genre(genre)}</span>
-                    {on ? (
-                      <span
-                        aria-hidden
-                        className="absolute top-1.5 right-1.5 inline-flex size-6 items-center justify-center rounded-full bg-primary text-primary-foreground"
-                      >
-                        <CheckIcon className="size-3.5" />
-                      </span>
-                    ) : null}
-                  </button>
-                )
-              })}
-            </div>
-            <div className="flex flex-col items-center gap-2">
-              <span className="text-sm leading-5 font-medium">{t("format")}</span>
-              <Segmented<Format>
-                label={t("format")}
-                value={state.format}
-                onChange={(format) => update({ format })}
-                options={[
-                  { value: "all", label: t("formatAll") },
-                  { value: "comic", label: t("formatComic") },
-                  { value: "novel", label: t("formatNovel") },
-                ]}
-              />
-            </div>
-            {state.tried && !state.picked.length ? (
-              <p role="alert" className="text-[13px] leading-[18px] font-medium text-destructive">
-                {t("genreErr")}
-              </p>
-            ) : null}
-          </section>
-        ) : state.step === "alerts" ? (
-          <section aria-labelledby="wl-title" className="flex w-full flex-col items-center gap-[18px] pt-3">
-            <span
-              aria-hidden
-              className="flex size-[72px] items-center justify-center rounded-3xl bg-primary text-primary-foreground shadow-[0_12px_30px_rgba(0,166,80,0.3)]"
-            >
-              <BellIcon className="size-7" />
-            </span>
-            <Title>{t("alertsTitle")}</Title>
-            <Sub>{t("alertsSub")}</Sub>
-            <ul className="flex flex-col gap-2.5 text-left">
-              {(["perk1", "perk2", "perk3"] as const).map((k) => (
-                <li key={k} className="flex items-center gap-2.5 text-sm text-[#27272a]">
-                  <CheckIcon className="size-3.5 shrink-0 text-brand-ink" aria-hidden />
-                  {t(k)}
-                </li>
-              ))}
-            </ul>
-            {state.denied ? (
-              <Alert variant="warning" role="status" className="text-left">
-                <InfoIcon aria-hidden />
-                <AlertDescription className="text-[13px] leading-[19px] text-warning-ink">{t(state.denied)}</AlertDescription>
-              </Alert>
-            ) : null}
-          </section>
-        ) : (
-          <section aria-labelledby="wl-title" className="flex w-full flex-col items-center gap-[18px] pt-3">
-            <span aria-hidden className="inline-flex size-14 items-center justify-center rounded-full bg-primary text-primary-foreground">
-              <CheckIcon className="size-[26px]" />
-            </span>
-            <Title>{t("doneTitle")}</Title>
-            <Sub>{doneLine}</Sub>
-            <div className="flex w-full flex-col gap-2.5">
-              <span className="text-sm leading-5 font-medium">{t("startWith")}</span>
-              <ul className="flex flex-col overflow-hidden rounded-xl border bg-white">
-                {picks.map((s) => {
-                  const on = state.subs.includes(s.id)
+        {/* Each step fades up when it opens (the key restarts the effect). */}
+        <Effect key={state.step} fade slide={{ direction: "up", offset: 12 }} className="flex w-full flex-col items-center">
+          {!hydrated ? null : state.step === "language" ? (
+            <section aria-labelledby="wl-title" className="flex w-full flex-col items-center gap-[18px] pt-3">
+              <Title>{name ? t("langTitle", { name }) : t("langTitleNoName")}</Title>
+              <Sub>{t("langSub")}</Sub>
+              <div role="group" aria-label={t("appLang")} className="grid w-full grid-cols-2 gap-3">
+                {LANG_CARDS.map((c) => {
+                  const on = c.value === locale
                   return (
-                    <li key={s.id} className="flex items-center gap-3 border-b px-3 py-2.5 last:border-b-0">
-                      <Image src={s.cover} alt="" width={40} height={52} className="h-[52px] w-10 shrink-0 rounded-md object-cover" />
-                      <span className="flex min-w-0 flex-1 flex-col gap-0.5 text-left">
-                        <span className="truncate text-[13px] leading-[18px] font-semibold">{s.title}</span>
-                        <span className="truncate text-xs leading-4 text-muted-foreground">
-                          {t("meta", { genre: localize.genre(s.genre), likes: s.likes })}
-                        </span>
-                      </span>
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant={on ? "secondary" : "outline"}
-                        aria-pressed={on}
-                        aria-label={t(on ? "removeAria" : "addAria", { title: s.title })}
-                        onClick={() => update({ subs: on ? state.subs.filter((x) => x !== s.id) : [...state.subs, s.id] })}
-                      >
-                        {on ? t("added") : t("add")}
-                      </Button>
-                    </li>
+                    <button
+                      key={c.value}
+                      type="button"
+                      lang={c.value}
+                      aria-pressed={on}
+                      onClick={() => pickLang(c.value)}
+                      className={cn(
+                        "flex flex-col items-center gap-1.5 rounded-2xl border bg-white px-4 py-6 outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+                        on && "border-primary bg-selected shadow-[0_0_0_2px_var(--primary)]"
+                      )}
+                    >
+                      <span className={cn("text-[26px] leading-[34px] font-bold", c.value === "km" && "font-khmer")}>{c.big}</span>
+                      <span className="text-[13px] leading-[18px] text-muted-foreground">{c.small}</span>
+                    </button>
                   )
                 })}
+              </div>
+              <div className="flex flex-col items-center gap-2">
+                <span id="wl-stories" className="text-sm leading-5 font-medium">
+                  {t("storiesLabel")}
+                </span>
+                <div role="group" aria-labelledby="wl-stories" className="flex flex-wrap justify-center gap-2">
+                  {LANG_CARDS.map((c) => (
+                    <Chip key={c.value} check selected={stories.includes(c.value)} onClick={() => toggleStory(c.value)}>
+                      <span lang={c.value} className={c.value === "km" ? "font-khmer" : undefined}>
+                        {c.big}
+                      </span>
+                    </Chip>
+                  ))}
+                </div>
+              </div>
+            </section>
+          ) : state.step === "genres" ? (
+            <section aria-labelledby="wl-title" className="flex w-full flex-col items-center gap-[18px] pt-3">
+              <Title>{t("genresTitle")}</Title>
+              <Sub>{t("genresSub")}</Sub>
+              <div role="group" aria-label={t("genresLabel")} className="grid w-full grid-cols-4 gap-2.5 max-md:grid-cols-2">
+                {GENRE_CARDS.map(({ genre, cover }) => {
+                  const on = state.picked.includes(genre)
+                  return (
+                    <button
+                      key={genre}
+                      type="button"
+                      aria-pressed={on}
+                      onClick={() =>
+                        update({ picked: on ? state.picked.filter((g) => g !== genre) : [...state.picked, genre], tried: false })
+                      }
+                      className={cn(
+                        "relative flex flex-col overflow-hidden rounded-[14px] border-2 border-transparent bg-white shadow-xs outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+                        on && "border-primary"
+                      )}
+                    >
+                      {cover ? (
+                        <Image src={cover} alt="" width={240} height={180} sizes="(max-width: 767px) 50vw, 150px" className="aspect-[4/3] w-full object-cover" />
+                      ) : null}
+                      <span className="p-2 text-[13px] font-semibold">{localize.genre(genre)}</span>
+                      {on ? (
+                        <span
+                          aria-hidden
+                          className="absolute top-1.5 right-1.5 inline-flex size-6 items-center justify-center rounded-full bg-primary text-primary-foreground"
+                        >
+                          <CheckIcon className="size-3.5" />
+                        </span>
+                      ) : null}
+                    </button>
+                  )
+                })}
+              </div>
+              <div className="flex flex-col items-center gap-2">
+                <span className="text-sm leading-5 font-medium">{t("format")}</span>
+                <Segmented<Format>
+                  label={t("format")}
+                  value={state.format}
+                  onChange={(format) => update({ format })}
+                  options={[
+                    { value: "all", label: t("formatAll") },
+                    { value: "comic", label: t("formatComic") },
+                    { value: "novel", label: t("formatNovel") },
+                  ]}
+                />
+              </div>
+              {state.tried && !state.picked.length ? (
+                <p role="alert" className="text-[13px] leading-[18px] font-medium text-destructive">
+                  {t("genreErr")}
+                </p>
+              ) : null}
+            </section>
+          ) : state.step === "alerts" ? (
+            <section aria-labelledby="wl-title" className="flex w-full flex-col items-center gap-[18px] pt-3">
+              <span
+                aria-hidden
+                className="flex size-[72px] items-center justify-center rounded-3xl bg-primary text-primary-foreground shadow-[0_12px_30px_rgba(0,166,80,0.3)]"
+              >
+                <BellIcon className="size-7" />
+              </span>
+              <Title>{t("alertsTitle")}</Title>
+              <Sub>{t("alertsSub")}</Sub>
+              <ul className="flex flex-col gap-2.5 text-left">
+                {(["perk1", "perk2", "perk3"] as const).map((k) => (
+                  <li key={k} className="flex items-center gap-2.5 text-sm text-[#27272a]">
+                    <CheckIcon className="size-3.5 shrink-0 text-brand-ink" aria-hidden />
+                    {t(k)}
+                  </li>
+                ))}
               </ul>
-            </div>
-          </section>
-        )}
+              {state.denied ? (
+                <Alert variant="warning" role="status" className="text-left">
+                  <InfoIcon aria-hidden />
+                  <AlertDescription className="text-[13px] leading-[19px] text-warning-ink">{t(state.denied)}</AlertDescription>
+                </Alert>
+              ) : null}
+            </section>
+          ) : (
+            <section aria-labelledby="wl-title" className="flex w-full flex-col items-center gap-[18px] pt-3">
+              <span aria-hidden className="inline-flex size-14 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                <CheckIcon className="size-[26px]" />
+              </span>
+              <Title>{t("doneTitle")}</Title>
+              <Sub>{doneLine}</Sub>
+              <div className="flex w-full flex-col gap-2.5">
+                <span className="text-sm leading-5 font-medium">{t("startWith")}</span>
+                <ul className="flex flex-col overflow-hidden rounded-xl border bg-white">
+                  {picks.map((s) => {
+                    const on = state.subs.includes(s.id)
+                    return (
+                      <li key={s.id} className="flex items-center gap-3 border-b px-3 py-2.5 last:border-b-0">
+                        <Image src={s.cover} alt="" width={40} height={52} className="h-[52px] w-10 shrink-0 rounded-md object-cover" />
+                        <span className="flex min-w-0 flex-1 flex-col gap-0.5 text-left">
+                          <span className="truncate text-[13px] leading-[18px] font-semibold">{s.title}</span>
+                          <span className="truncate text-xs leading-4 text-muted-foreground">
+                            {t("meta", { genre: localize.genre(s.genre), likes: s.likes })}
+                          </span>
+                        </span>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant={on ? "secondary" : "outline"}
+                          aria-pressed={on}
+                          aria-label={t(on ? "removeAria" : "addAria", { title: s.title })}
+                          onClick={() => update({ subs: on ? state.subs.filter((x) => x !== s.id) : [...state.subs, s.id] })}
+                        >
+                          {on ? t("added") : t("add")}
+                        </Button>
+                      </li>
+                    )
+                  })}
+                </ul>
+              </div>
+            </section>
+          )}
+        </Effect>
       </main>
 
       <footer

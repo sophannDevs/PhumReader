@@ -562,3 +562,10 @@ docs/BACKEND_CHECKLIST.md, "V2.1 API additions" (V21-01 … V21-07).
   `Element.animate/getAnimations`, which Animate UI's checkbox and OTP input use. Playwright runs the real animations.
 - ANIM-6 (animations) **Skipped**: Animate UI's Page Transition and its registry icons (Heart, Bell) were not added
   (their install steps were not verified); the comment Like icon pops with `Effect` instead.
+- ANIM-7 (animations) **Round 2**: the series page now uses Animate UI Tabs (it used Radix directly before), the hero
+  fades from half opacity (it holds the LCP cover), episode rows and the sidebar fade in; coin packs stagger in; the
+  checkout card eases to the next step's height (`AutoHeight`) and the success check bursts a ring of dots
+  (`Particles`; the dots are the brand green, 10 of them, and skipped when motion is reduced); Home sections fade up
+  as they scroll into view (the hero stays instant); the Log in / Sign up card and brand panel and each Welcome step
+  fade up. Not done: a sliding ring across the coin packs (the selection ring is CSS `has-[:checked]`; moving it
+  would change the card styling) and an expanding About text (the About tab is not collapsible).
