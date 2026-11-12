@@ -8,6 +8,7 @@ import { Link } from "@/i18n/navigation"
 import { cn } from "@/lib/utils"
 import { Num } from "@/i18n/num"
 import { CountingNumber } from "@animate-ui/react/primitives/texts/counting-number"
+import { Effect } from "@animate-ui/react/primitives/effects/effect"
 
 /**
  * V2.1 patterns shared by several pages (foundations.md §8 "Patterns added"):
@@ -238,17 +239,22 @@ export function StatCard({
     "flex min-w-0 flex-col gap-1.5 rounded-card border bg-card px-5 py-[18px] shadow-xs max-md:px-4 max-md:py-3.5",
     className
   )
-  if (href)
-    return (
-      <Link
-        href={href}
-        className={cn(
-          base,
-          "transition-colors outline-none hover:bg-[#fafafa] focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-        )}
-      >
-        {body}
-      </Link>
-    )
-  return <div className={base}>{body}</div>
+  const card = href ? (
+    <Link
+      href={href}
+      className={cn(
+        base,
+        "transition-colors outline-none hover:bg-[#fafafa] focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+      )}
+    >
+      {body}
+    </Link>
+  ) : (
+    <div className={base}>{body}</div>
+  )
+  return (
+    <Effect asChild fade slide={{ direction: "up", offset: 8 }} inView>
+      {card}
+    </Effect>
+  )
 }

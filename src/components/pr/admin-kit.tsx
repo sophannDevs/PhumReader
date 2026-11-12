@@ -17,6 +17,7 @@ import { useLocalize } from "@/lib/localize"
 import { formatDate, formatShortDate, formatTime, ictDate } from "@/lib/format"
 import { useAppStore, type AdminDecision } from "@/lib/store"
 import { cn } from "@/lib/utils"
+import { Effect } from "@animate-ui/react/primitives/effects/effect"
 
 /**
  * Shared parts of the admin screens (spec §22, prototype Admin): the decision log with its 6-second Undo, the page
@@ -259,13 +260,15 @@ export function useReportText() {
 /** `h1.h2` + muted line (every admin screen). */
 export function AdminHead({ title, line, aside }: { title: string; line?: string; aside?: React.ReactNode }) {
   return (
-    <div className="flex flex-col gap-1">
-      <div className="flex flex-wrap items-center gap-2">
-        <h1 className="type-h2">{title}</h1>
-        {aside}
+    <Effect asChild fade slide={{ direction: "up", offset: 6 }}>
+      <div className="flex flex-col gap-1">
+        <div className="flex flex-wrap items-center gap-2">
+          <h1 className="type-h2">{title}</h1>
+          {aside}
+        </div>
+        {line ? <p className="text-[13px] leading-[18px] text-muted-foreground">{line}</p> : null}
       </div>
-      {line ? <p className="text-[13px] leading-[18px] text-muted-foreground">{line}</p> : null}
-    </div>
+    </Effect>
   )
 }
 
@@ -286,17 +289,19 @@ export function AdminCard({
   bodyClassName?: string
 }) {
   return (
-    <section aria-labelledby={title ? titleId : undefined} className={cn("min-w-0 rounded-card border bg-card shadow-xs", className)}>
-      {title ? (
-        <div className="flex flex-col gap-1 px-4 pt-4 md:px-5 md:pt-5">
-          <h2 id={titleId} className="type-h3">
-            {title}
-          </h2>
-          {desc ? <p className="text-[13px] leading-[18px] text-muted-foreground">{desc}</p> : null}
-        </div>
-      ) : null}
-      <div className={cn("p-4 md:p-5", bodyClassName)}>{children}</div>
-    </section>
+    <Effect asChild fade slide={{ direction: "up", offset: 6 }} inView>
+      <section aria-labelledby={title ? titleId : undefined} className={cn("min-w-0 rounded-card border bg-card shadow-xs", className)}>
+        {title ? (
+          <div className="flex flex-col gap-1 px-4 pt-4 md:px-5 md:pt-5">
+            <h2 id={titleId} className="type-h3">
+              {title}
+            </h2>
+            {desc ? <p className="text-[13px] leading-[18px] text-muted-foreground">{desc}</p> : null}
+          </div>
+        ) : null}
+        <div className={cn("p-4 md:p-5", bodyClassName)}>{children}</div>
+      </section>
+    </Effect>
   )
 }
 
@@ -334,19 +339,21 @@ export function QueueList({ label, children }: { label: string; children: React.
 /** `.ad-qi`: a queue row; the selected one has the brand tint and a 3 px green bar (foundations §8 ListRowActions). */
 export function QueueRow({ selected, onPick, children }: { selected: boolean; onPick: () => void; children: React.ReactNode }) {
   return (
-    <li>
-      <button
-        type="button"
-        aria-current={selected ? "true" : undefined}
-        onClick={onPick}
-        className={cn(
-          "flex w-full items-center gap-2.5 px-3 py-2.5 text-left transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset",
-          selected ? "bg-brand-soft shadow-[inset_3px_0_0_var(--primary)]" : "hover:bg-[#fafafa] dark:hover:bg-muted"
-        )}
-      >
-        {children}
-      </button>
-    </li>
+    <Effect asChild fade slide={{ direction: "up", offset: 6 }} inView>
+      <li>
+        <button
+          type="button"
+          aria-current={selected ? "true" : undefined}
+          onClick={onPick}
+          className={cn(
+            "flex w-full items-center gap-2.5 px-3 py-2.5 text-left transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset",
+            selected ? "bg-brand-soft shadow-[inset_3px_0_0_var(--primary)]" : "hover:bg-[#fafafa] dark:hover:bg-muted"
+          )}
+        >
+          {children}
+        </button>
+      </li>
+    </Effect>
   )
 }
 
@@ -374,13 +381,15 @@ export function DetailCard({
 /** The "queue is empty" card: green check, title, optional line. */
 export function DoneCard({ title, text }: { title: string; text?: string }) {
   return (
-    <div role="status" className="flex flex-col items-center gap-2 rounded-card border bg-card px-5 py-10 text-center shadow-xs">
-      <span aria-hidden className="inline-flex size-11 items-center justify-center rounded-full bg-primary text-primary-foreground">
-        <CheckIcon className="size-5" />
-      </span>
-      <h2 className="type-h3">{title}</h2>
-      {text ? <p className="text-[13px] leading-[18px] text-muted-foreground">{text}</p> : null}
-    </div>
+    <Effect asChild fade zoom={{ initialScale: 0.96 }}>
+      <div role="status" className="flex flex-col items-center gap-2 rounded-card border bg-card px-5 py-10 text-center shadow-xs">
+        <span aria-hidden className="inline-flex size-11 items-center justify-center rounded-full bg-primary text-primary-foreground">
+          <CheckIcon className="size-5" />
+        </span>
+        <h2 className="type-h3">{title}</h2>
+        {text ? <p className="text-[13px] leading-[18px] text-muted-foreground">{text}</p> : null}
+      </div>
+    </Effect>
   )
 }
 

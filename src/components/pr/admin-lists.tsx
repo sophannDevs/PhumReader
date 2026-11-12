@@ -22,6 +22,7 @@ import {
   useOrders,
   useUsers,
 } from "@/lib/admin";
+import { Effect } from "@animate-ui/react/primitives/effects/effect";
 import type {
   AdminContent,
   AdminOrder,
@@ -166,12 +167,11 @@ function Listing<T>({
         aria-label={label}
       >
         {items.map((item, i) => (
-          <li
-            key={i}
-            className="flex flex-wrap items-center gap-x-4 gap-y-2 p-3 md:flex-nowrap"
-          >
-            {row(item)}
-          </li>
+          <Effect key={i} asChild fade delay={Math.min(i, 10) * 30} inView>
+            <li className="flex flex-wrap items-center gap-x-4 gap-y-2 p-3 md:flex-nowrap">
+              {row(item)}
+            </li>
+          </Effect>
         ))}
       </ul>
       {query.hasNextPage ? (
