@@ -21,6 +21,7 @@ const MAX_RESULTS = 8
 const POPULAR_COUNT = 6
 /** Real API: ask once typing pauses this long. */
 const DEBOUNCE_MS = 250
+const SEE_ALL = "see-all"
 
 /** Demo: the demo catalogue, filtered as you type. */
 function filterSeries(query: string): Series[] {
@@ -63,11 +64,17 @@ export function SearchCommand({
   // Real API: waiting for the pause or the answer, with nothing to show yet.
   const loading = !DEMO_MODE && results.length === 0 && !search.isError && (asked !== typed || search.isFetching || search.isPending)
   const failed = !DEMO_MODE && search.isError && !loading
+  // The highlighted row. Results arrive after the pause, so the row cmdk picked for the old list may be gone: then the
+  // first result is highlighted, and Enter works without an arrow key first.
+  const [picked, setPicked] = useState("")
+  const seeAllShown = typed !== "" && results.length > 0
+  const active = (picked === SEE_ALL && seeAllShown) || results.some((s) => s.id === picked) ? picked : (results[0]?.id ?? "")
 
   function handleOpenChange(next: boolean) {
     if (!next) {
       setQuery("")
       setAsked("")
+      setPicked("")
     }
     onOpenChange(next)
   }
@@ -94,6 +101,8 @@ export function SearchCommand({
         <DialogDescription className="sr-only">{t("description")}</DialogDescription>
         <CommandPrimitive
           shouldFilter={false}
+          value={active}
+          onValueChange={setPicked}
           loop
           label={t("title")}
           className="flex w-full flex-col overflow-hidden rounded-dialog bg-popover text-popover-foreground"
@@ -140,9 +149,9 @@ export function SearchCommand({
                 </CommandItem>
               ))}
             </CommandGroup>
-            {query.trim() && results.length > 0 ? (
+            {seeAllShown ? (
               <CommandGroup>
-                <CommandItem value="see-all" onSelect={seeAll} className="gap-3 py-2 text-muted-foreground">
+                <CommandItem value={SEE_ALL} onSelect={seeAll} className="gap-3 py-2 text-muted-foreground">
                   <SearchIcon className="size-4" aria-hidden />
                   {t("seeAll", { q: query.trim() })}
                 </CommandItem>

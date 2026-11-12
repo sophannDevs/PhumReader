@@ -153,6 +153,7 @@ describe("CreatorProfilePage (real API)", () => {
 
   it("keeps the report dialog open with an error when the API refuses the report", async () => {
     useAppStore.getState().login({ name: "Sokha", email: "sokha@example.com" })
+    const reportsBefore = useAppStore.getState().reports
     server.use(
       http.get(`${API}/creators/dara-vann`, () => HttpResponse.json(profile())),
       http.post(`${API}/users/c-1/report`, () => apiError(429, "too_many_reports")),
@@ -163,7 +164,8 @@ describe("CreatorProfilePage (real API)", () => {
     await user.click(within(dialog).getByRole("radio", { name: /Spam or fake account/ }))
     await user.click(within(dialog).getByRole("button", { name: "Send report" }))
     expect(await within(dialog).findByRole("alert")).toHaveTextContent("Something went wrong. Please try again.")
-    expect(useAppStore.getState().reports).toEqual([])
+    // Nothing new was saved (the store starts with the demo "Removed" report).
+    expect(useAppStore.getState().reports).toEqual(reportsBefore)
   })
 
   it("is a 404 page for a handle nobody has", async () => {

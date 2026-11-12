@@ -88,7 +88,7 @@ const nextUpdate = () => {
 
 async function fillChapter(user: ReturnType<typeof renderUi>["user"]) {
   await user.type(await screen.findByLabelText(/Chapter title/), "The Memory Stall")
-  await user.click(screen.getByLabelText("Chapter text"))
+  await user.click(screen.getByRole("textbox", { name: "Chapter text" }))
   await user.paste("word ".repeat(320))
 }
 

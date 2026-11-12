@@ -2,7 +2,7 @@ import { useState } from "react"
 import { describe, expect, it } from "vitest"
 import { SearchCommand } from "@/components/layout/search-command"
 import { router } from "@/test/navigation"
-import { renderUi, screen, within } from "@/test/render"
+import { renderUi, screen, waitFor, within } from "@/test/render"
 import { API, apiError, http, HttpResponse, server } from "@/test/server"
 
 /** The ⌘K search on the real API (Vitest runs in real mode): GET /search. The demo catalogue is covered by e2e/pages.spec.ts. */
@@ -66,6 +66,8 @@ async function open() {
 }
 const results = () => within(screen.getByRole("listbox")).queryAllByRole("option")
 const BOX = "Search series, creators…"
+/** The popular list stays on screen during the 250 ms pause (keepPrevious); wait until the typed text's answer replaces it. */
+const answered = (count: number) => waitFor(() => expect(results()).toHaveLength(count))
 
 describe("SearchCommand: open and close", () => {
   it("opens with the search box focused and the API's popular series (6) under Popular now", async () => {
@@ -117,6 +119,7 @@ describe("SearchCommand: searching", () => {
     await user.type(screen.getByPlaceholderText(BOX), "glass comp")
     expect(screen.getByText("Series")).toBeInTheDocument()
     await screen.findByText(/See all results/)
+    await answered(2)
     expect(results().map((r) => r.textContent)).toEqual([expect.stringContaining("Glass Compass"), expect.stringContaining("See all results")])
     // One request for the whole text, after the pause (not one per letter).
     expect(asked).toEqual([
@@ -197,6 +200,9 @@ describe("SearchCommand: choosing", () => {
     const { user } = await open()
     await user.type(screen.getByPlaceholderText(BOX), "ink witch")
     await screen.findByText(/See all results/)
+    await answered(2)
+    // The highlight moved to the new first result by itself, so Enter needs no arrow key first.
+    expect(results()[0]).toHaveAttribute("aria-selected", "true")
     await user.keyboard("{Enter}")
     expect(router.push).toHaveBeenCalledWith("/series/ink-witch")
   })
@@ -206,6 +212,7 @@ describe("SearchCommand: choosing", () => {
     const { user } = await open()
     await user.type(screen.getByPlaceholderText(BOX), "glass comp")
     await screen.findByText(/See all results/)
+    await answered(2)
     await user.keyboard("{ArrowDown}{Enter}")
     expect(router.push).toHaveBeenCalledWith("/search?q=glass%20comp")
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
