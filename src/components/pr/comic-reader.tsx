@@ -14,6 +14,7 @@ import { EmptyState } from "@/components/pr/empty-state"
 import { ErrorState } from "@/components/pr/error-state"
 import { FastPassLockCard } from "@/components/pr/fast-pass-lock-card"
 import { comicVars } from "@/components/pr/reader-theme"
+import { StarsBackground } from "@/components/pr/stars-background"
 import { ResumeChip } from "@/components/pr/resume-chip"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -207,7 +208,8 @@ function ComicReaderView({ series, episode, total, panels, commentsEnabled = tru
   const btn = barButton
 
   return (
-    <div style={comicVars(bg)} className={cn("flex flex-1 flex-col text-foreground", bg === "dark" ? "bg-background" : "bg-muted")}>
+    <div style={comicVars(bg)} className={cn("relative isolate flex flex-1 flex-col text-foreground", bg === "dark" ? "bg-background" : "bg-muted")}>
+      {bg === "dark" ? <StarsBackground className="text-foreground/60" /> : null}
       <ComicReaderBar
         light={bg === "light"}
         backHref={seriesHref(series)}

@@ -577,3 +577,11 @@ docs/BACKEND_CHECKLIST.md, "V2.1 API additions" (V21-01 … V21-07).
   form, no steps), `AutoHeight` on Create series (the card keeps its fixed footer) and on Settings (the quiet-hours
   reveal is on the Notifications page and its focus rings would be clipped), and a sliding underline on the
   hand-built Manage series tabs.
+- ANIM-9 (animations) **Reader Stars background**: `src/components/pr/stars-background.tsx` is new and is not in the
+  V2.1 design pack. Check it against `design/screens` before launch. It is hand-written with the installed `motion`
+  library, because `@animate-ui/react` has no Stars background (only github-stars). It shows only on the dark comic
+  reader background and the dark novel theme. Stars use the foreground colour at 60% (comic) and the reader text colour
+  at 25% (novel), so only existing tokens are used. The drift is 80 s and the parallax is 0.02, gentler than the
+  Animate UI defaults. With reduced motion the stars stay still. Known nit: in the novel reader the star field
+  remounts when the skeleton swaps to the loaded page. Open item (not caused by this): the novel reader already
+  overflows horizontally by about 4 px at 320 px.

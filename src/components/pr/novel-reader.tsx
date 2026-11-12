@@ -11,6 +11,7 @@ import { FastPassLockCard } from "@/components/pr/fast-pass-lock-card"
 import { NovelEndSection } from "@/components/pr/novel-end-section"
 import { novelVars, useNovelSettings } from "@/components/pr/reader-theme"
 import { ResumeChip } from "@/components/pr/resume-chip"
+import { StarsBackground } from "@/components/pr/stars-background"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { episodePrice, episodesCost, fastPassPrice, type Episode, type NovelBlock, type NovelChapter, type Series } from "@/data"
@@ -37,9 +38,10 @@ function NovelRoot({ settings, children, ...props }: { settings: NovelSettings; 
           "--novel-leading": settings.wide ? 1.85 : 1.6,
         } as React.CSSProperties
       }
-      className="flex flex-1 flex-col bg-reader-page text-reader-text"
+      className="relative isolate flex flex-1 flex-col bg-reader-page text-reader-text"
       {...props}
     >
+      {settings.theme === "dark" ? <StarsBackground className="text-reader-text/25" /> : null}
       {children}
     </div>
   )
