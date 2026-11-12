@@ -20,6 +20,7 @@ import { withDemo } from "@/lib/demo-api"
 import { localDigits } from "@/lib/format"
 import { useAppStore, useHydrated } from "@/lib/store"
 import { cn } from "@/lib/utils"
+import { Effect } from "@animate-ui/react/primitives/effects/effect"
 
 export const CONTACT_TOPICS = ["payment", "account", "reading", "creator", "report", "other"] as const
 const MSG_MAX = 1000
@@ -128,179 +129,181 @@ export function HelpContact() {
     errors[field] ? `ct-${field}-error` : hintId
 
   return (
-    <aside className="flex min-w-0 flex-col gap-4">
-      <section
-        ref={sectionRef}
-        id="contact"
-        aria-labelledby="ct-title"
-        className="min-w-0 scroll-mt-20 rounded-card border bg-card shadow-xs"
-      >
-        {sent ? (
-          <div className="flex flex-col items-start gap-2.5 p-5 max-md:p-4" role="status">
-            <span aria-hidden className="inline-flex size-11 items-center justify-center rounded-full bg-primary text-primary-foreground">
-              <CheckIcon className="size-5" />
-            </span>
-            <h2 id="ct-title" ref={sentHeading} tabIndex={-1} className="type-h3 outline-none">
-              {t("sentTitle")}
-            </h2>
-            <p className="text-[13px] leading-[18px] text-muted-foreground">
-              {t.rich("sentBody", {
-                email: sent.email,
-                ticket: sent.ticket,
-                b: (chunks) => <strong className="text-foreground">{chunks}</strong>,
-              })}
-            </p>
-            <Button variant="outline" size="sm" onClick={again}>
-              {t("again")}
-            </Button>
-          </div>
-        ) : (
-          <form noValidate className="flex flex-col gap-3.5 p-5 max-md:p-4" onSubmit={form.handleSubmit(() => send.mutate())}>
-            <div className="flex flex-col gap-1">
-              <h2 id="ct-title" className="type-h3">
-                {t("title")}
+    <Effect asChild fade slide={{ direction: "up", offset: 10 }} inView>
+      <aside className="flex min-w-0 flex-col gap-4">
+        <section
+          ref={sectionRef}
+          id="contact"
+          aria-labelledby="ct-title"
+          className="min-w-0 scroll-mt-20 rounded-card border bg-card shadow-xs"
+        >
+          {sent ? (
+            <div className="flex flex-col items-start gap-2.5 p-5 max-md:p-4" role="status">
+              <span aria-hidden className="inline-flex size-11 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                <CheckIcon className="size-5" />
+              </span>
+              <h2 id="ct-title" ref={sentHeading} tabIndex={-1} className="type-h3 outline-none">
+                {t("sentTitle")}
               </h2>
-              <p className={hint}>{t("intro")}</p>
+              <p className="text-[13px] leading-[18px] text-muted-foreground">
+                {t.rich("sentBody", {
+                  email: sent.email,
+                  ticket: sent.ticket,
+                  b: (chunks) => <strong className="text-foreground">{chunks}</strong>,
+                })}
+              </p>
+              <Button variant="outline" size="sm" onClick={again}>
+                {t("again")}
+              </Button>
             </div>
+          ) : (
+            <form noValidate className="flex flex-col gap-3.5 p-5 max-md:p-4" onSubmit={form.handleSubmit(() => send.mutate())}>
+              <div className="flex flex-col gap-1">
+                <h2 id="ct-title" className="type-h3">
+                  {t("title")}
+                </h2>
+                <p className={hint}>{t("intro")}</p>
+              </div>
 
-            <div className="flex min-w-0 flex-col gap-2">
-              <label htmlFor="ct-topic" className={label}>
-                {t("topic")}
-                <Required />
-              </label>
-              <NativeSelect
-                id="ct-topic"
-                aria-required
-                aria-invalid={!!errors.topic}
-                aria-describedby={described("topic")}
-                className={cn(errors.topic && "border-destructive")}
-                {...form.register("topic")}
-              >
-                <option value="">{t("chooseTopic")}</option>
-                {CONTACT_TOPICS.map((k) => (
-                  <option key={k} value={k}>
-                    {t(`topics.${k}`)}
-                  </option>
-                ))}
-              </NativeSelect>
-              {errors.topic ? (
-                <p id="ct-topic-error" className={error}>
-                  {t("topicError")}
-                </p>
-              ) : null}
-            </div>
-
-            <div className="flex min-w-0 flex-col gap-2">
-              <label htmlFor="ct-email" className={label}>
-                {t("email")}
-                <Required />
-              </label>
-              <Input
-                id="ct-email"
-                type="email"
-                inputMode="email"
-                autoComplete="email"
-                aria-required
-                aria-invalid={!!errors.email}
-                aria-describedby={described("email")}
-                {...form.register("email")}
-              />
-              {errors.email ? (
-                <p id="ct-email-error" className={error}>
-                  {t("emailError")}
-                </p>
-              ) : null}
-            </div>
-
-            {topic === "payment" ? (
               <div className="flex min-w-0 flex-col gap-2">
-                <label htmlFor="ct-order" className={label}>
-                  {t("order")}
+                <label htmlFor="ct-topic" className={label}>
+                  {t("topic")}
+                  <Required />
+                </label>
+                <NativeSelect
+                  id="ct-topic"
+                  aria-required
+                  aria-invalid={!!errors.topic}
+                  aria-describedby={described("topic")}
+                  className={cn(errors.topic && "border-destructive")}
+                  {...form.register("topic")}
+                >
+                  <option value="">{t("chooseTopic")}</option>
+                  {CONTACT_TOPICS.map((k) => (
+                    <option key={k} value={k}>
+                      {t(`topics.${k}`)}
+                    </option>
+                  ))}
+                </NativeSelect>
+                {errors.topic ? (
+                  <p id="ct-topic-error" className={error}>
+                    {t("topicError")}
+                  </p>
+                ) : null}
+              </div>
+
+              <div className="flex min-w-0 flex-col gap-2">
+                <label htmlFor="ct-email" className={label}>
+                  {t("email")}
+                  <Required />
                 </label>
                 <Input
-                  id="ct-order"
-                  value={order}
-                  autoComplete="off"
-                  spellCheck={false}
-                  placeholder={t("orderPh")}
-                  className="placeholder:text-[#a1a1aa]"
-                  aria-invalid={!!errors.order}
-                  aria-describedby={described("order", "ct-order-hint")}
-                  onChange={(e) =>
-                    form.setValue("order", e.target.value.toUpperCase().slice(0, 11), { shouldValidate: isSubmitted })
-                  }
+                  id="ct-email"
+                  type="email"
+                  inputMode="email"
+                  autoComplete="email"
+                  aria-required
+                  aria-invalid={!!errors.email}
+                  aria-describedby={described("email")}
+                  {...form.register("email")}
                 />
-                {errors.order ? (
-                  <p id="ct-order-error" className={error}>
-                    {t("orderError")}
+                {errors.email ? (
+                  <p id="ct-email-error" className={error}>
+                    {t("emailError")}
                   </p>
-                ) : (
-                  <p id="ct-order-hint" className={hint}>
-                    {t("orderHint")}
-                  </p>
-                )}
+                ) : null}
               </div>
-            ) : null}
 
-            <div className="flex min-w-0 flex-col gap-2">
-              <label htmlFor="ct-msg" className={label}>
-                {t("message")}
-                <Required />
-              </label>
-              <Textarea
-                id="ct-msg"
-                rows={5}
-                maxLength={MSG_MAX}
-                placeholder={t("messagePh")}
-                className="placeholder:text-[#a1a1aa]"
-                aria-required
-                aria-invalid={!!errors.msg}
-                aria-describedby={described("msg", "ct-msg-hint")}
-                {...form.register("msg")}
-              />
-              <div className="flex items-center justify-between gap-3">
-                {errors.msg ? (
-                  <p id="ct-msg-error" className={error}>
-                    {t("messageError")}
-                  </p>
-                ) : (
-                  <p id="ct-msg-hint" className={hint}>
-                    {t("messageHint")}
-                  </p>
-                )}
-                <span className="shrink-0 text-xs leading-4 text-muted-foreground tabular-nums">
-                  {localDigits(`${msg.length}/${MSG_MAX}`, locale)}
-                </span>
+              {topic === "payment" ? (
+                <div className="flex min-w-0 flex-col gap-2">
+                  <label htmlFor="ct-order" className={label}>
+                    {t("order")}
+                  </label>
+                  <Input
+                    id="ct-order"
+                    value={order}
+                    autoComplete="off"
+                    spellCheck={false}
+                    placeholder={t("orderPh")}
+                    className="placeholder:text-[#a1a1aa]"
+                    aria-invalid={!!errors.order}
+                    aria-describedby={described("order", "ct-order-hint")}
+                    onChange={(e) =>
+                      form.setValue("order", e.target.value.toUpperCase().slice(0, 11), { shouldValidate: isSubmitted })
+                    }
+                  />
+                  {errors.order ? (
+                    <p id="ct-order-error" className={error}>
+                      {t("orderError")}
+                    </p>
+                  ) : (
+                    <p id="ct-order-hint" className={hint}>
+                      {t("orderHint")}
+                    </p>
+                  )}
+                </div>
+              ) : null}
+
+              <div className="flex min-w-0 flex-col gap-2">
+                <label htmlFor="ct-msg" className={label}>
+                  {t("message")}
+                  <Required />
+                </label>
+                <Textarea
+                  id="ct-msg"
+                  rows={5}
+                  maxLength={MSG_MAX}
+                  placeholder={t("messagePh")}
+                  className="placeholder:text-[#a1a1aa]"
+                  aria-required
+                  aria-invalid={!!errors.msg}
+                  aria-describedby={described("msg", "ct-msg-hint")}
+                  {...form.register("msg")}
+                />
+                <div className="flex items-center justify-between gap-3">
+                  {errors.msg ? (
+                    <p id="ct-msg-error" className={error}>
+                      {t("messageError")}
+                    </p>
+                  ) : (
+                    <p id="ct-msg-hint" className={hint}>
+                      {t("messageHint")}
+                    </p>
+                  )}
+                  <span className="shrink-0 text-xs leading-4 text-muted-foreground tabular-nums">
+                    {localDigits(`${msg.length}/${MSG_MAX}`, locale)}
+                  </span>
+                </div>
               </div>
-            </div>
 
-            <div className="flex flex-wrap items-center gap-2">
-              <input
-                ref={fileInput}
-                type="file"
-                accept="image/png,image/jpeg"
-                multiple
-                className="sr-only"
-                tabIndex={-1}
-                aria-hidden
-                onChange={(e) => addFiles(e.target.files)}
-              />
-              <Button type="button" variant="outline" size="sm" onClick={() => fileInput.current?.click()}>
-                <PlusIcon className="size-3.5" />
-                {files.length ? t("attached", { count: files.length }) : t("attach")}
+              <div className="flex flex-wrap items-center gap-2">
+                <input
+                  ref={fileInput}
+                  type="file"
+                  accept="image/png,image/jpeg"
+                  multiple
+                  className="sr-only"
+                  tabIndex={-1}
+                  aria-hidden
+                  onChange={(e) => addFiles(e.target.files)}
+                />
+                <Button type="button" variant="outline" size="sm" onClick={() => fileInput.current?.click()}>
+                  <PlusIcon className="size-3.5" />
+                  {files.length ? t("attached", { count: files.length }) : t("attach")}
+                </Button>
+                <span className="text-xs leading-4 text-muted-foreground">{t("attachHint")}</span>
+              </div>
+
+              <Button type="submit" variant="brand" loading={send.isPending} className="w-full">
+                {t("send")}
               </Button>
-              <span className="text-xs leading-4 text-muted-foreground">{t("attachHint")}</span>
-            </div>
+            </form>
+          )}
+        </section>
 
-            <Button type="submit" variant="brand" loading={send.isPending} className="w-full">
-              {t("send")}
-            </Button>
-          </form>
-        )}
-      </section>
-
-      <OtherWays />
-    </aside>
+        <OtherWays />
+      </aside>
+    </Effect>
   )
 }
 

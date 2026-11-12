@@ -589,3 +589,14 @@ docs/BACKEND_CHECKLIST.md, "V2.1 API additions" (V21-01 … V21-07).
   sections), the full comments page header, the alert settings rows on Notifications and the Upload episode form and
   preview panel fade up. Upload episode needs no steps, so only its two columns fade in; its sticky action bar still
   sticks once the entrance has finished.
+- ANIM-11 (animations) **Round 5 (rest of the app)**: Admin (the shared `AdminHead`, `AdminCard`, queue rows, the
+  "all done" card, list rows on Users / Content / Orders / Audit, and every `StatCard`) fades up in short steps; the
+  Admin side menu has a sliding `Highlight` pill (the shell stays mounted between pages, so it can slide), with no
+  count-up on Admin numbers. Also: Series unavailable (same hero fade as the error pages), the Fast Pass lock card,
+  the creator gate, the novel end-of-chapter section, the purchase history card, the Help contact card and the site
+  footer. Offline, Maintenance and Coming soon already animate through the shared error hero.
+- ANIM-12 (animations) **Left still on purpose**: the comic panels and the novel text (fading panels in while
+  scrolling would leave blank gaps and text that fades in is harder to read); the legal page's draft-template
+  warning ("have a lawyer review") and its long text sections (anchor links jump to them; only the summary box and
+  the footer card animate); the creator nav (each page renders its own copy, so it remounts on every navigation and
+  a slide could never play); the home hero (it holds the LCP image); `/dev/foundations`.

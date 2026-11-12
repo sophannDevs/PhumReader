@@ -9,6 +9,7 @@ import { formatDate, ictDate } from "@/lib/format"
 import { useLocalize } from "@/lib/localize"
 import { useDemoFlag } from "@/lib/queries"
 import { cn } from "@/lib/utils"
+import { Effect } from "@animate-ui/react/primitives/effects/effect"
 
 const statusVariant = { Paid: "brand", Failed: "up", Cancelled: "secondary" } as const
 
@@ -42,64 +43,66 @@ export function PurchaseHistory({ methods, purchases }: { methods: PaymentMethod
       <h2 id="history-title" className="type-h3">
         {t("historyTitle")}
       </h2>
-      <div className="overflow-hidden rounded-card border bg-card shadow-xs">
-        {rows.length === 0 ? (
-          <p className="p-6 text-center text-[13px] leading-[18px] text-muted-foreground">{t("noPurchases")}</p>
-        ) : (
-          <table className="w-full table-fixed border-collapse text-sm max-md:text-[13px]">
-            <thead className="bg-[#fafafa]">
-              <tr className="border-b">
-                <th scope="col" className={cn(head, "w-[124px] max-md:w-[100px]")}>
-                  {t("colDate")}
-                </th>
-                <th scope="col" className={head}>
-                  {t("colItem")}
-                </th>
-                <th scope="col" className={cn(head, "w-[170px] max-md:hidden")}>
-                  {t("colMethod")}
-                </th>
-                <th scope="col" className={cn(head, "w-[80px] text-right max-md:w-[56px]")}>
-                  {t("colCoins")}
-                </th>
-                <th scope="col" className={cn(head, "w-[110px] max-md:w-[84px]")}>
-                  {t("colStatus")}
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((p, i) => {
-                const date = formatDate(p.at ? ictDate(p.at) : p.date, locale)
-                const item = loc.pack(p.pack)
-                return (
-                  <tr key={p.orderId ?? `${p.date}-${i}`} className="border-b last:border-b-0">
-                    <td className={cn(cell, "whitespace-nowrap text-muted-foreground")}>{date}</td>
-                    <td className={cn(cell, "font-semibold")}>
-                      {p.orderId ? (
-                        <Link
-                          href={receiptHref(p.orderId)}
-                          aria-label={t("openReceipt", { item, date })}
-                          className="rounded-sm underline-offset-4 outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                        >
-                          {item}
-                        </Link>
-                      ) : (
-                        item
-                      )}
-                    </td>
-                    <td className={cn(cell, "text-muted-foreground max-md:hidden")}>{label(p.method)}</td>
-                    <td className={cn(cell, "text-right tabular-nums")}>+{p.coins}</td>
-                    <td className={cell}>
-                      <Badge variant={statusVariant[p.status]} className="max-w-full">
-                        {statusLabel(p.status)}
-                      </Badge>
-                    </td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
-        )}
-      </div>
+      <Effect asChild fade slide={{ direction: "up", offset: 8 }} inView>
+        <div className="overflow-hidden rounded-card border bg-card shadow-xs">
+          {rows.length === 0 ? (
+            <p className="p-6 text-center text-[13px] leading-[18px] text-muted-foreground">{t("noPurchases")}</p>
+          ) : (
+            <table className="w-full table-fixed border-collapse text-sm max-md:text-[13px]">
+              <thead className="bg-[#fafafa]">
+                <tr className="border-b">
+                  <th scope="col" className={cn(head, "w-[124px] max-md:w-[100px]")}>
+                    {t("colDate")}
+                  </th>
+                  <th scope="col" className={head}>
+                    {t("colItem")}
+                  </th>
+                  <th scope="col" className={cn(head, "w-[170px] max-md:hidden")}>
+                    {t("colMethod")}
+                  </th>
+                  <th scope="col" className={cn(head, "w-[80px] text-right max-md:w-[56px]")}>
+                    {t("colCoins")}
+                  </th>
+                  <th scope="col" className={cn(head, "w-[110px] max-md:w-[84px]")}>
+                    {t("colStatus")}
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((p, i) => {
+                  const date = formatDate(p.at ? ictDate(p.at) : p.date, locale)
+                  const item = loc.pack(p.pack)
+                  return (
+                    <tr key={p.orderId ?? `${p.date}-${i}`} className="border-b last:border-b-0">
+                      <td className={cn(cell, "whitespace-nowrap text-muted-foreground")}>{date}</td>
+                      <td className={cn(cell, "font-semibold")}>
+                        {p.orderId ? (
+                          <Link
+                            href={receiptHref(p.orderId)}
+                            aria-label={t("openReceipt", { item, date })}
+                            className="rounded-sm underline-offset-4 outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                          >
+                            {item}
+                          </Link>
+                        ) : (
+                          item
+                        )}
+                      </td>
+                      <td className={cn(cell, "text-muted-foreground max-md:hidden")}>{label(p.method)}</td>
+                      <td className={cn(cell, "text-right tabular-nums")}>+{p.coins}</td>
+                      <td className={cell}>
+                        <Badge variant={statusVariant[p.status]} className="max-w-full">
+                          {statusLabel(p.status)}
+                        </Badge>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          )}
+        </div>
+      </Effect>
     </section>
   )
 }

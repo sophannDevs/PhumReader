@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button"
 import { demoData, type PolicyId } from "@/data"
 import { Link } from "@/i18n/navigation"
 import { cn } from "@/lib/utils"
+import { Effect } from "@animate-ui/react/primitives/effects/effect"
 
 const navItem =
   "flex h-9 shrink-0 items-center gap-2 rounded-lg px-3 text-sm font-medium whitespace-nowrap text-muted-foreground transition-colors outline-none hover:bg-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
@@ -99,16 +100,18 @@ export function LegalPage({ doc }: { doc: PolicyId }) {
           </div>
         ) : null}
 
-        <section aria-labelledby="lg-short" className="rounded-xl border border-brand-soft-border bg-brand-soft px-5 py-[18px]">
-          <h2 id="lg-short" className="type-h4">
-            {t("short")}
-          </h2>
-          <ul lang={english} className="mt-2 flex list-disc flex-col gap-1.5 pl-5 text-sm leading-[21px] text-[#27272a]">
-            {policy.summary.map((s) => (
-              <li key={s}>{s}</li>
-            ))}
-          </ul>
-        </section>
+        <Effect asChild fade slide={{ direction: "up", offset: 8 }}>
+          <section aria-labelledby="lg-short" className="rounded-xl border border-brand-soft-border bg-brand-soft px-5 py-[18px]">
+            <h2 id="lg-short" className="type-h4">
+              {t("short")}
+            </h2>
+            <ul lang={english} className="mt-2 flex list-disc flex-col gap-1.5 pl-5 text-sm leading-[21px] text-[#27272a]">
+              {policy.summary.map((s) => (
+                <li key={s}>{s}</li>
+              ))}
+            </ul>
+          </section>
+        </Effect>
 
         <nav aria-labelledby="lg-toc">
           <p id="lg-toc" className="text-xs leading-4 font-semibold text-muted-foreground">
@@ -141,12 +144,14 @@ export function LegalPage({ doc }: { doc: PolicyId }) {
           </section>
         ))}
 
-        <footer className="flex items-center justify-between gap-3 rounded-card border bg-card p-5 shadow-xs max-md:flex-col max-md:items-start max-md:p-4">
-          <p className="text-[13px] leading-[18px]">{t("footer")}</p>
-          <Button asChild variant="outline" size="sm">
-            <Link href="/help#contact">{t("contact")}</Link>
-          </Button>
-        </footer>
+        <Effect asChild fade slide={{ direction: "up", offset: 8 }} inView>
+          <footer className="flex items-center justify-between gap-3 rounded-card border bg-card p-5 shadow-xs max-md:flex-col max-md:items-start max-md:p-4">
+            <p className="text-[13px] leading-[18px]">{t("footer")}</p>
+            <Button asChild variant="outline" size="sm">
+              <Link href="/help#contact">{t("contact")}</Link>
+            </Button>
+          </footer>
+        </Effect>
       </article>
     </div>
   )

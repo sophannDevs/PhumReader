@@ -11,6 +11,7 @@ import { Link, usePathname } from "@/i18n/navigation"
 import { DEMO_MODE } from "@/lib/api/config"
 import { useCreator } from "@/lib/queries"
 import { isCreator, useAppStore, useHydrated, useUser } from "@/lib/store"
+import { Effect } from "@animate-ui/react/primitives/effects/effect"
 
 /**
  * What every creator page needs first: a signed-in account (else Log in / Sign up) with the creator role (else the
@@ -106,14 +107,16 @@ export function CreatorGate({ title, eyebrow, children }: { title: string; eyebr
 /** Prototype `.cr-start` look: soft green fade, round icon, title, text and buttons. */
 function GateCard({ icon: Icon, title, text, actions }: { icon: LucideIcon; title: string; text: string; actions: React.ReactNode }) {
   return (
-    <section className="flex flex-col items-center gap-3 rounded-[16px] border bg-background bg-[image:linear-gradient(135deg,#effcf4,#ffffff_70%)] px-5 py-12 text-center shadow-xs md:rounded-hero md:px-8 md:py-14">
-      <span aria-hidden className="inline-flex size-12 items-center justify-center rounded-full bg-brand-soft text-brand-ink">
-        <Icon className="size-5" />
-      </span>
-      <h2 className="type-h3">{title}</h2>
-      <p className="max-w-md text-sm leading-[21px] text-muted-foreground">{text}</p>
-      <div className="mt-2 flex flex-wrap justify-center gap-2">{actions}</div>
-    </section>
+    <Effect asChild fade slide={{ direction: "up", offset: 10 }}>
+      <section className="flex flex-col items-center gap-3 rounded-[16px] border bg-background bg-[image:linear-gradient(135deg,#effcf4,#ffffff_70%)] px-5 py-12 text-center shadow-xs md:rounded-hero md:px-8 md:py-14">
+        <span aria-hidden className="inline-flex size-12 items-center justify-center rounded-full bg-brand-soft text-brand-ink">
+          <Icon className="size-5" />
+        </span>
+        <h2 className="type-h3">{title}</h2>
+        <p className="max-w-md text-sm leading-[21px] text-muted-foreground">{text}</p>
+        <div className="mt-2 flex flex-wrap justify-center gap-2">{actions}</div>
+      </section>
+    </Effect>
   )
 }
 
