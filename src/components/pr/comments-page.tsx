@@ -20,6 +20,7 @@ import { useEpisodes, useSeries } from "@/lib/queries"
 import { readerHref, seriesHref } from "@/lib/routes"
 import { useAppStore } from "@/lib/store"
 import { Num } from "@/i18n/num"
+import { Effect } from "@animate-ui/react/primitives/effects/effect"
 
 const PAGE = 6
 
@@ -126,23 +127,25 @@ function CommentsBody({ series, seriesCount, ep, closed }: { series: Series; ser
         </ol>
       </nav>
 
-      <header className="flex items-center gap-3.5">
-        <Image src={series.cover} alt="" width={104} height={136} sizes="52px" className="h-[68px] w-[52px] shrink-0 rounded-lg object-cover" />
-        <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-          <h1 className="type-h2">
-            {t("title")} <span className="font-medium text-muted-foreground tabular-nums"><Num>{count}</Num></span>
-          </h1>
-          <span className="truncate text-[13px] leading-[18px] text-muted-foreground">
-            {series.title} · {scopeLabel}
-          </span>
-        </div>
-        <Button asChild variant="outline" size="sm">
-          <Link href={ep ? readerHref(series, ep) : seriesHref(series)}>
-            <BookIcon className="size-3.5" />
-            {ep ? t(novel ? "backToChapter" : "backToEpisode", { n: ep }) : t("backToSeries")}
-          </Link>
-        </Button>
-      </header>
+      <Effect asChild fade slide={{ direction: "up", offset: 8 }}>
+        <header className="flex items-center gap-3.5">
+          <Image src={series.cover} alt="" width={104} height={136} sizes="52px" className="h-[68px] w-[52px] shrink-0 rounded-lg object-cover" />
+          <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+            <h1 className="type-h2">
+              {t("title")} <span className="font-medium text-muted-foreground tabular-nums"><Num>{count}</Num></span>
+            </h1>
+            <span className="truncate text-[13px] leading-[18px] text-muted-foreground">
+              {series.title} · {scopeLabel}
+            </span>
+          </div>
+          <Button asChild variant="outline" size="sm">
+            <Link href={ep ? readerHref(series, ep) : seriesHref(series)}>
+              <BookIcon className="size-3.5" />
+              {ep ? t(novel ? "backToChapter" : "backToEpisode", { n: ep }) : t("backToSeries")}
+            </Link>
+          </Button>
+        </header>
+      </Effect>
 
       {closed ? (
         <p className="rounded-card border bg-card p-4 text-[13px] leading-[18px] text-muted-foreground shadow-xs">{t("closed")}</p>

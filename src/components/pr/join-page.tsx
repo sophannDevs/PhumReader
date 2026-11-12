@@ -12,6 +12,7 @@ import { Link } from "@/i18n/navigation"
 import { useAppStore, useHydrated, useUser } from "@/lib/store"
 import { cn } from "@/lib/utils"
 import { Num } from "@/i18n/num"
+import { Effect } from "@animate-ui/react/primitives/effects/effect"
 
 /**
  * Become a creator (spec §26, prototype Join/): hero with Start creating / Creator guidelines, How it works in 4 steps,
@@ -70,25 +71,27 @@ export function JoinPage() {
     <>
       <section className="border-b bg-[#fafafa] bg-[image:radial-gradient(800px_300px_at_80%_0%,#d9f7e6_0%,rgba(217,247,230,0)_70%)]">
         <div className="container grid items-center gap-12 pt-14 pb-14 max-md:pt-7 max-md:pb-8 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
-          <div className="flex min-w-0 flex-col gap-[18px]">
-            <Eyebrow>{t("eyebrow")}</Eyebrow>
-            <h1 className="text-[44px] leading-[50px] font-extrabold tracking-[-0.03em] max-md:text-[30px] max-md:leading-9">{t("title")}</h1>
-            <p className="max-w-[52ch] text-[17px] leading-[27px] text-[#3f3f46] max-md:text-[15px] max-md:leading-6">{t("lead")}</p>
-            <div className="flex flex-wrap gap-2.5">
-              {start("lg", undefined, true)}
-              <Button asChild variant="outline" size="lg">
-                <Link href="/legal/creator">{t("guidelines")}</Link>
-              </Button>
+          <Effect asChild fade slide={{ direction: "up", offset: 12 }}>
+            <div className="flex min-w-0 flex-col gap-[18px]">
+              <Eyebrow>{t("eyebrow")}</Eyebrow>
+              <h1 className="text-[44px] leading-[50px] font-extrabold tracking-[-0.03em] max-md:text-[30px] max-md:leading-9">{t("title")}</h1>
+              <p className="max-w-[52ch] text-[17px] leading-[27px] text-[#3f3f46] max-md:text-[15px] max-md:leading-6">{t("lead")}</p>
+              <div className="flex flex-wrap gap-2.5">
+                {start("lg", undefined, true)}
+                <Button asChild variant="outline" size="lg">
+                  <Link href="/legal/creator">{t("guidelines")}</Link>
+                </Button>
+              </div>
+              <ul className="m-0 flex list-none flex-wrap gap-x-[18px] gap-y-2 p-0">
+                {(["fact1", "fact2", "fact3"] as const).map((k) => (
+                  <li key={k} className="flex items-center gap-1.5 text-sm leading-5 text-[#27272a]">
+                    <CheckIcon className="size-3.5 shrink-0 text-brand-ink" aria-hidden />
+                    {t(k)}
+                  </li>
+                ))}
+              </ul>
             </div>
-            <ul className="m-0 flex list-none flex-wrap gap-x-[18px] gap-y-2 p-0">
-              {(["fact1", "fact2", "fact3"] as const).map((k) => (
-                <li key={k} className="flex items-center gap-1.5 text-sm leading-5 text-[#27272a]">
-                  <CheckIcon className="size-3.5 shrink-0 text-brand-ink" aria-hidden />
-                  {t(k)}
-                </li>
-              ))}
-            </ul>
-          </div>
+          </Effect>
           <div aria-hidden className="relative h-[360px] max-lg:hidden">
             {ART.map(({ i, cls }) =>
               series[i] ? (
@@ -107,65 +110,71 @@ export function JoinPage() {
       </section>
 
       <div className="container flex flex-col gap-14 pt-12 pb-[72px]">
-        <section aria-labelledby="how-title" className="flex flex-col gap-[18px]">
-          <h2 id="how-title" className="type-h2">
-            {t("howTitle")}
-          </h2>
-          <ol className="m-0 grid list-none gap-3.5 p-0 md:grid-cols-2 lg:grid-cols-4">
-            {STEPS.map((n) => (
-              <li key={n} className="flex flex-col gap-2 rounded-card border bg-card p-[18px] shadow-xs">
-                <span aria-hidden className="inline-flex size-8 items-center justify-center rounded-full bg-foreground text-sm font-bold text-background">
-                  <Num>{n}</Num>
-                </span>
-                <span className="type-h4">{t(`step${n}Title`)}</span>
-                <span className="text-[13px] leading-[18px] text-muted-foreground">{t(`step${n}Desc`)}</span>
-              </li>
-            ))}
-          </ol>
-        </section>
-
-        <section
-          aria-labelledby="earn-title"
-          className="grid items-center gap-8 rounded-[16px] border border-[#c9f1da] bg-brand-soft bg-[image:linear-gradient(135deg,#effcf4,#e3f9ec)] p-8 max-md:p-[18px] md:rounded-hero lg:grid-cols-[minmax(0,1fr)_420px]"
-        >
-          <div className="flex min-w-0 flex-col gap-3">
-            <h2 id="earn-title" className="type-h2">
-              {t("earnTitle")}
+        <Effect asChild fade slide={{ direction: "up", offset: 12 }} inView>
+          <section aria-labelledby="how-title" className="flex flex-col gap-[18px]">
+            <h2 id="how-title" className="type-h2">
+              {t("howTitle")}
             </h2>
-            <p className="max-w-[52ch] text-[13px] leading-5 text-[#3f3f46]">{t("earnBody1", { price })}</p>
-            <p className="max-w-[52ch] text-[13px] leading-5 text-[#3f3f46]">{t("earnBody2")}</p>
-          </div>
-          <div className="flex min-w-0 flex-col gap-4 rounded-card border bg-card p-5 shadow-xs">
-            <h3 className="type-h4">{t("calcTitle")}</h3>
-            <Range id="jn-readers" label={t("calcReaders")} min={10} max={2000} step={10} value={readers} onChange={setReaders} valueText={t("readersValue", { count: readers })} />
-            <Range id="jn-eps" label={t("calcEpisodes")} min={1} max={12} step={1} value={eps} onChange={setEps} valueText={t("episodesValue", { count: eps })} />
-            <div role="status" aria-live="polite" className="flex flex-col gap-0.5 rounded-card border bg-[#fafafa] p-3.5">
-              <span className="text-xs leading-4 text-muted-foreground">{t("calcOutLabel")}</span>
-              <span className="type-h2 tabular-nums">{t("calcCoins", { coins: fmt(coins) })}</span>
-              <span className="text-xs leading-4 text-muted-foreground">{t("calcUsd")}</span>
-            </div>
-            <span className="text-xs leading-4 text-muted-foreground">{t("calcNote")}</span>
-          </div>
-        </section>
+            <ol className="m-0 grid list-none gap-3.5 p-0 md:grid-cols-2 lg:grid-cols-4">
+              {STEPS.map((n) => (
+                <li key={n} className="flex flex-col gap-2 rounded-card border bg-card p-[18px] shadow-xs">
+                  <span aria-hidden className="inline-flex size-8 items-center justify-center rounded-full bg-foreground text-sm font-bold text-background">
+                    <Num>{n}</Num>
+                  </span>
+                  <span className="type-h4">{t(`step${n}Title`)}</span>
+                  <span className="text-[13px] leading-[18px] text-muted-foreground">{t(`step${n}Desc`)}</span>
+                </li>
+              ))}
+            </ol>
+          </section>
+        </Effect>
 
-        <section aria-labelledby="get-title" className="flex flex-col gap-[18px]">
-          <h2 id="get-title" className="type-h2">
-            {t("getTitle")}
-          </h2>
-          <ul className="m-0 grid list-none gap-5 p-0 md:grid-cols-2 lg:grid-cols-3">
-            {TOOLS.map(({ icon: Icon, key }) => (
-              <li key={key} className="flex items-start gap-3">
-                <span aria-hidden className="inline-flex size-10 shrink-0 items-center justify-center rounded-xl bg-brand-soft text-brand-ink">
-                  <Icon className="size-[18px]" />
-                </span>
-                <span className="flex min-w-0 flex-col gap-0.5">
-                  <span className="type-h4">{t(`${key}Title`)}</span>
-                  <span className="text-[13px] leading-[18px] text-muted-foreground">{t(`${key}Desc`)}</span>
-                </span>
-              </li>
-            ))}
-          </ul>
-        </section>
+        <Effect asChild fade slide={{ direction: "up", offset: 12 }} inView>
+          <section
+            aria-labelledby="earn-title"
+            className="grid items-center gap-8 rounded-[16px] border border-[#c9f1da] bg-brand-soft bg-[image:linear-gradient(135deg,#effcf4,#e3f9ec)] p-8 max-md:p-[18px] md:rounded-hero lg:grid-cols-[minmax(0,1fr)_420px]"
+          >
+            <div className="flex min-w-0 flex-col gap-3">
+              <h2 id="earn-title" className="type-h2">
+                {t("earnTitle")}
+              </h2>
+              <p className="max-w-[52ch] text-[13px] leading-5 text-[#3f3f46]">{t("earnBody1", { price })}</p>
+              <p className="max-w-[52ch] text-[13px] leading-5 text-[#3f3f46]">{t("earnBody2")}</p>
+            </div>
+            <div className="flex min-w-0 flex-col gap-4 rounded-card border bg-card p-5 shadow-xs">
+              <h3 className="type-h4">{t("calcTitle")}</h3>
+              <Range id="jn-readers" label={t("calcReaders")} min={10} max={2000} step={10} value={readers} onChange={setReaders} valueText={t("readersValue", { count: readers })} />
+              <Range id="jn-eps" label={t("calcEpisodes")} min={1} max={12} step={1} value={eps} onChange={setEps} valueText={t("episodesValue", { count: eps })} />
+              <div role="status" aria-live="polite" className="flex flex-col gap-0.5 rounded-card border bg-[#fafafa] p-3.5">
+                <span className="text-xs leading-4 text-muted-foreground">{t("calcOutLabel")}</span>
+                <span className="type-h2 tabular-nums">{t("calcCoins", { coins: fmt(coins) })}</span>
+                <span className="text-xs leading-4 text-muted-foreground">{t("calcUsd")}</span>
+              </div>
+              <span className="text-xs leading-4 text-muted-foreground">{t("calcNote")}</span>
+            </div>
+          </section>
+        </Effect>
+
+        <Effect asChild fade slide={{ direction: "up", offset: 12 }} inView>
+          <section aria-labelledby="get-title" className="flex flex-col gap-[18px]">
+            <h2 id="get-title" className="type-h2">
+              {t("getTitle")}
+            </h2>
+            <ul className="m-0 grid list-none gap-5 p-0 md:grid-cols-2 lg:grid-cols-3">
+              {TOOLS.map(({ icon: Icon, key }) => (
+                <li key={key} className="flex items-start gap-3">
+                  <span aria-hidden className="inline-flex size-10 shrink-0 items-center justify-center rounded-xl bg-brand-soft text-brand-ink">
+                    <Icon className="size-[18px]" />
+                  </span>
+                  <span className="flex min-w-0 flex-col gap-0.5">
+                    <span className="type-h4">{t(`${key}Title`)}</span>
+                    <span className="text-[13px] leading-[18px] text-muted-foreground">{t(`${key}Desc`)}</span>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </section>
+        </Effect>
 
         <section aria-labelledby="rules-title" className="flex flex-col gap-4 rounded-[16px] border bg-card p-6 max-md:p-[18px]">
           <div className="flex flex-col gap-2">
