@@ -1,11 +1,11 @@
 ---
 name: playwright-qa
-description: "Executes, writes, and debugs Playwright end-to-end tests for PhumReader. Use immediately after fixing bugs or adding UI features to prevent regressions and verify user flows."
+description: "Executes, writes, and debugs Playwright end-to-end tests for PhumiReader. Use immediately after fixing bugs or adding UI features to prevent regressions and verify user flows."
 ---
 
 # Playwright QA Skill — E2E Testing & Regression Verification
 
-Use this skill whenever code is modified, a bug is fixed, or a new flow is introduced in PhumReader.
+Use this skill whenever code is modified, a bug is fixed, or a new flow is introduced in PhumiReader.
 
 ## When to Run Tests
 - **After every bugfix**: Run the targeted test covering the affected page or flow.
@@ -70,4 +70,5 @@ When adding new test cases to `e2e/`:
 1. Use semantic locators (`getByRole`, `getByText`, `getByLabel`). Avoid brittle CSS paths.
 2. Account for demo API latency (300–800ms per request).
 3. Check both English (`/en/...`) and Khmer (`/km/...`) routes where appropriate.
-4. Keep localStorage keys consistent (`phumreader.*`).
+4. Keep localStorage keys consistent (`phumireader.*`).
+

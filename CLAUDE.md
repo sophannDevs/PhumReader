@@ -98,17 +98,30 @@ backend/                       Spring Boot API (Phase 2)
 
 ## Harness Multi-Agent Architecture
 This project is configured with the **Harness AI** framework (`revfactory/harness`):
-- **Agents** (`.claude/agents/`, `.agents/agents/`):
-  - `frontend-developer`: Next.js 16, React 19, Tailwind CSS, Zustand, i18n
-  - `backend-developer`: Spring Boot, Java 21, Gradle, Supabase, Redis
-  - `qa-verifier`: Playwright E2E testing, API boundary coherence, type & lint verification
+- **Agents** (`.claude/agents/`, `.agents/agents/`), by role:
+  - Advisor: `tech-advisor` (read-only): brief before coding (files, approach, risks, user decisions)
+  - Dev: `frontend-developer`: Next.js 16, React 19, Tailwind CSS, Zustand, i18n
+  - Dev: `backend-developer`: Spring Boot, Java 21, Gradle, Supabase, Redis
+  - QA: `qa-verifier`: Playwright E2E testing, API boundary coherence, type & lint verification
+  - Review: `code-reviewer` (read-only): bugs, design match, i18n, accessibility, project rules
+  - Doc: `doc-writer` (edits docs/ only): ticks tasks, Assumptions, API docs
 - **Skills** (`.claude/skills/`, `.agents/skills/`):
-  - `phumreader-orchestrator`: Pipeline & Producer-Reviewer coordinator
+  - `phumreader-orchestrator`: runs the team on a task: Advisor → Dev → QA + Review → Doc
   - `playwright-qa`: Targeted & full E2E test executions, trace diagnostics
   - `api-sync`: OpenAPI schema sync and contract enforcement
   - `harness`: Meta-skill for agent team engineering and updates
   - `harness-evolve`: Retrospective feedback and harness improvement
+- **Team trigger (automatic)**: whenever the user asks to do, build or fix something (a docs/CHECKLIST.md task such
+  as T45 or F12, a docs/BACKEND_CHECKLIST.md task such as P3-02, `/next-task`, or a bug), use the
+  `phumreader-orchestrator` skill, even if the user doesn't mention the team. The same goes for follow-ups ("review
+  again", "run QA again", "only update the docs"). Don't use it for questions or explanations, or when the user says
+  "without the team" or "do it yourself".
 - **Verification Trigger**: After fixing any defect or adding a flow, always execute Playwright tests (`npx playwright test e2e/<file>.spec.ts` or `npm run test:e2e`).
+- **Harness changes:**
+  | Date | Change | Target | Reason |
+  |---|---|---|---|
+  | 2026-11-12 | Added `tech-advisor`, `code-reviewer`, `doc-writer`; orchestrator runs 5 roles; brand name and QA gate fixed in existing agents | agents, orchestrator, playwright-qa | Team roles Dev / QA / Review / Advisor / Doc |
+  | 2026-11-12 | The team runs automatically for every task request; `/next-task` hands the task to the team | CLAUDE.md, orchestrator, next-task | The user wants the agents to work together without asking each time |
 
 ## Commands
 ```
