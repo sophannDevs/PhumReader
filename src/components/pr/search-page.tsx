@@ -28,6 +28,7 @@ import { creatorHandle, creatorHref, seriesHref } from "@/lib/routes"
 import { useAppStore, useHydrated, useUser } from "@/lib/store"
 import { cn } from "@/lib/utils"
 import { Num } from "@/i18n/num"
+import { Effect } from "@animate-ui/react/primitives/effects/effect"
 
 /** Search terms people use (prototype `trending`): demo content, so English in both languages. */
 const TRENDING = ["Glass Compass", "romance", "Mina Sok", "tiny dragon", "fantasy", "Letters to Tuesday", "sci-fi", "Sunday Sword"]
@@ -517,8 +518,8 @@ function Results({
               </h2>
             ) : null}
             <ul className="grid grid-cols-3 gap-3 max-lg:grid-cols-2 max-md:grid-cols-[minmax(0,1fr)]">
-              {(tab === "all" ? creators.slice(0, 3) : creators).map((c) => (
-                <CreatorItem key={c.name} name={c.name} series={c.series} k={k} />
+              {(tab === "all" ? creators.slice(0, 3) : creators).map((c, i) => (
+                <CreatorItem key={c.name} name={c.name} series={c.series} k={k} index={i} />
               ))}
             </ul>
           </section>
@@ -532,8 +533,8 @@ function Results({
               </h2>
             ) : null}
             <ul className="flex flex-col">
-              {sorted.slice(0, shown).map((s) => (
-                <ResultRow key={s.id} series={s} k={k} />
+              {sorted.slice(0, shown).map((s, i) => (
+                <ResultRow key={s.id} series={s} k={k} index={i} />
               ))}
             </ul>
             {sorted.length > shown ? (
@@ -551,52 +552,54 @@ function Results({
   )
 }
 
-function ResultRow({ series: s, k }: { series: Series; k: string }) {
+function ResultRow({ series: s, k, index }: { series: Series; k: string; index: number }) {
   const t = useTranslations("search")
   const tc = useTranslations("cards")
   const loc = useLocalize()
   const novel = s.type === "novel"
   return (
-    <li className="group flex items-center gap-4 border-b py-3.5 last:border-b-0 max-md:items-start max-md:gap-3 max-md:py-3">
-      <Link
-        href={seriesHref(s)}
-        tabIndex={-1}
-        aria-hidden
-        className="h-24 w-[72px] shrink-0 overflow-hidden rounded-lg bg-muted max-md:h-20 max-md:w-[60px]"
-      >
-        <Image src={s.cover} alt="" width={144} height={192} sizes="72px" className="cover-zoom size-full object-cover" />
-      </Link>
-      <div className="flex min-w-0 flex-1 flex-col gap-1">
-        <div className="flex flex-wrap gap-1.5">
-          {novel ? <Badge variant="secondary">{t("webNovel")}</Badge> : null}
-          {s.badges.up ? <Badge variant="up">{tc("up")}</Badge> : null}
-          <Badge variant="outline">{loc.genre(s.genre)}</Badge>
-        </div>
+    <Effect asChild fade slide={{ direction: "up", offset: 8 }} delay={Math.min(index, 10) * 40} inView>
+      <li className="group flex items-center gap-4 border-b py-3.5 last:border-b-0 max-md:items-start max-md:gap-3 max-md:py-3">
         <Link
           href={seriesHref(s)}
-          className="block truncate rounded-sm text-base leading-[22px] font-semibold underline-offset-[3px] outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring max-md:line-clamp-2 max-md:text-[15px] max-md:whitespace-normal"
+          tabIndex={-1}
+          aria-hidden
+          className="h-24 w-[72px] shrink-0 overflow-hidden rounded-lg bg-muted max-md:h-20 max-md:w-[60px]"
         >
-          <Highlight text={s.title} k={k} />
+          <Image src={s.cover} alt="" width={144} height={192} sizes="72px" className="cover-zoom size-full object-cover" />
         </Link>
-        <span className="truncate text-[13px] leading-[18px] text-muted-foreground">{loc.hook(s)}</span>
-        <span className="flex flex-wrap gap-x-2.5 text-xs leading-4 text-muted-foreground">
-          <span>{s.creator}</span>
-          <span>{novel ? t("chapters", { count: s.freeEpisodes }) : t("episodes", { count: s.freeEpisodes })}</span>
-          <span className="inline-flex items-center gap-[3px]">
-            <HeartIcon className="size-3" aria-hidden />
-            <span className="sr-only">{t("likes", { count: s.likes })}</span>
-            <span aria-hidden><Num>{s.likes}</Num></span>
+        <div className="flex min-w-0 flex-1 flex-col gap-1">
+          <div className="flex flex-wrap gap-1.5">
+            {novel ? <Badge variant="secondary">{t("webNovel")}</Badge> : null}
+            {s.badges.up ? <Badge variant="up">{tc("up")}</Badge> : null}
+            <Badge variant="outline">{loc.genre(s.genre)}</Badge>
+          </div>
+          <Link
+            href={seriesHref(s)}
+            className="block truncate rounded-sm text-base leading-[22px] font-semibold underline-offset-[3px] outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring max-md:line-clamp-2 max-md:text-[15px] max-md:whitespace-normal"
+          >
+            <Highlight text={s.title} k={k} />
+          </Link>
+          <span className="truncate text-[13px] leading-[18px] text-muted-foreground">{loc.hook(s)}</span>
+          <span className="flex flex-wrap gap-x-2.5 text-xs leading-4 text-muted-foreground">
+            <span>{s.creator}</span>
+            <span>{novel ? t("chapters", { count: s.freeEpisodes }) : t("episodes", { count: s.freeEpisodes })}</span>
+            <span className="inline-flex items-center gap-[3px]">
+              <HeartIcon className="size-3" aria-hidden />
+              <span className="sr-only">{t("likes", { count: s.likes })}</span>
+              <span aria-hidden><Num>{s.likes}</Num></span>
+            </span>
+            {s.schedule ? <span>{loc.schedule(s)}</span> : null}
           </span>
-          {s.schedule ? <span>{loc.schedule(s)}</span> : null}
-        </span>
-      </div>
-      <SubscribeButton
-        series={s}
-        labels={[t("subscribe"), t("subscribed")]}
-        title={s.title}
-        className="max-md:px-2.5"
-      />
-    </li>
+        </div>
+        <SubscribeButton
+          series={s}
+          labels={[t("subscribe"), t("subscribed")]}
+          title={s.title}
+          className="max-md:px-2.5"
+        />
+      </li>
+    </Effect>
   )
 }
 
@@ -607,7 +610,7 @@ function ResultRow({ series: s, k }: { series: Series; k: string }) {
  * the call fails). Cards without an id (older answers) fall back to the profile (GET /creators/{handle}); without one
  * there is no Follow. Logged out, Follow asks to log in.
  */
-function CreatorItem({ name, series, k }: { name: string; series: Series[]; k: string }) {
+function CreatorItem({ name, series, k, index }: { name: string; series: Series[]; k: string; index: number }) {
   const t = useTranslations("search")
   const tt = useTranslations("toasts")
   const hydrated = useHydrated()
@@ -690,33 +693,35 @@ function CreatorItem({ name, series, k }: { name: string; series: Series[]; k: s
   }
 
   return (
-    <li className="flex items-center gap-3 rounded-card border bg-card p-3 shadow-xs">
-      <span aria-hidden className="inline-flex size-11 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground">
-        {initials(name)}
-      </span>
-      <div className="flex min-w-0 flex-1 flex-col">
-        <Link
-          href={creatorHref(name, handle)}
-          className="type-h4 block truncate rounded-sm underline-offset-[3px] outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring"
-        >
-          <Highlight text={name} k={k} />
-        </Link>
-        <span className="truncate text-xs leading-4 text-muted-foreground">
-          {t("creatorMeta", {
-            count: series.length,
-            titles: series
-              .slice(0, 2)
-              .map((s) => s.title)
-              .join(", "),
-          })}
+    <Effect asChild fade slide={{ direction: "up", offset: 8 }} delay={Math.min(index, 10) * 40} inView>
+      <li className="flex items-center gap-3 rounded-card border bg-card p-3 shadow-xs">
+        <span aria-hidden className="inline-flex size-11 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground">
+          {initials(name)}
         </span>
-      </div>
-      {showFollow ? (
-        <Button variant="outline" size="sm" aria-pressed={on} disabled={loading || saving} onClick={() => void follow()}>
-          {on ? t("following") : t("follow")}
-        </Button>
-      ) : null}
-    </li>
+        <div className="flex min-w-0 flex-1 flex-col">
+          <Link
+            href={creatorHref(name, handle)}
+            className="type-h4 block truncate rounded-sm underline-offset-[3px] outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            <Highlight text={name} k={k} />
+          </Link>
+          <span className="truncate text-xs leading-4 text-muted-foreground">
+            {t("creatorMeta", {
+              count: series.length,
+              titles: series
+                .slice(0, 2)
+                .map((s) => s.title)
+                .join(", "),
+            })}
+          </span>
+        </div>
+        {showFollow ? (
+          <Button variant="outline" size="sm" aria-pressed={on} disabled={loading || saving} onClick={() => void follow()}>
+            {on ? t("following") : t("follow")}
+          </Button>
+        ) : null}
+      </li>
+    </Effect>
   )
 }
 
