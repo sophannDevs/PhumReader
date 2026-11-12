@@ -8,6 +8,7 @@ import { RadioGroupItem, radioCardClassName } from "@/components/ui/radio-group"
 import type { CoinPack } from "@/data/types"
 import { cn } from "@/lib/utils"
 import { Num } from "@/i18n/num"
+import { Effect } from "@animate-ui/react/primitives/effects/effect"
 
 /**
  * Coin pack as a radio card (prototype Shop `.radio-card`). Render inside a `RadioGroup`; the item value is
@@ -22,6 +23,7 @@ export function PackCard({
   unit = "episode",
   covers = false,
   disabled = false,
+  index = 0,
   className,
 }: {
   pack: CoinPack
@@ -31,6 +33,8 @@ export function PackCard({
   unit?: "episode" | "chapter"
   covers?: boolean
   disabled?: boolean
+  /** Position in the grid: staggers the entrance (capped at 10 steps) */
+  index?: number
   className?: string
 }) {
   const t = useTranslations("packs")
@@ -48,33 +52,35 @@ export function PackCard({
   ) : null
 
   return (
-    <label
-      htmlFor={id}
-      className={cn(
-        radioCardClassName,
-        "min-h-[168px] flex-col items-start gap-1.5 rounded-[10px] bg-background p-3.5 shadow-xs max-md:min-h-[140px]",
-        className
-      )}
-    >
-      <span className="flex min-h-[22px] w-full items-center justify-between gap-2">
-        <RadioGroupItem id={id} value={String(pack.coins)} disabled={disabled} className="border-[#a1a1aa]" />
-        {tag}
-      </span>
-      <span className="flex items-center gap-2">
-        <CoinIcon size={20} />
-        <span className="text-2xl leading-[30px] font-semibold tracking-[-0.02em] tabular-nums max-md:text-xl max-md:leading-[26px]">
-          <Num>{pack.coins}</Num>
+    <Effect asChild fade slide={{ direction: "up", offset: 8 }} delay={Math.min(index, 10) * 50} inView>
+      <label
+        htmlFor={id}
+        className={cn(
+          radioCardClassName,
+          "min-h-[168px] flex-col items-start gap-1.5 rounded-[10px] bg-background p-3.5 shadow-xs max-md:min-h-[140px]",
+          className
+        )}
+      >
+        <span className="flex min-h-[22px] w-full items-center justify-between gap-2">
+          <RadioGroupItem id={id} value={String(pack.coins)} disabled={disabled} className="border-[#a1a1aa]" />
+          {tag}
         </span>
-        <span className="sr-only">{t("coinsLabel", { count: pack.coins })}</span>
-      </span>
-      <span className={cn("text-xs leading-4", pack.bonus > 0 ? "text-brand-ink" : "text-muted-foreground")}>
-        {pack.bonus > 0 ? t("bonus", { count: pack.bonus, pct: Math.round((pack.bonus / pack.coins) * 100) }) : t("noBonus")}
-      </span>
-      <span className="text-xs leading-4 text-muted-foreground">
-        {total !== pack.coins ? `${t("youGet", { count: total })} · ${about}` : about}
-      </span>
-      <span className="mt-auto pt-1 text-[13px] leading-[18px] font-semibold">{pack.priceUSD}</span>
-      <span className="text-xs leading-4 text-muted-foreground">{pack.priceKHR}</span>
-    </label>
+        <span className="flex items-center gap-2">
+          <CoinIcon size={20} />
+          <span className="text-2xl leading-[30px] font-semibold tracking-[-0.02em] tabular-nums max-md:text-xl max-md:leading-[26px]">
+            <Num>{pack.coins}</Num>
+          </span>
+          <span className="sr-only">{t("coinsLabel", { count: pack.coins })}</span>
+        </span>
+        <span className={cn("text-xs leading-4", pack.bonus > 0 ? "text-brand-ink" : "text-muted-foreground")}>
+          {pack.bonus > 0 ? t("bonus", { count: pack.bonus, pct: Math.round((pack.bonus / pack.coins) * 100) }) : t("noBonus")}
+        </span>
+        <span className="text-xs leading-4 text-muted-foreground">
+          {total !== pack.coins ? `${t("youGet", { count: total })} · ${about}` : about}
+        </span>
+        <span className="mt-auto pt-1 text-[13px] leading-[18px] font-semibold">{pack.priceUSD}</span>
+        <span className="text-xs leading-4 text-muted-foreground">{pack.priceKHR}</span>
+      </label>
+    </Effect>
   )
 }

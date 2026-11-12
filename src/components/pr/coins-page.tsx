@@ -213,9 +213,10 @@ function CoinsBody({ data, offer, ret }: { data: CoinsData; offer: boolean; ret:
             disabled={checkout.busy}
             className="grid-cols-[repeat(2,minmax(0,1fr))] gap-2.5 md:grid-cols-5"
           >
-            {data.packs.map((p) => (
+            {data.packs.map((p, i) => (
               <PackCard
                 key={p.coins}
+                index={i}
                 pack={p}
                 firstPurchaseOffer={offer}
                 price={price}
