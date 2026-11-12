@@ -13,6 +13,7 @@ import { Link, usePathname, useRouter } from "@/i18n/navigation"
 import { routing, type Locale } from "@/i18n/routing"
 import { useAppStore } from "@/lib/store"
 import { cn } from "@/lib/utils"
+import { Effect } from "@animate-ui/react/primitives/effects/effect"
 
 /**
  * The error page family (spec §9, design/prototype-src/Error, screens 09-*): a soft green hero with the illustration
@@ -105,28 +106,32 @@ export function ErrorHero({
       <section className="border-b bg-[#fafafa] bg-[image:radial-gradient(1200px_400px_at_20%_0%,#effcf4_0%,rgba(239,252,244,0)_70%)]">
         <div className="container">
           <div className="mx-auto grid max-w-[976px] grid-cols-[minmax(0,1fr)] items-center gap-5 pt-6 pb-8 md:grid-cols-[240px_minmax(0,1fr)] md:gap-9 md:pt-12 md:pb-14 lg:grid-cols-[320px_minmax(0,1fr)] lg:gap-14 lg:pt-16 lg:pb-[72px]">
-            <div className="flex h-[150px] w-full items-center justify-center rounded-[18px] border bg-white shadow-md md:h-[220px] md:w-60 md:rounded-3xl lg:h-[280px] lg:w-80">
-              <ErrorArt kind={kind === "comingSoon" ? "maintenance" : kind} className="h-auto w-[150px] max-w-full md:w-[240px]" />
-            </div>
-
-            <div className="flex min-w-0 flex-col gap-4">
-              <div className="flex items-center justify-between gap-3">
-                <Badge variant={BADGE[kind]}>
-                  {t(`codes.${kind}`)}
-                </Badge>
-                <ErrorLangToggle />
+            <Effect asChild fade zoom={{ initialScale: 0.92 }}>
+              <div className="flex h-[150px] w-full items-center justify-center rounded-[18px] border bg-white shadow-md md:h-[220px] md:w-60 md:rounded-3xl lg:h-[280px] lg:w-80">
+                <ErrorArt kind={kind === "comingSoon" ? "maintenance" : kind} className="h-auto w-[150px] max-w-full md:w-[240px]" />
               </div>
-              <h1
-                className={cn(
-                  "m-0 font-extrabold tracking-[-0.03em]",
-                  locale === "km" ? "text-2xl md:text-[32px]" : "text-[28px] leading-[34px] md:text-[40px] md:leading-[46px]"
-                )}
-              >
-                {title}
-              </h1>
-              <p className="m-0 max-w-[52ch] text-[15px] leading-6 text-muted-foreground md:text-base md:leading-[26px]">{body}</p>
-              {children}
-            </div>
+            </Effect>
+
+            <Effect asChild fade slide={{ direction: "up", offset: 12 }} delay={100}>
+              <div className="flex min-w-0 flex-col gap-4">
+                <div className="flex items-center justify-between gap-3">
+                  <Badge variant={BADGE[kind]}>
+                    {t(`codes.${kind}`)}
+                  </Badge>
+                  <ErrorLangToggle />
+                </div>
+                <h1
+                  className={cn(
+                    "m-0 font-extrabold tracking-[-0.03em]",
+                    locale === "km" ? "text-2xl md:text-[32px]" : "text-[28px] leading-[34px] md:text-[40px] md:leading-[46px]"
+                  )}
+                >
+                  {title}
+                </h1>
+                <p className="m-0 max-w-[52ch] text-[15px] leading-6 text-muted-foreground md:text-base md:leading-[26px]">{body}</p>
+                {children}
+              </div>
+            </Effect>
           </div>
         </div>
       </section>

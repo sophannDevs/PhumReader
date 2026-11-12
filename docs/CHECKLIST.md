@@ -569,3 +569,11 @@ docs/BACKEND_CHECKLIST.md, "V2.1 API additions" (V21-01 … V21-07).
   as they scroll into view (the hero stays instant); the Log in / Sign up card and brand panel and each Welcome step
   fade up. Not done: a sliding ring across the coin packs (the selection ring is CSS `has-[:checked]`; moving it
   would change the card styling) and an expanding About text (the About tab is not collapsible).
+- ANIM-8 (animations) **Round 3**: Search result rows and creator cards stagger in; Create series fades each step
+  in (keyed by the step) and Manage series fades each tab's panel; comment threads and lists fade up, and a comment
+  you post slides in; the receipt timeline steps appear one after another; Settings cards fade up; the creator
+  and earnings chart columns rise and fade in (Animate UI has no bar-growth effect, so the bar heights themselves do
+  not animate); the end-of-episode section and the 404 / error hero fade in. Not done: Upload episode (a single
+  form, no steps), `AutoHeight` on Create series (the card keeps its fixed footer) and on Settings (the quiet-hours
+  reveal is on the Notifications page and its focus rings would be clipped), and a sliding underline on the
+  hand-built Manage series tabs.

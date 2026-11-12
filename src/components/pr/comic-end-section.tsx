@@ -23,6 +23,7 @@ import { seriesHref } from "@/lib/routes"
 import { useAppStore, useUser } from "@/lib/store"
 import { cn } from "@/lib/utils"
 import { Num } from "@/i18n/num"
+import { Effect } from "@animate-ui/react/primitives/effects/effect"
 
 /** `.vw-card`: the reader's card colours (set on the reader root), 14 px radius. */
 const card = "rounded-[14px] border bg-card p-6 text-card-foreground max-md:p-[18px]"
@@ -100,91 +101,93 @@ export function ComicEndSection({
         : t("caughtUpLine", { day: loc.days(series.updateDays, "full") })
 
   return (
-    <section aria-label={t("endOf", { n: episode.n })} className="mx-auto flex w-full max-w-[800px] flex-col gap-4 px-4 pt-8 pb-[72px]">
-      <div ref={finishRef} className={cn(card, "flex flex-col items-center gap-4 text-center")}>
-        <p className="text-xs leading-4 font-semibold tracking-[0.06em] text-muted-foreground uppercase">{t("endOf", { n: episode.n })}</p>
-        <h2 className="type-h3">{loc.title(episode.title)}</h2>
-        <div className="flex flex-wrap items-center justify-center gap-2">
-          <Button
-            variant="outline"
-            aria-pressed={liked}
-            aria-label={t("likeLabel", { count: formatCount(likeCount) })}
-            className={cn(pill, "tabular-nums", liked && "bg-foreground text-background hover:bg-foreground/90 hover:text-background")}
-            onClick={like}
-          >
-            <HeartIcon className={cn(liked && "fill-destructive text-destructive")} aria-hidden />
-            <Num>{formatCount(likeCount)}</Num>
-          </Button>
-          <Button variant="outline" aria-pressed={subscribed} className={pill} onClick={() => void toggleSubscribe()}>
-            <BellIcon aria-hidden />
-            {subscribed ? t("subscribed") : t("subscribe")}
-          </Button>
-          <Button variant="outline" className={pill} onClick={share}>
-            <Share2Icon aria-hidden />
-            {t("share")}
-          </Button>
-        </div>
-        <button
-          type="button"
-          onClick={() => (user ? openReport({
-                  kind: "episode",
-                  target: `${series.title} · ${episode.title}`,
-                  onSend: DEMO_MODE ? undefined : (reason, details) => real.reportEpisode(series.slug, episode.n, reason, details),
-                }) : askToLogin())}
-          className="rounded-sm text-[13px] leading-[18px] text-muted-foreground underline underline-offset-[3px] outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
-        >
-          {t("reportEpisode")}
-        </button>
-      </div>
-
-      {next ? (
-        <>
-          {countdown !== null && !nextLocked ? (
-            <div
-              role="status"
-              className="flex items-center justify-between gap-3 rounded-xl border border-primary/35 bg-primary/12 py-2.5 pr-3 pl-4 text-sm tabular-nums"
+    <Effect asChild fade slide={{ direction: "up", offset: 12 }} inView>
+      <section aria-label={t("endOf", { n: episode.n })} className="mx-auto flex w-full max-w-[800px] flex-col gap-4 px-4 pt-8 pb-[72px]">
+        <div ref={finishRef} className={cn(card, "flex flex-col items-center gap-4 text-center")}>
+          <p className="text-xs leading-4 font-semibold tracking-[0.06em] text-muted-foreground uppercase">{t("endOf", { n: episode.n })}</p>
+          <h2 className="type-h3">{loc.title(episode.title)}</h2>
+          <div className="flex flex-wrap items-center justify-center gap-2">
+            <Button
+              variant="outline"
+              aria-pressed={liked}
+              aria-label={t("likeLabel", { count: formatCount(likeCount) })}
+              className={cn(pill, "tabular-nums", liked && "bg-foreground text-background hover:bg-foreground/90 hover:text-background")}
+              onClick={like}
             >
-              {t("nextIn", { count: countdown })}
-              <Button variant="ghost" size="sm" onClick={onCancelAuto}>
-                {t("cancel")}
-              </Button>
-            </div>
-          ) : null}
+              <HeartIcon className={cn(liked && "fill-destructive text-destructive")} aria-hidden />
+              <Num>{formatCount(likeCount)}</Num>
+            </Button>
+            <Button variant="outline" aria-pressed={subscribed} className={pill} onClick={() => void toggleSubscribe()}>
+              <BellIcon aria-hidden />
+              {subscribed ? t("subscribed") : t("subscribe")}
+            </Button>
+            <Button variant="outline" className={pill} onClick={share}>
+              <Share2Icon aria-hidden />
+              {t("share")}
+            </Button>
+          </div>
           <button
             type="button"
-            onClick={onNext}
-            className="group flex w-full items-center gap-4 rounded-[14px] border bg-card p-4 text-left text-card-foreground transition-colors outline-none hover:border-input focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background max-md:flex-wrap"
+            onClick={() => (user ? openReport({
+                    kind: "episode",
+                    target: `${series.title} · ${episode.title}`,
+                    onSend: DEMO_MODE ? undefined : (reason, details) => real.reportEpisode(series.slug, episode.n, reason, details),
+                  }) : askToLogin())}
+            className="rounded-sm text-[13px] leading-[18px] text-muted-foreground underline underline-offset-[3px] outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
           >
-            <Image src={next.thumb} alt="" width={144} height={144} sizes="72px" className="size-[72px] shrink-0 rounded-[10px] object-cover" />
-            <span className="flex min-w-0 flex-1 flex-col items-start gap-1">
-              <span className="text-xs leading-4 text-muted-foreground">{t("nextEpisodeCard")}</span>
-              <span className="type-h4">{loc.title(next.title)}</span>
-              {nextLocked ? (
-                <Badge variant="warn" className="h-auto min-h-[22px] whitespace-normal">
-                  <ZapIcon className="size-3" aria-hidden />
-                  {t("nextFastPass", { price, date: loc.date(next.date) })}
-                </Badge>
-              ) : null}
-            </span>
-            <span className={cn(buttonVariants({ variant: "brand" }), "max-md:w-full")}>
-              {nextLocked ? t("unlock") : t("readNext")}
-              <ArrowRightIcon className="size-3.5" aria-hidden />
-            </span>
+            {t("reportEpisode")}
           </button>
-        </>
-      ) : (
-        <div className={cn(card, "text-center text-[13px] leading-[18px] text-foreground/80")}>{caughtUp}</div>
-      )}
+        </div>
 
-      <TopComments series={series} episode={episode} dark={dark} closed={!commentsEnabled} />
+        {next ? (
+          <>
+            {countdown !== null && !nextLocked ? (
+              <div
+                role="status"
+                className="flex items-center justify-between gap-3 rounded-xl border border-primary/35 bg-primary/12 py-2.5 pr-3 pl-4 text-sm tabular-nums"
+              >
+                {t("nextIn", { count: countdown })}
+                <Button variant="ghost" size="sm" onClick={onCancelAuto}>
+                  {t("cancel")}
+                </Button>
+              </div>
+            ) : null}
+            <button
+              type="button"
+              onClick={onNext}
+              className="group flex w-full items-center gap-4 rounded-[14px] border bg-card p-4 text-left text-card-foreground transition-colors outline-none hover:border-input focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background max-md:flex-wrap"
+            >
+              <Image src={next.thumb} alt="" width={144} height={144} sizes="72px" className="size-[72px] shrink-0 rounded-[10px] object-cover" />
+              <span className="flex min-w-0 flex-1 flex-col items-start gap-1">
+                <span className="text-xs leading-4 text-muted-foreground">{t("nextEpisodeCard")}</span>
+                <span className="type-h4">{loc.title(next.title)}</span>
+                {nextLocked ? (
+                  <Badge variant="warn" className="h-auto min-h-[22px] whitespace-normal">
+                    <ZapIcon className="size-3" aria-hidden />
+                    {t("nextFastPass", { price, date: loc.date(next.date) })}
+                  </Badge>
+                ) : null}
+              </span>
+              <span className={cn(buttonVariants({ variant: "brand" }), "max-md:w-full")}>
+                {nextLocked ? t("unlock") : t("readNext")}
+                <ArrowRightIcon className="size-3.5" aria-hidden />
+              </span>
+            </button>
+          </>
+        ) : (
+          <div className={cn(card, "text-center text-[13px] leading-[18px] text-foreground/80")}>{caughtUp}</div>
+        )}
 
-      <Button asChild variant="outline" className={cn(pill, "self-center")}>
-        <Link href={seriesHref(series)}>
-          <ListIcon className="size-3.5" aria-hidden />
-          {t("allEpisodes", { title: series.title })}
-        </Link>
-      </Button>
-    </section>
+        <TopComments series={series} episode={episode} dark={dark} closed={!commentsEnabled} />
+
+        <Button asChild variant="outline" className={cn(pill, "self-center")}>
+          <Link href={seriesHref(series)}>
+            <ListIcon className="size-3.5" aria-hidden />
+            {t("allEpisodes", { title: series.title })}
+          </Link>
+        </Button>
+      </section>
+    </Effect>
   )
 }
 
