@@ -1,8 +1,9 @@
 import { STORAGE_PREFIX } from "./storage-migration"
 
 /**
- * Storage key for the site theme (Settings > Reading: light / dark / system). Kept out of theme.tsx ("use client")
- * so server code (the root layout) can read it.
+ * Storage key for the site theme (Settings > Reading: light / dark / system). Shared by ThemeScript
+ * (src/components/layout/theme-script.tsx) and ThemeProvider (src/lib/theme.tsx); theme.test.tsx runs the script
+ * string directly.
  */
 export const THEME_STORAGE_KEY = `${STORAGE_PREFIX}theme`
 

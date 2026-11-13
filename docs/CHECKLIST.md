@@ -694,8 +694,11 @@ docs/BACKEND_CHECKLIST.md, "V2.1 API additions" (V21-01 … V21-07).
   - New tokens (light values equal the old prototype hex, so light mode looks the same): `subtle`, `soft-foreground`,
     `strong-foreground`, `border-strong` (dark `#71717a`), `border-hover`, `track`, `brand-line`, `brand-wash-from` /
     `brand-wash-to`, `info-soft` / `info-ink`, and `--shine`.
-  - First paint: the script `themeInitScript` in the server root layout (`src/app/[locale]/layout.tsx`) sets the class
-    before React loads, so there is no flash.
+  - First paint: the script `themeInitScript` in the root layout (`src/app/[locale]/layout.tsx`) sets the class
+    before React loads, so there is no flash. It is rendered by the Client Component `ThemeScript`
+    (`src/components/layout/theme-script.tsx`): the server HTML has it as `text/javascript` (runs before paint), and
+    a copy the client creates (en/km switch, 404) is inert `text/plain`, so React logs no "Encountered a script tag"
+    error. Pattern from the Next 16 guide "Preventing flash before hydration".
   - Stay light in dark mode: QR codes, comic panels, surface heroes and bars, the SVG error illustrations and their
     white frames, genre tiles and the genres banner (a fixed light tile), the phone mock in the upload preview, and
     global-error. The novel sepia / light and the comic light background keep their own colours on a dark site

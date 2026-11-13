@@ -5,8 +5,9 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 
 /**
  * Light / dark / system theme for the whole site (Settings > Reading > Theme). Replaces next-themes, whose inline
- * <script> inside a client component makes React 19 log a console error; the first-paint script lives in the
- * server root layout instead (src/lib/theme-script.ts). This provider keeps `.dark` in sync afterwards.
+ * <script> makes React 19 log a console error when the client renders it. The first-paint script
+ * (src/lib/theme-script.ts) is rendered in the root layout by ThemeScript (src/components/layout/theme-script.tsx),
+ * which runs it from the server HTML and keeps the client copy inert. This provider keeps `.dark` in sync afterwards.
  */
 export type Theme = "light" | "dark" | "system"
 
