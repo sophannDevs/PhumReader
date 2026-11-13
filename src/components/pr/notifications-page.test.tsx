@@ -190,7 +190,10 @@ afterEach(() => {
   vi.useRealTimers()
 })
 
-describe("NotificationsPage (real API): the inbox", () => {
+// A margin only: nothing is typed here. The slowest test (every tab in turn) is about 0.8 s alone, but each tab click
+// re-renders the whole page, alert switches included (Animate UI measures each switch thumb with getComputedStyle on
+// every render, a few ms a call in jsdom), and the test ran 3.9 s in the full suite against Vitest's default 5 s.
+describe("NotificationsPage (real API): the inbox", { timeout: 15_000 }, () => {
   it("asks a logged-out visitor to log in, without calling the API", async () => {
     const { user } = renderUi(<NotificationsPage />)
     expect(screen.getByText("Log in to see your notifications")).toBeInTheDocument()
@@ -492,7 +495,9 @@ describe("NotificationsPage (real API): the inbox", () => {
   })
 })
 
-describe("NotificationsPage (real API): alert settings", () => {
+// A margin only: nothing is typed here. "saves the quiet hours" opens two animated hour lists (1.2 s alone, the
+// slowest test in this file) and ran 2.6 s in the full suite, which runs tests 3–4 times slower than alone.
+describe("NotificationsPage (real API): alert settings", { timeout: 15_000 }, () => {
   it("shows the account's alert settings", async () => {
     signIn()
     inbox([])

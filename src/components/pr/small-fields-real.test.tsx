@@ -3,6 +3,7 @@ import { HelpPage } from "@/components/pr/help-page"
 import { ForYouSection } from "@/components/pr/home/for-you"
 import { meKeys } from "@/lib/api/keys"
 import { useAppStore } from "@/lib/store"
+import { fill } from "@/test/fill"
 import { renderUi, screen, waitFor } from "@/test/render"
 import { API, apiError, http, HttpResponse, server } from "@/test/server"
 import { selectOption } from "@/test/select"
@@ -62,7 +63,11 @@ describe("Home picks (ForYouSection)", () => {
   })
 })
 
-describe("Help: Contact us and votes", () => {
+// The contact form is filled with `fill` (click + paste): typing its 51 characters key by key took about 1 s of a
+// 1.5 s test (five events and a timer tick per key; the message counter re-renders the form on each message key), and
+// no test here checks per-key behaviour (validation runs on submit). The timeout is a margin on top of that, not
+// instead of it: these tests ran 3–4 times slower in the full suite and timed out at Vitest's default 5 s.
+describe("Help: Contact us and votes", { timeout: 15_000 }, () => {
   it("sends the ticket to the API and shows its number", async () => {
     let body: unknown
     server.use(
@@ -73,8 +78,8 @@ describe("Help: Contact us and votes", () => {
     )
     const { user } = renderUi(<HelpPage />)
     await selectOption(user, screen.getByRole("combobox", { name: /Topic/ }), "other")
-    await user.type(screen.getByLabelText(/^Email/), "dara@example.com")
-    await user.type(screen.getByLabelText(/^Message/), "Where do I find my reading history?")
+    await fill(user, screen.getByLabelText(/^Email/), "dara@example.com")
+    await fill(user, screen.getByLabelText(/^Message/), "Where do I find my reading history?")
     await user.click(screen.getByRole("button", { name: "Send message" }))
     expect(await screen.findByText("T-58214")).toBeInTheDocument()
     expect(body).toEqual({ topic: "other", email: "dara@example.com", order: null, message: "Where do I find my reading history?", locale: "en" })
@@ -84,8 +89,8 @@ describe("Help: Contact us and votes", () => {
     server.use(http.post(`${API}/help/tickets`, () => apiError(429, "too_many_requests")))
     const { user } = renderUi(<HelpPage />)
     await selectOption(user, screen.getByRole("combobox", { name: /Topic/ }), "other")
-    await user.type(screen.getByLabelText(/^Email/), "dara@example.com")
-    await user.type(screen.getByLabelText(/^Message/), "Where do I find my reading history?")
+    await fill(user, screen.getByLabelText(/^Email/), "dara@example.com")
+    await fill(user, screen.getByLabelText(/^Message/), "Where do I find my reading history?")
     await user.click(screen.getByRole("button", { name: "Send message" }))
     await waitFor(() => expect(screen.getByRole("button", { name: "Send message" })).toBeEnabled())
     expect(screen.queryByText(/T-\d+/)).not.toBeInTheDocument()

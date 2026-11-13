@@ -3,6 +3,7 @@ import { UploadEpisodePage } from "@/components/pr/upload-episode-page"
 import { onOrAfter } from "@/lib/creator-studio"
 import { addDays, formatShortDate, ictDate, weekdayOf } from "@/lib/format"
 import { useAppStore } from "@/lib/store"
+import { fill } from "@/test/fill"
 import { setSearch } from "@/test/navigation"
 import { renderUi, screen, waitFor } from "@/test/render"
 import { API, http, HttpResponse, server } from "@/test/server"
@@ -86,8 +87,12 @@ const nextUpdate = () => {
   return [onOrAfter("Mon", tomorrow), onOrAfter("Thu", tomorrow)].sort()[0]
 }
 
+/**
+ * A title and 320 words. The title goes in with `fill` (click + paste): typing it key by key re-rendered the whole page
+ * on every key (about 0.5 s for 16 keys), and no test here checks the title per key.
+ */
 async function fillChapter(user: ReturnType<typeof renderUi>["user"]) {
-  await user.type(await screen.findByLabelText(/Chapter title/), "The Memory Stall")
+  await fill(user, await screen.findByLabelText(/Chapter title/), "The Memory Stall")
   await user.click(screen.getByRole("textbox", { name: "Chapter text" }))
   await user.paste("word ".repeat(320))
 }
@@ -96,7 +101,9 @@ beforeEach(() => {
   vi.spyOn(window, "scrollTo").mockImplementation(() => undefined)
 })
 
-describe("UploadEpisodePage: defaults from the series (real API)", () => {
+// A margin on top of `fillChapter`'s paste, not instead of it: these tests take under 1 s alone but ran 4–5 times
+// slower in the full suite (the first one also loads the page's modules), up to 4.9 s against Vitest's default 5 s.
+describe("UploadEpisodePage: defaults from the series (real API)", { timeout: 15_000 }, () => {
   it("starts on the next update day at the series' release hour with its Fast Pass, and sends useSeriesFastPass", async () => {
     signIn()
     let body: Record<string, unknown> | undefined

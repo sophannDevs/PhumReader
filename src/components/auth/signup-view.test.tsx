@@ -1,6 +1,7 @@
 import { toast } from "sonner"
 import { describe, expect, it, vi } from "vitest"
 import { SignupView } from "@/components/auth/signup-view"
+import { fill } from "@/test/fill"
 import { renderUi, screen, waitFor } from "@/test/render"
 import { API, apiError, http, HttpResponse, server } from "@/test/server"
 import { selectOption } from "@/test/select"
@@ -15,18 +16,26 @@ type User = ReturnType<typeof setup>["user"]
 const NAME_ERROR = "Enter a display name (2 to 20 characters)."
 const RULES = /doesn’t meet all the rules/
 
+// `fill` (click + paste), not `user.type`: the form re-renders on every key, birth-year list included (about 30 ms a
+// key in jsdom). No test here checks per-key behaviour; the values (spaces included) reach the form unchanged.
 async function fillAll(user: User, over: Partial<Record<"name" | "email" | "password" | "confirm", string>> = {}, terms = true) {
   const password = over.password ?? "Abcdef1!"
-  await user.type(screen.getByLabelText("Display name"), over.name ?? "Sokha")
-  await user.type(screen.getByLabelText("Email"), over.email ?? "sokha@example.com")
-  await user.type(screen.getByLabelText("Password"), password)
-  await user.type(screen.getByLabelText("Confirm password"), over.confirm ?? password)
+  await fill(user, screen.getByLabelText("Display name"), over.name ?? "Sokha")
+  await fill(user, screen.getByLabelText("Email"), over.email ?? "sokha@example.com")
+  await fill(user, screen.getByLabelText("Password"), password)
+  await fill(user, screen.getByLabelText("Confirm password"), over.confirm ?? password)
   await selectOption(user, screen.getByLabelText("Birth year"), "1998")
   if (terms) await user.click(screen.getByRole("checkbox"))
 }
 const submit = (user: User) => user.click(screen.getByRole("button", { name: "Create account" }))
 
-describe("SignupView: validation", () => {
+// A margin on top of `fill`, not instead of it: a form-filling test takes about 1.5 s alone, half of it opening the
+// birth-year list and picking from it (about 90 options, one more each January; Animate UI reads getComputedStyle
+// once or twice per option, about 2 ms a call in jsdom), and up to about 4.5 s while the full suite runs in parallel,
+// too close to Vitest's default 5 s.
+const SLOW = { timeout: 15_000 }
+
+describe("SignupView: validation", SLOW, () => {
   it("shows every required message on an empty form and sends nothing", async () => {
     const { user, onSubmitted } = setup()
     await submit(user)
@@ -83,7 +92,7 @@ describe("SignupView: validation", () => {
   })
 })
 
-describe("SignupView: creating the account", () => {
+describe("SignupView: creating the account", SLOW, () => {
   it("posts the trimmed values with the site language and passes the pending code on", async () => {
     let body: unknown
     server.use(
@@ -111,10 +120,10 @@ describe("SignupView: creating the account", () => {
     )
     const { user, onSubmitted } = setup("km")
     // Khmer labels differ, so reach the fields by id; the structure is the same as English.
-    await user.type(document.getElementById("signup-name") as HTMLElement, "Sokha")
-    await user.type(document.getElementById("signup-email") as HTMLElement, "sokha@example.com")
-    await user.type(document.getElementById("signup-password") as HTMLElement, "Abcdef1!")
-    await user.type(document.getElementById("signup-confirm") as HTMLElement, "Abcdef1!")
+    await fill(user, document.getElementById("signup-name") as HTMLElement, "Sokha")
+    await fill(user, document.getElementById("signup-email") as HTMLElement, "sokha@example.com")
+    await fill(user, document.getElementById("signup-password") as HTMLElement, "Abcdef1!")
+    await fill(user, document.getElementById("signup-confirm") as HTMLElement, "Abcdef1!")
     await selectOption(user, document.getElementById("signup-year") as HTMLElement, "1998")
     await user.click(screen.getByRole("checkbox"))
     await user.click(document.querySelector("button[type=submit]") as HTMLElement)
