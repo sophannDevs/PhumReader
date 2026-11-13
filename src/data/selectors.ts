@@ -193,4 +193,4 @@ export const episodePrice = (e: Pick<Episode, "price"> | null | undefined): numb
 export const episodesCost = (list: readonly Pick<Episode, "price">[]): number => list.reduce((sum, e) => sum + episodePrice(e), 0)
 
 /** Not in the data: an episode thread is about 2.55% of the episode's likes ("47K" likes -> "1.2K" comments). */
-export const episodeCommentCount = (e: Episode): string => formatCount(parseCount(e.likes) * 0.0255)
+export const episodeCommentCount = (e: Pick<Episode, "likes">): string => formatCount(parseCount(e.likes) * 0.0255)

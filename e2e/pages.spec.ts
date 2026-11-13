@@ -31,6 +31,33 @@ test.describe("readers and search", () => {
     expect(saved).toMatchObject({ theme: "sepia", font: "serif" })
   })
 
+  test("Novel chapter end: comments", async ({ page }) => {
+    await seed(page, { user: SOKHA })
+    await page.goto("/novel/ink-witch/1")
+    const end = visible(page.getByRole("region", { name: "End of chapter 1" }))
+    await end.scrollIntoViewIfNeeded()
+    await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight))
+    await expect(end.getByRole("heading", { name: /^Comments/ })).toBeVisible()
+    const seeAll = end.getByRole("link", { name: "See all" })
+    await expect(seeAll).toHaveAttribute("href", /\/series\/ink-witch\/comments\?ep=1$/)
+
+    const list = end.getByRole("list", { name: "Comments" })
+    await expect(list.getByRole("listitem").first()).toBeVisible()
+    await end.getByRole("textbox", { name: "Add a comment" }).fill("E2E novel comment")
+    await end.getByRole("button", { name: "Post" }).click()
+    const first = list.locator(":scope > li").first()
+    await expect(first).toContainText("E2E novel comment")
+
+    const like = list.locator(":scope > li").nth(1).locator("button[aria-pressed]").first()
+    await expect(like).toHaveAttribute("aria-pressed", "false")
+    await like.click()
+    await expect(like).toHaveAttribute("aria-pressed", "true")
+
+    await seeAll.click()
+    await expect(page).toHaveURL(/\/series\/ink-witch\/comments\?ep=1$/)
+    await expect(visible(page.getByText("Chapter 1", { exact: true }))).toBeVisible()
+  })
+
   test('⌘K -> "gl" -> Glass Compass -> Series; See all results -> /search', async ({ page, isMobile }) => {
     await page.goto("/")
     const input = visible(page.getByPlaceholder(/Search series/))

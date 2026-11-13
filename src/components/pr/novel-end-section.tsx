@@ -7,6 +7,7 @@ import { HeartIcon } from "@/components/animate-ui/icons/heart"
 import { Share2Icon } from "@/components/animate-ui/icons/share-2"
 import { useTranslations } from "@/i18n/translations"
 import { useReport } from "@/components/pr/report-dialog"
+import { TopComments } from "@/components/pr/top-comments"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import type { NovelChapter, Series } from "@/data"
@@ -28,7 +29,8 @@ const outline = "border-border bg-background text-reader-text hover:bg-accent ho
 
 /**
  * End of a chapter (spec §4, prototype Novel end section): Like, Bookmark, Share, the creator's note,
- * Previous / Next (with the price when the next chapter is Fast Pass), all chapters and "Report this chapter".
+ * Previous / Next (with the price when the next chapter is Fast Pass), all chapters, "Report this chapter" and the
+ * top comments (same as the comic reader: composer, top 3 threads, "See all"; F-novel-comments, replaces V2-39).
  */
 export function NovelEndSection({
   series,
@@ -39,6 +41,7 @@ export function NovelEndSection({
   onPrev,
   onNext,
   finishRef,
+  commentsEnabled = true,
 }: {
   series: Series
   chapter: NovelChapter
@@ -49,6 +52,8 @@ export function NovelEndSection({
   onNext: () => void
   /** Marks the chapter finished once the end card scrolls into view. */
   finishRef?: (el: HTMLElement | null) => void
+  /** Real API: false when the creator turned comments off (no comment box) */
+  commentsEnabled?: boolean
 }) {
   const t = useTranslations("reader")
   const user = useUser()
@@ -139,6 +144,14 @@ export function NovelEndSection({
         >
           {t("reportChapter")}
         </button>
+
+        <TopComments
+          series={series}
+          episode={chapter}
+          closed={!commentsEnabled}
+          className={cn(card, "w-full self-stretch p-6 max-md:p-[18px]")}
+          inputClassName="focus-visible:ring-offset-reader-page"
+        />
       </section>
     </Effect>
   )

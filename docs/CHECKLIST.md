@@ -165,6 +165,7 @@ docs/BACKEND_CHECKLIST.md, "V2.1 API additions" (V21-01 … V21-07).
   `phumreader:rl:signup:*` keys in Redis.
 - [x] T46 No coin balance for logged-out visitors: header chip, series Fast Pass card and Coins page (owner decision
   2026-11-11; the design shows them). V2-66
+- [x] F-novel-comments Comments at the end of a novel chapter (2026-11-13). V2-39, V2-93
 - [x] F-quality Frontend quality pass (2026-11-13), no change in behaviour: dead code removed (`reader-discover.tsx`,
   `SkeletonText`, `SkeletonForm`, three store hooks, four selectors, `formatDateTime`, `stripMarks`, the `queryKeys`
   aggregator); one copy each of the eight demo-api view-model types, `getDemoFlag` (`src/lib/demo-flags.ts`),
@@ -285,8 +286,8 @@ docs/BACKEND_CHECKLIST.md, "V2.1 API additions" (V21-01 … V21-07).
   episode; data saver asks for half-width images; top comments are the reader's own new comments then the 3 most liked;
   the episode list and settings popovers stay dark on the light background.
 - V2-39 (F09) **Novel reader**: until its Aa popover is used (`novelCustom`), size and theme follow Settings; the lock
-  card also offers "Unlock all" when 2 or more chapters are locked; there is no comments block (spec §4 and the
-  prototype end a chapter without it). Reading time comes from the text.
+  card also offers "Unlock all" when 2 or more chapters are locked; the chapter ends with a comments card (V2-93,
+  which replaces the earlier "no comments block"). Reading time comes from the text.
 - V2-40 (F14) **Search**: the demo searches the whole catalogue; the real API returns at most 20 results, which the page
   tabs, filters and sorts. Creators come from the results; Follow uses the store's `follows` in both modes. Only Enter,
   a recent / trending / genre click or arriving with `?q=` saves a recent search. "Did you mean" = closest title by edit
@@ -734,3 +735,12 @@ docs/BACKEND_CHECKLIST.md, "V2.1 API additions" (V21-01 … V21-07).
   - `embla-carousel-react` is only used by `src/components/ui/carousel.tsx`, which nothing imports.
   - Possible performance tasks later: per-route next-intl message namespaces, and keeping `demo-data.json` out of the
     real-mode bundles.
+- V2-93 (F-novel-comments) **Comments at the end of a novel chapter**: not in the design pack (spec §4, the Novel
+  prototype and screens 04-* show no comments); added on the owner's request. It replaces the "no comments block" part
+  of V2-39. A chapter now ends with the comic reader's top-comments card (shared component
+  `src/components/pr/top-comments.tsx`): same thread `slug:n`, the reader's own new comments first, then the 3 most
+  liked (V2-38), Report and Block, and "See all" to `/series/[slug]/comments?ep=n`. It comes last, after "Report this
+  chapter", in the reader theme's card colours (`text-reader-text`; no new colours). The header count uses the comic
+  estimate (`episodeCommentCount`, 2.55 % of the likes). In real mode the comments switch (`commentsEnabled`) applies
+  as on the comic end card. The reading-progress bar now reaches 100 % at the bottom of the comments, while
+  "finished" still triggers when the end card scrolls into view.

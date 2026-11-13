@@ -147,7 +147,15 @@ export function NovelReader({ slug, n }: { slug: string; n: number }) {
   const { series, chapter, total } = query.data
   return (
     <NovelRoot settings={settings}>
-      <NovelReaderBody key={`${slug}:${n}`} series={series} chapter={chapter} total={total} font={settings.font} refetch={query.refetch} />
+      <NovelReaderBody
+        key={`${slug}:${n}`}
+        series={series}
+        chapter={chapter}
+        total={total}
+        font={settings.font}
+        commentsEnabled={query.data.commentsEnabled !== false}
+        refetch={query.refetch}
+      />
     </NovelRoot>
   )
 }
@@ -171,6 +179,8 @@ type BodyProps = {
   lockedByApi?: boolean
   /** Real API: the price the 402 named for this chapter */
   lockPrice?: number
+  /** Real API: false when the chapter's or the series' comments switch is off (no comment box) */
+  commentsEnabled?: boolean
   refetch: () => unknown
 }
 
@@ -187,7 +197,7 @@ type Nav = ReturnType<typeof useReaderNav>
 const h1 = "mt-1.5 text-[30px] leading-[38px] font-bold tracking-[-0.02em] max-md:text-2xl max-md:leading-[30px]"
 
 /** Mounted once the store and the chapter list are known (the saved place is read on mount). */
-function NovelReaderView({ series, chapter, total, font, lockPrice, nav }: BodyProps & { nav: Nav }) {
+function NovelReaderView({ series, chapter, total, font, lockPrice, commentsEnabled = true, nav }: BodyProps & { nav: Nav }) {
   const t = useTranslations("reader")
   const loc = useLocalize()
   const user = useUser()
@@ -285,6 +295,7 @@ function NovelReaderView({ series, chapter, total, font, lockPrice, nav }: BodyP
               nextLocked={!!nextEpisode && isLocked(nextEpisode)}
               onPrev={() => go(n - 1)}
               onNext={() => go(n + 1)}
+              commentsEnabled={commentsEnabled}
             />
           </>
         )}

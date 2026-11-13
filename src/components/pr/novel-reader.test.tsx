@@ -7,9 +7,10 @@ import { renderUi, screen } from "@/test/render"
 import { API, apiError, http, HttpResponse, server } from "@/test/server"
 
 vi.mock("@/components/pr/novel-end-section", () => ({
-  NovelEndSection: ({ nextLocked, onNext }: { nextLocked: boolean; onNext: () => void }) => (
+  NovelEndSection: ({ nextLocked, onNext, commentsEnabled = true }: { nextLocked: boolean; onNext: () => void; commentsEnabled?: boolean }) => (
     <section aria-label="End of chapter">
       <button onClick={onNext}>{nextLocked ? "Unlock next chapter" : "Next chapter link"}</button>
+      <span>{commentsEnabled ? "Comment box" : "Comments off"}</span>
     </section>
   ),
 }))
@@ -149,6 +150,17 @@ describe("NovelReader", () => {
     await user.keyboard("{ArrowRight}")
     expect(await screen.findByRole("dialog", { name: "Unlock chapter 3" })).toBeInTheDocument()
     expect(router.push).not.toHaveBeenCalled()
+  })
+
+  it("hands the end of the chapter the API's commentsEnabled (chapter and series switches)", async () => {
+    server.use(list(), chapterAt(2, { ...chapterBody(2), commentsEnabled: false }))
+    renderUi(<NovelReader slug={SLUG} n={2} />)
+    expect(await screen.findByText("Comments off")).toBeInTheDocument()
+  })
+
+  it("keeps the comment box when comments are on", async () => {
+    await open(2)
+    expect(screen.getByText("Comment box")).toBeInTheDocument()
   })
 
   it("shows an error with Retry and a way back", async () => {
