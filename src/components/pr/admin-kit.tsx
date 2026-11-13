@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import type { Flag, Priority, QueueReport } from "@/lib/admin"
 import { ApiError } from "@/lib/api/client"
+import { adminKeys } from "@/lib/api/keys"
 import { useLocalize } from "@/lib/localize"
 import { formatDate, formatShortDate, formatTime, ictDate } from "@/lib/format"
 import { useAppStore, type AdminDecision } from "@/lib/store"
@@ -80,12 +81,12 @@ export function AdminDecisions({ children }: { children: React.ReactNode }) {
   const run = useCallback((p: Pending) => {
     clearTimeout(p.timer)
     p.commit().then(
-      () => helpers.current.qc.invalidateQueries({ queryKey: ["admin"] }),
+      () => helpers.current.qc.invalidateQueries({ queryKey: adminKeys.all }),
       (err: unknown) => {
         p.revert()
         toast.error(helpers.current.errorText(err))
         // 409: another admin decided first (not_in_review, report_closed): reload the queues so the item leaves them.
-        if (err instanceof ApiError && err.status === 409) void helpers.current.qc.invalidateQueries({ queryKey: ["admin"] })
+        if (err instanceof ApiError && err.status === 409) void helpers.current.qc.invalidateQueries({ queryKey: adminKeys.all })
       }
     )
   }, [])

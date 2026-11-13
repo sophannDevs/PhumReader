@@ -10,6 +10,7 @@ import { ParticleBurst, useBurstOnPress } from "@/components/pr/particle-burst"
 import { genres, type Series } from "@/data"
 import * as real from "@/lib/api/catalog"
 import { DEMO_MODE } from "@/lib/api/config"
+import { catalogKeys } from "@/lib/api/keys"
 import * as demo from "@/lib/demo-api"
 import { parseCount } from "@/lib/format"
 import { useAskToLogin, useSubscribe } from "@/lib/me"
@@ -145,7 +146,7 @@ export function useCatalog() {
   const flag = useDemoFlag()
   const fetchGenre = DEMO_MODE ? demo.fetchGenre : real.fetchGenre
   const results = useQueries({
-    queries: genres().map((g) => ({ queryKey: ["genre", g, flag], queryFn: () => fetchGenre(g) })),
+    queries: genres().map((g) => ({ queryKey: catalogKeys.genre(g, flag), queryFn: () => fetchGenre(g) })),
   })
   const seen = new Set<string>()
   const series = results

@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query"
 import { coinPacks, type PaymentMethodId } from "@/data"
 import { ApiError } from "@/lib/api/client"
 import { DEMO_MODE } from "@/lib/api/config"
+import { walletKeys } from "@/lib/api/keys"
 import { withDemo } from "@/lib/demo-api"
 import { useAccountEmail } from "@/lib/me"
 import { useCoinsPage, useDemoFlag } from "@/lib/queries"
@@ -154,7 +155,7 @@ export function useReceipt(id: string): ReceiptState {
   const purchases = useAppStore((s) => s.purchases)
 
   const demo = useQuery({
-    queryKey: ["receipt", id, flag],
+    queryKey: walletKeys.receiptDemo(id, flag),
     queryFn: () =>
       withDemo(
         () => ({ found: true, refunded: new URLSearchParams(window.location.search).get("status") === "refunded" }),

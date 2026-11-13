@@ -10,6 +10,7 @@ import { SmallSwitch } from "@/components/pr/settings-ui"
 import { Chip } from "@/components/pr/v2-primitives"
 import type { Weekday } from "@/data"
 import { errorCode, fieldErrors, retryAfterSeconds } from "@/lib/api/errors"
+import { UploadError } from "@/lib/api/uploads"
 import { REVIEW_ITEMS, WEEK, type ReviewItem } from "@/lib/creator-studio"
 import { formatShortDate, formatTime, weekdayOf } from "@/lib/format"
 import { useWaitText } from "@/lib/use-wait-text"
@@ -272,6 +273,22 @@ export function useFailToast() {
     const wait = retryAfterSeconds(error)
     if (wait !== undefined) toast.error(tauth("tooManyTitle"), { description: waitText(wait), duration: 5000 })
     else toast.error(ts("errorTitle"), { description: ts("errorDescription"), duration: 5000 })
+  }
+}
+
+/**
+ * Why a cover upload failed (Create series, Manage series): the width rule for a too-small image, the message for the
+ * error's code, or "upload failed" (also for an error that isn't an UploadError).
+ */
+export function useCoverUploadErrorText() {
+  const tf = useTranslations("seriesForm")
+  return (e: unknown): string => {
+    const err = e instanceof UploadError ? e : new UploadError("upload_failed")
+    return err.code === "image_too_small"
+      ? tf("uploadTooSmall", { width: err.detail.width ?? 0, min: err.detail.min ?? 0 })
+      : tf.has(`uploadError_${err.code}` as never)
+        ? tf(`uploadError_${err.code}` as never)
+        : tf("uploadError_upload_failed")
   }
 }
 

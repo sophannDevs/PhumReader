@@ -28,6 +28,7 @@ import { useLocalize } from "@/lib/localize"
 import { useAskToLogin, useEpisodeReactions, useSubscribe } from "@/lib/me"
 import { seriesHref } from "@/lib/routes"
 import { useAppStore, useUser } from "@/lib/store"
+import { useCopyLink } from "@/lib/use-copy-link"
 import { cn } from "@/lib/utils"
 import { Num } from "@/i18n/num"
 import { Effect } from "@animate-ui/react/primitives/effects/effect"
@@ -74,7 +75,6 @@ export function ComicEndSection({
   commentsEnabled?: boolean
 }) {
   const t = useTranslations("reader")
-  const tt = useTranslations("toasts")
   const loc = useLocalize()
   const user = useUser()
   const askToLogin = useAskToLogin()
@@ -84,14 +84,7 @@ export function ComicEndSection({
   const [likeBurst, armLike] = useBurstOnPress(liked)
   const [subBurst, armSub] = useBurstOnPress(subscribed)
 
-  async function share() {
-    try {
-      await navigator.clipboard.writeText(window.location.href);
-      toast.success(tt("linkCopied"));
-    } catch {
-      toast.error(tt("copyFailed"));
-    }
-  }
+  const share = useCopyLink()
 
   function like() {
     const liking = !liked

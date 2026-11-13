@@ -1,13 +1,12 @@
 import { BACKEND_URL, DEMO_MODE } from "@/lib/api/config"
 import { toEpisode, toRanking, toSeries, toSeriesDetail, type SeriesDetail } from "@/lib/api/catalog"
 import type { HeroSlideView, RankingEntry } from "@/data/selectors"
-import type { Episode, Genre, Series, Weekday } from "@/data/types"
+import { WEEKDAYS, type Episode, type Genre, type Series, type Weekday } from "@/data/types"
 import type { HomeData } from "@/lib/api/types"
 import type { Schemas } from "@/lib/api/client"
 import { genreSlug } from "@/lib/routes"
 
 type Card = Schemas["SeriesCard"]
-const WEEKDAYS: Weekday[] = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 
 /**
  * Server-side public data fetching with Next.js revalidation tags (P5-01).

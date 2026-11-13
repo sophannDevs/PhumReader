@@ -4,7 +4,7 @@ import { keepPreviousData, useQuery } from "@tanstack/react-query"
 import { useSyncExternalStore } from "react"
 import type { Genre } from "@/data"
 import { usePathname } from "@/i18n/navigation"
-import { catalogKeys, commentsKeys, creatorKeys, walletKeys } from "@/lib/api/keys"
+import { catalogKeys, commentsKeys, creatorKeys, meKeys, walletKeys } from "@/lib/api/keys"
 import * as real from "@/lib/api/catalog"
 import * as realAccount from "@/lib/api/account"
 import * as realCoins from "@/lib/api/coins"
@@ -121,7 +121,7 @@ export const useCoinsPage = () => {
     enabled: DEMO_MODE,
   })
   const realQuery = useQuery({
-    queryKey: ["coins-page", "real", email ?? ""],
+    queryKey: walletKeys.coinsPageReal(email),
     queryFn: () => realCoins.fetchCoinsPage(!!email),
     enabled: !DEMO_MODE && hydrated,
   })
@@ -131,7 +131,7 @@ export const useCoinsPage = () => {
 export const useLibrary = () => {
   const flag = useDemoFlag()
   return useQuery({
-    queryKey: ["library", flag],
+    queryKey: meKeys.library(flag),
     queryFn: () => getDemo().then((m) => m.fetchLibrary()),
     enabled: DEMO_MODE,
   })
@@ -149,7 +149,7 @@ export const useCreator = () => {
     enabled: DEMO_MODE,
   })
   const realQuery = useQuery({
-    queryKey: ["creator", "real", email ?? ""],
+    queryKey: creatorKeys.dashboardReal(email),
     queryFn: realAccount.fetchCreator,
     enabled: !DEMO_MODE && !!email,
   })

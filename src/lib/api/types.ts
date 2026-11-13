@@ -22,7 +22,7 @@ import type {
 export type HomeData = {
   hero: HeroSlideView[]
   continueReading: ContinueView[]
-  /** Daily updates grid per weekday (6 each). */
+  /** Every series that updates on each weekday (the Home day tabs show the counts and "Show all N"). */
   daily: Record<Weekday, Series[]>
   rankings: { comics: RankingEntry[]; novels: RankingEntry[] }
   genres: Genre[]
@@ -95,6 +95,7 @@ export type ChapterData = {
 export type CoinsPageData = {
   packs: CoinPack[]
   methods: PaymentMethod[]
+  /** Demo: the two demo rows; the store adds new purchases on top (T18). */
   history: Purchase[]
   faq: FaqItem[]
   firstPurchaseBonus: string

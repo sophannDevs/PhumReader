@@ -5,15 +5,14 @@ import { CircleCheckIcon as CheckCircle2Icon } from "@/components/animate-ui/ico
 import { ChevronRightIcon } from "@/components/animate-ui/icons/chevron-right"
 import { useLocale } from "next-intl"
 import { useTranslations } from "@/i18n/translations"
+import { LangPills } from "@/components/layout/language-switch"
 import { ErrorArt, type ErrorArtKind } from "@/components/pr/error-art"
 import { SeriesCard } from "@/components/pr/series-card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import type { Series } from "@/data"
-import { Link, usePathname, useRouter } from "@/i18n/navigation"
-import { routing, type Locale } from "@/i18n/routing"
-import { useAppStore } from "@/lib/store"
+import { Link } from "@/i18n/navigation"
 import { cn } from "@/lib/utils"
 import { Effect } from "@animate-ui/react/primitives/effects/effect"
 
@@ -33,8 +32,6 @@ const BADGE: Record<ErrorPageKind, "secondary" | "up" | "warn" | "brand"> = {
   comingSoon: "brand",
 }
 
-const LANG_LABEL: Record<Locale, string> = { en: "English", km: "ខ្មែរ" }
-
 /** `.er-actions`: wrapping row of large buttons that share the width on phones. */
 export const errorActions = "flex flex-wrap gap-2 pt-1 max-md:[&>*]:flex-auto"
 
@@ -45,46 +42,6 @@ export const errorLinkButton =
 /** Help line links ("Help center", "Service status"): semibold, in the line's colour. */
 const helpLink =
   "rounded-sm font-semibold outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-
-/**
- * `.er-langs`: switches the site language and stays on the address (like the header language button). The
- * `data-locale-switch` attribute lets the offline page's inline script do the same when the page was served by the
- * service worker without its JavaScript.
- */
-export function ErrorLangToggle() {
-  const t = useTranslations("errors")
-  const locale = useLocale() as Locale
-  const pathname = usePathname()
-  const router = useRouter()
-
-  function switchTo(next: Locale) {
-    if (next === locale) return
-    useAppStore.getState().setLang(next)
-    router.replace(`${pathname}${window.location.search}`, { locale: next })
-  }
-
-  return (
-    <div role="group" aria-label={t("language")} className="inline-flex shrink-0 gap-0.5 rounded-full bg-muted p-[3px]">
-      {routing.locales.map((l) => (
-        <button
-          key={l}
-          type="button"
-          lang={l}
-          data-locale-switch={l}
-          aria-pressed={l === locale}
-          onClick={() => switchTo(l)}
-          className={cn(
-            "h-7 rounded-full px-3 text-xs font-semibold outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-            l === "km" && "font-khmer",
-            l === locale ? "bg-background text-foreground shadow-[0_1px_3px_rgba(9,9,11,0.1)]" : "text-muted-foreground hover:text-foreground"
-          )}
-        >
-          {LANG_LABEL[l]}
-        </button>
-      ))}
-    </div>
-  )
-}
 
 export function ErrorHero({
   kind,
@@ -120,7 +77,8 @@ export function ErrorHero({
                   <Badge variant={BADGE[kind]}>
                     {t(`codes.${kind}`)}
                   </Badge>
-                  <ErrorLangToggle />
+                  {/* `.er-langs`; data-locale-switch keeps it working on the offline page without JavaScript. */}
+                  <LangPills label={t("language")} localeSwitchAttr />
                 </div>
                 <h1
                   className={cn(

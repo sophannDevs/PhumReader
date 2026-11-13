@@ -21,11 +21,11 @@ import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Tabs, TabsContent, TabsCount, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { episodesFor, fastPassPrice, type ContinueView, type Series, type Weekday } from "@/data"
+import { episodesFor, fastPassPrice, type ContinueView, type Series } from "@/data"
 import { Link, usePathname } from "@/i18n/navigation"
 import { DEMO_MODE } from "@/lib/api/config"
 import * as real from "@/lib/api/me"
-import { addDays, daysFromToday, formatShortDate, ictDate, today, weekdayOf } from "@/lib/format"
+import { SUN_FIRST_WEEKDAYS, addDays, daysFromToday, formatShortDate, ictDate, today, weekdayOf } from "@/lib/format"
 import { useLocalize } from "@/lib/localize"
 import { meKeys, useAccountEmail, useFailed, useSubscriptions } from "@/lib/me"
 import { useDemoFlag, useLibrary } from "@/lib/queries"
@@ -53,7 +53,6 @@ type UnlockedItem = { series: Series; numbers: number[]; coins?: number }
 const NONE_LIST: string[] = []
 const NONE_MAP: Record<string, number[]> = {}
 const NONE_READ: Record<string, number> = {}
-const WEEK: Weekday[] = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
 /** Days ago of the demo history rows, in order (prototype: Today, Today, Yesterday, 2 days ago, …). */
 const DEMO_DAYS_AGO = [0, 0, 1, 2, 3, 7]
 
@@ -70,7 +69,7 @@ function newCount(s: Series): number {
 /** Days since the series' latest update day (0 = today), for "Recently updated". */
 function daysSinceUpdate(s: Series): number {
   if (!s.updateDays.length) return 7
-  return Math.min(...s.updateDays.map((d) => (WEEK.indexOf(weekdayOf(today)) - WEEK.indexOf(d) + 7) % 7))
+  return Math.min(...s.updateDays.map((d) => (SUN_FIRST_WEEKDAYS.indexOf(weekdayOf(today)) - SUN_FIRST_WEEKDAYS.indexOf(d) + 7) % 7))
 }
 
 /** "Nov 26, 2026" (episode display date) → "2026-11-26", or undefined. */

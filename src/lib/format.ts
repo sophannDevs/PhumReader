@@ -1,5 +1,6 @@
 import { demoData } from "@/data/demo"
 import type { Weekday } from "@/data/types"
+import { toKhmerDigits } from "@/i18n/local-digits"
 
 /** The app's pinned "today" (ISO date), not the real clock: see assumption 2. */
 export const today: string = demoData.today
@@ -17,7 +18,7 @@ export function addDays(iso: string, days: number): string {
 }
 
 const KHMER_MONTHS = ["មករា", "កុម្ភៈ", "មីនា", "មេសា", "ឧសភា", "មិថុនា", "កក្កដា", "សីហា", "កញ្ញា", "តុលា", "វិច្ឆិកា", "ធ្នូ"]
-const khmerDigits = (n: number) => String(n).replace(/\d/g, (c) => "០១២៣៤៥៦៧៨៩"[Number(c)])
+const khmerDigits = (n: number) => toKhmerDigits(String(n))
 
 /** "2026-11-05" -> "Nov 5, 2026" (en) or the Khmer equivalent. */
 export function formatDate(iso: string, locale: string = "en"): string {
@@ -34,12 +35,13 @@ export function formatDate(iso: string, locale: string = "en"): string {
   }).format(new Date(toUtc(iso)))
 }
 
-const WEEKDAYS: Weekday[] = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
-export const weekdayOf = (iso: string): Weekday => WEEKDAYS[new Date(toUtc(iso)).getUTCDay()]
+/** The week Sun → Sat, so the index is `Date.getUTCDay()` (the Mon-first display order is WEEKDAYS in @/data). */
+export const SUN_FIRST_WEEKDAYS: readonly Weekday[] = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
+export const weekdayOf = (iso: string): Weekday => SUN_FIRST_WEEKDAYS[new Date(toUtc(iso)).getUTCDay()]
 
 /** The real weekday in Cambodia (ICT, UTC+7), whatever the device's time zone is. */
 export const realWeekdayIct = (now: number = Date.now()): Weekday =>
-  WEEKDAYS[new Date(now + 7 * 3_600_000).getUTCDay()]
+  SUN_FIRST_WEEKDAYS[new Date(now + 7 * 3_600_000).getUTCDay()]
 
 /** "1.8M" -> 1_800_000, "871K" -> 871_000, "52" -> 52. */
 export function parseCount(text: string): number {
@@ -78,11 +80,9 @@ export function firstName(name: string): string {
 const ICT_OFFSET_MS = 7 * 3_600_000
 const EN_MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 
-export { khmerDigits }
-
 /** Digits in the reader's language: Khmer numerals for km, unchanged for en. */
 export const localDigits = (value: number | string, locale: string) =>
-  locale === "km" ? String(value).replace(/\d/g, (c) => "០១២៣៤៥៦៧៨៩"[Number(c)]) : String(value)
+  locale === "km" ? toKhmerDigits(String(value)) : String(value)
 
 /** Parts of an epoch time in ICT. */
 function ictParts(epochMs: number) {
@@ -103,11 +103,6 @@ export function formatTime(epochMs: number, locale: string = "en"): string {
   const mm = String(min).padStart(2, "0")
   if (locale === "km") return `${localDigits(h12, "km")}:${localDigits(mm, "km")} ${h < 12 ? "ព្រឹក" : "ល្ងាច"}`
   return `${h12}:${mm} ${h < 12 ? "AM" : "PM"}`
-}
-
-/** "Oct 28, 2026, 7:05 AM" (en) or the Khmer equivalent, in ICT. */
-export function formatDateTime(epochMs: number, locale: string = "en"): string {
-  return `${formatDate(ictDate(epochMs), locale)}${locale === "km" ? " " : ", "}${formatTime(epochMs, locale)}`
 }
 
 /** "Nov 26" (en) or "២៦ វិច្ឆិកា" (km): an ISO date without the year. */

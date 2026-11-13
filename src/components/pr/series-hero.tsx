@@ -7,7 +7,6 @@ import { ShareIcon } from "@/components/animate-ui/icons/share"
 import Image from "next/image"
 import { useTranslations } from "@/i18n/translations"
 import { useEffect, useState } from "react"
-import { toast } from "sonner"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { ParticleBurst, useBurstOnPress } from "@/components/pr/particle-burst"
@@ -18,6 +17,7 @@ import { creatorNameByHandle } from "@/lib/creator-profiles"
 import { creatorHandle as creatorHandle_, creatorHref, genreHref, readerHref } from "@/lib/routes"
 import { useSeriesViewer, useSubscribe } from "@/lib/me"
 import { useLocalize } from "@/lib/localize"
+import { useCopyLink } from "@/lib/use-copy-link"
 import { cn } from "@/lib/utils"
 import { Num } from "@/i18n/num"
 
@@ -71,7 +71,6 @@ export function SeriesHero({
 }) {
   const t = useTranslations("series")
   const loc = useLocalize()
-  const tt = useTranslations("toasts")
   const { subscribed, toggle: toggleSubscribe } = useSubscribe(series)
   const [subBurst, armSub] = useBurstOnPress(subscribed)
   const { episode, continuing } = useContinueTarget(series)
@@ -89,14 +88,7 @@ export function SeriesHero({
     { label: t(novel ? "chapters" : "episodes"), value: String(series.totalEpisodes) },
   ]
 
-  async function share() {
-    try {
-      await navigator.clipboard.writeText(window.location.href)
-      toast.success(tt("linkCopied"))
-    } catch {
-      toast.error(tt("copyFailed"))
-    }
-  }
+  const share = useCopyLink()
 
   return (
     <section className="relative isolate overflow-hidden bg-surface text-surface-foreground">

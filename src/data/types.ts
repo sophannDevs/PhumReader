@@ -19,6 +19,8 @@ export const genreSchema = z.enum([
   "Sci-fi",
 ]);
 export const weekdaySchema = z.enum(["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]);
+/** The week Mon → Sun: the order of the day tabs, filters and chips (Sun-first by `getUTCDay()`: SUN_FIRST_WEEKDAYS in lib/format). */
+export const WEEKDAYS: readonly Weekday[] = weekdaySchema.options;
 /** "hiatus" (On break) comes from the real API only (V21-02); the demo series are ongoing or completed. */
 export const seriesStatusSchema = z.enum(["ongoing", "completed", "hiatus"]);
 export const episodeAccessSchema = z.enum(["free", "fastpass"]);

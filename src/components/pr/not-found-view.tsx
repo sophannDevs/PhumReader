@@ -18,6 +18,7 @@ import { useLocalize } from "@/lib/localize"
 import { parseCount } from "@/lib/format"
 import { useRankings } from "@/lib/queries"
 import { seriesHref } from "@/lib/routes"
+import { editDistance } from "@/lib/utils"
 
 const noSubscribe = () => () => {}
 
@@ -34,21 +35,6 @@ function useTriedAddress(): string {
     },
     () => ""
   )
-}
-
-/** Edit distance (Levenshtein), for "Did you mean". */
-function distance(a: string, b: string): number {
-  const row = Array.from({ length: b.length + 1 }, (_, i) => i)
-  for (let i = 1; i <= a.length; i++) {
-    let prev = row[0]
-    row[0] = i
-    for (let j = 1; j <= b.length; j++) {
-      const cur = row[j]
-      row[j] = Math.min(row[j] + 1, row[j - 1] + 1, prev + (a[i - 1] === b[j - 1] ? 0 : 1))
-      prev = cur
-    }
-  }
-  return row[b.length]
 }
 
 const slugify = (s: string) =>
@@ -79,7 +65,7 @@ function closestSeries(words: string[], pool: Series[]): Series | undefined {
   for (const word of words) {
     const limit = Math.max(2, Math.floor(word.length * 0.35))
     for (const s of pool) {
-      const d = Math.min(distance(word, s.slug), distance(word, slugify(s.title)))
+      const d = Math.min(editDistance(word, s.slug), editDistance(word, slugify(s.title)))
       if (d <= limit && d < bestScore) {
         best = s
         bestScore = d

@@ -29,6 +29,7 @@ import {
   fieldCol,
   fieldRow,
   selectInvalid,
+  useCoverUploadErrorText,
   useFailToast,
   useHourLabel,
 } from "@/components/pr/studio-kit"
@@ -44,7 +45,7 @@ import { demoData, type Genre, type Weekday } from "@/data"
 import { Link } from "@/i18n/navigation"
 import { DEMO_MODE } from "@/lib/api/config"
 import * as api from "@/lib/api/creator"
-import { UploadError, uploadImage } from "@/lib/api/uploads"
+import { uploadImage } from "@/lib/api/uploads"
 import { creatorKeys, useMySeries, useSeriesEdit } from "@/lib/creator"
 import {
   AGES,
@@ -256,6 +257,7 @@ function Wizard({ workId, seed }: { workId: string | null; seed: Partial<Draft> 
   const qc = useQueryClient()
   const fail = useFailToast()
   const hourLabel = useHourLabel()
+  const coverErrorText = useCoverUploadErrorText()
   const studioName = useStudioName()
   const myWorks = useAppStore((s) => s.myWorks)
   const realSeries = useMySeries({ q: "", visibility: "" }, !DEMO_MODE)
@@ -355,14 +357,7 @@ function Wizard({ workId, seed }: { workId: string | null; seed: Partial<Draft> 
       const image = await uploadImage(file, "COVER", { onProgress: setCoverProgress })
       update({ cover: image.url ?? URL.createObjectURL(file), coverUploadId: image.id })
     } catch (e) {
-      const err = e instanceof UploadError ? e : new UploadError("upload_failed")
-      setCoverError(
-        err.code === "image_too_small"
-          ? t("uploadTooSmall", { width: err.detail.width ?? 0, min: err.detail.min ?? 0 })
-          : t.has(`uploadError_${err.code}` as never)
-            ? t(`uploadError_${err.code}` as never)
-            : t("uploadError_upload_failed")
-      )
+      setCoverError(coverErrorText(e))
     } finally {
       setCoverProgress(null)
     }

@@ -1,4 +1,4 @@
-import { addDays, formatCount, formatDate, parseCount, today, weekdayOf } from "@/lib/format"
+import { addDays, formatCount, formatDate, parseCount, today } from "@/lib/format"
 import { demoData } from "./demo"
 import type {
   CoinPack,
@@ -27,14 +27,6 @@ export const seriesByGenre = (genre: Genre): Series[] => demoData.series.filter(
 export const seriesByDay = (day: Weekday): Series[] => demoData.series.filter((s) => s.updateDays.includes(day))
 export const novels = (): Series[] => demoData.series.filter((s) => s.type === "novel")
 export const genres = (): Genre[] => demoData.genres
-
-/** Daily updates grid: that day's series, topped up with UP series when fewer than `count`. */
-export function dailyUpdates(day: Weekday, count = 6): Series[] {
-  const base = seriesByDay(day)
-  if (base.length >= count) return base.slice(0, count)
-  const fill = demoData.series.filter((s) => s.badges.up && !base.includes(s))
-  return [...base, ...fill].slice(0, count)
-}
 
 /** Up to `count` other series in the same genre (data order). */
 export const relatedSeries = (series: Series, count = 4): Series[] =>
@@ -149,9 +141,6 @@ export function episodesFor(slug: string): Episode[] {
 export const episode = (slug: string, n: number): Episode | undefined =>
   episodesFor(slug).find((e) => e.n === n)
 
-/** Fast Pass episodes carry their free release date in `date`. */
-export const freeOnDate = (e: Episode): string => e.date
-
 // ---------- readers ----------
 export const comicPanels = (): Panel[] => demoData.comicPanels
 
@@ -194,9 +183,6 @@ export function derivedStats(series: Series): { subscribers: string; comments: s
   return { subscribers: formatCount(likes * 0.04683), comments: formatCount(likes * 0.00133) }
 }
 
-/** Day of the week "today" falls on (Thursday for the pinned date). */
-export const todayWeekday = (): Weekday => weekdayOf(today)
-
 /** Fast Pass price in coins (the demo's; the real API's episodes carry their own, see `episodePrice`). */
 export const fastPassPrice = (): number => demoData.fastPass.price
 
@@ -207,7 +193,4 @@ export const episodePrice = (e: Pick<Episode, "price"> | null | undefined): numb
 export const episodesCost = (list: readonly Pick<Episode, "price">[]): number => list.reduce((sum, e) => sum + episodePrice(e), 0)
 
 /** Not in the data: an episode thread is about 2.55% of the episode's likes ("47K" likes -> "1.2K" comments). */
-/** Same ratio as episodes, for a novel chapter. */
-export const chapterCommentCount = (c: { likes: string }): string => formatCount(parseCount(c.likes) * 0.0255)
-
 export const episodeCommentCount = (e: Episode): string => formatCount(parseCount(e.likes) * 0.0255)

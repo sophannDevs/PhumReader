@@ -165,6 +165,13 @@ docs/BACKEND_CHECKLIST.md, "V2.1 API additions" (V21-01 … V21-07).
   `phumreader:rl:signup:*` keys in Redis.
 - [x] T46 No coin balance for logged-out visitors: header chip, series Fast Pass card and Coins page (owner decision
   2026-11-11; the design shows them). V2-66
+- [x] F-quality Frontend quality pass (2026-11-13), no change in behaviour: dead code removed (`reader-discover.tsx`,
+  `SkeletonText`, `SkeletonForm`, three store hooks, four selectors, `formatDateTime`, `stripMarks`, the `queryKeys`
+  aggregator); one copy each of the eight demo-api view-model types, `getDemoFlag` (`src/lib/demo-flags.ts`),
+  `readSize`, `editDistance`, the weekday lists and `FAST_PASS_AHEAD`; shared `LangPills` / `useSwitchLocale`,
+  `useCopyLink`, `useCoverUploadErrorText`; inline query keys moved into `src/lib/api/keys.ts` (same arrays, only
+  `src/lib/me.ts:204` stays inline). Lint, typecheck, 525 Vitest tests, build and the 64 demo Playwright tests pass;
+  `e2e/real.spec.ts` was not run (no backend on :8080). Visible differences: V2-89, V2-90. Open gaps: V2-92.
 
 ## Assumptions (V2.1)
 (V1 assumptions 1–110 are in docs/CHECKLIST-v1.md. Anything guessed for V2.1 goes here, with the task ID.)
@@ -708,3 +715,22 @@ docs/BACKEND_CHECKLIST.md, "V2.1 API additions" (V21-01 … V21-07).
   - The error illustrations (`error-art.tsx`, `LockedBookArt`) are now drawn with `--art-*` variables (light values equal the old hex)
     inside a `bg-card` frame, so they follow the theme. The dark art colours are my own choice: the design pack has no dark
     version of them. `global-error` stays light.
+- V2-89 (F-quality) **Manage series tabs**: the tab bar now uses the shared `LineTabs` (`idBase` "mg"). Two visible
+  differences: the Episodes tab count shows Khmer digits in km (through `<Num>`, as V2-67 says for tab counts), and the
+  tab's focus ring no longer has the 2 px rounded top corners.
+- V2-90 (F-quality) **Series unavailable language pills**: this page has no prototype. Its English / ខ្មែរ pills are
+  now `LangPills` (`src/components/layout/language-switch.tsx`, shared with the error pages and the auth card), which
+  follow the Error page's `.er-langs` pattern: Khmer font on ខ្មែរ, hover colour, focus-ring offset and `shrink-0`.
+  `useSwitchLocale()` in the same file does the switch.
+- V2-91 (F-quality) **Unused message keys**: `reader.trendingNow` and `reader.mostPopular` (en + km, in
+  `src/messages/en/reader.json` and `src/messages/km/reader.json`) have no user now. Their only user,
+  `reader-discover.tsx`, was already dead code and is deleted. The keys are left in place.
+- V2-92 (F-quality) **Open after the quality pass** (found, not done; waiting for the owner's decision):
+  - `Segmented` and `PillGroup` are still two components, and the radiogroups have no arrow-key handling.
+  - Latin digits in km on the earnings chart and table, the creator profile stats, the creator filter counts and the
+    upload panel index. Converting them conflicts with ANIM-3 (the count-up prints Latin digits only).
+  - No caller: `revalidateCatalogTags` (`src/lib/actions/revalidate.ts`) and five fetchers in `src/lib/api/server.ts`.
+  - `MAX_EPISODE_BYTES` (`src/lib/use-panel-uploads.ts`) is not checked in the browser.
+  - `embla-carousel-react` is only used by `src/components/ui/carousel.tsx`, which nothing imports.
+  - Possible performance tasks later: per-route next-intl message namespaces, and keeping `demo-data.json` out of the
+    real-mode bundles.

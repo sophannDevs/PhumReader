@@ -21,7 +21,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { ParticleBurst, useBurstOnPress } from "@/components/pr/particle-burst"
 import { Skeleton } from "@/components/ui/skeleton"
-import { genres, type Genre, type Series, type Weekday } from "@/data"
+import { WEEKDAYS, genres, type Genre, type Series, type Weekday } from "@/data"
 import { Link } from "@/i18n/navigation"
 import { DEMO_MODE } from "@/lib/api/config"
 import { fetchCreatorProfile, type CreatorProfile } from "@/lib/api/creators"
@@ -33,13 +33,12 @@ import { useAccountEmail, useAskToLogin, useFailed, useFollowedCreators } from "
 import { useSearchSeries } from "@/lib/queries"
 import { creatorHandle, creatorHref, seriesHref } from "@/lib/routes"
 import { useAppStore, useHydrated, useUser } from "@/lib/store"
-import { cn } from "@/lib/utils"
+import { cn, editDistance } from "@/lib/utils"
 import { Num } from "@/i18n/num"
 import { Effect } from "@animate-ui/react/primitives/effects/effect"
 
 /** Search terms people use (prototype `trending`): demo content, so English in both languages. */
 const TRENDING = ["Glass Compass", "romance", "Mina Sok", "tiny dragon", "fantasy", "Letters to Tuesday", "sci-fi", "Sunday Sword"]
-const DAYS: Weekday[] = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 const PAGE = 6
 /** The demo searches everything; the API returns at most 20. */
 const LIMIT = DEMO_MODE ? 100 : 20
@@ -55,16 +54,6 @@ function score(s: Series, k: string): number {
   if (s.creator.toLowerCase().includes(k)) return 2
   if (s.genre.toLowerCase().includes(k)) return 1
   return 0
-}
-
-/** Edit distance, for "Search “…” instead". */
-function distance(a: string, b: string): number {
-  const d: number[][] = Array.from({ length: a.length + 1 }, (_, i) => [i])
-  for (let j = 1; j <= b.length; j++) d[0][j] = j
-  for (let i = 1; i <= a.length; i++)
-    for (let j = 1; j <= b.length; j++)
-      d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1))
-  return d[a.length][b.length]
 }
 
 /** The text with every case-insensitive match of `k` in a yellow <mark>. */
@@ -459,7 +448,7 @@ function Results({
                 wrapperClassName="md:w-auto md:min-w-[150px]"
               >
                 <option value="all">{t("anyDay")}</option>
-                {DAYS.map((d) => (
+                {WEEKDAYS.map((d) => (
                   <option key={d} value={d}>
                     {t("updatesOn", { day: td(`dayFull.${d}`) })}
                   </option>
@@ -667,7 +656,7 @@ function CreatorItem({ name, series, k, index }: { name: string; series: Series[
       // The follows list, the profile, the series pages' "Follow the creator" and the Library's followed creators.
       void qc.invalidateQueries({ queryKey: meKeys.follows(email ?? "") })
       void qc.invalidateQueries({ queryKey: profileKey })
-      void qc.invalidateQueries({ queryKey: ["viewer", email] })
+      void qc.invalidateQueries({ queryKey: meKeys.viewerAll(email) })
     }
   }
 
@@ -758,7 +747,7 @@ function NoResults({
     let best = ""
     let bd = Infinity
     for (const s of pool) {
-      const d = distance(k, s.title.toLowerCase())
+      const d = editDistance(k, s.title.toLowerCase())
       if (d < bd) {
         bd = d
         best = s.title

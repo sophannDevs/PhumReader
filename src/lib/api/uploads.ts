@@ -24,7 +24,8 @@ export class UploadError extends Error {
   }
 }
 
-function readSize(file: File): Promise<{ width: number; height: number }> {
+/** The image's pixel size, read in the browser; a file that isn't a readable image rejects with corrupt_image. */
+export function readSize(file: File): Promise<{ width: number; height: number }> {
   return new Promise((resolve, reject) => {
     const url = URL.createObjectURL(file)
     const img = new Image()

@@ -7,6 +7,7 @@ import { useTranslations } from "@/i18n/translations"
 import type { CoinPack, PaymentMethod } from "@/data"
 import { DEMO_MODE } from "@/lib/api/config"
 import * as coins from "@/lib/api/coins"
+import { walletKeys } from "@/lib/api/keys"
 import { today } from "@/lib/format"
 import { useAccountEmail } from "@/lib/me"
 import { useAppStore } from "@/lib/store"
@@ -131,7 +132,7 @@ export function useCheckout({
     settled.current = true
     order.current = null
     writePending(null)
-    void qc.invalidateQueries({ queryKey: ["coins-page"] })
+    void qc.invalidateQueries({ queryKey: walletKeys.coinsPageAll })
     if (state.status === "paid") {
       try {
         const wallet = await coins.fetchWallet()

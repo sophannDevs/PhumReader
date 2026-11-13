@@ -168,7 +168,7 @@ export function useCommentThreads(series: Pick<Series, "creator"> | undefined, t
   const likes = useAppStore((s) => s.likes)
   const scope = `threads:${thread}`
   const demoQuery = useQuery({
-    queryKey: ["comment-threads", thread, flag],
+    queryKey: commentsKeys.threadsDemo(thread, flag),
     queryFn: () => fetchCommentThreads(thread),
     enabled: DEMO_MODE,
   })

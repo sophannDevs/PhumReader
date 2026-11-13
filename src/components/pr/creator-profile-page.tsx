@@ -50,6 +50,7 @@ import { useDemoFlag } from "@/lib/queries"
 import { creatorHandle, readerHref } from "@/lib/routes"
 import { unblockUser } from "@/lib/moderation"
 import { isCreator, useAppStore, useHydrated, useUser } from "@/lib/store"
+import { useCopyLink } from "@/lib/use-copy-link"
 import { cn } from "@/lib/utils"
 import { Effect } from "@animate-ui/react/primitives/effects/effect"
 
@@ -157,8 +158,10 @@ function Profile({ handle, baseName, isOwner, api }: { handle: string; baseName:
   const blocked = useAppStore((s) => s.blocked.includes(baseName))
   const [editing, setEditing] = useState(false)
   const [tab, setTab] = useState("series")
+  // Share copies the profile's address without its query ("Profile link copied").
+  const share = useCopyLink({ url: () => `${window.location.origin}${window.location.pathname}`, successKey: "profile.linkCopied" })
   const demoQuery = useQuery({
-    queryKey: ["creator-profile", handle, flag],
+    queryKey: creatorKeys.profileDemo(handle, flag),
     queryFn: () => withDemo(() => true, { empty: () => false }),
     enabled: !api,
   })
@@ -246,14 +249,6 @@ function Profile({ handle, baseName, isOwner, api }: { handle: string; baseName:
       void qc.invalidateQueries({ queryKey: key })
       // The reader's follows list (search's Follow buttons read it).
       if (email) void qc.invalidateQueries({ queryKey: meKeys.follows(email) })
-    }
-  }
-  async function share() {
-    try {
-      await navigator.clipboard.writeText(`${window.location.origin}${window.location.pathname}`)
-      toast.success(t("linkCopied"))
-    } catch {
-      toast.error(tt("copyFailed"))
     }
   }
   function report() {

@@ -85,7 +85,7 @@ export function useAdminAction<V, R>(run: (v: V) => Promise<R>) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: run,
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["admin"] }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: adminKeys.all }),
   });
 }
 
@@ -439,7 +439,7 @@ export function fromApiReview(q: real.ReviewQueueItem, now: number): QueueSeries
 export function useAdminQueues() {
   const flag = useDemoFlag();
   const query = useQuery({
-    queryKey: ["admin-demo", flag],
+    queryKey: adminKeys.demo(flag),
     queryFn: fetchAdminDemo,
     staleTime: Infinity,
     // Demo data only: real mode never waits for the demo delay or follows ?demo= flags.

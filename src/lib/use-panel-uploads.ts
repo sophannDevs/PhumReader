@@ -1,7 +1,7 @@
 "use client"
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
-import { MAX_IMAGE_BYTES, uploadImage, UploadError } from "@/lib/api/uploads"
+import { MAX_IMAGE_BYTES, readSize, uploadImage, UploadError } from "@/lib/api/uploads"
 import { PANEL_MAX_WIDTH, PANEL_MIN_WIDTH } from "@/lib/creator-studio"
 
 /** A19: at most 100 images and 200 MB per episode; a few files travel at once. */
@@ -33,22 +33,6 @@ const NOT_RETRYABLE = new Set(["unsupported_type", "file_too_large", "image_too_
 export const canRetry = (item: PanelItem) => item.status === "error" && !!item.error && !NOT_RETRYABLE.has(item.error.code)
 
 let counter = 0
-
-function readSize(file: File): Promise<{ width: number; height: number }> {
-  return new Promise((resolve, reject) => {
-    const url = URL.createObjectURL(file)
-    const img = new Image()
-    img.onload = () => {
-      URL.revokeObjectURL(url)
-      resolve({ width: img.naturalWidth, height: img.naturalHeight })
-    }
-    img.onerror = () => {
-      URL.revokeObjectURL(url)
-      reject(new UploadError("corrupt_image"))
-    }
-    img.src = url
-  })
-}
 
 const realUpload: PanelUploader = async (file, { onProgress, signal }) => uploadImage(file, "PANEL", { onProgress, signal })
 

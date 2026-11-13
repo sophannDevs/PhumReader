@@ -17,6 +17,3 @@ export function inlineMarks(text: string): React.ReactNode[] {
   if (last < text.length) out.push(<Fragment key={key++}>{text.slice(last)}</Fragment>)
   return out
 }
-
-/** The text without its marks (for word counts and plain previews). */
-export const stripMarks = (text: string): string => text.replace(/\*\*([^*]+)\*\*/g, "$1").replace(/\*([^*]+)\*/g, "$1")

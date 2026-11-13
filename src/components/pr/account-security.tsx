@@ -33,6 +33,7 @@ import * as account from "@/lib/api/account"
 import { DEMO_MODE } from "@/lib/api/config"
 import { withDemo } from "@/lib/demo-api"
 import { errorCode, fieldErrors, retryAfterSeconds } from "@/lib/api/errors"
+import { meKeys } from "@/lib/api/keys"
 import { UploadError, uploadImage } from "@/lib/api/uploads"
 import { formatDate, initials } from "@/lib/format"
 import { toUser } from "@/lib/session"
@@ -337,7 +338,7 @@ export function PasswordRow() {
     mutationFn: () => (DEMO_MODE ? withDemo(() => undefined) : account.changePassword(pw.cur, pw.nw)),
     onSuccess: () => {
       toast.success(t(DEMO_MODE ? "passwordUpdated" : "passwordChanged"))
-      void qc.invalidateQueries({ queryKey: ["devices"] })
+      void qc.invalidateQueries({ queryKey: meKeys.devicesAll })
       toggle(false)
     },
     onError: (e) => {
@@ -431,13 +432,13 @@ export function Devices() {
   const qc = useQueryClient()
   const failed = useFailureToast()
   const user = useUser()
-  const query = useQuery({ queryKey: ["devices", user?.email ?? ""], queryFn: account.fetchDevices, enabled: !!user })
+  const query = useQuery({ queryKey: meKeys.devices(user?.email), queryFn: account.fetchDevices, enabled: !!user })
 
   const signOut = useMutation({
     mutationFn: account.signOutDevice,
     onSuccess: () => {
       toast.success(t("deviceSignedOut"))
-      void qc.invalidateQueries({ queryKey: ["devices"] })
+      void qc.invalidateQueries({ queryKey: meKeys.devicesAll })
     },
     onError: failed,
   })

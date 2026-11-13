@@ -467,10 +467,6 @@ export function useHydrated(): boolean {
 // ---- selectors
 export const useUser = () => useAppStore((s) => s.user)
 export const useCoins = () => useAppStore((s) => s.coins)
-export const useIsUnlocked = (seriesId: string, n: number) =>
-  useAppStore((s) => s.unlocked[seriesId]?.includes(n) ?? false)
-export const useIsRead = (seriesId: string, n: number) => useAppStore((s) => n <= (s.lastRead[seriesId] ?? 0))
-export const useIsBlocked = (name: string) => useAppStore((s) => s.blocked.includes(name))
 export const isCreator = (user: StoredUser | null) => !!user?.roles?.some((r) => r === "CREATOR" || r === "ADMIN")
 export const isAdmin = (user: StoredUser | null) => !!user?.roles?.includes("ADMIN")
 

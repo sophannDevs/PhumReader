@@ -1,5 +1,5 @@
 import type { HeroSlideView, NovelChapter, RankingEntry } from "@/data/selectors"
-import { genreSchema, type Episode, type Genre, type NovelBlock, type Series, type Weekday } from "@/data/types"
+import { WEEKDAYS, genreSchema, type Episode, type Genre, type NovelBlock, type Series, type Weekday } from "@/data/types"
 import { ApiError, api, type Schemas } from "@/lib/api/client"
 import type { ChapterData, EpisodeData, HomeData, SeriesDetail } from "@/lib/api/types"
 export type { SeriesDetail }
@@ -18,7 +18,6 @@ type Summary = Schemas["EpisodeSummary"]
 
 /** The API's largest page; lists the pages show whole are fetched page by page. */
 const PAGE = 100
-const WEEKDAYS: Weekday[] = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 
 /** Shown while a series has no cover yet (uploads come with P3-07). */
 export const PLACEHOLDER_COVER = "/covers/placeholder.svg"

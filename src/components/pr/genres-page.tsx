@@ -15,7 +15,7 @@ import { Chip, Segmented, StateBox } from "@/components/pr/v2-primitives"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
-import { demoData, genres, type Genre, type Series, type Weekday } from "@/data"
+import { WEEKDAYS, demoData, genres, type Genre, type Series, type Weekday } from "@/data"
 import { Link } from "@/i18n/navigation"
 import { useLocalize } from "@/lib/localize"
 import { genreSlug, seriesHref } from "@/lib/routes"
@@ -28,7 +28,6 @@ type Status = "any" | "ongoing" | "completed"
 type Sort = "popular" | "liked" | "updated" | "az"
 
 const PAGE = 18
-const DAYS: Weekday[] = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 const GRID = "grid grid-cols-6 gap-x-5 gap-y-7 max-lg:grid-cols-4 max-md:grid-cols-3 max-md:gap-x-3 max-md:gap-y-5"
 
 /** ?g= accepts the genre name ("Slice of life") or its slug ("slice-of-life"); anything else is All genres. */
@@ -170,7 +169,7 @@ export function GenresPage() {
           wrapperClassName="md:w-auto md:min-w-[150px] max-md:flex-1"
         >
           <option value="any">{t("anyDay")}</option>
-          {DAYS.map((d) => (
+          {WEEKDAYS.map((d) => (
             <option key={d} value={d}>
               {td(`dayFull.${d}`)}
             </option>

@@ -12,12 +12,12 @@ import { phoneSwipeRow, SectionHead, Segmented, StateBox } from "@/components/pr
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import type { Series, Weekday } from "@/data"
+import { WEEKDAYS } from "@/data/types"
 import { realWeekdayIct } from "@/lib/format"
 import { cn } from "@/lib/utils"
 import { Num } from "@/i18n/num"
 import { SlidingTab, SlidingTabs } from "@/components/ui/sliding-tabs"
 
-const DAYS: Weekday[] = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 type Kind = "all" | "comic" | "novel"
 
 const grid = cn("grid grid-cols-4 gap-5 min-[1100px]:grid-cols-6", phoneSwipeRow, "max-md:auto-cols-[38%]")
@@ -103,7 +103,7 @@ export function DailyUpdatesSection({
         className="grid grid-cols-7 gap-1.5 max-md:-mx-4 max-md:flex max-md:overflow-x-auto max-md:px-4 max-md:[scrollbar-width:none]"
       >
         <SlidingTabs value={day} pill="inset-0 rounded-[10px] bg-foreground">
-        {DAYS.map((d) => {
+        {WEEKDAYS.map((d) => {
           const on = d === day
           const n = (daily[d] ?? []).filter(match).length
           return (

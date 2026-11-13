@@ -10,6 +10,7 @@ import { usePathname, useRouter } from "@/i18n/navigation"
 import { DEMO_MODE } from "@/lib/api/config"
 import * as realCoins from "@/lib/api/coins"
 import { ApiError, idempotencyKey } from "@/lib/api/client"
+import { walletKeys } from "@/lib/api/keys"
 import type { Viewer } from "@/lib/api/me"
 import { unlock } from "@/lib/demo-api"
 import { meKeys, useAccountEmail, useSeriesViewer } from "@/lib/me"
@@ -175,7 +176,7 @@ export function useSeriesUnlock(
             router.push(readerHref(series, n))
           } catch (error) {
             // Not enough coins (402) or an episode that is free now (409): the balance may have changed.
-            if (!DEMO_MODE && email && error instanceof ApiError) void qc.invalidateQueries({ queryKey: ["wallet", email] })
+            if (!DEMO_MODE && email && error instanceof ApiError) void qc.invalidateQueries({ queryKey: walletKeys.balance(email) })
             toast.error(tt("unlockFailed"))
           } finally {
             if (!DEMO_MODE && email && done.length > 0) {

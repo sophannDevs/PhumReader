@@ -23,32 +23,46 @@ import {
   relatedSeries,
   seriesByGenre,
   synopsisFor,
-  type ContinueView,
+  WEEKDAYS,
   type Episode,
   type Genre,
-  type HeroSlideView,
-  type NovelChapter,
-  type Panel,
   type PaymentMethodId,
   type RankingEntry,
   type Series,
   type Weekday,
   type Comment,
-  type CoinPack,
-  type PaymentMethod,
-  type Purchase,
-  type FaqItem,
 } from "@/data"
+import type {
+  ChapterData,
+  CoinsPageData,
+  CreatorData,
+  EpisodeData,
+  HomeData,
+  LibraryData,
+  SeriesDetail,
+} from "@/lib/api/types"
+import { getDemoFlag } from "@/lib/demo-flags"
+
+/** The view models are shared with the real API (src/lib/api/types.ts); re-exported for existing importers. */
+export type {
+  ChapterData,
+  CoinsPageData,
+  CreatorData,
+  EpisodeData,
+  HomeData,
+  LibraryData,
+  ReaderMarks,
+  SeriesDetail,
+} from "@/lib/api/types"
 
 /**
  * The fake backend. Every "server" read or write goes through here (pages never
- * touch demo data directly). Each call waits 300-800 ms and honours the URL flags:
+ * touch demo data directly). Each call waits 300-800 ms and honours the URL flags
+ * (read by `getDemoFlag` in src/lib/demo-flags.ts):
  *   ?demo=empty  empty lists / empty content
  *   ?demo=error  every call throws DemoApiError
  *   ?demo=slow   adds 3 s
  */
-
-export type DemoFlag = "empty" | "error" | "slow"
 
 export class DemoApiError extends Error {
   constructor(
@@ -59,13 +73,6 @@ export class DemoApiError extends Error {
     super(message)
     this.name = "DemoApiError"
   }
-}
-
-/** The active flag, read from the URL. Always null on the server. */
-export function getDemoFlag(): DemoFlag | null {
-  if (typeof window === "undefined") return null
-  const value = new URLSearchParams(window.location.search).get("demo")
-  return value === "empty" || value === "error" || value === "slow" ? value : null
 }
 
 const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms))
@@ -90,23 +97,8 @@ export async function withDemo<T>(
 }
 
 // ------------------------------------------------------------------ reads
-export type HomeData = {
-  hero: HeroSlideView[]
-  continueReading: ContinueView[]
-  /** Every series that updates on each weekday (the Home day tabs show the counts and "Show all N"). */
-  daily: Record<Weekday, Series[]>
-  rankings: { comics: RankingEntry[]; novels: RankingEntry[] }
-  genres: Genre[]
-  byGenre: Record<Genre, Series[]>
-  novels: Series[]
-  /** Three covers for the creator call-to-action card. */
-  creatorCovers: Series[]
-}
-
 const CTA_TITLES = ["Ink Witch", "Sunday Sword", "The Orchard Pact"]
 const ctaCovers = () => CTA_TITLES.flatMap((t) => getSeries().filter((s) => s.title === t))
-
-const WEEKDAYS: Weekday[] = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 
 export const fetchHome = () =>
   withDemo<HomeData>(
@@ -134,25 +126,11 @@ export const fetchHome = () =>
     }
   )
 
-export type LibraryData = { series: Series[]; continueReading: ContinueView[] }
-
 /** All series (the page filters by the store's ids) and the demo "continue reading" entries. */
 export const fetchLibrary = () =>
   withDemo<LibraryData>(() => ({ series: getSeries(), continueReading: continueReading() }), {
     empty: () => ({ series: getSeries(), continueReading: [] }),
   })
-
-export type CreatorData = {
-  name: string
-  series: Series[]
-  totals: { views: string; likes: string }
-  /** Real API only: the account has the creator role. */
-  isCreator?: boolean
-  /** Real API only: coins earned from unlocks. */
-  earnedCoins?: number
-  /** Real API only (V21-05): the address of the public profile, /creators/<handle>. */
-  handle?: string | null
-}
 
 /** The demo has no creator accounts: the dashboard shows Chan Sreyleak's series. */
 export const STAND_IN_CREATOR = "Chan Sreyleak"
@@ -173,24 +151,6 @@ export const fetchCreator = () =>
     { empty: () => ({ name: STAND_IN_CREATOR, series: [], totals: { views: "0", likes: "0" } }) }
   )
 
-export type SeriesDetail = {
-  series: Series
-  synopsis: string
-  stats: { subscribers: string; comments: string }
-  related: Series[]
-  creatorSeriesCount: number
-  /** Real API only: the id the Follow button needs. */
-  creatorId?: string
-  /** Real API only (V21-05): the address of the creator's profile, /creators/<handle>. */
-  creatorHandle?: string
-  /** Real API only (V21-02): the second genre; demo series have one genre. */
-  secondGenre?: Genre | null
-  /** Real API only (V21-02): the "On break" message; demo series are never on a break. */
-  breakMessage?: string | null
-  /** Real API only (V21-02): false when the creator turned comments off; the demo always allows them. */
-  commentsEnabled?: boolean
-}
-
 /** null when the slug is unknown (pages call notFound()). Not affected by ?demo=empty. */
 export const fetchSeries = (slug: string) =>
   withDemo<SeriesDetail | null>(() => {
@@ -209,19 +169,6 @@ export const fetchSeries = (slug: string) =>
 export const fetchEpisodes = (slug: string) =>
   withDemo<Episode[]>(() => episodesFor(slug), { empty: () => [] })
 
-export type EpisodeData = {
-  series: Series
-  episode: Episode
-  total: number
-  panels: Panel[]
-  /** Real API only: what the signed-in reader did with this episode. */
-  viewer?: ReaderMarks
-  /** Real API only: false when the comments switch is off (the demo always allows comments). */
-  commentsEnabled?: boolean
-}
-
-export type ReaderMarks = { liked: boolean; bookmarked: boolean }
-
 /** null when the series or the episode number does not exist. */
 export const fetchEpisode = (slug: string, n: number) =>
   withDemo<EpisodeData | null>(
@@ -239,8 +186,6 @@ export const fetchEpisode = (slug: string, n: number) =>
       },
     }
   )
-
-export type ChapterData = { series: Series; chapter: NovelChapter; total: number; viewer?: ReaderMarks; commentsEnabled?: boolean }
 
 export const fetchChapter = (slug: string, n: number) =>
   withDemo<ChapterData | null>(
@@ -293,21 +238,6 @@ export const search = (query: string, limit = 8) =>
     },
     { empty: () => [] }
   )
-
-export type CoinsPageData = {
-  packs: CoinPack[]
-  methods: PaymentMethod[]
-  /** The two demo rows; the store adds new purchases on top (T18). */
-  history: Purchase[]
-  faq: FaqItem[]
-  firstPurchaseBonus: string
-  khqrExpiryMinutes: number
-  fastPassPrice: number
-  /** Real API only: pack size (coins) -> pack id. */
-  packIds?: Record<number, number>
-  /** Real API only: the dev payment simulator is on. */
-  simulator?: boolean
-}
 
 export const fetchCoinsPage = () =>
   withDemo<CoinsPageData>(

@@ -123,7 +123,7 @@ function useUploadSeries() {
   const flag = useDemoFlag()
   const works = useAppStore((s) => s.myWorks)
   const demo = useQuery({
-    queryKey: ["studio-upload", flag],
+    queryKey: creatorKeys.uploadDemo(flag),
     queryFn: () => withDemo(() => true, { empty: () => false }),
     enabled: DEMO_MODE,
   })

@@ -6,7 +6,6 @@ import { ChevronRightIcon } from "@/components/animate-ui/icons/chevron-right"
 import { HeartIcon } from "@/components/animate-ui/icons/heart"
 import { Share2Icon } from "@/components/animate-ui/icons/share-2"
 import { useTranslations } from "@/i18n/translations"
-import { toast } from "sonner"
 import { useReport } from "@/components/pr/report-dialog"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
@@ -18,6 +17,7 @@ import * as real from "@/lib/api/me"
 import { useAskToLogin, useEpisodeReactions } from "@/lib/me"
 import { seriesHref } from "@/lib/routes"
 import { useUser } from "@/lib/store"
+import { useCopyLink } from "@/lib/use-copy-link"
 import { cn } from "@/lib/utils"
 import { Effect } from "@animate-ui/react/primitives/effects/effect"
 import { ParticleBurst, useBurstOnPress } from "@/components/pr/particle-burst"
@@ -51,7 +51,6 @@ export function NovelEndSection({
   finishRef?: (el: HTMLElement | null) => void
 }) {
   const t = useTranslations("reader")
-  const tt = useTranslations("toasts")
   const user = useUser()
   const askToLogin = useAskToLogin()
   const { openReport } = useReport()
@@ -60,14 +59,7 @@ export function NovelEndSection({
   const [likeBurst, armLike] = useBurstOnPress(liked)
   const [markBurst, armMark] = useBurstOnPress(bookmarked)
 
-  async function share() {
-    try {
-      await navigator.clipboard.writeText(window.location.href)
-      toast.success(tt("linkCopied"))
-    } catch {
-      toast.error(tt("copyFailed"))
-    }
-  }
+  const share = useCopyLink()
 
   return (
     <Effect asChild fade slide={{ direction: "up", offset: 12 }} inView>

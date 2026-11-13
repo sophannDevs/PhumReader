@@ -1,6 +1,6 @@
 import { demoData, type MyWork, type Weekday } from "@/data"
-import { genreSchema } from "@/data/types"
-import { addDays, weekdayOf } from "@/lib/format"
+import { WEEKDAYS, genreSchema } from "@/data/types"
+import { SUN_FIRST_WEEKDAYS, addDays, weekdayOf } from "@/lib/format"
 
 /**
  * Rules and demo helpers shared by the V2.1 creator studio pages: Create series (spec §15), Upload episode (§16) and
@@ -9,8 +9,8 @@ import { addDays, weekdayOf } from "@/lib/format"
 
 export const GENRES = genreSchema.options
 export type StudioGenre = (typeof GENRES)[number]
-/** Monday first, the order of the update-day chips. */
-export const WEEK: Weekday[] = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+/** Monday first, the order of the update-day chips (the shared WEEKDAYS). */
+export const WEEK = WEEKDAYS
 /** Release times offered, in ICT hours: 12:00 PM, 6:00 PM, 8:00 PM, 9:00 PM. */
 export const RELEASE_HOURS = [12, 18, 20, 21] as const
 export const DEFAULT_HOUR = 18
@@ -40,16 +40,14 @@ export const FREE_AFTER_DAYS = 7
 /** Days in week order without repeats. */
 export const sortDays = (days: readonly Weekday[]) => WEEK.filter((d) => days.includes(d))
 
-const SUN_FIRST: Weekday[] = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
-
 /** The first date on or after `from` (ISO) that falls on `day`. */
 export function onOrAfter(day: Weekday, from: string): string {
-  return addDays(from, (SUN_FIRST.indexOf(day) - SUN_FIRST.indexOf(weekdayOf(from)) + 7) % 7)
+  return addDays(from, (SUN_FIRST_WEEKDAYS.indexOf(day) - SUN_FIRST_WEEKDAYS.indexOf(weekdayOf(from)) + 7) % 7)
 }
 
 /** The last date on or before `from` (ISO) that falls on `day`. */
 export function onOrBefore(day: Weekday, from: string): string {
-  return addDays(from, -((SUN_FIRST.indexOf(weekdayOf(from)) - SUN_FIRST.indexOf(day) + 7) % 7))
+  return addDays(from, -((SUN_FIRST_WEEKDAYS.indexOf(weekdayOf(from)) - SUN_FIRST_WEEKDAYS.indexOf(day) + 7) % 7))
 }
 
 /** Epoch ms of a wall-clock time in Cambodia (ICT, UTC+7, no daylight saving). */

@@ -27,7 +27,8 @@ import { PLACEHOLDER_COVER } from "@/lib/api/catalog"
 import { DEMO_MODE } from "@/lib/api/config"
 import { fetchSeriesEdit } from "@/lib/api/creator"
 import { creatorKeys, useMySeries } from "@/lib/creator"
-import { addDays, firstName, formatCount, formatShortDate, formatTime, ictDate, initials, today, weekdayOf } from "@/lib/format"
+import { FAST_PASS_AHEAD } from "@/lib/creator-studio"
+import { SUN_FIRST_WEEKDAYS, addDays, firstName, formatCount, formatShortDate, formatTime, ictDate, initials, today, weekdayOf } from "@/lib/format"
 import { useLocalize } from "@/lib/localize"
 import { useAccountEmail } from "@/lib/me"
 import { useCreator, useDemoFlag } from "@/lib/queries"
@@ -81,14 +82,9 @@ const DEMO_COMMENTS = [
   { id: "c3", name: "Vibol S.", back: 1, text: "Is the old ferryman going to come back?" },
 ]
 
-/** Fast Pass episodes ready ahead of the free ones (demo episode rule). */
-const FAST_PASS_AHEAD = 3
-
-const WEEK: Weekday[] = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
-
 /** Next release date (ISO) for an update day, after `base`. */
 function nextRelease(day: Weekday, base: string): string {
-  const diff = (WEEK.indexOf(day) - WEEK.indexOf(weekdayOf(base)) + 7) % 7 || 7
+  const diff = (SUN_FIRST_WEEKDAYS.indexOf(day) - SUN_FIRST_WEEKDAYS.indexOf(weekdayOf(base)) + 7) % 7 || 7
   return addDays(base, diff)
 }
 /** The update day that comes first after `base` (V21-02: a series can come out on several days), or null. */

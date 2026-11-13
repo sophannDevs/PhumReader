@@ -4,24 +4,20 @@ import { BookOpenIcon } from "@/components/animate-ui/icons/book-open"
 import { ChevronRightIcon } from "@/components/animate-ui/icons/chevron-right"
 import { HouseIcon as HomeIcon } from "@/components/animate-ui/icons/house"
 import Image from "next/image"
-import { useLocale } from "next-intl"
 import { useTranslations } from "@/i18n/translations"
+import { LangPills } from "@/components/layout/language-switch"
 import { ART, art } from "@/components/pr/error-art"
 import { SeriesCard } from "@/components/pr/series-card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import type { Series } from "@/data"
-import { Link, usePathname, useRouter } from "@/i18n/navigation"
-import { routing, type Locale } from "@/i18n/routing"
+import { Link } from "@/i18n/navigation"
 import { useSubscribe } from "@/lib/me"
 import { useGenre, useRankings } from "@/lib/queries"
 import { genreHref } from "@/lib/routes"
 import { useLocalize } from "@/lib/localize"
-import { useAppStore } from "@/lib/store"
 import { cn } from "@/lib/utils"
 import { Effect } from "@animate-ui/react/primitives/effects/effect"
-
-const LANG_LABEL: Record<Locale, string> = { en: "English", km: "ខ្មែរ" }
 
 /** Open book with a padlock (prototype Error page, "unavailable" illustration). */
 function LockedBookArt({ className }: { className?: string }) {
@@ -49,9 +45,6 @@ function LockedBookArt({ className }: { className?: string }) {
 export function SeriesUnavailable({ series }: { series: Series }) {
   const t = useTranslations("series")
   const loc = useLocalize()
-  const locale = useLocale() as Locale
-  const pathname = usePathname()
-  const router = useRouter()
   const { subscribed, toggle } = useSubscribe(series)
   const genre = useGenre(series.genre)
   const popular = useRankings("comics")
@@ -60,12 +53,6 @@ export function SeriesUnavailable({ series }: { series: Series }) {
     ...(genre.data?.series ?? []).filter((s) => s.id !== series.id),
     ...(popular.data ?? []).map((r) => r.series).filter((s) => s.id !== series.id && s.genre !== series.genre),
   ].slice(0, 6)
-
-  function switchTo(next: Locale) {
-    if (next === locale) return
-    useAppStore.getState().setLang(next)
-    router.replace(`${pathname}${window.location.search}`, { locale: next })
-  }
 
   return (
     <>
@@ -82,23 +69,7 @@ export function SeriesUnavailable({ series }: { series: Series }) {
               <div className="flex min-w-0 flex-col gap-4">
                 <div className="flex items-center justify-between gap-3">
                   <Badge variant="secondary">{t("unavailableBadge")}</Badge>
-                  <div role="group" aria-label={t("language")} className="inline-flex gap-0.5 rounded-full bg-muted p-[3px]">
-                    {routing.locales.map((l) => (
-                      <button
-                        key={l}
-                        type="button"
-                        lang={l}
-                        aria-pressed={l === locale}
-                        onClick={() => switchTo(l)}
-                        className={cn(
-                          "h-7 rounded-full px-3 text-xs font-semibold outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                          l === locale ? "bg-background text-foreground shadow-[0_1px_3px_rgba(9,9,11,0.1)]" : "text-muted-foreground"
-                        )}
-                      >
-                        {LANG_LABEL[l]}
-                      </button>
-                    ))}
-                  </div>
+                  <LangPills label={t("language")} />
                 </div>
                 <h1 className="m-0 text-[28px] leading-[34px] font-extrabold tracking-[-0.03em] md:text-[40px] md:leading-[46px]">
                   {t("unavailableTitle")}

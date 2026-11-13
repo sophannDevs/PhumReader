@@ -15,6 +15,7 @@ import { useTranslations } from "@/i18n/translations"
 import { useRef, useState } from "react"
 import { toast } from "sonner"
 import { CreatorNav, useOwnHandle } from "@/components/layout/creator-nav"
+import { LineTabs } from "@/components/pr/browse-kit"
 import { CreatorGate } from "@/components/pr/creator-gate"
 import { NativeSelect } from "@/components/pr/settings-ui"
 import {
@@ -27,6 +28,7 @@ import {
   fieldCol,
   fieldRow,
   useDayDate,
+  useCoverUploadErrorText,
   useFailToast,
   useHourLabel,
   useReviewItemLabel,
@@ -44,7 +46,7 @@ import { ApiError } from "@/lib/api/client"
 import { DEMO_MODE } from "@/lib/api/config"
 import * as api from "@/lib/api/creator"
 import { errorCode } from "@/lib/api/errors"
-import { UploadError, uploadImage } from "@/lib/api/uploads"
+import { uploadImage } from "@/lib/api/uploads"
 import { creatorKeys, useMyEpisodes, useMySeries, useSeriesEdit } from "@/lib/creator"
 import {
   BREAK_NOTE_MAX,
@@ -75,7 +77,6 @@ import { genreFromSlug, genreSlug } from "@/lib/routes"
 import { useAppStore } from "@/lib/store"
 import { cn } from "@/lib/utils"
 import { Effect } from "@animate-ui/react/primitives/effects/effect"
-import { SlidingTab, SlidingTabs } from "@/components/ui/sliding-tabs"
 
 /**
  * Manage series (spec §21, prototype Manage/): header with the cover, status, "View as reader" and Upload; the reviewer's
@@ -217,7 +218,7 @@ function DemoManage({ id }: { id: string }) {
   const handle = useOwnHandle()
   const work = useAppStore((s) => s.myWorks.find((w) => w.id === id))
   const review = useAppStore((s) => s.reviewNotes[id] ?? null)
-  const query = useQuery({ queryKey: ["studio-manage", id, flag], queryFn: () => withDemo(() => true, { empty: () => false }) })
+  const query = useQuery({ queryKey: creatorKeys.manageDemo(id, flag), queryFn: () => withDemo(() => true, { empty: () => false }) })
   if (query.isPending) return <ManageSkeleton />
   if (query.isError) return <Problem onRetry={() => void query.refetch()} />
   if (!work) return <Problem missing />
@@ -277,7 +278,7 @@ function DemoManage({ id }: { id: string }) {
 }
 
 function RealManage({ id }: { id: string }) {
-  const tu = useTranslations("seriesForm")
+  const coverErrorText = useCoverUploadErrorText()
   const tm = useTranslations("manage")
   const qc = useQueryClient()
   const router = useRouter()
@@ -446,18 +447,7 @@ function RealManage({ id }: { id: string }) {
           if (!file) return resolve(null)
           uploadImage(file, "COVER").then(
             (image) => resolve({ url: image.url ?? URL.createObjectURL(file), uploadId: image.id }),
-            (e: unknown) => {
-              const err = e instanceof UploadError ? e : new UploadError("upload_failed")
-              reject(
-                new Error(
-                  err.code === "image_too_small"
-                    ? tu("uploadTooSmall", { width: err.detail.width ?? 0, min: err.detail.min ?? 0 })
-                    : tu.has(`uploadError_${err.code}` as never)
-                      ? tu(`uploadError_${err.code}` as never)
-                      : tu("uploadError_upload_failed")
-                )
-              )
-            }
+            (e: unknown) => reject(new Error(coverErrorText(e)))
           )
         }
         fileRef.current?.click()
@@ -510,7 +500,6 @@ function ManageView({ model, actions }: { model: Model; actions: Actions }) {
 
   const tabParam = params.get("tab")
   const tab: Tab = (TABS as string[]).includes(tabParam ?? "") ? (tabParam as Tab) : "episodes"
-  const tabRefs = useRef<Record<string, HTMLButtonElement | null>>({})
 
   const [eps, setEps] = useState<StudioEpisode[]>(model.episodes)
   const [filter, setFilter] = useState<Filter>("all")
@@ -569,14 +558,6 @@ function ManageView({ model, actions }: { model: Model; actions: Actions }) {
     else q.set("tab", next)
     const qs = q.toString()
     router.replace(`/creator/series/${encodeURIComponent(model.id)}${qs ? `?${qs}` : ""}`, { scroll: false })
-  }
-  function tabKey(e: React.KeyboardEvent) {
-    const i = TABS.indexOf(tab)
-    const to = e.key === "ArrowRight" ? TABS[(i + 1) % TABS.length] : e.key === "ArrowLeft" ? TABS[(i + TABS.length - 1) % TABS.length] : e.key === "Home" ? TABS[0] : e.key === "End" ? TABS[TABS.length - 1] : null
-    if (!to) return
-    e.preventDefault()
-    pickTab(to)
-    tabRefs.current[to]?.focus()
   }
 
   const label = (e: StudioEpisode) => t("epLabel", { unit, n: e.n, title: e.title || t("untitledDraft") })
@@ -935,41 +916,20 @@ function ManageView({ model, actions }: { model: Model; actions: Actions }) {
         </div>
       ) : null}
 
-      <div role="tablist" aria-label={t("tabsLabel")} className="flex gap-1 overflow-x-auto border-b [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        <SlidingTabs value={tab} pill="inset-x-0 bottom-0 h-0.5 bg-foreground">
-        {TABS.map((id) => {
-          const on = id === tab
-          return (
-            <SlidingTab key={id} value={id} className="-mb-px inline-flex shrink-0">
-            <button
-              ref={(el) => {
-                tabRefs.current[id] = el
-              }}
-              type="button"
-              role="tab"
-              id={`mg-tab-${id}`}
-              aria-selected={on}
-              aria-controls="mg-panel"
-              tabIndex={on ? 0 : -1}
-              onClick={() => pickTab(id)}
-              onKeyDown={tabKey}
-              className={cn(
-                "inline-flex h-11 items-center gap-1.5 rounded-t-sm px-3 text-sm font-medium whitespace-nowrap transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset",
-                on ? "text-foreground" : "text-muted-foreground hover:text-foreground"
-              )}
-            >
-              {id === "episodes" ? t("tabEpisodes", { unit }) : id === "details" ? t("tabDetails") : id === "fast-pass" ? t("tabFastPass") : t("tabSettings")}
-              {id === "episodes" && eps.length ? (
-                <Badge variant="secondary" className="tabular-nums">
-                  {eps.length}
-                </Badge>
-              ) : null}
-            </button>
-            </SlidingTab>
-          )
-        })}
-        </SlidingTabs>
-      </div>
+      <LineTabs
+        idBase="mg"
+        label={t("tabsLabel")}
+        value={tab}
+        onChange={pickTab}
+        items={TABS.map((id) => ({
+          value: id,
+          label:
+            id === "episodes" ? t("tabEpisodes", { unit }) : id === "details" ? t("tabDetails") : id === "fast-pass" ? t("tabFastPass") : t("tabSettings"),
+          // No badge while the series has no episodes.
+          count: id === "episodes" ? eps.length || undefined : undefined,
+        }))}
+        className="[&::-webkit-scrollbar]:hidden"
+      />
 
       <Effect key={tab} asChild fade slide={{ direction: "up", offset: 8 }}>
         <div role="tabpanel" id="mg-panel" aria-labelledby={`mg-tab-${tab}`} className="flex min-w-0 flex-col gap-5 outline-none">
