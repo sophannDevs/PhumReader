@@ -75,7 +75,7 @@ describe("Series page: V21-02 fields from the API", () => {
 
   it("says the days in Khmer", () => {
     renderPage(detail(), "km")
-    expect(screen.getAllByText("រៀងរាល់ថ្ងៃច័ន្ទ និងថ្ងៃព្រហស្បតិ៍").length).toBeGreaterThan(0)
+    expect(screen.getAllByText("រៀងរាល់ថ្ងៃច័ន្ទ និង ថ្ងៃព្រហស្បតិ៍").length).toBeGreaterThan(0)
   })
 
   it("a series on hiatus shows On break and the creator's message, without 'New episodes every …'", () => {

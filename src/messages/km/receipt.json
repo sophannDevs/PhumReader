@@ -29,7 +29,7 @@
   "rowPaidWith": "បានបង់តាម",
   "rowProvider": "លេខយោងអ្នកផ្តល់សេវា",
   "rowTotal": "សរុប",
-  "coinsValue": "{count} កាក់",
+  "coinsValue": "{count, plural, one {#} other {#}} កាក់",
   "bonusValue": "+{count} កាក់",
   "dateValue": "{date} · {time} (ICT)",
   "notCharged": "មិនបានកាត់ប្រាក់",

@@ -2,10 +2,10 @@
   "title": "ប្រភេទរឿង",
   "lead": "ស្វែងរករឿងបន្ទាប់របស់អ្នកតាមប្រភេទ ទម្រង់ និងថ្ងៃបង្ហោះ។",
   "novelsTitle": "ប្រលោមលោកអនឡាញ",
-  "novelsLead": "រឿងសម្រាប់អានជាអក្សរ ម្តងមួយជំពូក។",
+  "novelsLead": "រឿងសម្រាប់អានជាអក្សរ ម្តងមួយភាគ។",
   "genres": "ប្រភេទរឿង",
   "allGenres": "គ្រប់ប្រភេទ",
-  "bannerCount": "{count} រឿង",
+  "bannerCount": "{count, plural, one {#} other {#}} រឿង",
   "desc": {
     "Drama": "អាថ៌កំបាំងគ្រួសារ ឱកាសទីពីរ និងរឿងដែលនៅជាប់ក្នុងចិត្ត។",
     "Fantasy": "វេទមន្ត ដំណើរផ្សងព្រេង និងពិភពដែលមានច្បាប់ផ្ទាល់ខ្លួន។",
@@ -37,8 +37,8 @@
     "updated": "ទើបបង្ហោះថ្មីៗ",
     "az": "ក ដល់ អ"
   },
-  "count": "{count} រឿង",
-  "countIn": "{count} រឿងក្នុង{genre}",
+  "count": "{count, plural, one {#} other {#}} រឿង",
+  "countIn": "{count, plural, one {#} other {#}} រឿងក្នុង{genre}",
   "clearFiltersCount": "សម្អាតតម្រង ({count})",
   "clearFilters": "សម្អាតតម្រង",
   "completed": "បានបញ្ចប់",

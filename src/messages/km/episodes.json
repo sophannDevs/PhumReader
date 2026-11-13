@@ -3,7 +3,7 @@
   "unlocked": "បានដោះសោ",
   "upNext": "បន្ទាប់",
   "likes": "ចូលចិត្ត {count}",
-  "coins": "{count} កាក់",
+  "coins": "{count, plural, one {#} other {#}} កាក់",
   "freeOnShort": "ឥតគិតថ្លៃ {date}",
   "freeIn": "{days, plural, =0 {ឥតគិតថ្លៃថ្ងៃនេះ} =1 {ឥតគិតថ្លៃថ្ងៃស្អែក} other {ឥតគិតថ្លៃក្នុង # ថ្ងៃទៀត}}",
   "fastPass": "Fast Pass,"

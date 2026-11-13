@@ -1,17 +1,17 @@
 {
   "novel": "ប្រលោមលោក",
-  "up": "UP",
+  "up": "ភាគថ្មី",
   "new": "ថ្មី",
   "likes": "ចូលចិត្ត {count}",
-  "views": "{views} ដងមើល",
-  "chapters": "{count} ជំពូក",
+  "views": "មើល {views} ដង",
+  "chapters": "{count, plural, one {#} other {#}} ភាគ",
   "episodeProgress": "ភាគ {n} · បានអាន {percent}%",
-  "chapterProgress": "ជំពូក {n} · បានអាន {percent}%",
+  "chapterProgress": "ភាគ {n} · បានអាន {percent}%",
   "cover": "គម្របរឿង {title}",
-  "rank": "លេខ {rank}",
-  "moveUp": "ឡើង {n}",
-  "moveDown": "ចុះ {n}",
-  "moveNew": "ថ្មី",
+  "rank": "ចំណាត់ថ្នាក់ទី {rank}",
+  "moveUp": "ឡើង {n} ចំណាត់ថ្នាក់",
+  "moveDown": "ចុះ {n} ចំណាត់ថ្នាក់",
+  "moveNew": "ចូលចំណាត់ថ្នាក់ថ្មី",
   "moveSame": "មិនប្រែប្រួល",
-  "progressOf": "វឌ្ឍនភាព {title}"
+  "progressOf": "វឌ្ឍនភាពនៃការអាន {title}"
 }
