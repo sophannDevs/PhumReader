@@ -1,7 +1,7 @@
 "use client"
 
 import { ExternalLinkIcon } from "@/components/animate-ui/icons/external-link"
-import { ReceiptTextIcon } from "lucide-react"
+import { ReceiptTextIcon } from "@/components/animate-ui/icons/receipt-text"
 import { Undo2Icon } from "@/components/animate-ui/icons/undo-2"
 import { CircleAlertIcon as AlertCircleIcon } from "@/components/animate-ui/icons/circle-alert"
 import { CheckIcon } from "@/components/animate-ui/icons/check"
@@ -285,7 +285,7 @@ function ReceiptView({ r }: { r: Receipt }) {
               <dd className={cn("m-0 flex min-w-0 items-center gap-1 text-right tabular-nums", row.total ? "font-bold" : "font-medium")}>
                 <span className="min-w-0 break-words">{row.v}</span>
                 {row.copy ? (
-                  <Button variant="ghost" size="icon-sm" onClick={() => void copyId()} aria-label={t("copy")}>
+                  <Button animateIcon variant="ghost" size="icon-sm" onClick={() => void copyId()} aria-label={t("copy")}>
                     <CopyIcon className="size-3.5" />
                   </Button>
                 ) : null}
@@ -311,12 +311,12 @@ function ReceiptView({ r }: { r: Receipt }) {
             </Button>
           ) : null}
           {paid ? (
-            <Button variant="outline" className={action} onClick={() => toast(t("downloadToast"))}>
+            <Button animateIcon variant="outline" className={action} onClick={() => toast(t("downloadToast"))}>
               <ExternalLinkIcon className="size-3.5" aria-hidden />
               {t("download")}
             </Button>
           ) : null}
-          <Button variant="outline" className={action} asChild>
+          <Button animateIcon variant="outline" className={action} asChild>
             <Link href="/help#contact" onClick={help("")}>
               <MessageSquareIcon className="size-3.5" aria-hidden />
               {t("getHelp")}

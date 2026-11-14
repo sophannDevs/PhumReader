@@ -1,6 +1,6 @@
 "use client"
 
-import { BookIcon } from "lucide-react"
+import { BookIcon } from "@/components/animate-ui/icons/book"
 import { ChevronRightIcon } from "@/components/animate-ui/icons/chevron-right"
 import { MessageSquareIcon } from "@/components/animate-ui/icons/message-square"
 import { RotateCcwIcon } from "@/components/animate-ui/icons/rotate-ccw"
@@ -143,7 +143,7 @@ function CommentsBody({ series, seriesCount, ep, closed }: { series: Series; ser
           </div>
           <Button asChild variant="outline" size="sm">
             <Link href={ep ? readerHref(series, ep) : seriesHref(series)}>
-              <BookIcon className="size-3.5" />
+              <BookIcon className="size-3.5" aria-hidden />
               {ep ? t(novel ? "backToChapter" : "backToEpisode", { n: ep }) : t("backToSeries")}
             </Link>
           </Button>

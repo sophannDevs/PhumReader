@@ -178,7 +178,7 @@ export function SeriesHero({
           </dl>
 
           <div className="flex flex-wrap items-center gap-2 pt-1">
-            <Button asChild variant="brand" size="lg">
+            <Button animateIcon asChild variant="brand" size="lg">
               <Link href={readerHref(series, episode)}>
                 <BookOpenIcon />
                 {readLabel}
@@ -196,7 +196,7 @@ export function SeriesHero({
             >
               <ParticleBurst burst={subBurst}>{subscribed ? t("subscribedLabel") : t("subscribeLabel")}</ParticleBurst>
             </Button>
-            <Button variant="outline" size="icon" className={cn(ghostDark, "size-11 rounded-[10px]")} aria-label={t("copyLink")} onClick={share}>
+            <Button animateIcon variant="outline" size="icon" className={cn(ghostDark, "size-11 rounded-[10px]")} aria-label={t("copyLink")} onClick={share}>
               <ShareIcon />
             </Button>
           </div>

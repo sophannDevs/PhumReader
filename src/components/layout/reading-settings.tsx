@@ -164,7 +164,7 @@ export function ReadingSettingsControls({ className }: { className?: string }) {
           <span className="text-xs text-reader-quiet tabular-nums">{t("sizeLabel", { size: settings.size })}</span>
         </div>
         <div className="flex items-center gap-2">
-          <Button
+          <Button animateIcon
             variant="outline"
             size="icon-sm"
             className={stepper}
@@ -175,7 +175,7 @@ export function ReadingSettingsControls({ className }: { className?: string }) {
             <MinusIcon className="size-3.5" />
           </Button>
           <Progress value={((idx + 1) / TEXT_SIZES.length) * 100} aria-label={t("textSize")} aria-valuetext={t("sizeLabel", { size: settings.size })} className="flex-1" />
-          <Button
+          <Button animateIcon
             variant="outline"
             size="icon-sm"
             className={stepper}

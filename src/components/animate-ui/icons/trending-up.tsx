@@ -68,7 +68,7 @@ function IconComponent({ size, ...props }: TrendingUpProps) {
 }
 
 function TrendingUp(props: TrendingUpProps) {
-  return <IconWrapper icon={IconComponent} size={24} animateOnHover {...props} />;
+  return <IconWrapper icon={IconComponent} size={24} {...props} />;
 }
 
 export {

@@ -141,7 +141,7 @@ function IconComponent({ size, ...props }: Share2Props) {
 }
 
 function Share2(props: Share2Props) {
-  return <IconWrapper icon={IconComponent} size={24} animateOnHover {...props} />;
+  return <IconWrapper icon={IconComponent} size={24} {...props} />;
 }
 
 export {

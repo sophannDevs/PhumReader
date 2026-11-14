@@ -142,7 +142,7 @@ function IconComponent({ size, ...props }: ArrowRightProps) {
 }
 
 function ArrowRight(props: ArrowRightProps) {
-  return <IconWrapper icon={IconComponent} size={24} animateOnHover {...props} />;
+  return <IconWrapper icon={IconComponent} size={24} {...props} />;
 }
 
 export {

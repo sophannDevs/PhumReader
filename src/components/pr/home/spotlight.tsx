@@ -136,7 +136,7 @@ function SpotlightMain({ slide }: { slide: HeroSlideView }) {
           ) : null}
         </div>
         <div className="flex flex-wrap gap-2 pt-1.5">
-          <Button asChild variant="brand" size="lg">
+          <Button animateIcon asChild variant="brand" size="lg">
             <Link href={readerHref(s, 1)}>
               <BookOpenIcon />
               {novel ? t("startCh") : t("startEp")}
@@ -154,7 +154,7 @@ function SpotlightMain({ slide }: { slide: HeroSlideView }) {
           >
             <ParticleBurst burst={subBurst}>{subscribed ? t("subscribed") : t("subscribe")}</ParticleBurst>
           </Button>
-          <Button asChild variant="link" size="lg" className="text-[#fafafa] no-underline hover:text-white">
+          <Button animateIcon asChild variant="link" size="lg" className="text-[#fafafa] no-underline hover:text-white">
             <Link href={seriesHref(s)}>
               {t("details")}
               <ArrowRightIcon className="size-3.5" />

@@ -115,7 +115,7 @@ function IconComponent({ size, ...props }: XProps) {
 }
 
 function X(props: XProps) {
-  return <IconWrapper icon={IconComponent} size={24} animateOnHover {...props} />;
+  return <IconWrapper icon={IconComponent} size={24} {...props} />;
 }
 
 export { animations, X, X as XIcon, type XProps, type XProps as XIconProps };

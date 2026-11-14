@@ -1,5 +1,6 @@
 import { ChevronRightIcon } from "@/components/animate-ui/icons/chevron-right"
 import Image from "next/image"
+import { AnimateIcon } from "@animate-ui/react/icons"
 import { useTranslations } from "@/i18n/translations"
 import type { Series } from "@/data/types"
 import { Link } from "@/i18n/navigation"
@@ -23,7 +24,9 @@ export function ContinueCard({
   const percent = Math.round(progress * 100)
   const label = t(series.type === "novel" ? "chapterProgress" : "episodeProgress", { n: episode, percent })
 
+  // One icon trigger per card: hovering the card plays the go button's chevron.
   return (
+    <AnimateIcon asChild animateOnHover>
     <Link
       href={readerHref(series, episode)}
       className={cn(
@@ -57,5 +60,6 @@ export function ContinueCard({
         <ChevronRightIcon className="size-3.5" />
       </span>
     </Link>
+    </AnimateIcon>
   )
 }

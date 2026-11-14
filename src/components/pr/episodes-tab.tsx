@@ -168,7 +168,7 @@ export function EpisodesTab({
           </div>
           <div className="flex flex-wrap gap-2">
             {lockedFast.length > 1 ? (
-              <Button variant="brand" size="sm" onClick={() => onUnlock(lockedFast[0], "all")}>
+              <Button animateIcon variant="brand" size="sm" onClick={() => onUnlock(lockedFast[0], "all")}>
                 <ZapIcon className="size-3.5" />
                 {t("unlockAll", { count: lockedFast.length, cost: episodesCost(lockedFast) })}
               </Button>
@@ -244,7 +244,7 @@ export function EpisodesTab({
                 {t("go")}
               </Button>
             </form>
-            <Button variant="ghost" size="sm" onClick={() => setNewestFirst((v) => !v)}>
+            <Button animateIcon variant="ghost" size="sm" onClick={() => setNewestFirst((v) => !v)}>
               <ArrowUpDownIcon className="size-3.5" />
               {t(newestFirst ? "sortNewest" : "sortOldest")}
             </Button>

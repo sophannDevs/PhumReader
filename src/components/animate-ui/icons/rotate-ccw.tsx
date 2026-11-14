@@ -80,7 +80,7 @@ function IconComponent({ size, ...props }: RotateCcwProps) {
 }
 
 function RotateCcw(props: RotateCcwProps) {
-  return <IconWrapper icon={IconComponent} size={24} animateOnHover {...props} />;
+  return <IconWrapper icon={IconComponent} size={24} {...props} />;
 }
 
 export {

@@ -86,7 +86,7 @@ function IconComponent({ size, ...props }: ThumbsUpProps) {
 }
 
 function ThumbsUp(props: ThumbsUpProps) {
-  return <IconWrapper icon={IconComponent} size={24} animateOnHover {...props} />;
+  return <IconWrapper icon={IconComponent} size={24} {...props} />;
 }
 
 export {

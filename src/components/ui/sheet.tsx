@@ -71,6 +71,7 @@ function SheetContent({
         {showCloseButton && (
           <SheetPrimitive.Close data-slot="sheet-close" asChild>
             <Button
+              animateIcon
               variant="ghost"
               className="absolute top-4 right-4"
               size="icon-sm"

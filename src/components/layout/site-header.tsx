@@ -1,7 +1,8 @@
 "use client"
 
 import { AnimateIcon } from "@animate-ui/react/icons"
-import { CoinsIcon, PenLineIcon } from "lucide-react"
+import { CoinsIcon } from "@/components/animate-ui/icons/coins"
+import { PenLineIcon } from "@/components/animate-ui/icons/pen-line"
 import { BellIcon } from "@/components/animate-ui/icons/bell"
 import { BookOpenIcon } from "@/components/animate-ui/icons/book-open"
 import { LogOutIcon } from "@/components/animate-ui/icons/log-out"
@@ -123,7 +124,7 @@ export function SiteHeader({
               ⌘K
             </kbd>
           </button></AnimateIcon>
-          <Button variant="ghost" size="icon" aria-label={t("search")} onClick={onSearchOpen} className="md:hidden">
+          <Button animateIcon variant="ghost" size="icon" aria-label={t("search")} onClick={onSearchOpen} className="md:hidden">
             <SearchIcon className="size-[18px]" />
           </Button>
 
@@ -133,7 +134,7 @@ export function SiteHeader({
 
           {user ? (
             <>
-              <Button asChild variant="ghost" size="icon" className="relative rounded-full">
+              <Button asChild animateIcon variant="ghost" size="icon" className="relative rounded-full">
                 <Link href="/notifications" aria-label={unread > 0 ? t("bellUnread", { count: unread }) : t("notifications")}>
                   <BellIcon className="size-[18px]" />
                   {unread > 0 ? (
@@ -177,12 +178,12 @@ export function SiteHeader({
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
                     <Link href="/coins">
-                      <CoinsIcon /> {t("getCoins")}
+                      <CoinsIcon aria-hidden /> {t("getCoins")}
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
                     <Link href="/creator">
-                      <PenLineIcon /> {t("creatorDashboard")}
+                      <PenLineIcon aria-hidden /> {t("creatorDashboard")}
                     </Link>
                   </DropdownMenuItem>
                   {user.roles?.includes("ADMIN") ? (

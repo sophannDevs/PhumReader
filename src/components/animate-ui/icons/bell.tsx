@@ -74,7 +74,7 @@ function IconComponent({ size, ...props }: BellProps) {
 }
 
 function Bell(props: BellProps) {
-  return <IconWrapper icon={IconComponent} size={24} animateOnHover {...props} />;
+  return <IconWrapper icon={IconComponent} size={24} {...props} />;
 }
 
 export {

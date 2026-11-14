@@ -145,7 +145,7 @@ function IconComponent({ size, ...props }: LockProps) {
 }
 
 function Lock(props: LockProps) {
-  return <IconWrapper icon={IconComponent} size={24} animateOnHover {...props} />;
+  return <IconWrapper icon={IconComponent} size={24} {...props} />;
 }
 
 export {

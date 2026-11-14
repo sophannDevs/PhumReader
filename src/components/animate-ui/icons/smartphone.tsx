@@ -196,7 +196,7 @@ function IconComponent({ size, ...props }: SmartphoneProps) {
 }
 
 function Smartphone(props: SmartphoneProps) {
-  return <IconWrapper icon={IconComponent} size={24} animateOnHover {...props} />;
+  return <IconWrapper icon={IconComponent} size={24} {...props} />;
 }
 
 export {

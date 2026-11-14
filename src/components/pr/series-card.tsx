@@ -3,6 +3,7 @@ import Image from "next/image"
 import { useTranslations } from "@/i18n/translations"
 import { Badge } from "@/components/ui/badge"
 import { Effect } from "@animate-ui/react/primitives/effects/effect"
+import { AnimateIcon } from "@animate-ui/react/icons"
 import { Tilt, TiltContent } from "@animate-ui/react/primitives/effects/tilt"
 import { Link } from "@/i18n/navigation"
 import type { Series } from "@/data/types"
@@ -95,11 +96,20 @@ export function SeriesCard({
     </Link>
   )
 
+  // One icon trigger per card: hovering the card plays its icons.
   // Cards above the fold (priority) render visible at once so they never flash or delay LCP.
-  if (priority) return card
+  if (priority) {
+    return (
+      <AnimateIcon asChild animateOnHover>
+        {card}
+      </AnimateIcon>
+    )
+  }
   return (
-    <Effect asChild fade slide={{ direction: "up", offset: 12 }} inView inViewMargin="0px 0px -40px 0px">
-      {card}
-    </Effect>
+    <AnimateIcon asChild animateOnHover>
+      <Effect asChild fade slide={{ direction: "up", offset: 12 }} inView inViewMargin="0px 0px -40px 0px">
+        {card}
+      </Effect>
+    </AnimateIcon>
   )
 }

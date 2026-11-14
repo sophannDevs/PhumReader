@@ -55,7 +55,10 @@ function Button({
     asChild?: boolean
     /** Shows a spinner and disables the button (prevents double submits). */
     loading?: boolean
-    /** Plays the animated icons inside on hover. Opt in only for a few singleton CTAs (each one costs observers). */
+    /**
+     * Plays the animated icons inside on hover. Adds one AnimateIcon root per button (one animation
+     * controller and its view observers); the icons inside share it. Icons without a trigger stay static.
+     */
     animateIcon?: boolean
   }) {
   const Comp = asChild ? Slot.Root : "button"

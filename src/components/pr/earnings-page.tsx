@@ -1,7 +1,7 @@
 "use client"
 
 import { useQuery, useQueryClient } from "@tanstack/react-query"
-import { CoinsIcon } from "lucide-react"
+import { CoinsIcon } from "@/components/animate-ui/icons/coins"
 import { CircleAlertIcon as AlertCircleIcon } from "@/components/animate-ui/icons/circle-alert"
 import { TriangleAlertIcon as AlertTriangleIcon } from "@/components/animate-ui/icons/triangle-alert"
 import Image from "next/image"

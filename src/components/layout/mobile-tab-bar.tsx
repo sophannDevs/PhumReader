@@ -1,7 +1,7 @@
 "use client"
 
 import { useSyncExternalStore } from "react"
-import { CoinsIcon } from "lucide-react"
+import { CoinsIcon } from "@/components/animate-ui/icons/coins"
 import { AnimateIcon } from "@animate-ui/react/icons"
 import { BookOpenIcon } from "@/components/animate-ui/icons/book-open"
 import { HouseIcon as HomeIcon } from "@/components/animate-ui/icons/house"
@@ -126,7 +126,7 @@ export function MobileTabBar({
                   value={key}
                   className="flex justify-center"
                 >
-                  <AnimateIcon asChild animateOnHover>
+                  <AnimateIcon asChild animateOnHover animateOnTap completeOnStop>
                     <BottomNavigationItem
                       asChild
                       value={key}

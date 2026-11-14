@@ -140,7 +140,7 @@ export function DailyUpdatesSection({
           title={t("dayErrorTitle")}
           text={t("dayErrorText")}
           action={
-            <Button variant="outline" size="sm" onClick={onRetry}>
+            <Button animateIcon variant="outline" size="sm" onClick={onRetry}>
               <RefreshCwIcon className="size-3.5" />
               {t("tryAgain")}
             </Button>
@@ -196,7 +196,7 @@ export function DailyUpdatesSection({
             })}
           </div>
           {!showAll && list.length > 6 ? (
-            <Button variant="outline" className="w-full max-md:hidden" onClick={() => setShowAll(true)}>
+            <Button animateIcon variant="outline" className="w-full max-md:hidden" onClick={() => setShowAll(true)}>
               {t("showAllDay", { count: list.length, type: kind })}
               <ChevronDownIcon className="size-3.5" />
             </Button>

@@ -2,7 +2,8 @@
 
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useMutation } from "@tanstack/react-query"
-import { CoinsIcon, ShieldIcon } from "lucide-react"
+import { CoinsIcon } from "@/components/animate-ui/icons/coins"
+import { ShieldIcon } from "@/components/animate-ui/icons/shield"
 import { CheckIcon } from "@/components/animate-ui/icons/check"
 import { ClockIcon } from "@/components/animate-ui/icons/clock"
 import { MailIcon } from "@/components/animate-ui/icons/mail"
@@ -305,7 +306,7 @@ export function HelpContact() {
                   aria-hidden
                   onChange={(e) => addFiles(e.target.files)}
                 />
-                <Button type="button" variant="outline" size="sm" onClick={() => fileInput.current?.click()}>
+                <Button animateIcon type="button" variant="outline" size="sm" onClick={() => fileInput.current?.click()}>
                   <PlusIcon className="size-3.5" />
                   {files.length ? t("attached", { count: files.length }) : t("attach")}
                 </Button>

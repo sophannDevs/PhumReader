@@ -123,7 +123,7 @@ export function RankingsPage() {
             {t("lead")} {list === "popular" ? t("allTime") : t("updated")}
           </p>
         </div>
-        <Button
+        <Button animateIcon
           variant="ghost"
           size="sm"
           aria-expanded={howOpen}
@@ -195,7 +195,7 @@ export function RankingsPage() {
             title={t("errorTitle")}
             text={t("errorText")}
             action={
-              <Button
+              <Button animateIcon
                 variant="outline"
                 size="sm"
                 onClick={() => {

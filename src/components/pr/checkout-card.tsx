@@ -1,6 +1,6 @@
 "use client"
 
-import { ShieldIcon } from "lucide-react"
+import { ShieldIcon } from "@/components/animate-ui/icons/shield"
 import { ArrowRightIcon } from "@/components/animate-ui/icons/arrow-right"
 import { CheckIcon } from "@/components/animate-ui/icons/check"
 import { ClockIcon } from "@/components/animate-ui/icons/clock"
@@ -140,7 +140,7 @@ function SuccessPanel({ flow, onReset }: { flow: Extract<Flow, { step: "success"
         {t("orderLine", { id: flow.orderId, method: loc.method(flow.method, { label: flow.method, desc: "" }).label })}
       </span>
       {shopReturn ? (
-        <Button variant="brand" size="lg" className={cn("w-full gap-1.5 px-4", wrapButton)} onClick={goBack}>
+        <Button animateIcon variant="brand" size="lg" className={cn("w-full gap-1.5 px-4", wrapButton)} onClick={goBack}>
           {t(novel ? "backToChapter" : "backToEpisode", { n: shopReturn.episode, title: shopReturn.title })}
           <ArrowRightIcon className="size-3.5" aria-hidden />
         </Button>

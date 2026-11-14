@@ -72,7 +72,7 @@ export function NovelEndSection({
         <div ref={finishRef} className={cn(card, "flex flex-col items-center gap-3.5 p-6 text-center")}>
           <p className="text-xs leading-4 font-semibold tracking-[0.06em] text-reader-quiet uppercase">{t("endOfChapter", { n })}</p>
           <div className="flex flex-wrap justify-center gap-2">
-            <Button
+            <Button animateIcon
               variant="outline"
               className={outline}
               aria-pressed={liked}
@@ -86,7 +86,7 @@ export function NovelEndSection({
               </ParticleBurst>
               {liked ? t("liked") : t("like")}
             </Button>
-            <Button
+            <Button animateIcon
               variant="outline"
               className={outline}
               aria-pressed={bookmarked}
@@ -100,7 +100,7 @@ export function NovelEndSection({
               </ParticleBurst>
               {bookmarked ? t("bookmarked") : t("bookmark")}
             </Button>
-            <Button variant="outline" className={outline} onClick={share}>
+            <Button animateIcon variant="outline" className={outline} onClick={share}>
               <Share2Icon aria-hidden />
               {t("share")}
             </Button>
@@ -120,11 +120,11 @@ export function NovelEndSection({
         ) : null}
 
         <div className="flex gap-2.5">
-          <Button variant="outline" size="lg" className={cn(outline, "flex-1")} disabled={n <= 1} onClick={onPrev}>
+          <Button animateIcon variant="outline" size="lg" className={cn(outline, "flex-1")} disabled={n <= 1} onClick={onPrev}>
             <ChevronLeftIcon aria-hidden />
             {t("previous")}
           </Button>
-          <Button variant="brand" size="lg" className="flex-1" disabled={n >= total} onClick={onNext}>
+          <Button animateIcon variant="brand" size="lg" className="flex-1" disabled={n >= total} onClick={onNext}>
             {nextLocked ? t("nextCoins", { price }) : t("nextChapterBtn")}
             <ChevronRightIcon aria-hidden />
           </Button>

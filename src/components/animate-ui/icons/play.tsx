@@ -67,7 +67,7 @@ function IconComponent({ size, ...props }: PlayProps) {
 }
 
 function Play(props: PlayProps) {
-  return <IconWrapper icon={IconComponent} size={24} animateOnHover {...props} />;
+  return <IconWrapper icon={IconComponent} size={24} {...props} />;
 }
 
 export {

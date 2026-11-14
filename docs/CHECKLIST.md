@@ -678,6 +678,32 @@ docs/BACKEND_CHECKLIST.md, "V2.1 API additions" (V21-01 … V21-07).
   sign-off from the design owner.
   Open question: the animated icons and the particle burst are not in the design pack (like ANIM-4), so check against
   `design/screens` before launch.
+- ANIM-17 (animations) **Icons: roots and the 11 new icons**: request "check all icons and add the animation". No
+  checklist task.
+  The 66 icon wrappers in `src/components/animate-ui/icons/` no longer set `animateOnHover` by default. It made every
+  icon its own `AnimateIcon` root with 2 IntersectionObservers (about 290 instances) and a second root inside
+  `Button animateIcon`. An icon with no parent trigger is now static; an icon under a parent trigger shares its
+  controls. This replaces the ANIM-16 note that the per-icon hover was removed for performance (it had not taken
+  effect).
+  11 new hand-written animated icons: coins, pen-line, inbox, shield, library, shield-alert, laptop, book, languages,
+  search-x, receipt-text. The glyphs are copied verbatim from lucide-react 1.69 (shield-alert from
+  `shield-exclamation-point`). The motions are our own choice, because the design pack has no icon motions. This
+  reverses the ANIM-16 decision to keep these on lucide. Loader2 and the Check in `ui/checkbox`, `ui/dropdown-menu`
+  and `ui/select` stay lucide. The ANIM-15 open question stays open for the design owner.
+- ANIM-18 (animations) **Icons: triggers**: one trigger per interactive control (`Button animateIcon`, or `AnimateIcon`
+  with `asChild` and `animateOnHover`). The header bell `Button` has `animateIcon`. One trigger per card or row for
+  series-card, continue-card, episode-row and the notification rows (owner decision); hovering a series card also
+  plays its size-3 likes heart. Static on purpose: dropdown and command menu items, chips, per-item rows in long lists
+  (creator comment rows, manage-series per-episode buttons, upload-episode per-image buttons, admin-payments rows),
+  the comment Like (it has its own `Effect`), Loader2, toast icons, size-3 and size-3.5 inline meta icons, the logo,
+  social marks, KHQR and illustrations. The EmptyState, ErrorState and StateBox icon tiles play once when they come
+  into view (`animateOnView`).
+- ANIM-19 (animations) **Icons: phone, keyboard, reduced motion**: on the phone the bottom tab bar icons animate on
+  tap (`animateOnTap` with `completeOnStop`); everything else is hover only. Keyboard focus does not play card or row
+  animations (`AnimateIcon` reacts to hover and tap only, as before). `prefers-reduced-motion` is handled by the
+  library (`ReducedMotionConfig`): icons jump to the final state once, with no animation.
+  Open: the card and row triggers on lists that can exceed 20 items (the episode list, the notification inbox with
+  "load more") were kept because the owner named them. Revisit if scroll performance on low-end phones suffers.
 - V2-83 (V21-08) **Mature content and public library are saved only**: the two switches reach the account
   (`privacy.mature`, `privacy.publicLibrary`) but nothing reads them yet. No mature series is hidden and there is no
   public library page. Both are later tasks.

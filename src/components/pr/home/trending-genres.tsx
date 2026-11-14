@@ -52,7 +52,7 @@ function Retry({ title, onRetry, className }: { title: string; onRetry: () => vo
       title={title}
       className={className}
       action={
-        <Button variant="outline" size="sm" onClick={onRetry}>
+        <Button animateIcon variant="outline" size="sm" onClick={onRetry}>
           <RefreshCwIcon className="size-3.5" />
           {t("tryAgain")}
         </Button>
@@ -158,7 +158,7 @@ function Genres({
         subtitle={t("genreCount", { count: all.length, genre: loc.genre(genre) })}
         className="items-center"
         action={
-          <Button variant="outline" size="sm" onClick={surprise} disabled={all.length === 0}>
+          <Button animateIcon variant="outline" size="sm" onClick={surprise} disabled={all.length === 0}>
             <SparklesIcon className="size-3.5" />
             {t("surprise")}
           </Button>

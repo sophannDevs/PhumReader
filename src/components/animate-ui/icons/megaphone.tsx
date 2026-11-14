@@ -52,7 +52,7 @@ function IconComponent({ size, ...props }: MegaphoneProps) {
 }
 
 function Megaphone(props: MegaphoneProps) {
-  return <IconWrapper icon={IconComponent} size={24} animateOnHover {...props} />;
+  return <IconWrapper icon={IconComponent} size={24} {...props} />;
 }
 
 export {

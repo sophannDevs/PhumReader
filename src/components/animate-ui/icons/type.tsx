@@ -99,7 +99,7 @@ function IconComponent({ size, ...props }: TypeProps) {
 }
 
 function Type(props: TypeProps) {
-  return <IconWrapper icon={IconComponent} size={24} animateOnHover {...props} />;
+  return <IconWrapper icon={IconComponent} size={24} {...props} />;
 }
 
 export {

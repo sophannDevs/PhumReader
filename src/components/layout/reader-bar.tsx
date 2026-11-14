@@ -46,7 +46,7 @@ function ReaderBar({ kind, light, ...p }: ReaderBarProps & { kind: "episode" | "
         )}
       >
         <div className="mx-auto flex h-14 max-w-[880px] items-center gap-2 px-4">
-          <Button asChild variant="ghost" size="icon" className={button}>
+          <Button animateIcon asChild variant="ghost" size="icon" className={button}>
             <Link href={p.backHref} aria-label={t("backTo", { title: p.seriesTitle })}>
               <ArrowLeftIcon className="size-[18px]" />
             </Link>
@@ -67,7 +67,7 @@ function ReaderBar({ kind, light, ...p }: ReaderBarProps & { kind: "episode" | "
           {p.settingsSlot}
           {novel ? null : (
             <>
-              <Button
+              <Button animateIcon
                 variant="ghost"
                 size="icon-sm"
                 className={button}
@@ -77,7 +77,7 @@ function ReaderBar({ kind, light, ...p }: ReaderBarProps & { kind: "episode" | "
               >
                 <ChevronLeftIcon />
               </Button>
-              <Button
+              <Button animateIcon
                 variant="ghost"
                 size="icon-sm"
                 className={button}

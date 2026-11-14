@@ -345,12 +345,12 @@ function Profile({ handle, baseName, isOwner, api }: { handle: string; baseName:
                 </div>
                 <div className="flex shrink-0 items-center gap-2 max-md:w-full">
                   {isOwner ? null : (
-                    <Button variant={following ? "secondary" : "brand"} aria-pressed={following} className="max-md:flex-1" onClick={() => void toggleFollow()}>
+                    <Button animateIcon variant={following ? "secondary" : "brand"} aria-pressed={following} className="max-md:flex-1" onClick={() => void toggleFollow()}>
                       <ParticleBurst burst={followBurst}>{following ? <CheckIcon aria-hidden /> : <PlusIcon aria-hidden />}</ParticleBurst>
                       {following ? t("following") : t("follow")}
                     </Button>
                   )}
-                  <Button variant="outline" size="icon" aria-label={t("share")} onClick={() => void share()}>
+                  <Button animateIcon variant="outline" size="icon" aria-label={t("share")} onClick={() => void share()}>
                     <ShareIcon />
                   </Button>
                   {/* Real API: no reporting or blocking yourself, also on your own public page (400 cannot_report_self). */}

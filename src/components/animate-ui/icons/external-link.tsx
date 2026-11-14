@@ -90,7 +90,7 @@ function IconComponent({ size, ...props }: ExternalLinkProps) {
 }
 
 function ExternalLink(props: ExternalLinkProps) {
-  return <IconWrapper icon={IconComponent} size={24} animateOnHover {...props} />;
+  return <IconWrapper icon={IconComponent} size={24} {...props} />;
 }
 
 export {

@@ -1,6 +1,6 @@
 "use client"
 
-import { PenLineIcon } from "lucide-react"
+import { PenLineIcon } from "@/components/animate-ui/icons/pen-line"
 import Image from "next/image"
 import { useTranslations } from "@/i18n/translations"
 import { Eyebrow, SectionHead } from "@/components/pr/v2-primitives"
@@ -62,7 +62,7 @@ export function CreatorCta({ covers }: { covers: Series[] }) {
           <div className="flex flex-wrap gap-2 pt-1.5">
             <Button asChild variant="brand">
               <Link href="/creators/join">
-                <PenLineIcon className="size-3.5" />
+                <PenLineIcon className="size-3.5" aria-hidden />
                 {t("ctaStart")}
               </Link>
             </Button>

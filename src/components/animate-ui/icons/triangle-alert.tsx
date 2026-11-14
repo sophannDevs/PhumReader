@@ -68,7 +68,7 @@ function IconComponent({ size, ...props }: TriangleAlertProps) {
 }
 
 function TriangleAlert(props: TriangleAlertProps) {
-  return <IconWrapper icon={IconComponent} size={24} animateOnHover {...props} />;
+  return <IconWrapper icon={IconComponent} size={24} {...props} />;
 }
 
 export {

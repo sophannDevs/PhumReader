@@ -146,7 +146,7 @@ function IconComponent({ size, ...props }: CopyProps) {
 }
 
 function Copy(props: CopyProps) {
-  return <IconWrapper icon={IconComponent} size={24} animateOnHover {...props} />;
+  return <IconWrapper icon={IconComponent} size={24} {...props} />;
 }
 
 export {

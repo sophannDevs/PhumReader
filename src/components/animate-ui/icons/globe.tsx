@@ -54,7 +54,7 @@ function IconComponent({ size, ...props }: GlobeProps) {
 }
 
 function Globe(props: GlobeProps) {
-  return <IconWrapper icon={IconComponent} size={24} animateOnHover {...props} />;
+  return <IconWrapper icon={IconComponent} size={24} {...props} />;
 }
 
 export {

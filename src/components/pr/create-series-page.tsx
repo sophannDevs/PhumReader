@@ -948,7 +948,7 @@ function Wizard({ workId, seed }: { workId: string | null; seed: Partial<Draft> 
             </div>
             <div className="flex items-center gap-2 border-t px-5 pt-4 pb-5 max-md:flex-wrap max-md:px-4 max-md:pb-4">
               {ix > 0 ? (
-                <Button type="button" variant="ghost" onClick={() => go(STEPS[ix - 1])}>
+                <Button animateIcon type="button" variant="ghost" onClick={() => go(STEPS[ix - 1])}>
                   <ChevronLeftIcon />
                   {t("back")}
                 </Button>

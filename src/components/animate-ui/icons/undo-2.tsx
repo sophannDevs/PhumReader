@@ -80,7 +80,7 @@ function IconComponent({ size, ...props }: Undo2Props) {
 }
 
 function Undo2(props: Undo2Props) {
-  return <IconWrapper icon={IconComponent} size={24} animateOnHover {...props} />;
+  return <IconWrapper icon={IconComponent} size={24} {...props} />;
 }
 
 export {

@@ -236,7 +236,7 @@ function IconComponent({ size, ...props }: SlidersHorizontalProps) {
 }
 
 function SlidersHorizontal(props: SlidersHorizontalProps) {
-  return <IconWrapper icon={IconComponent} size={24} animateOnHover {...props} />;
+  return <IconWrapper icon={IconComponent} size={24} {...props} />;
 }
 
 export {

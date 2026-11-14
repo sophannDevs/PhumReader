@@ -157,7 +157,7 @@ function IconComponent({ size, ...props }: GiftProps) {
 }
 
 function Gift(props: GiftProps) {
-  return <IconWrapper icon={IconComponent} size={24} animateOnHover {...props} />;
+  return <IconWrapper icon={IconComponent} size={24} {...props} />;
 }
 
 export {

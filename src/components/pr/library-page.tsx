@@ -2,7 +2,7 @@
 
 import { AnimateIcon } from "@animate-ui/react/icons"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
-import { LibraryIcon } from "lucide-react"
+import { LibraryIcon } from "@/components/animate-ui/icons/library"
 import { CircleAlertIcon as AlertCircleIcon } from "@/components/animate-ui/icons/circle-alert"
 import { CheckIcon } from "@/components/animate-ui/icons/check"
 import { RefreshCwIcon } from "@/components/animate-ui/icons/refresh-cw"
@@ -339,7 +339,7 @@ export function LibraryPage() {
       {hydrated && !user ? (
         <div className="flex items-center gap-4 rounded-card border bg-[linear-gradient(120deg,#f0fdf5_0%,#ffffff_70%)] dark:bg-[image:linear-gradient(120deg,var(--brand-wash-from)_0%,var(--brand-wash-to)_70%)] p-5 shadow-xs max-md:flex-col max-md:items-start max-md:p-4">
           <span aria-hidden className="inline-flex size-11 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground">
-            <LibraryIcon className="size-5" />
+            <LibraryIcon className="size-5" aria-hidden />
           </span>
           <div className="flex min-w-0 flex-1 flex-col gap-1">
             <h2 className="type-h3">{t("guestTitle")}</h2>
@@ -399,7 +399,7 @@ export function LibraryPage() {
                     {sel.length ? t("selected", { count: sel.length }) : t("selectHint")}
                   </span>
                 </div>
-                <Button variant="destructive" size="sm" disabled={sel.length === 0} onClick={removeSelected}>
+                <Button animateIcon variant="destructive" size="sm" disabled={sel.length === 0} onClick={removeSelected}>
                   <XIcon className="size-3.5" />
                   {tab === "subs"
                     ? sel.length
@@ -489,7 +489,7 @@ export function LibraryPage() {
               title={t("errorTitle")}
               text={t("errorText")}
               action={
-                <Button variant="outline" size="sm" onClick={refetch}>
+                <Button animateIcon variant="outline" size="sm" onClick={refetch}>
                   <RefreshCwIcon className="size-3.5" />
                   {t("tryAgain")}
                 </Button>

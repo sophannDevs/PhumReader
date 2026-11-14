@@ -68,7 +68,7 @@ function IconComponent({ size, ...props }: InfoProps) {
 }
 
 function Info(props: InfoProps) {
-  return <IconWrapper icon={IconComponent} size={24} animateOnHover {...props} />;
+  return <IconWrapper icon={IconComponent} size={24} {...props} />;
 }
 
 export {

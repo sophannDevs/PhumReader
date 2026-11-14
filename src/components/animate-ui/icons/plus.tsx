@@ -115,7 +115,7 @@ function IconComponent({ size, ...props }: PlusProps) {
 }
 
 function Plus(props: PlusProps) {
-  return <IconWrapper icon={IconComponent} size={24} animateOnHover {...props} />;
+  return <IconWrapper icon={IconComponent} size={24} {...props} />;
 }
 
 export {

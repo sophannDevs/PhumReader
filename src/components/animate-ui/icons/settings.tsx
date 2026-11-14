@@ -85,7 +85,7 @@ function IconComponent({ size, ...props }: SettingsProps) {
 }
 
 function Settings(props: SettingsProps) {
-  return <IconWrapper icon={IconComponent} size={24} animateOnHover {...props} />;
+  return <IconWrapper icon={IconComponent} size={24} {...props} />;
 }
 
 export {

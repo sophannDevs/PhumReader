@@ -77,7 +77,7 @@ function IconComponent({ size, ...props }: MinusProps) {
 }
 
 function Minus(props: MinusProps) {
-  return <IconWrapper icon={IconComponent} size={24} animateOnHover {...props} />;
+  return <IconWrapper icon={IconComponent} size={24} {...props} />;
 }
 
 export {

@@ -86,7 +86,7 @@ function IconComponent({ size, ...props }: LogInProps) {
 }
 
 function LogIn(props: LogInProps) {
-  return <IconWrapper icon={IconComponent} size={24} animateOnHover {...props} />;
+  return <IconWrapper icon={IconComponent} size={24} {...props} />;
 }
 
 export {

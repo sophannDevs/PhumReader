@@ -390,7 +390,7 @@ export function WelcomeFlow() {
         style={{ background: "linear-gradient(transparent, var(--subtle) 30%)" }}
       >
         {ix > 0 && state.step !== "done" ? (
-          <Button variant="ghost" onClick={() => go(ORDER[ix - 1])}>
+          <Button animateIcon variant="ghost" onClick={() => go(ORDER[ix - 1])}>
             <ChevronLeftIcon aria-hidden />
             {t("back")}
           </Button>
@@ -417,7 +417,7 @@ export function WelcomeFlow() {
             >
               {t("notNow")}
             </Button>
-            <Button variant="brand" size="lg" onClick={() => void allow()}>
+            <Button animateIcon variant="brand" size="lg" onClick={() => void allow()}>
               <BellIcon aria-hidden />
               {t("turnOn")}
             </Button>

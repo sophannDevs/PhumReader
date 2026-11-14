@@ -7,6 +7,7 @@ import { CheckIcon } from "@/components/animate-ui/icons/check"
 import { PlayIcon } from "@/components/animate-ui/icons/play"
 import { RefreshCwIcon } from "@/components/animate-ui/icons/refresh-cw"
 import { XIcon } from "@/components/animate-ui/icons/x"
+import { AnimateIcon } from "@animate-ui/react/icons"
 import { useLocale } from "next-intl"
 import { useTranslations } from "@/i18n/translations"
 import { useState, useSyncExternalStore } from "react"
@@ -334,7 +335,7 @@ export function NotificationsPage() {
           ) : null}
         </div>
         {loggedIn && !loading && (unread ?? 0) > 0 ? (
-          <Button variant="outline" size="sm" onClick={markAll}>
+          <Button animateIcon variant="outline" size="sm" onClick={markAll}>
             <CheckIcon className="size-3.5" />
             {t("markAll")}
           </Button>
@@ -392,7 +393,7 @@ export function NotificationsPage() {
                     title={t("errorTitle")}
                     text={t("errorText")}
                     action={
-                      <Button variant="outline" size="sm" onClick={() => void (DEMO_MODE ? demo.refetch() : inbox.query.refetch())}>
+                      <Button animateIcon variant="outline" size="sm" onClick={() => void (DEMO_MODE ? demo.refetch() : inbox.query.refetch())}>
                         <RefreshCwIcon className="size-3.5" />
                         {t("tryAgain")}
                       </Button>
@@ -420,7 +421,8 @@ export function NotificationsPage() {
                         </h2>
                         <ul className="m-0 flex list-none flex-col divide-y overflow-hidden rounded-card border p-0">
                           {items.map((n, ni) => (
-                            <Effect key={n.id} asChild fade slide={{ direction: "up", offset: 8 }} delay={Math.min(ni, 10) * 40} inView>
+                            <AnimateIcon key={n.id} asChild animateOnHover>
+                            <Effect asChild fade slide={{ direction: "up", offset: 8 }} delay={Math.min(ni, 10) * 40} inView>
                             <li
                               className={cn(
                                 "group flex items-start gap-3 py-3.5 pr-3 pl-4 max-md:gap-2.5 max-md:py-3 max-md:pr-2 max-md:pl-3",
@@ -464,6 +466,7 @@ export function NotificationsPage() {
                               </div>
                             </li>
                             </Effect>
+                            </AnimateIcon>
                           ))}
                         </ul>
                       </div>
@@ -559,7 +562,7 @@ function AlertSettings() {
             title={t("settingsErrorText")}
             text={t("errorText")}
             action={
-              <Button variant="outline" size="sm" onClick={() => void account.refetch()}>
+              <Button animateIcon variant="outline" size="sm" onClick={() => void account.refetch()}>
                 <RefreshCwIcon className="size-3.5" />
                 {t("tryAgain")}
               </Button>

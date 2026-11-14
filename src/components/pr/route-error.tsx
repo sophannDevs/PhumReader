@@ -172,7 +172,7 @@ export function RouteError({ error, reset }: { error: Error & { digest?: string 
             {t("home")}
           </Link>
         </Button>
-        <Button asChild variant="ghost" size="lg">
+        <Button animateIcon asChild variant="ghost" size="lg">
           <Link href="/library">
             <BookOpenIcon />
             {t("library")}
@@ -183,7 +183,7 @@ export function RouteError({ error, reset }: { error: Error & { digest?: string 
         <p className="flex flex-wrap items-center gap-1.5">
           <span>{t("server.ref")}</span>
           <code className="rounded-md bg-muted px-2 py-[3px] font-mono text-xs break-all text-foreground">{reference}</code>
-          <Button variant="ghost" size="icon-sm" className="size-[26px]" onClick={copy} aria-label={t("server.copy")}>
+          <Button animateIcon variant="ghost" size="icon-sm" className="size-[26px]" onClick={copy} aria-label={t("server.copy")}>
             <CopyIcon className="size-3.5" />
           </Button>
         </p>

@@ -70,7 +70,7 @@ function IconComponent({ size, ...props }: BookmarkProps) {
 }
 
 function Bookmark(props: BookmarkProps) {
-  return <IconWrapper icon={IconComponent} size={24} animateOnHover {...props} />;
+  return <IconWrapper icon={IconComponent} size={24} {...props} />;
 }
 
 export {

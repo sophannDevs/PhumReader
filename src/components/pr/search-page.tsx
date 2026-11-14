@@ -186,7 +186,7 @@ export function SearchPage() {
           className="h-full min-w-0 flex-1 border-0 bg-transparent text-[17px] text-foreground outline-none placeholder:text-muted-foreground max-md:text-base [&::-webkit-search-cancel-button]:hidden"
         />
         {draft ? (
-          <Button
+          <Button animateIcon
             type="button"
             variant="ghost"
             size="icon-sm"
@@ -455,7 +455,7 @@ function Results({
                 ))}
               </NativeSelect>
               {hasFilters ? (
-                <Button variant="ghost" size="sm" onClick={onResetFilters} className="max-md:h-9 max-md:justify-start">
+                <Button animateIcon variant="ghost" size="sm" onClick={onResetFilters} className="max-md:h-9 max-md:justify-start">
                   <XIcon className="size-3.5" aria-hidden />
                   {t("clearFilters")}
                 </Button>
@@ -496,7 +496,7 @@ function Results({
             title={t("errorTitle")}
             text={t("errorText")}
             action={
-              <Button variant="outline" size="sm" onClick={() => void search.refetch()}>
+              <Button animateIcon variant="outline" size="sm" onClick={() => void search.refetch()}>
                 <RefreshCwIcon className="size-3.5" aria-hidden />
                 {t("tryAgain")}
               </Button>

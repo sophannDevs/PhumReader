@@ -1,6 +1,6 @@
 "use client"
 
-import { PenLineIcon } from "lucide-react"
+import { PenLineIcon } from "@/components/animate-ui/icons/pen-line"
 import { CircleAlertIcon as AlertCircleIcon } from "@/components/animate-ui/icons/circle-alert"
 import { LogInIcon } from "@/components/animate-ui/icons/log-in"
 import type { AnimatedIcon } from "@/components/animate-ui/icons/types"
@@ -113,7 +113,7 @@ function GateCard({ icon: Icon, title, text, actions }: { icon: AnimatedIcon; ti
     <Effect asChild fade slide={{ direction: "up", offset: 10 }}>
       <section className="flex flex-col items-center gap-3 rounded-[16px] border bg-background bg-[image:linear-gradient(135deg,var(--brand-wash-from),var(--brand-wash-to)_70%)] px-5 py-12 text-center shadow-xs md:rounded-hero md:px-8 md:py-14">
         <span aria-hidden className="inline-flex size-12 items-center justify-center rounded-full bg-brand-soft text-brand-ink">
-          <Icon className="size-5" />
+          <Icon className="size-5" aria-hidden />
         </span>
         <h2 className="type-h3">{title}</h2>
         <p className="max-w-md text-sm leading-[21px] text-muted-foreground">{text}</p>

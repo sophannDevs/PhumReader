@@ -174,7 +174,7 @@ export function ErrorCards({
         <h2 id="er-more-title" className="type-h3">
           {title}
         </h2>
-        <Button asChild variant="ghost" size="sm">
+        <Button animateIcon asChild variant="ghost" size="sm">
           <Link href={browseHref}>
             {t("browseAll")}
             <ChevronRightIcon className="size-3.5" aria-hidden />

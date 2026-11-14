@@ -182,7 +182,7 @@ function IconComponent({ size, ...props }: EllipsisProps) {
 }
 
 function Ellipsis(props: EllipsisProps) {
-  return <IconWrapper icon={IconComponent} size={24} animateOnHover {...props} />;
+  return <IconWrapper icon={IconComponent} size={24} {...props} />;
 }
 
 export {

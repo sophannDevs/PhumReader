@@ -2,6 +2,7 @@
 
 import { CheckIcon } from "@/components/animate-ui/icons/check"
 import type { AnimatedIcon } from "@/components/animate-ui/icons/types"
+import { AnimateIcon } from "@animate-ui/react/icons"
 import { cn } from "@/lib/utils"
 import { Num } from "@/i18n/num"
 import { SlidingTab, SlidingTabs } from "@/components/ui/sliding-tabs"
@@ -39,15 +40,18 @@ export function StateBox({
         className
       )}
     >
-      <span
-        aria-hidden
-        className={cn(
-          "mb-1 inline-flex size-11 items-center justify-center rounded-full",
-          tone === "bad" ? "bg-destructive-soft text-destructive" : "bg-muted text-muted-foreground"
-        )}
-      >
-        <Icon className="size-5" />
-      </span>
+      {/* The icon plays once when the state comes into view. */}
+      <AnimateIcon asChild animateOnView>
+        <span
+          aria-hidden
+          className={cn(
+            "mb-1 inline-flex size-11 items-center justify-center rounded-full",
+            tone === "bad" ? "bg-destructive-soft text-destructive" : "bg-muted text-muted-foreground"
+          )}
+        >
+          <Icon className="size-5" />
+        </span>
+      </AnimateIcon>
       <p className="text-[15px] leading-[22px] font-semibold">{title}</p>
       {text ? <p className="text-[13px] leading-[18px] text-muted-foreground">{text}</p> : null}
       {action}

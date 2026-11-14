@@ -16,6 +16,7 @@ import { cn } from "@/lib/utils"
 import { useLocalize } from "@/lib/localize"
 import { Num } from "@/i18n/num"
 import { Effect } from "@animate-ui/react/primitives/effects/effect"
+import { AnimateIcon } from "@animate-ui/react/icons"
 
 export type EpisodeState = "free" | "read" | "locked" | "unlocked"
 
@@ -150,7 +151,9 @@ export function EpisodeRow({
 
   const cls = cn(rowClass, upNext && "bg-brand-wash-from shadow-[inset_3px_0_0_var(--primary)] hover:bg-brand-wash-from")
 
+  // One icon trigger per row: hovering the row plays its icons.
   return (
+    <AnimateIcon asChild animateOnHover>
     <Effect asChild fade slide={{ direction: "up", offset: 8 }} delay={Math.min(index, 10) * 40} inView>
       <li>
         {locked ? (
@@ -168,5 +171,6 @@ export function EpisodeRow({
         )}
       </li>
     </Effect>
+    </AnimateIcon>
   )
 }

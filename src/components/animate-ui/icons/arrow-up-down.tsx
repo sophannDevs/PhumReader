@@ -161,7 +161,7 @@ function IconComponent({ size, ...props }: ArrowUpDownProps) {
 }
 
 function ArrowUpDown(props: ArrowUpDownProps) {
-  return <IconWrapper icon={IconComponent} size={24} animateOnHover {...props} />;
+  return <IconWrapper icon={IconComponent} size={24} {...props} />;
 }
 
 export {

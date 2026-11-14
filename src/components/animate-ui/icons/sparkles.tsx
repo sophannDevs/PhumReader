@@ -220,7 +220,7 @@ function IconComponent({ size, ...props }: SparklesProps) {
 }
 
 function Sparkles(props: SparklesProps) {
-  return <IconWrapper icon={IconComponent} size={24} animateOnHover {...props} />;
+  return <IconWrapper icon={IconComponent} size={24} {...props} />;
 }
 
 export {

@@ -32,7 +32,7 @@ export function ContinueReadingSection({ entries: demoEntries }: { entries: Cont
         title={t("continueTitle")}
         subtitle={t(loggedIn ? "continueLoggedIn" : "continueLoggedOut")}
         action={
-          <Button asChild variant="ghost" size="sm">
+          <Button animateIcon asChild variant="ghost" size="sm">
             <Link href="/library">
               {t("myLibrary")}
               <ChevronRightIcon className="size-3.5" />

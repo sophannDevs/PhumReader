@@ -120,7 +120,7 @@ export function HelpPage() {
                 className="h-12 rounded-xl px-11 text-base shadow-md placeholder:text-[#a1a1aa] md:h-[52px] [&::-webkit-search-cancel-button]:hidden"
               />
               {q ? (
-                <Button
+                <Button animateIcon
                   type="button"
                   variant="ghost"
                   size="icon-sm"

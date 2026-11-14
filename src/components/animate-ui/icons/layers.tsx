@@ -109,7 +109,7 @@ function IconComponent({ size, ...props }: LayersProps) {
 }
 
 function Layers(props: LayersProps) {
-  return <IconWrapper icon={IconComponent} size={24} animateOnHover {...props} />;
+  return <IconWrapper icon={IconComponent} size={24} {...props} />;
 }
 
 export {

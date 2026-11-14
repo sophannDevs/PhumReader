@@ -79,7 +79,7 @@ function IconComponent({ size, ...props }: HeartProps) {
 }
 
 function Heart(props: HeartProps) {
-  return <IconWrapper icon={IconComponent} size={24} animateOnHover {...props} />;
+  return <IconWrapper icon={IconComponent} size={24} {...props} />;
 }
 
 export {

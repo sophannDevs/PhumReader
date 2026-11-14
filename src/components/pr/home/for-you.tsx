@@ -110,7 +110,7 @@ export function ForYouSection({ genres, all }: { genres: Genre[]; all: Series[] 
         title={picked.length ? t("recommended") : t("popularNow")}
         subtitle={why}
         action={
-          <Button
+          <Button animateIcon
             variant="ghost"
             size="sm"
             onClick={() => {

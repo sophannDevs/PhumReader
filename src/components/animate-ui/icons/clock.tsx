@@ -88,7 +88,7 @@ function IconComponent({ size, ...props }: ClockProps) {
 }
 
 function Clock(props: ClockProps) {
-  return <IconWrapper icon={IconComponent} size={24} animateOnHover {...props} />;
+  return <IconWrapper icon={IconComponent} size={24} {...props} />;
 }
 
 export {

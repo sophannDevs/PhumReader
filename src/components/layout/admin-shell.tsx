@@ -1,7 +1,8 @@
 "use client"
 
-import { ShieldAlertIcon } from "lucide-react"
+import { ShieldAlertIcon } from "@/components/animate-ui/icons/shield-alert"
 import { LogInIcon } from "@/components/animate-ui/icons/log-in"
+import { AnimateIcon } from "@animate-ui/react/icons"
 import { useTranslations } from "@/i18n/translations"
 import { useEffect, useRef } from "react"
 import { Highlight, HighlightItem } from "@animate-ui/react/primitives/effects/highlight"
@@ -134,9 +135,11 @@ function AccessCard({ denied, email }: { denied: boolean; email: string }) {
   const Icon = denied ? ShieldAlertIcon : LogInIcon
   return (
     <section className="mx-auto mt-4 flex w-full max-w-xl flex-col items-center gap-3 rounded-card border bg-card px-5 py-12 text-center shadow-xs md:mt-8 md:px-8">
-      <span aria-hidden className="inline-flex size-12 items-center justify-center rounded-full bg-muted text-muted-foreground">
-        <Icon className="size-5" />
-      </span>
+      <AnimateIcon asChild animateOnView>
+        <span aria-hidden className="inline-flex size-12 items-center justify-center rounded-full bg-muted text-muted-foreground">
+          <Icon className="size-5" aria-hidden />
+        </span>
+      </AnimateIcon>
       <h1 className="type-h3">{t("gateTitle")}</h1>
       <p className="max-w-md text-sm leading-[21px] text-muted-foreground">
         {denied ? t("gateDeniedText", { email }) : t("gateLoginText")}

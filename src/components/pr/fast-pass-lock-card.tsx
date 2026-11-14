@@ -1,6 +1,6 @@
 "use client"
 
-import { CoinsIcon } from "lucide-react"
+import { CoinsIcon } from "@/components/animate-ui/icons/coins"
 import { ChevronLeftIcon } from "@/components/animate-ui/icons/chevron-left"
 import { ZapIcon } from "@/components/animate-ui/icons/zap"
 import { useTranslations } from "@/i18n/translations"
@@ -92,7 +92,7 @@ export function FastPassLockCard({
               {t("unlockFor", { count: price })}
             </Button>
           ) : (
-            <Button variant="brand" size="lg" className="h-auto min-h-11 w-full py-2 whitespace-normal" onClick={onGetCoins}>
+            <Button animateIcon variant="brand" size="lg" className="h-auto min-h-11 w-full py-2 whitespace-normal" onClick={onGetCoins}>
               <CoinsIcon aria-hidden />
               {t("getCoinsNeed", { count: need })}
             </Button>
@@ -109,7 +109,7 @@ export function FastPassLockCard({
               {t(comic ? "unlockAllEpisodes" : "unlockAllChapters", { count: bundle.count, cost: bundle.cost ?? bundle.count * price })}
             </Button>
           ) : null}
-          <Button variant="ghost" className={cn("w-full", !comic && "text-reader-text")} disabled={!canGoBack} onClick={onBack}>
+          <Button animateIcon variant="ghost" className={cn("w-full", !comic && "text-reader-text")} disabled={!canGoBack} onClick={onBack}>
             <ChevronLeftIcon aria-hidden />
             {comic ? t("backToEpisode", { n: n - 1 }) : t("prevChapter")}
           </Button>

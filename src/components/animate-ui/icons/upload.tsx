@@ -87,7 +87,7 @@ function IconComponent({ size, ...props }: UploadProps) {
 }
 
 function Upload(props: UploadProps) {
-  return <IconWrapper icon={IconComponent} size={24} animateOnHover {...props} />;
+  return <IconWrapper icon={IconComponent} size={24} {...props} />;
 }
 
 export {

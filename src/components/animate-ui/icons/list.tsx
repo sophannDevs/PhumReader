@@ -177,7 +177,7 @@ function IconComponent({ size, ...props }: ListProps) {
 }
 
 function List(props: ListProps) {
-  return <IconWrapper icon={IconComponent} size={24} animateOnHover {...props} />;
+  return <IconWrapper icon={IconComponent} size={24} {...props} />;
 }
 
 export {

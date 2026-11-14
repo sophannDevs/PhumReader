@@ -611,7 +611,7 @@ export function SettingsPage() {
                   </h2>
                   <span className={fieldHint}>{customAlerts ? t("notifCustom") : t("notifSummary")}</span>
                 </div>
-                <Button asChild variant="outline" size="sm" className="shrink-0">
+                <Button animateIcon asChild variant="outline" size="sm" className="shrink-0">
                   <Link href="/notifications#ns">
                     {t("manage")}
                     <ChevronRightIcon className="size-3.5" aria-hidden />
@@ -712,7 +712,7 @@ export function SettingsPage() {
                     <span className={fieldHint}>{t("coinsHint", { count: coins })}</span>
                   </div>
                 </div>
-                <Button asChild variant="outline" size="sm" className="shrink-0">
+                <Button animateIcon asChild variant="outline" size="sm" className="shrink-0">
                   <Link href="/coins#history-title">
                     {t("history")}
                     <ChevronRightIcon className="size-3.5" aria-hidden />

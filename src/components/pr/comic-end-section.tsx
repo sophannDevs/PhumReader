@@ -101,7 +101,7 @@ export function ComicEndSection({
           <p className="text-xs leading-4 font-semibold tracking-[0.06em] text-muted-foreground uppercase">{t("endOf", { n: episode.n })}</p>
           <h2 className="type-h3">{loc.title(episode.title)}</h2>
           <div className="flex flex-wrap items-center justify-center gap-2">
-            <Button
+            <Button animateIcon
               variant="outline"
               aria-pressed={liked}
               aria-label={t("likeLabel", { count: formatCount(likeCount) })}
@@ -113,7 +113,7 @@ export function ComicEndSection({
               </ParticleBurst>
               <Num>{formatCount(likeCount)}</Num>
             </Button>
-            <Button
+            <Button animateIcon
               variant="outline"
               aria-pressed={subscribed}
               className={pill}
@@ -127,7 +127,7 @@ export function ComicEndSection({
               </ParticleBurst>
               {subscribed ? t("subscribed") : t("subscribe")}
             </Button>
-            <Button variant="outline" className={pill} onClick={share}>
+            <Button animateIcon variant="outline" className={pill} onClick={share}>
               <Share2Icon aria-hidden />
               {t("share")}
             </Button>
@@ -186,7 +186,7 @@ export function ComicEndSection({
 
         <TopComments series={series} episode={episode} closed={!commentsEnabled} className={card} />
 
-        <Button asChild variant="outline" className={cn(pill, "self-center")}>
+        <Button animateIcon asChild variant="outline" className={cn(pill, "self-center")}>
           <Link href={seriesHref(series)}>
             <ListIcon className="size-3.5" aria-hidden />
             {t("allEpisodes", { title: series.title })}

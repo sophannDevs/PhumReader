@@ -190,14 +190,14 @@ function Dashboard() {
             {pending ? <Skeleton className="h-[18px] w-72 max-w-full" /> : error ? null : <p className="text-[13px] leading-[18px] text-muted-foreground">{sub}</p>}
           </div>
           <div className="flex flex-wrap gap-2">
-            <Button asChild variant="outline">
+            <Button animateIcon asChild variant="outline">
               <Link href="/creator/new">
                 <PlusIcon />
                 {t("newSeries")}
               </Link>
             </Button>
             {works.length > 0 && !error ? (
-              <Button asChild variant="brand">
+              <Button animateIcon asChild variant="brand">
                 <Link href={live ? `/creator/upload?series=${live.id}` : "/creator/upload"}>
                   <UploadIcon />
                   {t("uploadEpisode")}

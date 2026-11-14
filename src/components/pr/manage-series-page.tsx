@@ -1,7 +1,7 @@
 "use client"
 
 import { useQuery, useQueryClient } from "@tanstack/react-query"
-import { SearchXIcon } from "lucide-react"
+import { SearchXIcon } from "@/components/animate-ui/icons/search-x"
 import { CircleAlertIcon as AlertCircleIcon } from "@/components/animate-ui/icons/circle-alert"
 import { ArrowUpDownIcon } from "@/components/animate-ui/icons/arrow-up-down"
 import { ChevronRightIcon } from "@/components/animate-ui/icons/chevron-right"
@@ -820,7 +820,7 @@ function ManageView({ model, actions }: { model: Model; actions: Actions }) {
             <Link href={model.readerHref}>{t("viewAsReader")}</Link>
           </Button>
           {canUpload ? (
-            <Button asChild variant="brand">
+            <Button animateIcon asChild variant="brand">
               <Link href={`/creator/upload?series=${encodeURIComponent(model.id)}`}>
                 <UploadIcon />
                 {t("upload", { unit })}
@@ -951,7 +951,7 @@ function ManageView({ model, actions }: { model: Model; actions: Actions }) {
                     </Chip>
                   ))}
                 </div>
-                <Button type="button" variant="ghost" size="sm" onClick={() => setNewest((v) => !v)} aria-label={t("sortLabel", { order: newest ? t("newestFirst") : t("oldestFirst") })}>
+                <Button animateIcon type="button" variant="ghost" size="sm" onClick={() => setNewest((v) => !v)} aria-label={t("sortLabel", { order: newest ? t("newestFirst") : t("oldestFirst") })}>
                   <ArrowUpDownIcon className="size-3.5" />
                   {newest ? t("newestFirst") : t("oldestFirst")}
                 </Button>

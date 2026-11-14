@@ -17,7 +17,7 @@ export function PasswordInput({
   return (
     <div className="relative">
       <Input ref={ref} type={visible ? "text" : "password"} className="pr-11" {...props} />
-      <Button
+      <Button animateIcon
         type="button"
         variant="ghost"
         size="icon-sm"

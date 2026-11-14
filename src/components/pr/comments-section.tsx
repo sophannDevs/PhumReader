@@ -174,7 +174,7 @@ export function CommentsSection({
         <>
           {list("light")}
           {seeAllHref ? (
-            <Button asChild variant="outline" className="self-center">
+            <Button animateIcon asChild variant="outline" className="self-center">
               <Link href={seeAllHref}>
                 {t("seeAll", { count: count ?? "" })}
                 <ChevronRightIcon className="size-3.5" />

@@ -1,6 +1,7 @@
 "use client"
 
-import { CoinsIcon, LanguagesIcon } from "lucide-react"
+import { CoinsIcon } from "@/components/animate-ui/icons/coins"
+import { LanguagesIcon } from "@/components/animate-ui/icons/languages"
 import { ArrowRightIcon } from "@/components/animate-ui/icons/arrow-right"
 import { BadgeCheckIcon } from "@/components/animate-ui/icons/badge-check"
 import { CheckIcon } from "@/components/animate-ui/icons/check"
@@ -60,7 +61,7 @@ export function JoinPage() {
   const loggedOut = hydrated && !user
 
   const start = (size: "lg", className?: string, arrow = false) => (
-    <Button asChild variant="brand" size={size} className={className}>
+    <Button animateIcon asChild variant="brand" size={size} className={className}>
       <Link
         href={loggedOut ? "/login?mode=signup" : CREATE}
         onClick={() => {
@@ -170,7 +171,7 @@ export function JoinPage() {
               {TOOLS.map(({ icon: Icon, key }) => (
                 <li key={key} className="flex items-start gap-3">
                   <span aria-hidden className="inline-flex size-10 shrink-0 items-center justify-center rounded-xl bg-brand-soft text-brand-ink">
-                    <Icon className="size-[18px]" />
+                    <Icon className="size-[18px]" aria-hidden />
                   </span>
                   <span className="flex min-w-0 flex-col gap-0.5">
                     <span className="type-h4">{t(`${key}Title`)}</span>

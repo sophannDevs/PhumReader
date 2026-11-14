@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { REGEXP_ONLY_DIGITS } from "input-otp"
-import { LaptopIcon } from "lucide-react"
+import { LaptopIcon } from "@/components/animate-ui/icons/laptop"
 import { CheckIcon } from "@/components/animate-ui/icons/check"
 import { SmartphoneIcon } from "@/components/animate-ui/icons/smartphone"
 import { useLocale } from "next-intl"

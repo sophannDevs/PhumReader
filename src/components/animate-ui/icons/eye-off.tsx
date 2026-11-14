@@ -56,7 +56,7 @@ function IconComponent({ size, ...props }: EyeOffProps) {
 }
 
 function EyeOff(props: EyeOffProps) {
-  return <IconWrapper icon={IconComponent} size={24} animateOnHover {...props} />;
+  return <IconWrapper icon={IconComponent} size={24} {...props} />;
 }
 
 export {

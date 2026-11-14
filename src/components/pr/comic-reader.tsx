@@ -294,14 +294,14 @@ function ComicReaderView({ series, episode, total, panels, commentsEnabled = tru
             />
           </div>
           <div className="mx-auto flex w-fit max-w-full items-center justify-center gap-3 border-b px-6 py-3">
-            <Button variant="ghost" size="sm" className={btn} disabled={pg === 0} onClick={pagePrev}>
+            <Button animateIcon variant="ghost" size="sm" className={btn} disabled={pg === 0} onClick={pagePrev}>
               <ChevronLeftIcon className="size-3.5" aria-hidden />
               {t("back")}
             </Button>
             <span aria-live="polite" className="text-[13px] font-medium tabular-nums">
               {t("pageCount", { page: pg + 1, total: panels.length })}
             </span>
-            <Button variant="ghost" size="sm" className={btn} onClick={pageNext}>
+            <Button animateIcon variant="ghost" size="sm" className={btn} onClick={pageNext}>
               {pg < lastPage ? t("next") : next ? t("nextEpisode") : t("done")}
               <ChevronRightIcon className="size-3.5" aria-hidden />
             </Button>

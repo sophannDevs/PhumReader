@@ -66,7 +66,7 @@ function IconComponent({ size, ...props }: ChevronLeftProps) {
 }
 
 function ChevronLeft(props: ChevronLeftProps) {
-  return <IconWrapper icon={IconComponent} size={24} animateOnHover {...props} />;
+  return <IconWrapper icon={IconComponent} size={24} {...props} />;
 }
 
 export {

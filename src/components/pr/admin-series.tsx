@@ -357,7 +357,7 @@ function SeriesDetail({
       ) : (
         <div className="flex flex-col gap-4">
           <div className="flex flex-wrap gap-2">
-            <Button variant="brand" disabled={!allChecked} onClick={approve} aria-describedby={`${id}-hint`}>
+            <Button animateIcon variant="brand" disabled={!allChecked} onClick={approve} aria-describedby={`${id}-hint`}>
               <CheckIcon />
               {t("approve")}
             </Button>

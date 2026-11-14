@@ -96,7 +96,7 @@ function IconComponent({ size, ...props }: RefreshCwProps) {
 }
 
 function RefreshCw(props: RefreshCwProps) {
-  return <IconWrapper icon={IconComponent} size={24} animateOnHover {...props} />;
+  return <IconWrapper icon={IconComponent} size={24} {...props} />;
 }
 
 export {

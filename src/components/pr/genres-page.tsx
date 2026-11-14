@@ -192,7 +192,7 @@ export function GenresPage() {
           {ready ? (genre === "All" ? t("count", { count: list.length }) : t("countIn", { count: list.length, genre: loc.genre(genre) })) : null}
         </span>
         {filterCount > 0 ? (
-          <Button variant="ghost" size="sm" onClick={clearFilters}>
+          <Button animateIcon variant="ghost" size="sm" onClick={clearFilters}>
             <XIcon className="size-3.5" aria-hidden />
             {t("clearFiltersCount", { count: filterCount })}
           </Button>
@@ -212,7 +212,7 @@ export function GenresPage() {
           title={t("errorTitle")}
           text={t("errorText")}
           action={
-            <Button variant="outline" size="sm" onClick={catalog.refetch}>
+            <Button animateIcon variant="outline" size="sm" onClick={catalog.refetch}>
               <RefreshCwIcon className="size-3.5" aria-hidden />
               {t("tryAgain")}
             </Button>

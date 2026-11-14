@@ -1,6 +1,6 @@
 "use client"
 
-import { CoinsIcon } from "lucide-react"
+import { CoinsIcon } from "@/components/animate-ui/icons/coins"
 import { CircleAlertIcon } from "@/components/animate-ui/icons/circle-alert"
 import { InfoIcon } from "@/components/animate-ui/icons/info"
 import { ZapIcon } from "@/components/animate-ui/icons/zap"
@@ -176,8 +176,8 @@ export function UnlockDialog({
             </Button>
           ) : null}
           {state === "not-enough" ? (
-            <Button variant="brand" size="lg" className="w-full" onClick={onGetCoins}>
-              <CoinsIcon /> {t("getCoins")}
+            <Button animateIcon variant="brand" size="lg" className="w-full" onClick={onGetCoins}>
+              <CoinsIcon aria-hidden /> {t("getCoins")}
             </Button>
           ) : null}
           <Button variant="ghost" className="w-full" onClick={() => onOpenChange(false)}>

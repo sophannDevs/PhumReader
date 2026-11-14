@@ -106,7 +106,7 @@ export function SeriesUnavailable({ series }: { series: Series }) {
                       {t("goHome")}
                     </Link>
                   </Button>
-                  <Button asChild variant="ghost" size="lg" className="max-md:flex-1">
+                  <Button animateIcon asChild variant="ghost" size="lg" className="max-md:flex-1">
                     <Link href="/library">
                       <BookOpenIcon />
                       {t("myLibrary")}
@@ -135,7 +135,7 @@ export function SeriesUnavailable({ series }: { series: Series }) {
             <h2 id="similar-title" className="type-h3">
               {t("similarTitle")}
             </h2>
-            <Button asChild variant="ghost" size="sm">
+            <Button animateIcon asChild variant="ghost" size="sm">
               <Link href={genreHref(series.genre)}>
                 {t("browseAll")}
                 <ChevronRightIcon className="size-3.5" />
