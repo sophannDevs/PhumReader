@@ -76,6 +76,8 @@ export function DailyUpdatesSection({
       <SectionHead
         id="du-h"
         size="h2"
+        // On phones the type tabs always sit under the title, so a longer day name can't move them.
+        className="max-md:flex-col max-md:items-start max-md:gap-3"
         title={t("dailyTitle")}
         subtitle={
           state === "ready" ? t("dayLine", { count: list.length, type: kind, day: dayName, today: isToday ? "yes" : "no" }) : undefined

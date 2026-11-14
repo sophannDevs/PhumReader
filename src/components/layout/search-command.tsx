@@ -94,6 +94,7 @@ export function SearchCommand({
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent
         showCloseButton={false}
+        overlayClassName="max-md:bg-transparent"
         className="top-[16%] translate-y-0 gap-0 overflow-hidden p-0 sm:max-w-[560px]"
         {...restoreFocus}
       >

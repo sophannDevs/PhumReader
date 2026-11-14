@@ -1003,8 +1003,11 @@ test("14. admin: only ADMIN gets in; remove a reported comment, suspend a user, 
   const ap = await ctx.newPage();
   try {
     await logIn(ap, NEW_PASSWORD);
-    await visible(ap.getByRole("button", { name: /Account menu/ })).click();
-    await ap.getByRole("menuitem", { name: "Admin" }).click();
+    // The menu is animated and the page may re-render right after login: open it again if it closed.
+    await expect(async () => {
+      await visible(ap.getByRole("button", { name: /Account menu/ })).click();
+      await ap.getByRole("menuitem", { name: "Admin" }).click({ timeout: 5_000 });
+    }).toPass({ timeout: 30_000 });
     await expect(ap).toHaveURL(/\/admin$/);
     await expect(visible(ap.getByRole("heading", { level: 1, name: "Today" }))).toBeVisible();
 
@@ -1685,8 +1688,8 @@ test("22. smaller V2.1 fields: birth year, Home picks, Help ticket and votes sta
 
   // Help: the Contact us form creates a ticket; "Was this helpful?" is saved.
   await page.goto("/help");
-  await selectOption(visible(page.getByRole("combobox", { name: "Topic *" })), "other");
-  await visible(page.getByLabel("Message *")).fill(`Where do I find my reading history? ${stamp}`);
+  await selectOption(visible(page.getByRole("combobox", { name: "Topic" })), "other");
+  await visible(page.getByRole("textbox", { name: "Message" })).fill(`Where do I find my reading history? ${stamp}`);
   await visible(page.getByRole("button", { name: "Send message" })).click();
   await expect(visible(page.getByText(/^T-\d{5}$/).or(page.locator("strong", { hasText: /^T-\d{5}$/ })).first())).toBeVisible();
   await visible(page.locator('[data-slot="accordion-trigger"]').first()).click();

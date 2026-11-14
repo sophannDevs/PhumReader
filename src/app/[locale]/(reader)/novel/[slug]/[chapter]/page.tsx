@@ -2,13 +2,13 @@ import type { Metadata } from "next"
 import { Suspense } from "react"
 import { notFound } from "next/navigation"
 import { setRequestLocale } from "next-intl/server"
-import { getTranslations } from "@/i18n/translations-server"
+import { getCachedTranslations } from "@/i18n/translations-server"
 import { NovelReader, NovelSkeleton } from "@/components/pr/novel-reader"
 import { episodesFor, getSeries, getSeriesBySlug } from "@/data"
 import { redirect } from "@/i18n/navigation"
 import { DEMO_MODE } from "@/lib/api/config"
 import { fetchSeriesServer } from "@/lib/api/server"
-import { routing } from "@/i18n/routing"
+import { routing, type Locale } from "@/i18n/routing"
 
 // Chapter 1 of every novel is prerendered; other chapters render on request.
 export function generateStaticParams() {
@@ -28,7 +28,7 @@ export async function generateMetadata({ params }: PageProps<"/[locale]/novel/[s
     if (detail) series = detail.series
   }
   if (!series) return {}
-  const t = await getTranslations({ locale, namespace: "reader" })
+  const t = await getCachedTranslations(locale as Locale, "reader")
   return { title: `${series.title} · ${t("chapterLabel", { n: chapter })}` }
 }
 
