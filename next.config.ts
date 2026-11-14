@@ -37,7 +37,9 @@ const nextConfig: NextConfig = {
     // Next.js blocks optimizing images from private IPs; the local MinIO is one.
     dangerouslyAllowLocalIP: process.env.NODE_ENV !== "production",
   },
-  partialPrefetching: true,
+  // Off: with partial prefetching, a client-side navigation on Vercel (e.g. header "Log in" from the home page)
+  // showed the page without its Suspense content (blank login form, blank phone home) until a reload.
+  partialPrefetching: false,
   turbopack: {
     rules: {
       "*.css": {
