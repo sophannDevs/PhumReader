@@ -12,7 +12,7 @@ const scrollable = () => Math.max(1, document.documentElement.scrollHeight - win
  * Where the reader is in an episode or chapter (prototype Viewer / Novel scroll handler):
  * - `pct`: 0..1 of the page scrolled, for the progress line under the bar;
  * - saves the place to the store (`pos[seriesId][n]`) while it is between 5% and 95%, and clears it after 95%;
- * - `onEnd` once the reader is at 97% (the comic's auto-next);
+ * - `onEnd` once the reader is at 97% (optional; no caller uses it at the moment);
  * - `resumeAt`: the place saved last time (0 = none), with `resume()` (scroll there) and `startOver()` (forget it).
  * Mount it only once the store is loaded: the saved place is read when it mounts.
  */

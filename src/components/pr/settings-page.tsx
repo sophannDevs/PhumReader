@@ -56,7 +56,7 @@ import { Effect } from "@animate-ui/react/primitives/effects/effect"
  * the app language, blocking, password, photo, downloads and account actions act at once.
  * Saving writes `settings` (+ `novelSettings.size`, the site theme via useTheme, the display name). With the
  * real API the name goes to /me/profile, the story languages to /me/settings (V21-07), and SettingsSync saves the
- * reader theme, text size, reading choices (mode, quality, auto-next, data saver) and the region and privacy switches
+ * reader theme, text size, reading choices (mode, quality, data saver) and the region and privacy switches
  * (V21-08); only the Google / Facebook links stay on this device. The Notifications card sums up the account's alert
  * settings (changed on /notifications). "Request data download" is simulated in the demo; with the real API it shows "Coming
  * soon" with the button off (no export yet).
@@ -64,7 +64,7 @@ import { Effect } from "@animate-ui/react/primitives/effects/effect"
 
 type Form = Pick<
   AppSettings,
-  "mode" | "quality" | "theme" | "size" | "autoNext" | "saveData" | "region" | "langs" | "publicLib" | "mature" | "google" | "facebook"
+  "mode" | "quality" | "theme" | "size" | "saveData" | "region" | "langs" | "publicLib" | "mature" | "google" | "facebook"
 > & { name: string }
 
 const SECTIONS = ["account", "reading", "language", "notifs", "privacy", "coins", "danger"] as const
@@ -288,7 +288,6 @@ export function SettingsPage() {
       quality: f.quality,
       theme: f.theme,
       size: f.size,
-      autoNext: f.autoNext,
       saveData: f.saveData,
       region: f.region,
       langs: [...f.langs],
@@ -368,7 +367,7 @@ export function SettingsPage() {
     )
   }
 
-  const switchRow = (key: "autoNext" | "saveData" | "publicLib" | "mature") => (
+  const switchRow = (key: "saveData" | "publicLib" | "mature") => (
     <Row id={`t-${key}`} label={t(`switches.${key}.label`)} hint={t(`switches.${key}.desc`)}>
       <SmallSwitch checked={f[key]} aria-labelledby={`t-${key}`} onCheckedChange={(v) => set(key, v)} />
     </Row>
@@ -540,7 +539,6 @@ export function SettingsPage() {
               </div>
             </div>
             <Sep />
-            {switchRow("autoNext")}
             {switchRow("saveData")}
           </Card>
 

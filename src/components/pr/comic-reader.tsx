@@ -6,7 +6,6 @@ import { notFound } from "next/navigation"
 import { useTranslations } from "@/i18n/translations"
 import Image from "next/image"
 import { memo, useEffect, useRef, useState } from "react"
-import { toast } from "sonner"
 import { EpisodeListPopover } from "@/components/layout/episode-list-popover"
 import { barButton, ComicReaderBar } from "@/components/layout/reader-bar"
 import { ComicSettingsPopover } from "@/components/layout/reading-settings"
@@ -30,8 +29,6 @@ import { arrowStep, useReaderNav } from "@/lib/use-reader-nav"
 import { useReadingPosition } from "@/lib/use-reading-position"
 import { cn } from "@/lib/utils"
 
-const AUTO_NEXT_SECONDS = 5
-
 export function ReaderSkeleton() {
   return (
     <div className="flex-1 bg-surface" aria-hidden>
@@ -47,7 +44,7 @@ export function ReaderSkeleton() {
 
 /**
  * Comic reader (spec §3, prototype Viewer): bar with the place in the episode, settings (scroll / page by page,
- * dark / light, full / narrow, auto-next, data saver), resume chip, the strip or one page at a time, the end of
+ * dark / light, full / narrow, data saver), resume chip, the strip or one page at a time, the end of
  * the episode, and the Fast Pass lock screen for a locked episode (demo: from the store; real API: the 402).
  */
 export function ComicReader({ slug, n }: { slug: string; n: number }) {
@@ -127,7 +124,6 @@ function ComicReaderView({ series, episode, total, panels, commentsEnabled = tru
   const user = useUser()
   const bg = useAppStore((s) => s.readerBg)
   const narrow = useAppStore((s) => s.readerWidth === "narrow")
-  const autoNext = useAppStore((s) => s.settings.autoNext)
   const saveData = useAppStore((s) => s.settings.saveData)
   const n = episode.n
   // This episode's Fast Pass price (real API: its own, or the one its 402 named); the demo's are all 5 coins.
@@ -142,34 +138,10 @@ function ComicReaderView({ series, episode, total, panels, commentsEnabled = tru
   const pg = Math.min(page, lastPage)
   const showEnd = !locked && (!pageMode || pg === lastPage)
 
-  // Auto-open the next episode: 5 s countdown at the end, once per episode, never into a locked one.
-  const [countdown, setCountdown] = useState<number | null>(null)
-  const counted = useRef(false)
-  const maybeAutoNext = () => {
-    if (!autoNext || !next || nextLocked || counted.current) return
-    counted.current = true
-    setCountdown(AUTO_NEXT_SECONDS)
-  }
-  const goRef = useRef(go)
-  useEffect(() => {
-    goRef.current = go
-  })
-  useEffect(() => {
-    if (countdown === null) return
-    const id = setTimeout(() => {
-      if (countdown <= 1) {
-        setCountdown(null)
-        goRef.current(n + 1)
-      } else setCountdown(countdown - 1)
-    }, 1000)
-    return () => clearTimeout(id)
-  }, [countdown, n])
-
   const position = useReadingPosition({
     seriesId: series.id,
     n,
     savePos: !locked && !pageMode,
-    onEnd: showEnd ? maybeAutoNext : undefined,
   })
 
   // Page by page: ← / → turn pages (the last one leads to the next episode); on the lock screen they change episode.
@@ -185,9 +157,9 @@ function ComicReaderView({ series, episode, total, panels, commentsEnabled = tru
     setPage(pg - 1)
     window.scrollTo({ top: 0 })
   }
-  const keyRef = useRef({ pageNext, pagePrev, locked })
+  const keyRef = useRef({ pageNext, pagePrev, locked, go })
   useEffect(() => {
-    keyRef.current = { pageNext, pagePrev, locked }
+    keyRef.current = { pageNext, pagePrev, locked, go }
   })
   useEffect(() => {
     if (!pageMode) return
@@ -195,7 +167,7 @@ function ComicReaderView({ series, episode, total, panels, commentsEnabled = tru
       const step = arrowStep(e)
       if (!step) return
       const k = keyRef.current
-      if (k.locked) goRef.current(n + step)
+      if (k.locked) k.go(n + step)
       else if (step > 0) k.pageNext()
       else k.pagePrev()
     }
@@ -320,15 +292,7 @@ function ComicReaderView({ series, episode, total, panels, commentsEnabled = tru
             next={next}
             nextLocked={nextLocked}
             price={episodePrice(next)}
-            onNext={() => {
-              setCountdown(null)
-              go(n + 1)
-            }}
-            countdown={countdown}
-            onCancelAuto={() => {
-              setCountdown(null)
-              toast(t("autoNextCancelled"))
-            }}
+            onNext={() => go(n + 1)}
             commentsEnabled={commentsEnabled}
           />
         </div>

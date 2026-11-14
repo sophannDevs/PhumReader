@@ -36,7 +36,7 @@ export const pill = "rounded-full border-input bg-secondary text-foreground shad
 
 /**
  * Below the strip (spec §3 "End of episode", prototype `.vw-end`): the end card (Like, Subscribe, Share, Report this
- * episode), the auto-next countdown with Cancel, the next episode card (price and free date when it is Fast Pass) or
+ * episode), the next episode card (price and free date when it is Fast Pass) or
  * "all caught up", the top comments (CommentThread, Report / Block, "See all") and all episodes.
  */
 export function ComicEndSection({
@@ -46,8 +46,6 @@ export function ComicEndSection({
   nextLocked,
   price,
   onNext,
-  countdown,
-  onCancelAuto,
   finishRef,
   commentsEnabled = true,
 }: {
@@ -59,9 +57,6 @@ export function ComicEndSection({
   price: number
   /** Opens the next episode (or the UnlockDialog when it is locked). */
   onNext: () => void
-  /** Seconds left before the next episode opens; null when not counting. */
-  countdown: number | null
-  onCancelAuto: () => void
   /** Marks the episode finished once the end card scrolls into view. */
   finishRef?: (el: HTMLElement | null) => void
   /** Real API (V21-02): false when the creator turned comments off (no comment box) */
@@ -147,17 +142,6 @@ export function ComicEndSection({
 
         {next ? (
           <>
-            {countdown !== null && !nextLocked ? (
-              <div
-                role="status"
-                className="flex items-center justify-between gap-3 rounded-xl border border-primary/35 bg-primary/12 py-2.5 pr-3 pl-4 text-sm tabular-nums"
-              >
-                {t("nextIn", { count: countdown })}
-                <Button variant="ghost" size="sm" onClick={onCancelAuto}>
-                  {t("cancel")}
-                </Button>
-              </div>
-            ) : null}
             <AnimateIcon asChild animateOnHover><button
               type="button"
               onClick={onNext}

@@ -219,11 +219,12 @@ describe("SettingsPage: appearance and reading", () => {
 
   it("saves the reading switches", async () => {
     const { user } = renderUi(<SettingsPage />)
-    const auto = screen.getByRole("switch", { name: "Open the next episode automatically" })
-    expect(auto).toBeChecked()
-    await user.click(auto)
+    expect(screen.queryByRole("switch", { name: /next episode automatically/i })).not.toBeInTheDocument()
+    const saver = screen.getByRole("switch", { name: "Save data on mobile networks" })
+    expect(saver).not.toBeChecked()
+    await user.click(saver)
     await save(user)
-    await waitFor(() => expect(useAppStore.getState().settings.autoNext).toBe(false))
+    await waitFor(() => expect(useAppStore.getState().settings.saveData).toBe(true))
   })
 })
 

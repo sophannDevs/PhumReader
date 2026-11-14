@@ -73,10 +73,6 @@
   },
   "previewText": "The rain started just as the shop lights went out.",
   "switches": {
-    "autoNext": {
-      "label": "Open the next episode automatically",
-      "desc": "When you reach the end of an episode."
-    },
     "saveData": {
       "label": "Save data on mobile networks",
       "desc": "Loads images only as you scroll."

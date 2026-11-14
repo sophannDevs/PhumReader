@@ -77,7 +77,7 @@ function SwitchRow({ label, checked, onChange }: { label: string; checked: boole
 
 /**
  * The gear of the comic reader bar (spec §3 "Settings panel", prototype `.vw-set`): reading mode (`settings.mode`),
- * background (`readerBg`), width (`readerWidth`), auto-open next episode (`settings.autoNext`) and data saver
+ * background (`readerBg`), width (`readerWidth`) and data saver
  * (`settings.saveData`). Always dark, like the episode list.
  */
 export function ComicSettingsPopover({ triggerClassName }: { triggerClassName?: string }) {
@@ -127,7 +127,6 @@ export function ComicSettingsPopover({ triggerClassName }: { triggerClassName?: 
             { value: "narrow", label: t("widthNarrow") },
           ]}
         />
-        <SwitchRow label={t("autoNext")} checked={settings.autoNext} onChange={(autoNext) => store().setSettings({ autoNext })} />
         <SwitchRow
           label={t("dataSaver")}
           checked={settings.saveData}

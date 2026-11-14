@@ -770,3 +770,8 @@ docs/BACKEND_CHECKLIST.md, "V2.1 API additions" (V21-01 … V21-07).
   estimate (`episodeCommentCount`, 2.55 % of the likes). In real mode the comments switch (`commentsEnabled`) applies
   as on the comic end card. The reading-progress bar now reaches 100 % at the bottom of the comments, while
   "finished" still triggers when the end card scrolls into view.
+- V2-94 (F-no-auto-next) **No auto-open of the next episode**: removed on the owner's request (spec §3 "Settings
+  panel" and "End of episode" had a 5 s "Next episode in Ns · Cancel" countdown and an "Open next episode
+  automatically" switch). The countdown, both switches (reader gear panel and /settings) and their en + km keys are
+  gone; the end of an episode now waits for "Read next". `settings.autoNext` stays in the store and in the
+  `/me/settings` sync (`comics.autoNext`) because it is part of the API contract; nothing reads it any more.
